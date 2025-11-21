@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Manzzy ID</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div id="login-panel" class="auth-panel active">
+            <h2>Login Manzzy ID</h2>
+            <form id="login-form">
+                <div class="input-group">
+                    <i class="fas fa-user icon"></i>
+                    <input type="text" id="login-username" placeholder="Username" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock icon"></i>
+                    <input type="password" id="login-password" placeholder="Password" required>
+                </div>
+                <button type="submit" class="submit-btn primary">LOGIN</button>
+            </form>
+            <p>Belum punya akun? <a href="#" id="switch-to-register">Daftar di sini</a></p>
+        </div>
+
+        <div id="register-panel" class="auth-panel hidden">
+            <h2>Daftar Manzzy ID</h2>
+            <form id="register-form">
+                <div class="input-group">
+                    <i class="fas fa-user icon"></i>
+                    <input type="text" id="register-username" placeholder="Username" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock icon"></i>
+                    <input type="password" id="register-password" placeholder="Password" required>
+                </div>
+                <button type="submit" class="submit-btn secondary">DAFTAR</button>
+            </form>
+            <p>Sudah punya akun? <a href="#" id="switch-to-login">Masuk di sini</a></p>
+        </div>
+        <div id="message-area"></div>
+    </div>
+
+    <script>
+        const loginPanel = document.getElementById('login-panel');
+        const registerPanel = document.getElementById('register-panel');
+        const switchToRegister = document.getElementById('switch-to-register');
+        const switchToLogin = document.getElementById('switch-to-login');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const messageArea = document.getElementById('message-area');
+
+        // GANTI INI dengan URL Vercel Anda yang sebenarnya
+        const API_BASE_URL = 'https://apiman-gamma.vercel.app'; 
+
+        function switchPanel(show, hide) {
+             // ... (Fungsi switchPanel sama)
+             hide.classList.remove('active');
+             hide.classList.add('hidden');
+             show.classList.remove('hidden');
+             show.classList.add('active');
+        }
+
+        switchToRegister.addEventListener('click', (e) => {
+            e.preventDefault();
+            switchPanel(registerPanel, loginPanel);
+        });
+
+        switchToLogin.addEventListener('click', (e) => {
+            e.preventDefault();
+            switchPanel(loginPanel, registerPanel);
+        });
+
+        function displayMessage(message, isSuccess = true) {
+            messageArea.textContent = message;
+            messageArea.className = isSuccess ? 'success' : 'error';
+            setTimeout(() => { messageArea.textContent = ''; messageArea.className = ''; }, 3000);
+        }
+
+        async function handleFormSubmit(event, endpoint) {
+            event.preventDefault();
+            const form = event.target;
+            const usernameInput = form.querySelector('input[type="text"]').value;
+            const passwordInput = form.querySelector('input[type="password"]').value;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/${endpoint}`, { // Menggunakan API_BASE_URL
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username: usernameInput, password: passwordInput })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayMessage(data.message, true);
+                    form.reset(); 
+
+                    // --- LOGIKA PENGALIHAN SETELAH LOGIN ---
+                    if (endpoint === 'login' && data.token) {
+                        // 1. Simpan Token JWT ke LocalStorage
+                        localStorage.setItem('authToken', data.token);
+                        
+                        // 2. Arahkan ke Dashboard
+                        setTimeout(() => {
+                             window.location.href = 'dashboard.html'; 
+                        }, 500);
+
+                    } else {
+                        displayMessage(data.message, true);
+                    }
+                    // ----------------------------------------
+
+                } else {
+                    displayMessage(data.message || 'Terjadi kesalahan!', false);
+                }
+            } catch (error) {
+                console.error('Network Error:', error);
+                displayMessage('Sambungan ke server gagal.', false);
+            }
+        }
+
+        loginForm.addEventListener('submit', (e) => handleFormSubmit(e, 'login'));
+        registerForm.addEventListener('submit', (e) => handleFormSubmit(e, 'register'));
+
+    </script>
+</body>
+</html>
