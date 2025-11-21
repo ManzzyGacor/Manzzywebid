@@ -1,0 +1,197 @@
+/* Custom Background (Pakai Link) */
+body {
+    background-image: url('https://picsum.photos/1920/1080?random=2'); /* Ganti dengan link gambar Anda */
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+    color: #fff; /* Teks putih agar kontras dengan background gelap */
+}
+
+/* Kontainer Utama Form */
+.auth-container {
+    background-color: rgba(30, 30, 45, 0.9); /* Latar belakang gelap seperti gambar */
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); /* Shadow lebih gelap */
+    width: 100%;
+    max-width: 400px;
+    box-sizing: border-box;
+    overflow: hidden;
+    position: relative; /* Penting untuk panel absolute */
+}
+
+/* Animasi Form (Panel) */
+.auth-panel {
+    transition: all 0.5s ease-in-out;
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.auth-panel.hidden {
+    opacity: 0;
+    height: 0;
+    padding: 0;
+    margin: 0;
+    transform: translateX(100%); /* Geser keluar saat tersembunyi */
+    pointer-events: none;
+    position: absolute;
+    width: calc(100% - 80px); /* Sesuaikan dengan padding container */
+    top: 40px; /* Sesuaikan dengan padding container */
+    left: 40px; /* Sesuaikan dengan padding container */
+}
+
+.auth-panel.active {
+    position: static;
+}
+
+h2 {
+    text-align: center;
+    color: #fff; /* Judul putih */
+    margin-bottom: 25px;
+    font-size: 2em;
+}
+
+/* Input Group dengan Ikon */
+.input-group {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.input-group .icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #aaa;
+    font-size: 1.1em;
+}
+
+input[type="text"],
+input[type="password"] {
+    width: 100%;
+    padding: 12px 12px 12px 45px; /* Padding kiri untuk ikon */
+    background-color: #333; /* Warna input gelap */
+    border: 1px solid #555;
+    border-radius: 8px;
+    box-sizing: border-box;
+    color: #eee; /* Teks input putih */
+    font-size: 1em;
+}
+
+input[type="text"]::placeholder,
+input[type="password"]::placeholder {
+    color: #888;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+    border-color: #007bff; /* Highlight saat fokus */
+    outline: none;
+}
+
+/* Tombol Responsive dengan Gradient Bergerak */
+.submit-btn {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.2em;
+    cursor: pointer;
+    font-weight: bold;
+    color: white; /* Warna teks tombol */
+    position: relative; /* Untuk pseudo-element gradient */
+    overflow: hidden; /* Penting agar gradient tidak keluar */
+    background: transparent; /* Awalnya transparan */
+    z-index: 1; /* Pastikan tombol di atas gradient */
+}
+
+/* Gradient Bergerak */
+.submit-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%; /* Mulai dari luar kiri */
+    width: 300%; /* Lebar gradient lebih besar dari tombol */
+    height: 100%;
+    /* Warna gradient dari gambar referensi */
+    background: linear-gradient(90deg, #cb208e, #e23e7f, #fc606b, #ff7e5a, #fc606b, #e23e7f, #cb208e);
+    background-size: 300% 100%; /* Ukuran background gradient */
+    transition: background-position 0.8s ease-in-out; /* Animasi perpindahan posisi */
+    z-index: -1; /* Di belakang teks tombol */
+    border-radius: 8px; /* Ikuti border-radius tombol */
+}
+
+.submit-btn:hover::before {
+    background-position: 100% 0; /* Pindah ke kanan saat hover */
+}
+
+/* Link Switch */
+p {
+    text-align: center;
+    margin-top: 25px;
+    color: #ccc;
+    font-size: 0.9em;
+}
+
+a {
+    color: #007bff; /* Warna link default */
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: #4da6ff; /* Warna link saat hover */
+    text-decoration: underline;
+}
+
+/* Message Area (Success/Error) */
+#message-area {
+    margin-top: 20px;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 0.95em;
+}
+
+.success {
+    background-color: #28a745;
+    color: white;
+}
+
+.error {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* Media Queries untuk Responsif */
+@media (max-width: 480px) {
+    body {
+        padding: 0;
+    }
+    .auth-container {
+        padding: 25px;
+        border-radius: 0; /* Full screen di mobile */
+        min-height: 100vh;
+        max-width: none;
+        box-shadow: none;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    .auth-panel.hidden {
+        width: calc(100% - 50px);
+        top: 25px;
+        left: 25px;
+    }
+}
