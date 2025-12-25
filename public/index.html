@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -26,9 +25,31 @@
 
         /* --- LOADER --- */
         #loader { position: fixed; inset: 0; background: #000; z-index: 100; display: flex; justify-content: center; align-items: center; font-family: 'JetBrains Mono', monospace; }
-        .terminal-window { width: 90%; max-width: 450px; }
-        .loader-bar-bg { width: 100%; height: 4px; background: #1a1a1a; margin-top: 20px; border-radius: 2px; overflow: hidden; }
-        .loader-bar-fill { height: 100%; background: var(--primary); width: 0%; box-shadow: 0 0 10px var(--primary); transition: width 0.1s linear; }
+        .terminal-window { width: 90%; max-width: 500px; }
+        
+        /* Terminal Text Area */
+        #terminal-text { 
+            height: 160px; /* Tinggi fix */
+            overflow-y: hidden; /* Hide scrollbar */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end; /* Teks selalu di bawah */
+            margin-bottom: 10px;
+        }
+
+        .log-line { 
+            color: #a8a8a8; 
+            font-size: 0.85rem; 
+            margin-bottom: 2px;
+            white-space: nowrap; /* Mencegah wrap aneh */
+            overflow: hidden;
+        }
+        .log-success { color: #4ade80; }
+        .log-warn { color: #facc15; }
+        
+        /* Progress Bar Smooth */
+        .loader-bar-bg { width: 100%; height: 4px; background: #1a1a1a; margin-top: 10px; border-radius: 2px; overflow: hidden; }
+        .loader-bar-fill { height: 100%; background: var(--primary); width: 0%; box-shadow: 0 0 15px var(--primary); transition: width 0.1s linear; }
 
         /* --- VIEW TRANSITIONS --- */
         .view-section {
@@ -52,21 +73,34 @@
         .product-img { width: 100%; height: 180px; object-fit: cover; border-radius: 8px; margin-bottom: 15px; background: #111; }
         .neon-text { text-shadow: 0 0 20px rgba(139, 92, 246, 0.5); }
 
+        /* --- SOCIAL BUTTONS --- */
+        .social-btn {
+            width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            color: #a8a8a8; font-size: 1.2rem; transition: all 0.3s ease;
+        }
+        .social-btn:hover { transform: translateY(-5px); color: white; border-color: var(--primary); box-shadow: 0 0 15px rgba(139, 92, 246, 0.5); }
+
         /* --- MONITOR BARS --- */
         .stat-bar-bg { width: 100%; height: 6px; background: #333; border-radius: 3px; overflow: hidden; margin-top: 5px; }
         .stat-bar-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.8s ease-in-out; }
-        .cpu-warning { background: #ef4444 !important; box-shadow: 0 0 10px #ef4444; } /* Merah kalau CPU tinggi */
+        .cpu-warning { background: #ef4444 !important; box-shadow: 0 0 10px #ef4444; }
     </style>
 </head>
 <body>
 
     <div id="loader">
         <div class="terminal-window">
-            <div id="terminal-text" class="h-32 flex flex-col justify-end overflow-hidden text-gray-400 text-sm"></div>
-            <div class="flex justify-between text-xs text-gray-500 mt-2 font-mono">
-                <span>SYSTEM_BOOT</span><span id="percent">0%</span>
+            <div id="terminal-text"></div>
+            
+            <div class="flex justify-between text-xs text-gray-500 mt-2 font-mono uppercase tracking-wider">
+                <span id="boot-status">Initializing...</span>
+                <span id="percent">0%</span>
             </div>
-            <div class="loader-bar-bg"><div id="progress-fill" class="loader-bar-fill"></div></div>
+            
+            <div class="loader-bar-bg">
+                <div id="progress-fill" class="loader-bar-fill"></div>
+            </div>
         </div>
     </div>
 
@@ -90,7 +124,7 @@
             
             <div class="text-center max-w-3xl mt-8 mb-10">
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-900/20 border border-purple-500/30 text-purple-300 text-xs font-medium mb-6">
-                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> System v2.0 Online
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Version 2.8
                 </div>
                 <h1 class="text-5xl md:text-7xl font-bold mb-6 text-white neon-text">
                     MANZZY ID <br> <span class="text-purple-500">OFFICIAL</span>
@@ -98,13 +132,19 @@
                 <p class="text-gray-400 text-lg mb-8">
                     Penyedia layanan & sewa bot WhatsApp premium. <br>Stabilitas tinggi, tanpa kompromi.
                 </p>
-                <button onclick="switchView('store')" class="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg shadow-[0_0_20px_rgba(139,92,246,0.4)] transition hover:scale-105">
+                
+                <button onclick="switchView('store')" class="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg shadow-[0_0_20px_rgba(139,92,246,0.4)] transition hover:scale-105 mb-8">
                     Lihat Produk <i class="fa-solid fa-arrow-right ml-2"></i>
                 </button>
+
+                <div class="flex items-center justify-center gap-4 mb-6">
+                    <a href="https://instagram.com/Manzz_Wakeup" target="_blank" class="social-btn" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="https://wa.me/62895605053911" target="_blank" class="social-btn" title="Owner"><i class="fa-solid fa-user-shield"></i></a>
+                    <a href="https://chat.whatsapp.com/G3eLNFmrWQEBzQfI4RsrLJ?mode=ems_copy_t" target="_blank" class="social-btn" title="Group"><i class="fa-solid fa-users"></i></a>
+                </div>
             </div>
 
             <div class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-4 mb-16">
-                
                 <div class="glass-card p-5 rounded-xl border-l-4 border-l-green-500 flex items-center justify-between">
                     <div>
                         <h4 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Varesa Status</h4>
@@ -128,19 +168,16 @@
                         </div>
                         <span class="text-green-500 text-[10px] animate-pulse bg-green-900/20 px-2 py-1 rounded">● ONLINE</span>
                     </div>
-                    
                     <div class="flex items-center gap-3 text-xs font-mono mb-3">
                         <span class="w-8 text-purple-300">CPU</span>
                         <div class="flex-1 stat-bar-bg"><div id="bar-cpu" class="stat-bar-fill" style="width: 20%"></div></div>
                         <span id="text-cpu" class="w-12 text-right text-gray-300">20%</span>
                     </div>
-
                     <div class="flex items-center gap-3 text-xs font-mono mb-3">
                         <span class="w-8 text-purple-300">RAM</span>
                         <div class="flex-1 stat-bar-bg"><div id="bar-ram" class="stat-bar-fill" style="width: 45%"></div></div>
                         <span id="text-ram" class="w-24 text-right text-gray-300">-- / 26GB</span>
                     </div>
-
                     <div class="flex items-center gap-3 text-xs font-mono">
                         <span class="w-8 text-purple-300">ROM</span>
                         <div class="flex-1 stat-bar-bg"><div id="bar-rom" class="stat-bar-fill bg-blue-500" style="width: 15%"></div></div>
@@ -149,23 +186,29 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-10">
                 <div class="glass-card p-6 rounded-xl flex flex-col items-center text-center">
                     <i class="fa-brands fa-whatsapp text-4xl text-purple-500 mb-4"></i>
                     <h3 class="text-white font-bold">Bot Hosting</h3>
-                    <p class="text-sm text-gray-500 mt-2">Server khusus bot WA, support multi-device & custom script.</p>
+                    <p class="text-sm text-gray-500 mt-2">Server khusus bot WA, support multi-device.</p>
                 </div>
                 <div class="glass-card p-6 rounded-xl flex flex-col items-center text-center">
                     <i class="fa-solid fa-headset text-4xl text-purple-500 mb-4"></i>
                     <h3 class="text-white font-bold">Support 24/7</h3>
-                    <p class="text-sm text-gray-500 mt-2">Tim teknis selalu aktif membantu kendala bot Anda.</p>
+                    <p class="text-sm text-gray-500 mt-2">Tim teknis selalu aktif membantu kendala bot.</p>
                 </div>
                 <div class="glass-card p-6 rounded-xl flex flex-col items-center text-center">
                     <i class="fa-solid fa-bolt text-4xl text-purple-500 mb-4"></i>
                     <h3 class="text-white font-bold">Fast Speed</h3>
-                    <p class="text-sm text-gray-500 mt-2">Respon bot kilat tanpa delay dengan optimasi Node.js.</p>
+                    <p class="text-sm text-gray-500 mt-2">Respon bot kilat tanpa delay.</p>
                 </div>
             </div>
+
+            <footer class="w-full text-center py-6 border-t border-gray-900 mt-10">
+                <p class="text-gray-500 text-xs font-mono">
+                    Berdiri sejak 13 Mei 2025 sampai sekarang oleh <span class="text-purple-500">© Manzzy</span>
+                </p>
+            </footer>
         </section>
 
         <section id="view-store" class="view-section">
@@ -180,58 +223,120 @@
                 <p class="mt-2 text-sm">Mengambil Data Database...</p>
             </div>
             <div id="product-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full pb-20"></div>
+            
+            <footer class="w-full text-center py-6 border-t border-gray-800 mt-auto">
+                <p class="text-gray-600 text-xs font-mono">
+                    Berdiri sejak 13 Mei 2025 sampai sekarang oleh <span class="text-purple-500">© Manzzy</span>
+                </p>
+            </footer>
         </section>
-
     </div>
 
     <script>
-        // --- 1. BOOTING ANIMATION ---
+        // --- 1. BOOTING LOGIC (PERBAIKAN TOTAL) ---
         const terminalText = document.getElementById('terminal-text');
         const progressFill = document.getElementById('progress-fill');
         const percentText = document.getElementById('percent');
+        const bootStatus = document.getElementById('boot-status');
         const loader = document.getElementById('loader');
-        
-        const bootSequence = [
-            { text: "> Initializing System...", delay: 10 },
-            { text: "> Connecting to Database...", delay: 10 },
-            { text: "> Starting Runtime Counter...", delay: 10 },
-            { text: "> Access Granted.", delay: 20 }
+
+        // Tambahkan baris booting biar lebih panjang & terasa nyata
+        const bootLines = [
+            { text: "> BIOS Check...", delay: 200 },
+            { text: "> Loading Kernel Modules...", delay: 100 },
+            { text: "> Mounting File System...", delay: 150 },
+            { text: "> Connecting to Manzzy Server...", delay: 300 }, // Delay lama dikit biar kerasa connect
+            { text: "> Verifying SSL Certificates... <span class='log-success'>OK</span>", delay: 100 },
+            { text: "> Fetching Database Config...", delay: 200 },
+            { text: "> Optimizing Node.js Runtime...", delay: 150 },
+            { text: "> Starting Services [Bot, API, Web]...", delay: 200 },
+            { text: "> <span class='log-warn'>ACCESS GRANTED.</span> Welcome User.", delay: 500 }
         ];
 
-        let seqIdx = 0, charIdx = 0;
+        let totalChars = 0;
+        let printedChars = 0;
 
-        function typeWriter() {
-            if (seqIdx < bootSequence.length) {
-                const line = bootSequence[seqIdx];
-                if (charIdx === 0) {
-                    const div = document.createElement('div');
-                    div.innerText = line.text;
-                    terminalText.appendChild(div);
+        // Hitung total karakter bersih untuk persentase
+        bootLines.forEach(line => {
+            // Hapus tag HTML saat hitung panjang karakter biar akurat
+            const cleanText = line.text.replace(/<[^>]*>/g, ''); 
+            totalChars += cleanText.length;
+        });
+
+        async function startBooting() {
+            for (let i = 0; i < bootLines.length; i++) {
+                const lineData = bootLines[i];
+                
+                // Buat elemen baris baru
+                const lineEl = document.createElement('div');
+                lineEl.className = 'log-line';
+                terminalText.appendChild(lineEl);
+                
+                // Update status teks di bawah
+                bootStatus.innerText = "Processing: " + lineData.text.replace(/<[^>]*>/g, '').substring(0, 15) + "...";
+
+                // Logika ngetik per karakter (termasuk handle HTML tags)
+                let currentHTML = "";
+                const rawText = lineData.text;
+                let charIndex = 0;
+
+                // Kita simulasi ngetik manual
+                while(charIndex < rawText.length) {
+                    // Kalau ketemu tag HTML (misal <span...), langsung masukkan semuanya
+                    if(rawText[charIndex] === '<') {
+                        const closeTagIdx = rawText.indexOf('>', charIndex);
+                        if(closeTagIdx !== -1) {
+                            currentHTML += rawText.substring(charIndex, closeTagIdx + 1);
+                            charIndex = closeTagIdx + 1;
+                            continue; // Skip animasi buat tag HTML
+                        }
+                    }
+                    
+                    // Ketik karakter biasa
+                    currentHTML += rawText[charIndex];
+                    lineEl.innerHTML = currentHTML;
+                    
+                    printedChars++;
+                    updateProgress();
+                    
+                    // Scroll ke bawah otomatis
+                    terminalText.scrollTop = terminalText.scrollHeight;
+
+                    // Delay acak biar kayak hacker ngetik (10ms - 30ms)
+                    await new Promise(r => setTimeout(r, Math.random() * 20 + 10)); 
+                    charIndex++;
                 }
-                charIdx = line.text.length; 
-                updateProgress();
-                seqIdx++; 
-                setTimeout(typeWriter, 150);
-            } else {
-                finishLoading();
+
+                // Delay antar baris (misal 'Connecting...' butuh waktu lebih lama)
+                await new Promise(r => setTimeout(r, lineData.delay));
             }
+
+            // Selesai
+            finishBooting();
         }
 
         function updateProgress() {
-            let p = Math.round(((seqIdx + 1) / bootSequence.length) * 100);
-            progressFill.style.width = `${p}%`;
-            percentText.innerText = `${p}%`;
+            const percent = Math.min(Math.round((printedChars / totalChars) * 100), 100);
+            progressFill.style.width = `${percent}%`;
+            percentText.innerText = `${percent}%`;
         }
 
-        function finishLoading() {
+        function finishBooting() {
+            bootStatus.innerText = "SYSTEM READY.";
+            progressFill.style.width = "100%";
+            percentText.innerText = "100%";
+            
             setTimeout(() => {
                 loader.style.opacity = "0";
+                loader.style.transition = "opacity 0.8s ease";
                 document.body.style.overflow = "auto";
-                setTimeout(() => { loader.style.display = "none"; }, 800);
+                setTimeout(() => { 
+                    loader.style.display = "none"; 
+                }, 800);
             }, 500);
         }
 
-        // --- 2. RUNTIME COUNTER LOGIC (15 HARI LOOP) ---
+        // --- 2. RUNTIME COUNTER ---
         const runtimeElement = document.getElementById('runtime-counter');
         let startTime = new Date();
         startTime.setDate(startTime.getDate() - 12); 
@@ -239,69 +344,46 @@
         function updateRuntime() {
             const now = new Date();
             let diff = now - startTime;
-            
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
             const minutes = Math.floor((diff / 1000 / 60) % 60);
             const seconds = Math.floor((diff / 1000) % 60);
-
             if (days >= 15) startTime = new Date(); 
-
             const f = (n) => n.toString().padStart(2, '0');
             runtimeElement.innerHTML = `<span class="text-purple-500">${f(days)}d</span> ${f(hours)}h ${f(minutes)}m ${f(seconds)}s`;
         }
         setInterval(updateRuntime, 1000); 
 
-        // --- 3. FAKE SERVER MONITOR (UPDATED LOGIC) ---
+        // --- 3. SERVER MONITOR ---
         function updateServerStats() {
-            // CPU: 10% - 100%
             const cpu = Math.floor(Math.random() * (100 - 10 + 1)) + 10;
             const barCpu = document.getElementById('bar-cpu');
-            
             barCpu.style.width = `${cpu}%`;
             document.getElementById('text-cpu').innerText = `${cpu}%`;
-            
-            // Ubah warna jadi merah kalau di atas 80% (Efek Overload)
-            if(cpu > 80) barCpu.classList.add('cpu-warning');
-            else barCpu.classList.remove('cpu-warning');
+            if(cpu > 80) barCpu.classList.add('cpu-warning'); else barCpu.classList.remove('cpu-warning');
 
-            // RAM: 20% - 65% (Total 26GB)
             const ramPercent = Math.floor(Math.random() * (65 - 50 + 1)) + 20;
-            const ramTotal = 26;
-            const ramUsed = ((ramPercent / 100) * ramTotal).toFixed(1); // Hitung GB
-            
+            const ramUsed = ((ramPercent / 100) * 26).toFixed(1); 
             document.getElementById('bar-ram').style.width = `${ramPercent}%`;
-            document.getElementById('text-ram').innerText = `${ramUsed}G / ${ramTotal}G`;
+            document.getElementById('text-ram').innerText = `${ramUsed}G / 26G`;
 
-            // ROM: Fixed/Sedikit gerak sekitar 40-42GB dari 300GB
-            const romTotal = 300;
             const romUsed = (Math.random() * (42.5 - 40) + 40).toFixed(1);
-            const romPercent = (romUsed / romTotal) * 100;
-            
+            const romPercent = (romUsed / 300) * 100;
             document.getElementById('bar-rom').style.width = `${romPercent}%`;
-            document.getElementById('text-rom').innerText = `${Math.floor(romUsed)}G / ${romTotal}G`;
+            document.getElementById('text-rom').innerText = `${Math.floor(romUsed)}G / 300G`;
         }
         setInterval(updateServerStats, 2000); 
 
-        // --- 4. SWITCH VIEW & STORE LOGIC ---
+        // --- 4. SWITCH VIEW ---
         function switchView(target) {
             const landing = document.getElementById('view-landing');
             const store = document.getElementById('view-store');
-
             if (target === 'store') {
                 landing.style.opacity = '0'; landing.style.transform = 'translateY(-20px)';
-                setTimeout(() => {
-                    landing.classList.remove('view-active');
-                    store.classList.add('view-active');
-                    loadStore();
-                }, 400);
+                setTimeout(() => { landing.classList.remove('view-active'); store.classList.add('view-active'); loadStore(); }, 400);
             } else {
                 store.style.opacity = '0'; store.style.transform = 'translateY(20px)';
-                setTimeout(() => {
-                    store.classList.remove('view-active');
-                    landing.classList.add('view-active');
-                    landing.style.opacity = ''; landing.style.transform = '';
-                }, 400);
+                setTimeout(() => { store.classList.remove('view-active'); landing.classList.add('view-active'); landing.style.opacity = ''; landing.style.transform = ''; }, 400);
             }
         }
 
@@ -314,29 +396,17 @@
                 const products = await response.json();
                 const grid = document.getElementById('product-grid');
                 document.getElementById('loading-store').style.display = 'none';
-
                 if (products.length === 0) grid.innerHTML = `<p class="text-center text-gray-500 w-full col-span-3">Belum ada produk.</p>`;
                 else grid.innerHTML = products.map(p => {
                     const waLink = `https://wa.me/${ADMIN_WA}?text=Halo Manzzy, saya mau beli ${p.name}`;
                     const imgUrl = p.imageUrl || 'https://via.placeholder.com/400x200?text=No+Image';
-                    return `
-                        <div class="glass-card p-4 rounded-xl flex flex-col h-full group">
-                            <img src="${imgUrl}" class="product-img shadow-lg">
-                            <div class="flex-1 flex flex-col">
-                                <h3 class="text-lg font-bold text-white mb-1 group-hover:text-purple-400 transition">${p.name}</h3>
-                                <p class="text-xs text-gray-400 mb-3">${p.desc}</p>
-                                <div class="mt-auto flex justify-between items-center border-t border-gray-700 pt-3">
-                                    <span class="text-purple-400 font-bold">${p.price}</span>
-                                    <a href="${waLink}" target="_blank" class="px-3 py-1 bg-white text-black text-xs font-bold rounded hover:bg-purple-500 hover:text-white transition">BELI</a>
-                                </div>
-                            </div>
-                        </div>`;
+                    return `<div class="glass-card p-4 rounded-xl flex flex-col h-full group"><img src="${imgUrl}" class="product-img shadow-lg"><div class="flex-1 flex flex-col"><h3 class="text-lg font-bold text-white mb-1 group-hover:text-purple-400 transition">${p.name}</h3><p class="text-xs text-gray-400 mb-3">${p.desc}</p><div class="mt-auto flex justify-between items-center border-t border-gray-700 pt-3"><span class="text-purple-400 font-bold">${p.price}</span><a href="${waLink}" target="_blank" class="px-3 py-1 bg-white text-black text-xs font-bold rounded hover:bg-purple-500 hover:text-white transition">BELI</a></div></div></div>`;
                 }).join('');
                 isStoreLoaded = true;
             } catch (error) { console.error(error); }
         }
 
-        window.onload = () => { setTimeout(typeWriter, 500); };
+        window.onload = () => { setTimeout(startBooting, 500); };
     </script>
 </body>
 </html>
