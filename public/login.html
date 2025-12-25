@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login - Manzzy ID</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>body { background-color: #050505; color: white; }</style>
 </head>
 <body class="flex items-center justify-center h-screen">
@@ -22,30 +23,58 @@
                 <label class="block text-sm text-gray-400">Password</label>
                 <input type="password" id="password" class="w-full p-2 bg-gray-800 border border-gray-700 rounded focus:border-purple-500 outline-none text-white" required>
             </div>
-            <button type="submit" class="w-full py-2 bg-purple-600 hover:bg-purple-700 rounded text-white font-bold transition">LOGIN</button>
+            
+            <button type="submit" id="btnLogin" class="w-full py-2 bg-purple-600 hover:bg-purple-700 rounded text-white font-bold transition flex justify-center items-center gap-2">
+                <span>LOGIN</span>
+            </button>
         </form>
     </div>
 
     <script>
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            const btn = document.getElementById('btnLogin');
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
 
-            const res = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
+            // 1. Ubah tombol jadi Loading
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...`;
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
 
-            const data = await res.json();
-            if (data.success) {
-                localStorage.setItem('isAdmin', 'true'); // Simpan sesi simpel
-                window.location.href = 'admin.html';
-            } else {
-                alert('Akses Ditolak: ' + data.message);
+            try {
+                // 2. Tembak API (Gunakan Relative Path agar aman di Vercel & Local)
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    localStorage.setItem('isAdmin', 'true');
+                    window.location.href = 'admin.html';
+                } else {
+                    alert('Login Gagal: ' + (data.message || 'Username/Password Salah'));
+                    resetBtn();
+                }
+
+            } catch (error) {
+                console.error("Error:", error);
+                alert('Gagal terhubung ke server! Pastikan backend berjalan.');
+                resetBtn();
             }
         });
+
+        function resetBtn() {
+            const btn = document.getElementById('btnLogin');
+            btn.innerHTML = `<span>LOGIN</span>`;
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
     </script>
 </body>
 </html>
+
