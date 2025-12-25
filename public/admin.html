@@ -13,22 +13,26 @@
     <div class="max-w-4xl mx-auto">
         <div class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-bold text-purple-500">DASHBOARD ADMIN</h1>
-            <button onclick="logout()" class="text-red-500 hover:text-red-400">Logout <i class="fa-solid fa-right-from-bracket"></i></button>
+            <div class="flex gap-4">
+                <a href="index.html" class="text-gray-400 hover:text-white">Ke Website Utama</a>
+                <button onclick="logout()" class="text-red-500 hover:text-red-400">Logout <i class="fa-solid fa-right-from-bracket"></i></button>
+            </div>
         </div>
 
         <div class="bg-gray-900 p-6 rounded-xl border border-gray-800 mb-10">
             <h2 class="text-xl font-bold mb-4 text-white"><i class="fa-solid fa-plus-circle"></i> Tambah Produk Baru</h2>
             <form id="addForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input type="text" id="pName" placeholder="Nama Produk (misal: Sewa Bot 1 Bulan)" class="p-3 bg-gray-800 rounded border border-gray-700 focus:border-purple-500 outline-none text-white">
-                <input type="text" id="pPrice" placeholder="Harga (misal: Rp 20.000)" class="p-3 bg-gray-800 rounded border border-gray-700 focus:border-purple-500 outline-none text-white">
+                <input type="text" id="pName" placeholder="Nama Produk (misal: Sewa Bot 1 Bulan)" class="p-3 bg-gray-800 rounded border border-gray-700 focus:border-purple-500 outline-none text-white" required>
+                <input type="text" id="pPrice" placeholder="Harga (misal: Rp 20.000)" class="p-3 bg-gray-800 rounded border border-gray-700 focus:border-purple-500 outline-none text-white" required>
                 <input type="text" id="pImg" placeholder="URL Foto Image (Link Gambar)" class="p-3 bg-gray-800 rounded border border-gray-700 focus:border-purple-500 outline-none text-white">
                 <input type="text" id="pDesc" placeholder="Deskripsi Singkat" class="p-3 bg-gray-800 rounded border border-gray-700 focus:border-purple-500 outline-none text-white">
                 
-                <button type="submit" class="col-span-1 md:col-span-2 bg-purple-600 hover:bg-purple-700 py-3 rounded text-white font-bold transition">Upload Database</button>
+                <button type="submit" id="btnAdd" class="col-span-1 md:col-span-2 bg-purple-600 hover:bg-purple-700 py-3 rounded text-white font-bold transition">Upload Database</button>
             </form>
         </div>
 
-        <h2 class="text-xl font-bold mb-4">List Produk Aktif</h2>
+        <h2 class="text-xl font-bold mb-4">List Produk Aktif (Database)</h2>
+        <div id="loading" class="text-center text-gray-500 hidden">Loading data...</div>
         <div id="productList" class="grid grid-cols-1 md:grid-cols-2 gap-6">
             </div>
     </div>
@@ -44,31 +48,50 @@
 
         // 1. Fetch & Tampilkan Produk
         async function loadProducts() {
-            const res = await fetch('/api/products');
-            const products = await res.json();
-            const container = document.getElementById('productList');
-            container.innerHTML = '';
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('productList').innerHTML = '';
+            
+            try {
+                const res = await fetch('/api/products');
+                const products = await res.json();
+                document.getElementById('loading').style.display = 'none';
 
-            products.forEach(p => {
-                container.innerHTML += `
-                    <div class="bg-gray-900/50 p-4 rounded-lg border border-gray-800 flex gap-4 items-center">
-                        <img src="${p.imageUrl}" class="w-16 h-16 object-cover rounded bg-gray-800" alt="img">
-                        <div class="flex-1">
-                            <h3 class="font-bold text-white">${p.name}</h3>
-                            <p class="text-purple-400 text-sm">${p.price}</p>
-                            <p class="text-gray-500 text-xs">${p.desc}</p>
+                const container = document.getElementById('productList');
+                
+                if(products.length === 0) {
+                    container.innerHTML = '<p class="text-gray-600">Belum ada produk.</p>';
+                    return;
+                }
+
+                products.forEach(p => {
+                    const img = p.imageUrl || 'https://via.placeholder.com/100';
+                    container.innerHTML += `
+                        <div class="bg-gray-900/50 p-4 rounded-lg border border-gray-800 flex gap-4 items-center">
+                            <img src="${img}" class="w-16 h-16 object-cover rounded bg-gray-800" alt="img">
+                            <div class="flex-1">
+                                <h3 class="font-bold text-white">${p.name}</h3>
+                                <p class="text-purple-400 text-sm">${p.price}</p>
+                                <p class="text-gray-500 text-xs truncate w-40">${p.desc}</p>
+                            </div>
+                            <button onclick="deleteProduct('${p._id}')" class="bg-red-900/30 text-red-500 p-2 rounded hover:bg-red-900/50 transition">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
                         </div>
-                        <button onclick="deleteProduct('${p._id}')" class="bg-red-900/30 text-red-500 p-2 rounded hover:bg-red-900/50">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                `;
-            });
+                    `;
+                });
+            } catch (error) {
+                console.error(error);
+                alert("Gagal mengambil data produk.");
+            }
         }
 
         // 2. Tambah Produk
         document.getElementById('addForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const btn = document.getElementById('btnAdd');
+            btn.innerText = 'Uploading...';
+            btn.disabled = true;
+
             const data = {
                 name: document.getElementById('pName').value,
                 price: document.getElementById('pPrice').value,
@@ -76,22 +99,32 @@
                 desc: document.getElementById('pDesc').value
             };
 
-            await fetch('/api/products', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-
-            alert('Produk Berhasil Ditambahkan!');
-            document.getElementById('addForm').reset();
-            loadProducts(); // Refresh list
+            try {
+                await fetch('/api/products', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                alert('Produk Berhasil Ditambahkan!');
+                document.getElementById('addForm').reset();
+                loadProducts(); 
+            } catch (err) {
+                alert('Gagal upload: ' + err.message);
+            } finally {
+                btn.innerText = 'Upload Database';
+                btn.disabled = false;
+            }
         });
 
         // 3. Hapus Produk
         async function deleteProduct(id) {
             if(confirm('Yakin hapus produk ini?')) {
-                await fetch(`/api/products/${id}`, { method: 'DELETE' });
-                loadProducts();
+                try {
+                    await fetch(`/api/products/${id}`, { method: 'DELETE' });
+                    loadProducts();
+                } catch (err) {
+                    alert('Gagal menghapus.');
+                }
             }
         }
 
