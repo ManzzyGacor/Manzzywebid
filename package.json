@@ -1,0 +1,29 @@
+
+{
+  "name": "manzzy-web",
+  "version": "1.0.0",
+  "description": "Manzzy ID Official Premium Bot Services",
+  "main": "api/index.js",
+  "scripts": {
+    "start": "node api/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "whatsapp-bot",
+    "hosting",
+    "nodejs",
+    "express",
+    "vercel"
+  ],
+  "author": "Manzzy ID",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "mongoose": "^8.2.0"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
