@@ -1,0 +1,51 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Manzzy ID</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>body { background-color: #050505; color: white; }</style>
+</head>
+<body class="flex items-center justify-center h-screen">
+
+    <div class="w-full max-w-sm p-8 bg-gray-900 border border-purple-900 rounded-lg shadow-[0_0_20px_rgba(168,85,247,0.2)]">
+        <h2 class="text-2xl font-bold text-center mb-6 text-purple-500">SYSTEM ACCESS</h2>
+        
+        <form id="loginForm" class="space-y-4">
+            <div>
+                <label class="block text-sm text-gray-400">Username</label>
+                <input type="text" id="username" class="w-full p-2 bg-gray-800 border border-gray-700 rounded focus:border-purple-500 outline-none text-white" required>
+            </div>
+            <div>
+                <label class="block text-sm text-gray-400">Password</label>
+                <input type="password" id="password" class="w-full p-2 bg-gray-800 border border-gray-700 rounded focus:border-purple-500 outline-none text-white" required>
+            </div>
+            <button type="submit" class="w-full py-2 bg-purple-600 hover:bg-purple-700 rounded text-white font-bold transition">LOGIN</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                localStorage.setItem('isAdmin', 'true'); // Simpan sesi simpel
+                window.location.href = 'admin.html';
+            } else {
+                alert('Akses Ditolak: ' + data.message);
+            }
+        });
+    </script>
+</body>
+</html>
