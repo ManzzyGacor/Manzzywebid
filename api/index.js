@@ -1,28 +1,33 @@
-
-// api/index.js
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
 const app = express();
-
-// Middleware
 app.use(bodyParser.json());
 app.use(cors());
 
-// --- MODELS (DEFINISI SCHEMA DI ATAS BIAR AMAN) ---
+// --- SCHEMAS ---
 
-// 1. Model Product
+// 1. Schema Kategori (BARU)
+const CategorySchema = new mongoose.Schema({
+    name: String,
+    imageUrl: String
+});
+const Category = mongoose.models.Category || mongoose.model('Category', CategorySchema);
+
+// 2. Schema Product (UPDATE: tambah category & isAvailable)
 const ProductSchema = new mongoose.Schema({
     name: String,
     price: String,
     desc: String,
-    imageUrl: String
+    imageUrl: String,
+    category: String,        // Menyimpan Nama Kategori
+    isAvailable: { type: Boolean, default: true } // Status Tersedia/Habis
 });
 const Product = mongoose.models.Product || mongoose.model('Product', ProductSchema);
 
-// 2. Model Admin
+// 3. Schema Admin
 const AdminSchema = new mongoose.Schema({
     username: String,
     password: String
@@ -30,31 +35,20 @@ const AdminSchema = new mongoose.Schema({
 const Admin = mongoose.models.Admin || mongoose.model('Admin', AdminSchema);
 
 
-// --- KONEKSI DATABASE SERVERLESS (Caching) ---
+// --- KONEKSI DATABASE ---
 let isConnected = false;
-
 const connectDB = async () => {
     if (isConnected) return;
-    
     try {
-        // Mengambil link database dari Environment Variable Vercel
         await mongoose.connect(process.env.MONGO_URI);
         isConnected = true;
-        console.log("✅ Database Connected via Vercel");
-
-        // --- FITUR AUTO-CREATE ADMIN ---
-        // Cek apakah admin 'man' sudah ada?
-        const checkAdmin = await Admin.findOne({ username: 'man' });
+        console.log("✅ Database Connected");
         
+        // Auto-Create Admin (Safety)
+        const checkAdmin = await Admin.findOne({ username: 'man' });
         if (!checkAdmin) {
-            // Kalau belum ada, buat baru
-            const newAdmin = new Admin({ username: 'man', password: '112233' });
-            await newAdmin.save();
-            console.log("⚠️ Akun Admin Otomatis Dibuat: User: man | Pass: 112233");
-        } else {
-            console.log("✅ Akun Admin 'man' sudah tersedia.");
+            await new Admin({ username: 'man', password: '112233' }).save();
         }
-
     } catch (err) {
         console.error("❌ Database Error:", err);
     }
@@ -62,51 +56,77 @@ const connectDB = async () => {
 
 // --- ROUTES ---
 
-// 1. Root Route
-app.get('/api', (req, res) => {
-    res.send('Manzzy ID Backend is Running!');
-});
+app.get('/api', (req, res) => res.send('Manzzy Backend v2.0 Ready'));
 
-// 2. Login
+// Login
 app.post('/api/login', async (req, res) => {
     await connectDB();
     const { username, password } = req.body;
-    
-    // Cari admin di database
     const admin = await Admin.findOne({ username, password });
-    
-    if (admin) {
-        res.json({ success: true });
-    } else {
-        res.status(401).json({ success: false, message: "Username/Password Salah!" });
-    }
+    if (admin) res.json({ success: true });
+    else res.status(401).json({ success: false });
 });
 
-// 3. Get Products
+// --- API CATEGORY (BARU) ---
+app.get('/api/categories', async (req, res) => {
+    await connectDB();
+    const categories = await Category.find();
+    res.json(categories);
+});
+
+app.post('/api/categories', async (req, res) => {
+    await connectDB();
+    try {
+        const newCat = new Category(req.body);
+        await newCat.save();
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/categories/:id', async (req, res) => {
+    await connectDB();
+    await Category.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+});
+
+// --- API PRODUCTS (UPDATE) ---
+
+// Get All Products
 app.get('/api/products', async (req, res) => {
     await connectDB();
-    const products = await Product.find();
+    // Bisa filter by query ?category=nama
+    const { category } = req.query;
+    let filter = {};
+    if(category) filter.category = category;
+    
+    const products = await Product.find(filter);
     res.json(products);
 });
 
-// 4. Add Product
+// Add Product
 app.post('/api/products', async (req, res) => {
     await connectDB();
     try {
         const newProduct = new Product(req.body);
         await newProduct.save();
         res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 5. Delete Product
+// Edit Product (BARU: PUT)
+app.put('/api/products/:id', async (req, res) => {
+    await connectDB();
+    try {
+        await Product.findByIdAndUpdate(req.params.id, req.body);
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Delete Product
 app.delete('/api/products/:id', async (req, res) => {
     await connectDB();
     await Product.findByIdAndDelete(req.params.id);
     res.json({ success: true });
 });
 
-// PENTING: Jangan pakai app.listen()!
 module.exports = app;
