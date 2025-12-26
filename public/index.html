@@ -16,9 +16,16 @@
         /* --- CONFIG --- */
         :root { --primary: #8b5cf6; --bg-dark: #050505; --card-bg: #0f0f11; }
         body { font-family: 'Space Grotesk', sans-serif; background-color: var(--bg-dark); color: #e0e0e0; overflow-x: hidden; }
-        ::-webkit-scrollbar { width: 8px; } 
-        ::-webkit-scrollbar-track { background: #000; } 
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: #000; } ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+
+        /* --- LOADER (FIXED) --- */
+        #loader { position: fixed; inset: 0; background: #000; z-index: 100; display: flex; justify-content: center; align-items: center; font-family: 'JetBrains Mono', monospace; }
+        .terminal-window { width: 90%; max-width: 500px; }
+        #terminal-text { height: 160px; overflow-y: hidden; display: flex; flex-direction: column; justify-content: flex-end; margin-bottom: 10px; }
+        .log-line { color: #a8a8a8; font-size: 0.85rem; margin-bottom: 2px; white-space: nowrap; overflow: hidden; }
+        .log-success { color: #4ade80; } .log-warn { color: #facc15; }
+        .loader-bar-bg { width: 100%; height: 4px; background: #1a1a1a; margin-top: 10px; border-radius: 2px; overflow: hidden; }
+        .loader-bar-fill { height: 100%; background: var(--primary); width: 0%; box-shadow: 0 0 15px var(--primary); transition: width 0.1s linear; }
 
         /* --- GLITCH EFFECT --- */
         .glitch-wrapper { display: inline-block; position: relative; }
@@ -36,12 +43,12 @@
         .social-btn { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #a8a8a8; font-size: 1.1rem; transition: all 0.3s ease; }
         .social-btn:hover { transform: translateY(-5px); color: white; border-color: var(--primary); box-shadow: 0 0 15px rgba(139, 92, 246, 0.5); }
         
-        /* --- RATING STARS & FORM --- */
+        /* --- RATING --- */
         .star-rating i { cursor: pointer; color: #4b5563; transition: 0.2s; }
         .star-rating i.active { color: #facc15; }
         .review-card { border-left: 3px solid var(--primary); }
 
-        /* --- MODAL DETAIL --- */
+        /* --- MODAL --- */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: all 0.3s ease; }
         .modal-active { opacity: 1; pointer-events: auto; }
         .modal-box { background: #111; border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 20px; width: 90%; max-width: 500px; padding: 25px; transform: scale(0.9); transition: all 0.3s ease; box-shadow: 0 0 50px rgba(139, 92, 246, 0.15); max-height: 90vh; overflow-y: auto; }
@@ -104,6 +111,10 @@
     <div id="loader">
         <div class="terminal-window">
             <div id="terminal-text"></div>
+            <div class="flex justify-between text-xs text-gray-500 mt-2 font-mono uppercase tracking-wider">
+                <span id="boot-status">Initializing...</span>
+                <span id="percent">0%</span>
+            </div>
             <div class="loader-bar-bg"><div id="progress-fill" class="loader-bar-fill"></div></div>
         </div>
     </div>
@@ -288,25 +299,71 @@
     <script>
         // --- 1. BOOTING & LOADER ---
         function toggleSidebar() { document.body.classList.toggle('sidebar-active'); }
-        const terminalText = document.getElementById('terminal-text'), progressFill = document.getElementById('progress-fill'), loader = document.getElementById('loader');
-        const bootLines = [{text:"> BIOS Check... <span class='log-success'>OK</span>",delay:100},{text:"> Loading Kernel...",delay:80},{text:"> Mounting System...",delay:100},{text:"> Connecting Manzzy Server...",delay:200},{text:"> Fetching Database...",delay:150},{text:"> <span class='log-success'>ACCESS GRANTED.</span>",delay:400}];
+        const terminalText = document.getElementById('terminal-text'), progressFill = document.getElementById('progress-fill'), percentText = document.getElementById('percent'), bootStatus = document.getElementById('boot-status'), loader = document.getElementById('loader');
         
+        // BOOTING DATA (Fixed Typing Logic)
+        const bootLines = [
+            {text:"> BIOS Check... <span class='log-success'>OK</span>",delay:100},
+            {text:"> Loading Kernel Modules...",delay:80},
+            {text:"> Mounting File System...",delay:100},
+            {text:"> Connecting to Manzzy Server...",delay:200},
+            {text:"> Verifying Security Token...",delay:100},
+            {text:"> Fetching Database...",delay:150},
+            {text:"> <span class='log-success'>ACCESS GRANTED.</span> Welcome.",delay:400}
+        ];
+
+        let totalChars=0,printedChars=0;
+        bootLines.forEach(l=>totalChars+=l.text.replace(/<[^>]*>/g,'').length);
+
         async function startBooting(){
-            let totalChars=0,printedChars=0;
-            bootLines.forEach(l=>totalChars+=l.text.replace(/<[^>]*>/g,'').length);
             for(let i=0;i<bootLines.length;i++){
-                const line=bootLines[i],div=document.createElement('div');
-                div.className='log-line'; terminalText.appendChild(div);
+                const line=bootLines[i];
+                const div=document.createElement('div');
+                div.className='log-line';
+                terminalText.appendChild(div);
+                
+                // Update Status Text below terminal
+                bootStatus.innerText = "Processing: " + line.text.replace(/<[^>]*>/g,'').substring(0,15) + "...";
+
                 let cleanText=line.text, curHTML="", charIdx=0;
                 while(charIdx<cleanText.length){
-                    if(cleanText[charIdx]==='<'){ const end=cleanText.indexOf('>',charIdx); curHTML+=cleanText.substring(charIdx,end+1); charIdx=end+1; continue; }
-                    curHTML+=cleanText[charIdx]; div.innerHTML=curHTML; printedChars++;
-                    const p=Math.min(Math.round((printedChars/totalChars)*100),100); progressFill.style.width=`${p}%`;
-                    terminalText.scrollTop=terminalText.scrollHeight; await new Promise(r=>setTimeout(r,Math.random()*15+5)); charIdx++;
+                    // Handle HTML tags inside boot text
+                    if(cleanText[charIdx]==='<'){
+                        const end=cleanText.indexOf('>',charIdx);
+                        if(end!==-1){
+                            curHTML+=cleanText.substring(charIdx,end+1);
+                            charIdx=end+1;
+                            continue;
+                        }
+                    }
+                    curHTML+=cleanText[charIdx];
+                    div.innerHTML=curHTML;
+                    printedChars++;
+                    
+                    // Update Percent & Bar
+                    const p=Math.min(Math.round((printedChars/totalChars)*100),100);
+                    progressFill.style.width=`${p}%`;
+                    percentText.innerText=`${p}%`;
+                    
+                    terminalText.scrollTop=terminalText.scrollHeight;
+                    await new Promise(r=>setTimeout(r,Math.random()*15+5)); // Typing delay
+                    charIdx++;
                 }
-                await new Promise(r=>setTimeout(r,line.delay));
+                await new Promise(r=>setTimeout(r,line.delay)); // Line delay
             }
-            setTimeout(()=>{ loader.style.opacity="0"; loader.style.pointerEvents="none"; document.body.style.overflowY="auto"; setTimeout(()=>loader.style.display='none',800); },500);
+            finishBooting();
+        }
+
+        function finishBooting(){
+            bootStatus.innerText="SYSTEM READY";
+            percentText.innerText="100%";
+            progressFill.style.width="100%";
+            setTimeout(()=>{
+                loader.style.opacity="0";
+                loader.style.pointerEvents="none";
+                document.body.style.overflowY="auto";
+                setTimeout(()=>loader.style.display='none',800);
+            },500);
         }
 
         // --- 2. AUTH & USER LOGIC ---
@@ -411,4 +468,4 @@
         window.onload = () => { setTimeout(startBooting, 500); checkUserLogin(); fetchTestimonials(); setRating(5); };
     </script>
 </body>
-                </html>
+                                </html>
