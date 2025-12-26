@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manzzy ID Official - Premium Bot Services</title>
     
     <meta name="description" content="Penyedia layanan hosting bot WhatsApp profesional. Server stabil 24 jam.">
-    <meta property="og:image" content="https://manzzy.web.id/public/qris.jpg"> 
+    <meta property="og:image" content="https://manzzy.web.id/image/qris.jpg"> 
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,182 +16,196 @@
         /* --- CONFIG --- */
         :root { --primary: #8b5cf6; --bg-dark: #050505; --card-bg: #0f0f11; }
         body { font-family: 'Space Grotesk', sans-serif; background-color: var(--bg-dark); color: #e0e0e0; overflow-x: hidden; }
-        
-        /* SCROLLBAR */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar { width: 8px; } 
+        ::-webkit-scrollbar-track { background: #000; } 
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
 
-        /* --- GLITCH EFFECT (NEW) --- */
+        /* --- GLITCH EFFECT --- */
         .glitch-wrapper { display: inline-block; position: relative; }
         .glitch { position: relative; color: white; font-weight: bold; display: inline-block; }
-        .glitch::before, .glitch::after {
-            content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        }
-        .glitch::before {
-            left: 2px; text-shadow: -1px 0 #ff00c1; clip: rect(44px, 450px, 56px, 0);
-            animation: glitch-anim 5s infinite linear alternate-reverse;
-        }
-        .glitch::after {
-            left: -2px; text-shadow: -1px 0 #00fff9; clip: rect(44px, 450px, 56px, 0);
-            animation: glitch-anim2 5s infinite linear alternate-reverse;
-        }
-        @keyframes glitch-anim {
-            0% { clip: rect(31px, 9999px, 94px, 0); transform: skew(0.85deg); }
-            5% { clip: rect(70px, 9999px, 71px, 0); transform: skew(0.85deg); }
-            10% { clip: rect(29px, 9999px, 83px, 0); transform: skew(0.06deg); }
-            15% { clip: rect(12px, 9999px, 92px, 0); transform: skew(0.18deg); }
-            20% { clip: rect(56px, 9999px, 16px, 0); transform: skew(0.04deg); }
-            25% { clip: rect(69px, 9999px, 80px, 0); transform: skew(0.77deg); }
-            30% { clip: rect(48px, 9999px, 49px, 0); transform: skew(0.34deg); }
-            35% { clip: rect(78px, 9999px, 4px, 0); transform: skew(0.51deg); }
-            40% { clip: rect(13px, 9999px, 41px, 0); transform: skew(0.09deg); }
-            45% { clip: rect(4px, 9999px, 53px, 0); transform: skew(0.96deg); }
-            50% { clip: rect(50px, 9999px, 63px, 0); transform: skew(0.39deg); }
-            55% { clip: rect(8px, 9999px, 76px, 0); transform: skew(0.24deg); }
-            60% { clip: rect(39px, 9999px, 82px, 0); transform: skew(0.78deg); }
-            65% { clip: rect(69px, 9999px, 88px, 0); transform: skew(0.26deg); }
-            70% { clip: rect(23px, 9999px, 6px, 0); transform: skew(0.79deg); }
-            75% { clip: rect(71px, 9999px, 48px, 0); transform: skew(0.09deg); }
-            80% { clip: rect(42px, 9999px, 3px, 0); transform: skew(0.75deg); }
-            85% { clip: rect(8px, 9999px, 60px, 0); transform: skew(0.03deg); }
-            90% { clip: rect(41px, 9999px, 21px, 0); transform: skew(0.35deg); }
-            95% { clip: rect(54px, 9999px, 49px, 0); transform: skew(0.67deg); }
-            100% { clip: rect(35px, 9999px, 89px, 0); transform: skew(0.53deg); }
-        }
-        @keyframes glitch-anim2 {
-            0% { clip: rect(65px, 9999px, 100px, 0); transform: skew(0.51deg); }
-            100% { clip: rect(40px, 9999px, 70px, 0); transform: skew(0.51deg); }
-        }
+        .glitch::before, .glitch::after { content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .glitch::before { left: 2px; text-shadow: -1px 0 #ff00c1; clip: rect(44px, 450px, 56px, 0); animation: glitch-anim 5s infinite linear alternate-reverse; }
+        .glitch::after { left: -2px; text-shadow: -1px 0 #00fff9; clip: rect(44px, 450px, 56px, 0); animation: glitch-anim2 5s infinite linear alternate-reverse; }
+        @keyframes glitch-anim { 0% { clip: rect(31px, 9999px, 94px, 0); transform: skew(0.85deg); } 5% { clip: rect(70px, 9999px, 71px, 0); transform: skew(0.85deg); } 100% { clip: rect(35px, 9999px, 89px, 0); transform: skew(0.53deg); } }
+        @keyframes glitch-anim2 { 0% { clip: rect(65px, 9999px, 100px, 0); transform: skew(0.51deg); } 100% { clip: rect(40px, 9999px, 70px, 0); transform: skew(0.51deg); } }
 
-        /* --- PRODUCT MODAL (NEW) --- */
-        .modal-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
-            z-index: 100; display: flex; align-items: center; justify-content: center;
-            opacity: 0; pointer-events: none; transition: all 0.3s ease;
-        }
-        .modal-active { opacity: 1; pointer-events: auto; }
-        .modal-box {
-            background: #111; border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 20px;
-            width: 90%; max-width: 500px; padding: 25px; transform: scale(0.9);
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 0 50px rgba(139, 92, 246, 0.15); max-height: 90vh; overflow-y: auto;
-        }
-        .modal-active .modal-box { transform: scale(1); }
-
-        /* --- SIDEBAR --- */
-        .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 60; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
-        .sidebar-active .sidebar-overlay { opacity: 1; pointer-events: auto; }
-        .sidebar-menu { position: fixed; top: 0; left: 0; height: 100%; width: 280px; background: rgba(10, 10, 12, 0.95); border-right: 1px solid rgba(255,255,255,0.05); z-index: 70; transform: translateX(-100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 0 50px rgba(0,0,0,0.8); }
-        .sidebar-active .sidebar-menu { transform: translateX(0); }
-
-        /* --- LOADER --- */
-        #loader { position: fixed; inset: 0; background: #000; z-index: 100; display: flex; justify-content: center; align-items: center; font-family: 'JetBrains Mono', monospace; }
-        .terminal-window { width: 90%; max-width: 500px; }
-        #terminal-text { height: 160px; overflow-y: hidden; display: flex; flex-direction: column; justify-content: flex-end; margin-bottom: 10px; }
-        .log-line { color: #a8a8a8; font-size: 0.85rem; margin-bottom: 2px; white-space: nowrap; overflow: hidden; }
-        .loader-bar-bg { width: 100%; height: 4px; background: #1a1a1a; margin-top: 10px; border-radius: 2px; overflow: hidden; }
-        .loader-bar-fill { height: 100%; background: var(--primary); width: 0%; box-shadow: 0 0 15px var(--primary); transition: width 0.1s linear; }
-
-        /* --- UI COMPONENTS --- */
+        /* --- UI ELEMENTS --- */
         .glass-card { background: rgba(20, 20, 25, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; }
         .neon-text { text-shadow: 0 0 30px rgba(139, 92, 246, 0.4); }
         .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); mask-image: linear-gradient(to bottom, transparent, black 20%, black 80%, transparent); }
         .social-btn { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #a8a8a8; font-size: 1.1rem; transition: all 0.3s ease; }
         .social-btn:hover { transform: translateY(-5px); color: white; border-color: var(--primary); box-shadow: 0 0 15px rgba(139, 92, 246, 0.5); }
+        
+        /* --- RATING STARS & FORM --- */
+        .star-rating i { cursor: pointer; color: #4b5563; transition: 0.2s; }
+        .star-rating i.active { color: #facc15; }
+        .review-card { border-left: 3px solid var(--primary); }
 
-        /* --- CATEGORY CARD --- */
-        .cat-card { position: relative; height: 150px; border-radius: 12px; overflow: hidden; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); transition: all 0.3s ease; }
+        /* --- MODAL DETAIL --- */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: all 0.3s ease; }
+        .modal-active { opacity: 1; pointer-events: auto; }
+        .modal-box { background: #111; border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 20px; width: 90%; max-width: 500px; padding: 25px; transform: scale(0.9); transition: all 0.3s ease; box-shadow: 0 0 50px rgba(139, 92, 246, 0.15); max-height: 90vh; overflow-y: auto; }
+        .modal-active .modal-box { transform: scale(1); }
+
+        /* --- SIDEBAR --- */
+        .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 60; opacity: 0; pointer-events: none; transition: 0.3s; }
+        .sidebar-active .sidebar-overlay { opacity: 1; pointer-events: auto; }
+        .sidebar-menu { position: fixed; top: 0; left: 0; height: 100%; width: 280px; background: rgba(10, 10, 12, 0.95); border-right: 1px solid rgba(255,255,255,0.05); z-index: 70; transform: translateX(-100%); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 0 50px rgba(0,0,0,0.8); }
+        .sidebar-active .sidebar-menu { transform: translateX(0); }
+
+        /* --- RUNNING TEXT --- */
+        .running-bar { width: 100%; height: 30px; background: #000; border-bottom: 1px solid rgba(255,255,255,0.1); overflow: hidden; position: fixed; top: 0; left: 0; z-index: 60; display: flex; align-items: center; }
+        .marquee { white-space: nowrap; overflow: hidden; display: inline-block; animation: marquee 25s linear infinite; font-size: 0.75rem; color: #a8a8a8; font-family: 'JetBrains Mono', monospace; }
+        @keyframes marquee { 0% { transform: translate3d(100vw, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
+
+        /* --- FLOATING & SCROLL --- */
+        .float-wa { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background: #25d366; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 0 20px rgba(37, 211, 102, 0.5); z-index: 90; transition: 0.3s; animation: pulse-wa 2s infinite; }
+        .float-wa:hover { transform: scale(1.1); background: #128c7e; }
+        @keyframes pulse-wa { 0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(37, 211, 102, 0); } 100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); } }
+        .scroll-top-btn { position: fixed; bottom: 100px; right: 35px; width: 50px; height: 50px; background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(139, 92, 246, 0.5); backdrop-filter: blur(5px); border-radius: 12px; color: white; display: flex; align-items: center; justify-content: center; font-size: 20px; z-index: 89; cursor: pointer; transition: 0.3s; opacity: 0; pointer-events: none; transform: translateY(20px); }
+        .scroll-top-btn:hover { background: var(--primary); }
+        .show-scroll-btn { opacity: 1; pointer-events: auto; transform: translateY(0); }
+
+        /* --- SEARCH & PRODUCTS --- */
+        .search-container { position: relative; width: 100%; max-width: 400px; margin: 0 auto 30px auto; }
+        .search-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 12px 45px 12px 20px; border-radius: 50px; color: white; font-family: 'Space Grotesk', sans-serif; transition: 0.3s; }
+        .search-input:focus { outline: none; border-color: var(--primary); background: rgba(255,255,255,0.1); box-shadow: 0 0 15px rgba(139, 92, 246, 0.2); }
+        .search-icon { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); color: gray; }
+        
+        .cat-card { position: relative; height: 150px; border-radius: 12px; overflow: hidden; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); transition: 0.3s; }
         .cat-card:hover { transform: scale(1.02); border-color: var(--primary); box-shadow: 0 10px 30px -10px rgba(139, 92, 246, 0.3); }
         .cat-bg { position: absolute; inset: 0; background-size: cover; background-position: center; transition: transform 0.5s ease; }
         .cat-card:hover .cat-bg { transform: scale(1.1); }
         .cat-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); display: flex; align-items: flex-end; padding: 15px; }
 
-        /* --- PRODUCT CARD --- */
-        .product-card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; overflow: hidden; position: relative; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .product-card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; overflow: hidden; position: relative; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .product-card:hover { transform: translateY(-8px); border-color: rgba(139, 92, 246, 0.5); box-shadow: 0 20px 40px -10px rgba(139, 92, 246, 0.15); }
         .product-img-wrapper { overflow: hidden; height: 200px; position: relative; }
-        .product-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+        .product-img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s ease; }
         .product-card:hover .product-img { transform: scale(1.1); }
         .price-badge { background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); border: 1px solid rgba(139, 92, 246, 0.3); color: #c4b5fd; padding: 4px 12px; border-radius: 20px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; }
-        
         .unavailable { filter: grayscale(100%); opacity: 0.7; pointer-events: none; }
         .badge-unavailable { position: absolute; top: 10px; left: 10px; background: #ef4444; color: white; font-weight: bold; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; z-index: 10; }
-
-        /* --- VIEW TRANSITIONS --- */
+        
+        /* --- GENERAL --- */
         .view-section { display: none; opacity: 0; transition: opacity 0.5s ease; padding-top: 100px; width: 100%; }
         .view-active { display: block; opacity: 1; animation: fadeInUp 0.6s ease forwards; }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .faq-item { border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .faq-header { cursor: pointer; padding: 20px 0; display: flex; justify-content: space-between; align-items: center; }
+        .faq-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+        .faq-active .faq-content { max-height: 200px; }
+        .faq-active .faq-icon { transform: rotate(180deg); color: var(--primary); }
     </style>
 </head>
 <body>
 
-    <div id="loader"><div class="terminal-window"><div id="terminal-text"></div><div class="flex justify-between text-xs text-gray-500 mt-2 font-mono uppercase tracking-wider"><span id="boot-status">Initializing...</span> <span id="percent">0%</span></div><div class="loader-bar-bg"><div id="progress-fill" class="loader-bar-fill"></div></div></div></div>
+    <div id="loader">
+        <div class="terminal-window">
+            <div id="terminal-text"></div>
+            <div class="loader-bar-bg"><div id="progress-fill" class="loader-bar-fill"></div></div>
+        </div>
+    </div>
+
+    <div class="running-bar">
+        <div class="marquee">
+            🔥 HOT: Server Varesa v3.0 telah diupgrade! Lebih Cepat & Stabil. | ⭐ Join Member sekarang untuk memberi rating & ulasan! | 💬 CS Online 24 Jam.
+        </div>
+    </div>
 
     <div id="modal-overlay" class="modal-overlay" onclick="closeModal(event)">
         <div class="modal-box" onclick="event.stopPropagation()">
             <div class="relative">
-                <button onclick="closeModalDirect()" class="absolute -top-2 -right-2 text-gray-400 hover:text-white bg-gray-800 rounded-full w-8 h-8 flex items-center justify-center border border-gray-600 z-10">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-                
+                <button onclick="closeModalDirect()" class="absolute -top-2 -right-2 text-gray-400 hover:text-white bg-gray-800 rounded-full w-8 h-8 flex items-center justify-center border border-gray-600 z-10"><i class="fa-solid fa-xmark"></i></button>
                 <img id="modal-img" src="" class="w-full h-48 object-cover rounded-xl mb-5 border border-gray-800">
-                
                 <div class="flex justify-between items-start mb-2">
                     <h2 id="modal-title" class="text-2xl font-bold text-white leading-tight"></h2>
                     <span id="modal-price" class="text-purple-400 font-mono font-bold text-lg bg-purple-900/30 px-3 py-1 rounded-lg border border-purple-500/30"></span>
                 </div>
-                
                 <div class="h-px bg-gray-800 w-full my-4"></div>
-                
                 <h4 class="text-xs text-gray-500 font-bold uppercase mb-2">Deskripsi Layanan</h4>
                 <p id="modal-desc" class="text-gray-300 text-sm leading-relaxed mb-6 whitespace-pre-wrap font-sans"></p>
-
                 <a id="modal-btn" href="#" target="_blank" class="w-full py-4 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold flex items-center justify-center gap-3 transition shadow-lg shadow-purple-500/20">
-                    <i class="fa-brands fa-whatsapp text-xl"></i> Beli Sekarang via WhatsApp
+                    <i class="fa-brands fa-whatsapp text-xl"></i> Beli Sekarang
                 </a>
             </div>
         </div>
     </div>
 
+    <a href="https://wa.me/6287756632352" target="_blank" class="float-wa" title="Chat Owner">
+        <i class="fa-brands fa-whatsapp"></i>
+    </a>
+    <button onclick="scrollToTop()" id="btn-scroll" class="scroll-top-btn" title="Kembali ke Atas">
+        <i class="fa-solid fa-arrow-up"></i>
+    </button>
+
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
-    <aside id="sidebar-menu" class="sidebar-menu flex flex-col p-6">
-        <div class="flex items-center gap-3 mb-10 border-b border-gray-800 pb-6"><div class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-500/30"><i class="fa-solid fa-robot text-white text-lg"></i></div><div><h3 class="font-bold text-white text-lg leading-none">MANZZY<span class="text-purple-400">ID</span></h3><p class="text-xs text-gray-500 font-mono mt-1">Premium Bot Services</p></div></div>
+    <aside id="sidebar-menu" class="sidebar-menu flex flex-col p-6 pt-10">
+        <div class="flex items-center gap-3 mb-8 border-b border-gray-800 pb-6">
+            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-500/30"><i class="fa-solid fa-robot text-white text-lg"></i></div>
+            <div>
+                <h3 class="font-bold text-white text-lg leading-none">MANZZY<span class="text-purple-400">ID</span></h3>
+                <p id="user-status-sidebar" class="text-xs text-gray-500 font-mono mt-1">Guest Mode</p>
+            </div>
+        </div>
         <nav class="flex-1 space-y-2">
-            <a href="https://wa.me/62895605053911" target="_blank" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-headset w-6 text-center text-purple-500 group-hover:scale-110 transition"></i><span class="font-medium">Contact Support</span></a>
-            <a href="https://chat.whatsapp.com/G3eLNFmrWQEBzQfI4RsrLJ?mode=ems_copy_t" target="_blank" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-brands fa-whatsapp w-6 text-center text-green-500 group-hover:scale-110 transition"></i><span class="font-medium">Group WhatsApp</span></a>
+            <a href="#features" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-star w-6 text-center text-yellow-500 group-hover:scale-110 transition"></i><span class="font-medium">Keunggulan</span></a>
+            <a href="#testimonials" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-comment-dots w-6 text-center text-pink-500 group-hover:scale-110 transition"></i><span class="font-medium">Testimoni</span></a>
+            <a href="#faq" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-circle-question w-6 text-center text-blue-500 group-hover:scale-110 transition"></i><span class="font-medium">FAQ</span></a>
+            
             <div class="h-px bg-gray-800 my-4"></div>
-            <a href="/login.html" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-lock w-6 text-center text-red-500 group-hover:scale-110 transition"></i><span class="font-medium">Admin Login</span></a>
+            
+            <div id="auth-menu">
+                <a href="/login_user.html" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group">
+                    <i class="fa-solid fa-user w-6 text-center text-green-500 group-hover:scale-110 transition"></i><span class="font-medium">Login Member</span>
+                </a>
+            </div>
+            
+            <a href="/login.html" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group">
+                <i class="fa-solid fa-lock w-6 text-center text-red-500 group-hover:scale-110 transition"></i><span class="font-medium">Admin Panel</span>
+            </a>
         </nav>
-        <div class="mt-auto pt-6 border-t border-gray-800 text-center"><p class="text-[10px] text-gray-600 font-mono">System v2.5.1 Stable</p></div>
+        <div class="mt-auto pt-6 border-t border-gray-800 text-center"><p class="text-[10px] text-gray-600 font-mono">System v3.0 Stable</p></div>
     </aside>
 
-    <nav class="fixed top-0 w-full z-50 backdrop-blur-md bg-black/60 border-b border-white/5">
+    <nav class="fixed top-[30px] w-full z-50 backdrop-blur-md bg-black/60 border-b border-white/5">
         <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-4"><button onclick="toggleSidebar()" class="text-gray-300 hover:text-white transition p-2 hover:bg-white/10 rounded-lg"><i class="fa-solid fa-bars text-xl"></i></button><div class="flex items-center gap-2 cursor-pointer" onclick="switchView('landing')"><div class="w-1 h-6 bg-purple-600 rounded-full"></div><h2 class="text-lg font-bold tracking-widest text-white">MANZZY<span class="text-purple-400">ID</span></h2></div></div>
-            <div class="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-purple-900/20 border border-purple-500/20"><span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span><span class="text-xs text-purple-200 font-medium">System Online</span></div>
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="text-gray-300 hover:text-white transition p-2 hover:bg-white/10 rounded-lg"><i class="fa-solid fa-bars text-xl"></i></button>
+                <div class="flex items-center gap-2 cursor-pointer" onclick="switchView('landing')">
+                    <div class="w-1 h-6 bg-purple-600 rounded-full"></div>
+                    <h2 class="text-lg font-bold tracking-widest text-white">MANZZY<span class="text-purple-400">ID</span></h2>
+                </div>
+            </div>
+            <div class="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-purple-900/20 border border-purple-500/20">
+                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span><span class="text-xs text-purple-200 font-medium">System Online</span>
+            </div>
         </div>
     </nav>
 
-    <div id="main-container" class="min-h-screen relative w-full max-w-6xl mx-auto px-6 pb-20 pt-20">
+    <div id="main-container" class="min-h-screen relative w-full max-w-6xl mx-auto px-6 pb-20 pt-28">
         <div class="absolute inset-0 bg-grid -z-10 h-screen fixed opacity-40"></div>
         <div class="absolute top-0 right-0 w-96 h-96 bg-purple-600/10 rounded-full blur-[100px] -z-10 fixed pointer-events-none"></div>
 
         <section id="view-landing" class="view-section view-active">
-            <div class="text-center max-w-4xl mx-auto mt-16 mb-16">
+            
+            <div class="text-center max-w-4xl mx-auto mt-10 mb-16">
                 <h1 class="text-5xl md:text-8xl font-bold mb-6 leading-tight">
                     <span class="glitch neon-text" data-text="MANZZY ID">MANZZY ID</span> <br> 
                     <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">OFFICIAL</span>
                 </h1>
-                
                 <p class="text-gray-400 text-lg md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed">Layanan Hosting Bot WhatsApp Profesional & Terpercaya.<br>Server stabil, akses cepat, dan aktif 24 jam nonstop.</p>
                 <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-8">
                     <button onclick="switchView('store')" class="px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-[0_0_30px_rgba(139,92,246,0.3)] transition hover:scale-105 w-full md:w-auto"><i class="fa-solid fa-store mr-2"></i> Lihat Produk</button>
                 </div>
-                <div class="flex items-center justify-center gap-4 mb-6"><a href="https://instagram.com/Manzz_Wakeup" target="_blank" class="social-btn"><i class="fa-brands fa-instagram"></i></a><a href="https://wa.me/62895605053911" target="_blank" class="social-btn"><i class="fa-solid fa-user-shield"></i></a><a href="https://chat.whatsapp.com/G3eLNFmrWQEBzQfI4RsrLJ?mode=ems_copy_t" target="_blank" class="social-btn"><i class="fa-solid fa-users"></i></a></div>
+                <div class="flex items-center justify-center gap-4 mb-6">
+                    <a href="https://instagram.com/Manzz_Wakeup" target="_blank" class="social-btn"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="https://wa.me/6287756632352" target="_blank" class="social-btn"><i class="fa-solid fa-user-shield"></i></a>
+                </div>
             </div>
 
-            <div class="w-full max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 mb-20">
+            <div class="w-full max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 mb-24">
                 <div class="glass-card p-5 rounded-2xl flex items-center justify-between border-l-4 border-l-green-500"><div><h4 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Varesa Runtime</h4><div class="flex items-center gap-2 text-green-400 font-bold font-mono text-lg"><i class="fa-solid fa-clock"></i> <span id="runtime-counter">00d 00h 00m 00s</span></div></div></div>
                 <div class="glass-card p-5 rounded-2xl border-l-4 border-l-purple-500">
                     <div class="flex justify-between items-start mb-4 border-b border-gray-800 pb-3"><div><h4 class="text-white text-sm font-bold flex items-center gap-2"><i class="fa-brands fa-linux"></i> AMD Ryzen™ 7 7700X</h4><p class="text-[10px] text-gray-500 mt-1">8 Cores / 16 Threads • 4.5 GHz</p></div><span class="text-green-500 text-[10px] animate-pulse bg-green-900/20 px-2 py-1 rounded">● ONLINE</span></div>
@@ -200,6 +214,57 @@
                     <div class="flex items-center gap-3 text-xs font-mono"><span class="w-8 text-purple-300">ROM</span><div class="flex-1 h-1.5 bg-gray-800 rounded-full overflow-hidden"><div id="bar-rom" class="h-full bg-blue-500 transition-all duration-1000" style="width: 15%"></div></div><span id="text-rom" class="w-10 text-right text-gray-400">42G</span></div>
                 </div>
             </div>
+
+            <section id="features" class="mb-24 scroll-mt-32">
+                <div class="text-center mb-12"><h2 class="text-3xl font-bold text-white mb-4">KENAPA MEMILIH <span class="text-purple-500">KAMI?</span></h2><p class="text-gray-400 max-w-xl mx-auto">Infrastruktur terbaik untuk memastikan bot WhatsApp Anda berjalan optimal.</p></div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="glass-card p-8 rounded-2xl text-center hover:-translate-y-2 transition duration-300 border-t-4 border-t-purple-500"><div class="w-16 h-16 bg-purple-900/30 rounded-xl flex items-center justify-center mx-auto mb-6 neon-text"><i class="fa-solid fa-server text-3xl text-purple-400"></i></div><h3 class="text-xl font-bold text-white mb-3">Uptime 99.9%</h3><p class="text-gray-400 text-sm leading-relaxed">Server kami dirancang untuk selalu online. Minimalkan downtime dan pastikan bot Anda selalu siap.</p></div>
+                    <div class="glass-card p-8 rounded-2xl text-center hover:-translate-y-2 transition duration-300 border-t-4 border-t-blue-500"><div class="w-16 h-16 bg-blue-900/30 rounded-xl flex items-center justify-center mx-auto mb-6"><i class="fa-solid fa-bolt text-3xl text-blue-400"></i></div><h3 class="text-xl font-bold text-white mb-3">Koneksi Kilat</h3><p class="text-gray-400 text-sm leading-relaxed">Didukung jaringan berkecepatan tinggi dan hardware NVMe SSD untuk respon bot yang instan.</p></div>
+                    <div class="glass-card p-8 rounded-2xl text-center hover:-translate-y-2 transition duration-300 border-t-4 border-t-green-500"><div class="w-16 h-16 bg-green-900/30 rounded-xl flex items-center justify-center mx-auto mb-6"><i class="fa-solid fa-shield-halved text-3xl text-green-400"></i></div><h3 class="text-xl font-bold text-white mb-3">Aman & Privat</h3><p class="text-gray-400 text-sm leading-relaxed">Data sesi WhatsApp Anda terenkripsi dan tersimpan aman. Privasi pengguna adalah prioritas kami.</p></div>
+                </div>
+            </section>
+
+            <section id="testimonials" class="mb-24 scroll-mt-32">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-white mb-4">ULASAN <span class="text-purple-500">MEMBER</span></h2>
+                    <p class="text-gray-400">Pendapat jujur dari pengguna layanan kami.</p>
+                </div>
+
+                <div id="review-form-container" class="hidden glass-card p-6 rounded-xl max-w-lg mx-auto mb-10 border border-purple-500/30">
+                    <h3 class="text-white font-bold mb-3">Tulis Ulasan Anda</h3>
+                    <form onsubmit="submitReview(event)">
+                        <div class="flex gap-2 mb-4 star-rating" id="star-input">
+                            <i class="fa-solid fa-star text-2xl" onclick="setRating(1)"></i>
+                            <i class="fa-solid fa-star text-2xl" onclick="setRating(2)"></i>
+                            <i class="fa-solid fa-star text-2xl" onclick="setRating(3)"></i>
+                            <i class="fa-solid fa-star text-2xl" onclick="setRating(4)"></i>
+                            <i class="fa-solid fa-star text-2xl" onclick="setRating(5)"></i>
+                        </div>
+                        <input type="hidden" id="ratingValue" value="5">
+                        <textarea id="reviewComment" class="w-full bg-black/50 border border-gray-700 rounded p-3 text-white text-sm mb-3 focus:outline-none focus:border-purple-500" rows="3" placeholder="Bagaimana pengalaman Anda?" required></textarea>
+                        <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded">Kirim Ulasan</button>
+                    </form>
+                </div>
+
+                <div id="login-prompt" class="text-center mb-10">
+                    <p class="text-gray-500 mb-3">Ingin memberi ulasan?</p>
+                    <a href="/login_user.html" class="px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full border border-white/10 transition">Login Member</a>
+                </div>
+
+                <div id="testimonial-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <p class="text-center text-gray-500 col-span-full">Memuat ulasan...</p>
+                </div>
+            </section>
+
+            <section id="faq" class="mb-24 scroll-mt-32 max-w-3xl mx-auto">
+                <div class="text-center mb-12"><h2 class="text-3xl font-bold text-white mb-4">PERTANYAAN <span class="text-purple-500">UMUM</span></h2><p class="text-gray-400">Jawaban atas pertanyaan yang sering diajukan.</p></div>
+                <div class="glass-card p-2 rounded-2xl divide-y divide-gray-800/50">
+                    <div class="faq-item p-4"><div class="faq-header" onclick="toggleFaq(this)"><h3 class="font-bold text-white">Apa metode pembayaran yang tersedia?</h3><i class="fa-solid fa-chevron-down faq-icon text-gray-500"></i></div><div class="faq-content"><p class="text-gray-400 text-sm pb-4">Kami menerima pembayaran melalui Transfer Bank (BCA, BRI, Mandiri), E-Wallet (DANA, OVO, GoPay), dan QRIS untuk kemudahan transaksi.</p></div></div>
+                    <div class="faq-item p-4"><div class="faq-header" onclick="toggleFaq(this)"><h3 class="font-bold text-white">Berapa lama proses aktivasi?</h3><i class="fa-solid fa-chevron-down faq-icon text-gray-500"></i></div><div class="faq-content"><p class="text-gray-400 text-sm pb-4">Proses aktivasi biasanya instan atau maksimal 1x24 jam setelah konfirmasi pembayaran berhasil diverifikasi oleh admin.</p></div></div>
+                    <div class="faq-item p-4"><div class="faq-header" onclick="toggleFaq(this)"><h3 class="font-bold text-white">Apakah ada garansi?</h3><i class="fa-solid fa-chevron-down faq-icon text-gray-500"></i></div><div class="faq-content"><p class="text-gray-400 text-sm pb-4">Ya, kami memberikan garansi support penuh selama masa sewa aktif. Jika kendala berasal dari sisi server kami, akan kami perbaiki secepatnya.</p></div></div>
+                </div>
+            </section>
+
             <footer class="text-center text-gray-600 text-xs font-mono py-8 border-t border-gray-900">Berdiri sejak 13 Mei 2025 sampai sekarang oleh <span class="text-purple-500">© Manzzy</span></footer>
         </section>
 
@@ -209,161 +274,141 @@
                 <h2 class="text-3xl font-bold text-white">KATALOG <span class="text-purple-500">PRODUK</span></h2>
             </div>
 
-            <div id="section-categories">
-                <h3 class="text-gray-400 text-sm font-bold uppercase tracking-wider mb-4 border-l-4 border-purple-500 pl-3">Pilih Kategori</h3>
-                <div id="grid-categories" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12"></div>
+            <div class="search-container">
+                <input type="text" id="searchInput" onkeyup="filterProducts()" placeholder="Cari layanan (ex: Sewa Bot)..." class="search-input">
+                <i class="fa-solid fa-search search-icon"></i>
             </div>
 
-            <div id="section-products" class="hidden">
-                <div class="flex items-center gap-3 mb-6">
-                    <button onclick="backToCategories()" class="text-sm bg-gray-800 px-3 py-1 rounded hover:bg-gray-700 text-white"><i class="fa-solid fa-chevron-left"></i> Ganti Kategori</button>
-                    <span id="current-category-name" class="text-purple-400 font-bold text-lg"></span>
-                </div>
-                <div id="grid-products" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 pb-20"></div>
-            </div>
+            <div id="section-categories"><h3 class="text-gray-400 text-sm font-bold uppercase tracking-wider mb-4 border-l-4 border-purple-500 pl-3">Pilih Kategori</h3><div id="grid-categories" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12"></div></div>
+            <div id="section-products" class="hidden"><div class="flex items-center gap-3 mb-6"><button onclick="backToCategories()" class="text-sm bg-gray-800 px-3 py-1 rounded hover:bg-gray-700 text-white"><i class="fa-solid fa-chevron-left"></i> Ganti Kategori</button><span id="current-category-name" class="text-purple-400 font-bold text-lg"></span></div><div id="grid-products" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 pb-20"></div></div>
             <div id="loading-store" class="text-center py-20 hidden"><div class="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mb-4"></div><p class="text-gray-500 text-sm">Mengambil data...</p></div>
         </section>
     </div>
 
     <script>
-        // --- SIDEBAR & BOOTING ---
+        // --- 1. BOOTING & LOADER ---
         function toggleSidebar() { document.body.classList.toggle('sidebar-active'); }
-        const terminalText = document.getElementById('terminal-text'), progressFill = document.getElementById('progress-fill'), percentText = document.getElementById('percent'), bootStatus = document.getElementById('boot-status'), loader = document.getElementById('loader');
+        const terminalText = document.getElementById('terminal-text'), progressFill = document.getElementById('progress-fill'), loader = document.getElementById('loader');
         const bootLines = [{text:"> BIOS Check... <span class='log-success'>OK</span>",delay:100},{text:"> Loading Kernel...",delay:80},{text:"> Mounting System...",delay:100},{text:"> Connecting Manzzy Server...",delay:200},{text:"> Fetching Database...",delay:150},{text:"> <span class='log-success'>ACCESS GRANTED.</span>",delay:400}];
-        let totalChars=0,printedChars=0; bootLines.forEach(l=>totalChars+=l.text.replace(/<[^>]*>/g,'').length);
-        async function startBooting(){for(let i=0;i<bootLines.length;i++){const line=bootLines[i],div=document.createElement('div');div.className='log-line';terminalText.appendChild(div);bootStatus.innerText="Processing: "+line.text.replace(/<[^>]*>/g,'').substring(0,15)+"...";const cleanText=line.text;let curHTML="",charIdx=0;while(charIdx<cleanText.length){if(cleanText[charIdx]==='<'){const end=cleanText.indexOf('>',charIdx);if(end!==-1){curHTML+=cleanText.substring(charIdx,end+1);charIdx=end+1;continue;}}curHTML+=cleanText[charIdx];div.innerHTML=curHTML;printedChars++;updateProgress();terminalText.scrollTop=terminalText.scrollHeight;await new Promise(r=>setTimeout(r,Math.random()*15+5));charIdx++;}await new Promise(r=>setTimeout(r,line.delay));}finishBooting();}
-        function updateProgress(){const p=Math.min(Math.round((printedChars/totalChars)*100),100);progressFill.style.width=`${p}%`;percentText.innerText=`${p}%`;}
-        function finishBooting(){bootStatus.innerText="SYSTEM READY";setTimeout(()=>{loader.style.opacity="0";loader.style.pointerEvents="none";document.body.style.overflowY="auto";setTimeout(()=>loader.style.display='none',800);},500);}
-
-        // --- NEW MODAL SYSTEM ---
-        function openModal(id) {
-            const product = allProducts.find(p => p._id === id);
-            if(!product) return;
-
-            // Isi Data ke Modal
-            document.getElementById('modal-title').innerText = product.name;
-            document.getElementById('modal-price').innerText = product.price;
-            document.getElementById('modal-desc').innerText = product.desc;
-            document.getElementById('modal-img').src = product.imageUrl || 'https://via.placeholder.com/400x200?text=No+Image';
-            
-            // Link WA
-            const waLink = `https://wa.me/${ADMIN_WA}?text=Halo Manzzy, saya mau order *${product.name}* seharga ${product.price}. Apakah stok ready?`;
-            document.getElementById('modal-btn').href = waLink;
-
-            // Tampilkan Modal
-            document.getElementById('modal-overlay').classList.add('modal-active');
+        
+        async function startBooting(){
+            let totalChars=0,printedChars=0;
+            bootLines.forEach(l=>totalChars+=l.text.replace(/<[^>]*>/g,'').length);
+            for(let i=0;i<bootLines.length;i++){
+                const line=bootLines[i],div=document.createElement('div');
+                div.className='log-line'; terminalText.appendChild(div);
+                let cleanText=line.text, curHTML="", charIdx=0;
+                while(charIdx<cleanText.length){
+                    if(cleanText[charIdx]==='<'){ const end=cleanText.indexOf('>',charIdx); curHTML+=cleanText.substring(charIdx,end+1); charIdx=end+1; continue; }
+                    curHTML+=cleanText[charIdx]; div.innerHTML=curHTML; printedChars++;
+                    const p=Math.min(Math.round((printedChars/totalChars)*100),100); progressFill.style.width=`${p}%`;
+                    terminalText.scrollTop=terminalText.scrollHeight; await new Promise(r=>setTimeout(r,Math.random()*15+5)); charIdx++;
+                }
+                await new Promise(r=>setTimeout(r,line.delay));
+            }
+            setTimeout(()=>{ loader.style.opacity="0"; loader.style.pointerEvents="none"; document.body.style.overflowY="auto"; setTimeout(()=>loader.style.display='none',800); },500);
         }
 
-        function closeModal(e) {
-            if (e.target.id === 'modal-overlay') {
-                document.getElementById('modal-overlay').classList.remove('modal-active');
+        // --- 2. AUTH & USER LOGIC ---
+        const userSession = localStorage.getItem('user_session');
+        function checkUserLogin() {
+            if (userSession) {
+                document.getElementById('user-status-sidebar').innerText = "Hi, " + userSession;
+                document.getElementById('user-status-sidebar').classList.add('text-green-400');
+                document.getElementById('review-form-container').classList.remove('hidden');
+                document.getElementById('login-prompt').classList.add('hidden');
+                document.getElementById('auth-menu').innerHTML = `<a href="#" onclick="doLogout()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:bg-white/5 transition"><i class="fa-solid fa-sign-out-alt text-red-500 w-6 text-center"></i><span class="font-medium">Logout</span></a>`;
             }
         }
-        
-        function closeModalDirect() {
-            document.getElementById('modal-overlay').classList.remove('modal-active');
+        function doLogout() { localStorage.removeItem('user_session'); window.location.reload(); }
+
+        // --- 3. TESTIMONIAL LOGIC ---
+        let currentRating = 5;
+        function setRating(n) {
+            currentRating = n; document.getElementById('ratingValue').value = n;
+            document.querySelectorAll('#star-input i').forEach((s, index) => { if (index < n) s.classList.add('active'); else s.classList.remove('active'); });
+        }
+        async function fetchTestimonials() {
+            try {
+                const res = await fetch('/api/testimonials'); const reviews = await res.json();
+                const grid = document.getElementById('testimonial-grid');
+                if(reviews.length === 0) { grid.innerHTML = '<p class="text-center text-gray-500 col-span-full">Belum ada ulasan.</p>'; return; }
+                grid.innerHTML = reviews.map(r => `
+                    <div class="glass-card p-6 rounded-xl review-card bg-gradient-to-br from-gray-900 to-black">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-white font-bold text-lg">${r.username.charAt(0).toUpperCase()}</div><div><h4 class="font-bold text-white text-sm">${r.username}</h4><p class="text-[10px] text-gray-500">${new Date(r.date).toLocaleDateString()}</p></div></div>
+                            <div class="text-yellow-500 text-xs">${Array(r.rating).fill('<i class="fa-solid fa-star"></i>').join('')}</div>
+                        </div>
+                        <p class="text-gray-300 text-sm italic">"${r.comment}"</p>
+                    </div>`).join('');
+            } catch (error) { console.error("Error reviews", error); }
+        }
+        async function submitReview(e) {
+            e.preventDefault();
+            const comment = document.getElementById('reviewComment').value;
+            await fetch('/api/testimonials', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: userSession, rating: currentRating, comment }) });
+            document.getElementById('reviewComment').value = ''; alert("Ulasan terkirim!"); fetchTestimonials();
         }
 
-        // --- STORE LOGIC ---
-        const ADMIN_WA = "62895605053911";
-        let allProducts = [];
-        let allCategories = [];
+        // --- 4. STORE LOGIC ---
+        const ADMIN_WA = "6287756632352"; 
+        let allProducts = [], allCategories = [], currentCategory = '';
 
         function switchView(target) {
-            const landing = document.getElementById('view-landing');
-            const store = document.getElementById('view-store');
+            const landing = document.getElementById('view-landing'), store = document.getElementById('view-store');
             document.body.classList.remove('sidebar-active');
-            if (target === 'store') {
-                landing.style.opacity='0'; setTimeout(()=>{landing.classList.remove('view-active');store.classList.add('view-active'); loadStoreData();},400);
-            } else {
-                store.style.opacity='0'; setTimeout(()=>{store.classList.remove('view-active');landing.classList.add('view-active');landing.style.opacity='';},400);
-            }
+            if (target === 'store') { landing.style.opacity='0'; setTimeout(()=>{landing.classList.remove('view-active');store.classList.add('view-active'); loadStoreData();},400); } 
+            else { store.style.opacity='0'; setTimeout(()=>{store.classList.remove('view-active');landing.classList.add('view-active');landing.style.opacity='';},400); }
         }
-
         async function loadStoreData() {
-            if(allCategories.length > 0) return; 
-            document.getElementById('loading-store').classList.remove('hidden');
-            document.getElementById('section-categories').classList.add('hidden');
-            try {
-                const [resCat, resProd] = await Promise.all([fetch('/api/categories'), fetch('/api/products')]);
-                allCategories = await resCat.json();
-                allProducts = await resProd.json();
-                renderCategories();
-            } catch (err) { console.error(err); }
-            finally { document.getElementById('loading-store').classList.add('hidden'); }
+            if(allCategories.length > 0) return; document.getElementById('loading-store').classList.remove('hidden'); document.getElementById('section-categories').classList.add('hidden');
+            try { const [resCat, resProd] = await Promise.all([fetch('/api/categories'), fetch('/api/products')]); allCategories = await resCat.json(); allProducts = await resProd.json(); renderCategories(); } catch(e){} finally { document.getElementById('loading-store').classList.add('hidden'); }
         }
-
         function renderCategories() {
-            const grid = document.getElementById('grid-categories');
-            document.getElementById('section-categories').classList.remove('hidden');
-            document.getElementById('section-products').classList.add('hidden');
-            
+            const grid = document.getElementById('grid-categories'); document.getElementById('section-categories').classList.remove('hidden'); document.getElementById('section-products').classList.add('hidden');
             if(allCategories.length === 0) { grid.innerHTML = '<p class="text-gray-500">Belum ada kategori.</p>'; return; }
-            grid.innerHTML = allCategories.map(c => `
-                <div class="cat-card group" onclick="openCategory('${c.name}')">
-                    <div class="cat-bg" style="background-image: url('${c.imageUrl}');"></div>
-                    <div class="cat-overlay"><h3 class="text-white font-bold text-lg group-hover:text-purple-400 transition">${c.name}</h3></div>
-                </div>`).join('');
+            grid.innerHTML = allCategories.map(c => `<div class="cat-card group" onclick="openCategory('${c.name}')"><div class="cat-bg" style="background-image: url('${c.imageUrl}');"></div><div class="cat-overlay"><h3 class="text-white font-bold text-lg group-hover:text-purple-400 transition">${c.name}</h3></div></div>`).join('');
              grid.innerHTML += `<div class="cat-card group" onclick="openCategory('ALL')"><div class="cat-bg bg-purple-900"></div><div class="cat-overlay"><h3 class="text-white font-bold text-lg">Semua Produk</h3></div></div>`;
         }
-
-        function openCategory(catName) {
-            document.getElementById('section-categories').classList.add('hidden');
-            document.getElementById('section-products').classList.remove('hidden');
-            document.getElementById('current-category-name').innerText = catName === 'ALL' ? 'Semua Produk' : catName;
-            const filtered = catName === 'ALL' ? allProducts : allProducts.filter(p => p.category === catName);
-            renderProducts(filtered);
+        function openCategory(catName) { currentCategory = catName; document.getElementById('section-categories').classList.add('hidden'); document.getElementById('section-products').classList.remove('hidden'); document.getElementById('current-category-name').innerText = catName==='ALL'?'Semua Produk':catName; document.getElementById('searchInput').value = ''; filterProducts(); }
+        function backToCategories() { document.getElementById('section-products').classList.add('hidden'); document.getElementById('section-categories').classList.remove('hidden'); }
+        function filterProducts() {
+            const keyword = document.getElementById('searchInput').value.toLowerCase(); let filtered = currentCategory === 'ALL' ? allProducts : allProducts.filter(p => p.category === currentCategory);
+            if(keyword) filtered = filtered.filter(p => p.name.toLowerCase().includes(keyword)); renderProducts(filtered);
         }
-
-        function backToCategories() {
-            document.getElementById('section-products').classList.add('hidden');
-            document.getElementById('section-categories').classList.remove('hidden');
-        }
-
         function renderProducts(products) {
-            const grid = document.getElementById('grid-products');
-            if(products.length === 0) { grid.innerHTML = '<p class="text-gray-500 col-span-full text-center">Tidak ada produk.</p>'; return; }
-
+            const grid = document.getElementById('grid-products'); if(products.length === 0) { grid.innerHTML = '<p class="text-gray-500 col-span-full text-center">Produk tidak ditemukan.</p>'; return; }
             grid.innerHTML = products.map(p => {
-                const isAvailable = p.isAvailable !== false;
-                const imgUrl = p.imageUrl || 'https://via.placeholder.com/400x200?text=No+Image';
-                const cardClass = isAvailable ? '' : 'unavailable';
-                const btnClass = isAvailable ? 'bg-white/5 border-white/10 group-hover:bg-purple-600 group-hover:border-purple-600' : 'bg-red-900/20 border-red-900/50 cursor-not-allowed';
-                const btnText = isAvailable ? 'Lihat Detail' : 'Stok Habis';
-                const badge = isAvailable ? '' : '<div class="badge-unavailable">HABIS</div>';
-                // Jika tersedia, tombol membuka modal. Jika habis, tidak melakukan apa-apa.
-                const action = isAvailable ? `onclick="openModal('${p._id}')"` : '';
-
-                return `
-                <div class="product-card group flex flex-col h-full ${cardClass}">
-                    ${badge}
-                    <div class="product-img-wrapper"><img src="${imgUrl}" class="product-img"><div class="absolute top-3 right-3"><span class="price-badge">${p.price}</span></div></div>
-                    <div class="p-5 flex flex-col flex-1">
-                        <h3 class="text-xl font-bold text-white mb-2 group-hover:text-purple-400 transition">${p.name}</h3>
-                        <p class="text-sm text-gray-400 mb-6 line-clamp-3 leading-relaxed flex-1">${p.desc}</p>
-                        <button ${action} class="w-full py-3 rounded-lg border text-white font-bold flex items-center justify-center gap-2 transition-all duration-300 ${btnClass}">
-                            <i class="fa-solid fa-eye text-lg"></i> ${btnText}
-                        </button>
-                    </div>
-                </div>`;
+                const isAvailable = p.isAvailable !== false; const imgUrl = p.imageUrl || 'https://via.placeholder.com/400x200?text=No+Image'; const cardClass = isAvailable ? '' : 'unavailable'; const btnClass = isAvailable ? 'bg-white/5 border-white/10 group-hover:bg-purple-600 group-hover:border-purple-600' : 'bg-red-900/20 border-red-900/50 cursor-not-allowed'; const btnText = isAvailable ? 'Lihat Detail' : 'Stok Habis'; const badge = isAvailable ? '' : '<div class="badge-unavailable">HABIS</div>'; const action = isAvailable ? `onclick="openModal('${p._id}')"` : '';
+                return `<div class="product-card group flex flex-col h-full ${cardClass}">${badge}<div class="product-img-wrapper"><img src="${imgUrl}" class="product-img"><div class="absolute top-3 right-3"><span class="price-badge">${p.price}</span></div></div><div class="p-5 flex flex-col flex-1"><h3 class="text-xl font-bold text-white mb-2 group-hover:text-purple-400 transition">${p.name}</h3><p class="text-sm text-gray-400 mb-6 line-clamp-3 leading-relaxed flex-1">${p.desc}</p><button ${action} class="w-full py-3 rounded-lg border text-white font-bold flex items-center justify-center gap-2 transition-all duration-300 ${btnClass}"><i class="fa-solid fa-eye text-lg"></i> ${btnText}</button></div></div>`;
             }).join('');
         }
 
-        // --- RUNTIME & MONITOR ---
-        const runtimeEl = document.getElementById('runtime-counter');
-        let startTime = new Date(); startTime.setDate(startTime.getDate() - 12);
-        setInterval(() => {
-            const diff = new Date() - startTime;
-            const d = Math.floor(diff/86400000), h = Math.floor((diff/3600000)%24), m = Math.floor((diff/60000)%60), s = Math.floor((diff/1000)%60);
-            runtimeEl.innerText = `${d}d ${h}h ${m}m ${s}s`;
+        // --- 5. MODAL & SCROLL ---
+        function openModal(id) {
+            const product = allProducts.find(p => p._id === id); if(!product) return;
+            document.getElementById('modal-title').innerText = product.name; document.getElementById('modal-price').innerText = product.price; document.getElementById('modal-desc').innerText = product.desc; document.getElementById('modal-img').src = product.imageUrl || 'https://via.placeholder.com/400x200?text=No+Image';
+            document.getElementById('modal-btn').href = `https://wa.me/${ADMIN_WA}?text=Halo Manzzy, saya mau order *${product.name}* seharga ${product.price}. Apakah stok ready?`;
+            document.getElementById('modal-overlay').classList.add('modal-active');
+        }
+        function closeModalDirect() { document.getElementById('modal-overlay').classList.remove('modal-active'); }
+        function closeModal(e) { if(e.target.id === 'modal-overlay') closeModalDirect(); }
+        function toggleFaq(header) { header.parentElement.classList.toggle('faq-active'); }
+        
+        const scrollBtn = document.getElementById('btn-scroll');
+        window.onscroll = function() { scrollBtn.classList.toggle('show-scroll-btn', window.scrollY > 300); };
+        function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+        // --- 6. RUNTIME & INIT ---
+        const runtimeEl = document.getElementById('runtime-counter'); let startTime = new Date(); startTime.setDate(startTime.getDate() - 12);
+        setInterval(() => { const diff = new Date() - startTime; const d = Math.floor(diff/86400000), h = Math.floor((diff/3600000)%24), m = Math.floor((diff/60000)%60), s = Math.floor((diff/1000)%60); runtimeEl.innerText = `${d}d ${h}h ${m}m ${s}s`; 
+            // Fake Stats
             const cpu = Math.floor(Math.random()*30+10); document.getElementById('bar-cpu').style.width=cpu+"%"; document.getElementById('text-cpu').innerText=cpu+"%";
-            const ramPercent = Math.floor(Math.random()*15+40); const ramUsed = ((ramPercent/100)*26).toFixed(1);
-            document.getElementById('bar-ram').style.width=ramPercent+"%"; document.getElementById('text-ram').innerText=ramUsed+"G";
-            const romUsed = (Math.random()*(42.5-40)+40).toFixed(1); const romPercent = (romUsed/300)*100;
-            document.getElementById('bar-rom').style.width=romPercent+"%"; document.getElementById('text-rom').innerText=Math.floor(romUsed)+"G";
+            const ramPercent = Math.floor(Math.random()*15+40); const ramUsed = ((ramPercent/100)*26).toFixed(1); document.getElementById('bar-ram').style.width=ramPercent+"%"; document.getElementById('text-ram').innerText=ramUsed+"G";
+            const romUsed = (Math.random()*(42.5-40)+40).toFixed(1); const romPercent = (romUsed/300)*100; document.getElementById('bar-rom').style.width=romPercent+"%"; document.getElementById('text-rom').innerText=Math.floor(romUsed)+"G";
         }, 1000);
 
-        window.onload = () => setTimeout(startBooting, 500);
+        window.onload = () => { setTimeout(startBooting, 500); checkUserLogin(); fetchTestimonials(); setRating(5); };
     </script>
 </body>
                 </html>
