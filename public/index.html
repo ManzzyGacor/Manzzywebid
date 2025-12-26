@@ -22,6 +22,63 @@
         ::-webkit-scrollbar-track { background: #000; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
 
+        /* --- GLITCH EFFECT (NEW) --- */
+        .glitch-wrapper { display: inline-block; position: relative; }
+        .glitch { position: relative; color: white; font-weight: bold; display: inline-block; }
+        .glitch::before, .glitch::after {
+            content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        }
+        .glitch::before {
+            left: 2px; text-shadow: -1px 0 #ff00c1; clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim 5s infinite linear alternate-reverse;
+        }
+        .glitch::after {
+            left: -2px; text-shadow: -1px 0 #00fff9; clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim2 5s infinite linear alternate-reverse;
+        }
+        @keyframes glitch-anim {
+            0% { clip: rect(31px, 9999px, 94px, 0); transform: skew(0.85deg); }
+            5% { clip: rect(70px, 9999px, 71px, 0); transform: skew(0.85deg); }
+            10% { clip: rect(29px, 9999px, 83px, 0); transform: skew(0.06deg); }
+            15% { clip: rect(12px, 9999px, 92px, 0); transform: skew(0.18deg); }
+            20% { clip: rect(56px, 9999px, 16px, 0); transform: skew(0.04deg); }
+            25% { clip: rect(69px, 9999px, 80px, 0); transform: skew(0.77deg); }
+            30% { clip: rect(48px, 9999px, 49px, 0); transform: skew(0.34deg); }
+            35% { clip: rect(78px, 9999px, 4px, 0); transform: skew(0.51deg); }
+            40% { clip: rect(13px, 9999px, 41px, 0); transform: skew(0.09deg); }
+            45% { clip: rect(4px, 9999px, 53px, 0); transform: skew(0.96deg); }
+            50% { clip: rect(50px, 9999px, 63px, 0); transform: skew(0.39deg); }
+            55% { clip: rect(8px, 9999px, 76px, 0); transform: skew(0.24deg); }
+            60% { clip: rect(39px, 9999px, 82px, 0); transform: skew(0.78deg); }
+            65% { clip: rect(69px, 9999px, 88px, 0); transform: skew(0.26deg); }
+            70% { clip: rect(23px, 9999px, 6px, 0); transform: skew(0.79deg); }
+            75% { clip: rect(71px, 9999px, 48px, 0); transform: skew(0.09deg); }
+            80% { clip: rect(42px, 9999px, 3px, 0); transform: skew(0.75deg); }
+            85% { clip: rect(8px, 9999px, 60px, 0); transform: skew(0.03deg); }
+            90% { clip: rect(41px, 9999px, 21px, 0); transform: skew(0.35deg); }
+            95% { clip: rect(54px, 9999px, 49px, 0); transform: skew(0.67deg); }
+            100% { clip: rect(35px, 9999px, 89px, 0); transform: skew(0.53deg); }
+        }
+        @keyframes glitch-anim2 {
+            0% { clip: rect(65px, 9999px, 100px, 0); transform: skew(0.51deg); }
+            100% { clip: rect(40px, 9999px, 70px, 0); transform: skew(0.51deg); }
+        }
+
+        /* --- PRODUCT MODAL (NEW) --- */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+            z-index: 100; display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: all 0.3s ease;
+        }
+        .modal-active { opacity: 1; pointer-events: auto; }
+        .modal-box {
+            background: #111; border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 20px;
+            width: 90%; max-width: 500px; padding: 25px; transform: scale(0.9);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 50px rgba(139, 92, 246, 0.15); max-height: 90vh; overflow-y: auto;
+        }
+        .modal-active .modal-box { transform: scale(1); }
+
         /* --- SIDEBAR --- */
         .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 60; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
         .sidebar-active .sidebar-overlay { opacity: 1; pointer-events: auto; }
@@ -50,7 +107,7 @@
         .cat-card:hover .cat-bg { transform: scale(1.1); }
         .cat-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); display: flex; align-items: flex-end; padding: 15px; }
 
-        /* --- PRODUCT CARD (UPDATED) --- */
+        /* --- PRODUCT CARD --- */
         .product-card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; overflow: hidden; position: relative; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .product-card:hover { transform: translateY(-8px); border-color: rgba(139, 92, 246, 0.5); box-shadow: 0 20px 40px -10px rgba(139, 92, 246, 0.15); }
         .product-img-wrapper { overflow: hidden; height: 200px; position: relative; }
@@ -58,7 +115,6 @@
         .product-card:hover .product-img { transform: scale(1.1); }
         .price-badge { background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); border: 1px solid rgba(139, 92, 246, 0.3); color: #c4b5fd; padding: 4px 12px; border-radius: 20px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; }
         
-        /* Product Unavailable State */
         .unavailable { filter: grayscale(100%); opacity: 0.7; pointer-events: none; }
         .badge-unavailable { position: absolute; top: 10px; left: 10px; background: #ef4444; color: white; font-weight: bold; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; z-index: 10; }
 
@@ -71,6 +127,32 @@
 <body>
 
     <div id="loader"><div class="terminal-window"><div id="terminal-text"></div><div class="flex justify-between text-xs text-gray-500 mt-2 font-mono uppercase tracking-wider"><span id="boot-status">Initializing...</span> <span id="percent">0%</span></div><div class="loader-bar-bg"><div id="progress-fill" class="loader-bar-fill"></div></div></div></div>
+
+    <div id="modal-overlay" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-box" onclick="event.stopPropagation()">
+            <div class="relative">
+                <button onclick="closeModalDirect()" class="absolute -top-2 -right-2 text-gray-400 hover:text-white bg-gray-800 rounded-full w-8 h-8 flex items-center justify-center border border-gray-600 z-10">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                
+                <img id="modal-img" src="" class="w-full h-48 object-cover rounded-xl mb-5 border border-gray-800">
+                
+                <div class="flex justify-between items-start mb-2">
+                    <h2 id="modal-title" class="text-2xl font-bold text-white leading-tight"></h2>
+                    <span id="modal-price" class="text-purple-400 font-mono font-bold text-lg bg-purple-900/30 px-3 py-1 rounded-lg border border-purple-500/30"></span>
+                </div>
+                
+                <div class="h-px bg-gray-800 w-full my-4"></div>
+                
+                <h4 class="text-xs text-gray-500 font-bold uppercase mb-2">Deskripsi Layanan</h4>
+                <p id="modal-desc" class="text-gray-300 text-sm leading-relaxed mb-6 whitespace-pre-wrap font-sans"></p>
+
+                <a id="modal-btn" href="#" target="_blank" class="w-full py-4 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold flex items-center justify-center gap-3 transition shadow-lg shadow-purple-500/20">
+                    <i class="fa-brands fa-whatsapp text-xl"></i> Beli Sekarang via WhatsApp
+                </a>
+            </div>
+        </div>
+    </div>
 
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
     <aside id="sidebar-menu" class="sidebar-menu flex flex-col p-6">
@@ -97,7 +179,11 @@
 
         <section id="view-landing" class="view-section view-active">
             <div class="text-center max-w-4xl mx-auto mt-16 mb-16">
-                <h1 class="text-5xl md:text-8xl font-bold mb-6 text-white neon-text leading-tight">MANZZY ID <br> <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">OFFICIAL</span></h1>
+                <h1 class="text-5xl md:text-8xl font-bold mb-6 leading-tight">
+                    <span class="glitch neon-text" data-text="MANZZY ID">MANZZY ID</span> <br> 
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">OFFICIAL</span>
+                </h1>
+                
                 <p class="text-gray-400 text-lg md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed">Layanan Hosting Bot WhatsApp Profesional & Terpercaya.<br>Server stabil, akses cepat, dan aktif 24 jam nonstop.</p>
                 <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-8">
                     <button onclick="switchView('store')" class="px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-[0_0_30px_rgba(139,92,246,0.3)] transition hover:scale-105 w-full md:w-auto"><i class="fa-solid fa-store mr-2"></i> Lihat Produk</button>
@@ -135,13 +221,12 @@
                 </div>
                 <div id="grid-products" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 pb-20"></div>
             </div>
-
             <div id="loading-store" class="text-center py-20 hidden"><div class="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mb-4"></div><p class="text-gray-500 text-sm">Mengambil data...</p></div>
         </section>
     </div>
 
     <script>
-        // --- SIDEBAR & BOOTING (Standard) ---
+        // --- SIDEBAR & BOOTING ---
         function toggleSidebar() { document.body.classList.toggle('sidebar-active'); }
         const terminalText = document.getElementById('terminal-text'), progressFill = document.getElementById('progress-fill'), percentText = document.getElementById('percent'), bootStatus = document.getElementById('boot-status'), loader = document.getElementById('loader');
         const bootLines = [{text:"> BIOS Check... <span class='log-success'>OK</span>",delay:100},{text:"> Loading Kernel...",delay:80},{text:"> Mounting System...",delay:100},{text:"> Connecting Manzzy Server...",delay:200},{text:"> Fetching Database...",delay:150},{text:"> <span class='log-success'>ACCESS GRANTED.</span>",delay:400}];
@@ -150,8 +235,37 @@
         function updateProgress(){const p=Math.min(Math.round((printedChars/totalChars)*100),100);progressFill.style.width=`${p}%`;percentText.innerText=`${p}%`;}
         function finishBooting(){bootStatus.innerText="SYSTEM READY";setTimeout(()=>{loader.style.opacity="0";loader.style.pointerEvents="none";document.body.style.overflowY="auto";setTimeout(()=>loader.style.display='none',800);},500);}
 
-        // --- NEW STORE LOGIC ---
-        const ADMIN_WA = "6287756632352";
+        // --- NEW MODAL SYSTEM ---
+        function openModal(id) {
+            const product = allProducts.find(p => p._id === id);
+            if(!product) return;
+
+            // Isi Data ke Modal
+            document.getElementById('modal-title').innerText = product.name;
+            document.getElementById('modal-price').innerText = product.price;
+            document.getElementById('modal-desc').innerText = product.desc;
+            document.getElementById('modal-img').src = product.imageUrl || 'https://via.placeholder.com/400x200?text=No+Image';
+            
+            // Link WA
+            const waLink = `https://wa.me/${ADMIN_WA}?text=Halo Manzzy, saya mau order *${product.name}* seharga ${product.price}. Apakah stok ready?`;
+            document.getElementById('modal-btn').href = waLink;
+
+            // Tampilkan Modal
+            document.getElementById('modal-overlay').classList.add('modal-active');
+        }
+
+        function closeModal(e) {
+            if (e.target.id === 'modal-overlay') {
+                document.getElementById('modal-overlay').classList.remove('modal-active');
+            }
+        }
+        
+        function closeModalDirect() {
+            document.getElementById('modal-overlay').classList.remove('modal-active');
+        }
+
+        // --- STORE LOGIC ---
+        const ADMIN_WA = "62895605053911";
         let allProducts = [];
         let allCategories = [];
 
@@ -167,26 +281,16 @@
         }
 
         async function loadStoreData() {
-            if(allCategories.length > 0) return; // Cache
-            
+            if(allCategories.length > 0) return; 
             document.getElementById('loading-store').classList.remove('hidden');
             document.getElementById('section-categories').classList.add('hidden');
-            
             try {
-                // Fetch Categories & Products Parallel
-                const [resCat, resProd] = await Promise.all([
-                    fetch('/api/categories'),
-                    fetch('/api/products')
-                ]);
-                
+                const [resCat, resProd] = await Promise.all([fetch('/api/categories'), fetch('/api/products')]);
                 allCategories = await resCat.json();
                 allProducts = await resProd.json();
-                
                 renderCategories();
             } catch (err) { console.error(err); }
-            finally {
-                document.getElementById('loading-store').classList.add('hidden');
-            }
+            finally { document.getElementById('loading-store').classList.add('hidden'); }
         }
 
         function renderCategories() {
@@ -194,36 +298,19 @@
             document.getElementById('section-categories').classList.remove('hidden');
             document.getElementById('section-products').classList.add('hidden');
             
-            if(allCategories.length === 0) {
-                grid.innerHTML = '<p class="text-gray-500">Belum ada kategori.</p>';
-                return;
-            }
-
+            if(allCategories.length === 0) { grid.innerHTML = '<p class="text-gray-500">Belum ada kategori.</p>'; return; }
             grid.innerHTML = allCategories.map(c => `
                 <div class="cat-card group" onclick="openCategory('${c.name}')">
                     <div class="cat-bg" style="background-image: url('${c.imageUrl}');"></div>
-                    <div class="cat-overlay">
-                        <h3 class="text-white font-bold text-lg group-hover:text-purple-400 transition">${c.name}</h3>
-                    </div>
-                </div>
-            `).join('');
-            
-            // Tambah opsi "Semua Produk" jika mau
-             grid.innerHTML += `
-                <div class="cat-card group" onclick="openCategory('ALL')">
-                    <div class="cat-bg bg-purple-900"></div>
-                    <div class="cat-overlay">
-                        <h3 class="text-white font-bold text-lg">Semua Produk</h3>
-                    </div>
-                </div>
-            `;
+                    <div class="cat-overlay"><h3 class="text-white font-bold text-lg group-hover:text-purple-400 transition">${c.name}</h3></div>
+                </div>`).join('');
+             grid.innerHTML += `<div class="cat-card group" onclick="openCategory('ALL')"><div class="cat-bg bg-purple-900"></div><div class="cat-overlay"><h3 class="text-white font-bold text-lg">Semua Produk</h3></div></div>`;
         }
 
         function openCategory(catName) {
             document.getElementById('section-categories').classList.add('hidden');
             document.getElementById('section-products').classList.remove('hidden');
             document.getElementById('current-category-name').innerText = catName === 'ALL' ? 'Semua Produk' : catName;
-            
             const filtered = catName === 'ALL' ? allProducts : allProducts.filter(p => p.category === catName);
             renderProducts(filtered);
         }
@@ -235,36 +322,28 @@
 
         function renderProducts(products) {
             const grid = document.getElementById('grid-products');
-            if(products.length === 0) {
-                grid.innerHTML = '<p class="text-gray-500 col-span-full text-center">Tidak ada produk di kategori ini.</p>';
-                return;
-            }
+            if(products.length === 0) { grid.innerHTML = '<p class="text-gray-500 col-span-full text-center">Tidak ada produk.</p>'; return; }
 
             grid.innerHTML = products.map(p => {
-                const isAvailable = p.isAvailable !== false; // Default true
-                const waLink = `https://wa.me/${ADMIN_WA}?text=Halo Manzzy, saya mau order *${p.name}* seharga ${p.price}`;
+                const isAvailable = p.isAvailable !== false;
                 const imgUrl = p.imageUrl || 'https://via.placeholder.com/400x200?text=No+Image';
-                
-                // Logic Status
                 const cardClass = isAvailable ? '' : 'unavailable';
                 const btnClass = isAvailable ? 'bg-white/5 border-white/10 group-hover:bg-purple-600 group-hover:border-purple-600' : 'bg-red-900/20 border-red-900/50 cursor-not-allowed';
-                const btnText = isAvailable ? 'Order Sekarang' : 'Stok Habis';
+                const btnText = isAvailable ? 'Lihat Detail' : 'Stok Habis';
                 const badge = isAvailable ? '' : '<div class="badge-unavailable">HABIS</div>';
-                const linkAttr = isAvailable ? `href="${waLink}" target="_blank"` : '';
+                // Jika tersedia, tombol membuka modal. Jika habis, tidak melakukan apa-apa.
+                const action = isAvailable ? `onclick="openModal('${p._id}')"` : '';
 
                 return `
                 <div class="product-card group flex flex-col h-full ${cardClass}">
                     ${badge}
-                    <div class="product-img-wrapper">
-                        <img src="${imgUrl}" class="product-img">
-                        <div class="absolute top-3 right-3"><span class="price-badge">${p.price}</span></div>
-                    </div>
+                    <div class="product-img-wrapper"><img src="${imgUrl}" class="product-img"><div class="absolute top-3 right-3"><span class="price-badge">${p.price}</span></div></div>
                     <div class="p-5 flex flex-col flex-1">
                         <h3 class="text-xl font-bold text-white mb-2 group-hover:text-purple-400 transition">${p.name}</h3>
                         <p class="text-sm text-gray-400 mb-6 line-clamp-3 leading-relaxed flex-1">${p.desc}</p>
-                        <a ${linkAttr} class="w-full py-3 rounded-lg border text-white font-bold flex items-center justify-center gap-2 transition-all duration-300 ${btnClass}">
-                            <i class="fa-brands fa-whatsapp text-lg"></i> ${btnText}
-                        </a>
+                        <button ${action} class="w-full py-3 rounded-lg border text-white font-bold flex items-center justify-center gap-2 transition-all duration-300 ${btnClass}">
+                            <i class="fa-solid fa-eye text-lg"></i> ${btnText}
+                        </button>
                     </div>
                 </div>`;
             }).join('');
@@ -287,4 +366,4 @@
         window.onload = () => setTimeout(startBooting, 500);
     </script>
 </body>
-</html>
+                </html>
