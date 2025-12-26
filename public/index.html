@@ -16,16 +16,15 @@
         /* --- CONFIG --- */
         :root { --primary: #8b5cf6; --bg-dark: #050505; --card-bg: #0f0f11; }
         body { font-family: 'Space Grotesk', sans-serif; background-color: var(--bg-dark); color: #e0e0e0; overflow-x: hidden; }
-        ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: #000; } ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        
+        /* SCROLLBAR UTAMA */
+        ::-webkit-scrollbar { width: 8px; } 
+        ::-webkit-scrollbar-track { background: #000; } 
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
 
-        /* --- LOADER (FIXED) --- */
-        #loader { position: fixed; inset: 0; background: #000; z-index: 100; display: flex; justify-content: center; align-items: center; font-family: 'JetBrains Mono', monospace; }
-        .terminal-window { width: 90%; max-width: 500px; }
-        #terminal-text { height: 160px; overflow-y: hidden; display: flex; flex-direction: column; justify-content: flex-end; margin-bottom: 10px; }
-        .log-line { color: #a8a8a8; font-size: 0.85rem; margin-bottom: 2px; white-space: nowrap; overflow: hidden; }
-        .log-success { color: #4ade80; } .log-warn { color: #facc15; }
-        .loader-bar-bg { width: 100%; height: 4px; background: #1a1a1a; margin-top: 10px; border-radius: 2px; overflow: hidden; }
-        .loader-bar-fill { height: 100%; background: var(--primary); width: 0%; box-shadow: 0 0 15px var(--primary); transition: width 0.1s linear; }
+        /* HIDE SCROLLBAR (UTK SLIDER TESTIMONI) */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
         /* --- GLITCH EFFECT --- */
         .glitch-wrapper { display: inline-block; position: relative; }
@@ -43,12 +42,12 @@
         .social-btn { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #a8a8a8; font-size: 1.1rem; transition: all 0.3s ease; }
         .social-btn:hover { transform: translateY(-5px); color: white; border-color: var(--primary); box-shadow: 0 0 15px rgba(139, 92, 246, 0.5); }
         
-        /* --- RATING --- */
+        /* --- RATING STARS & FORM --- */
         .star-rating i { cursor: pointer; color: #4b5563; transition: 0.2s; }
         .star-rating i.active { color: #facc15; }
         .review-card { border-left: 3px solid var(--primary); }
 
-        /* --- MODAL --- */
+        /* --- MODAL DETAIL --- */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: all 0.3s ease; }
         .modal-active { opacity: 1; pointer-events: auto; }
         .modal-box { background: #111; border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 20px; width: 90%; max-width: 500px; padding: 25px; transform: scale(0.9); transition: all 0.3s ease; box-shadow: 0 0 50px rgba(139, 92, 246, 0.15); max-height: 90vh; overflow-y: auto; }
@@ -60,18 +59,18 @@
         .sidebar-menu { position: fixed; top: 0; left: 0; height: 100%; width: 280px; background: rgba(10, 10, 12, 0.95); border-right: 1px solid rgba(255,255,255,0.05); z-index: 70; transform: translateX(-100%); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 0 50px rgba(0,0,0,0.8); }
         .sidebar-active .sidebar-menu { transform: translateX(0); }
 
-        /* --- RUNNING TEXT --- */
-        .running-bar { width: 100%; height: 30px; background: #000; border-bottom: 1px solid rgba(255,255,255,0.1); overflow: hidden; position: fixed; top: 0; left: 0; z-index: 60; display: flex; align-items: center; }
-        .marquee { white-space: nowrap; overflow: hidden; display: inline-block; animation: marquee 25s linear infinite; font-size: 0.75rem; color: #a8a8a8; font-family: 'JetBrains Mono', monospace; }
-        @keyframes marquee { 0% { transform: translate3d(100vw, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
-
-        /* --- FLOATING & SCROLL --- */
-        .float-wa { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background: #25d366; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 0 20px rgba(37, 211, 102, 0.5); z-index: 90; transition: 0.3s; animation: pulse-wa 2s infinite; }
-        .float-wa:hover { transform: scale(1.1); background: #128c7e; }
-        @keyframes pulse-wa { 0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(37, 211, 102, 0); } 100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); } }
-        .scroll-top-btn { position: fixed; bottom: 100px; right: 35px; width: 50px; height: 50px; background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(139, 92, 246, 0.5); backdrop-filter: blur(5px); border-radius: 12px; color: white; display: flex; align-items: center; justify-content: center; font-size: 20px; z-index: 89; cursor: pointer; transition: 0.3s; opacity: 0; pointer-events: none; transform: translateY(20px); }
+        /* --- SCROLL TO TOP --- */
+        .scroll-top-btn { position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(139, 92, 246, 0.5); backdrop-filter: blur(5px); border-radius: 12px; color: white; display: flex; align-items: center; justify-content: center; font-size: 20px; z-index: 89; cursor: pointer; transition: 0.3s; opacity: 0; pointer-events: none; transform: translateY(20px); }
         .scroll-top-btn:hover { background: var(--primary); }
         .show-scroll-btn { opacity: 1; pointer-events: auto; transform: translateY(0); }
+
+        /* --- LOADER --- */
+        #loader { position: fixed; inset: 0; background: #000; z-index: 100; display: flex; justify-content: center; align-items: center; font-family: 'JetBrains Mono', monospace; }
+        .terminal-window { width: 90%; max-width: 500px; }
+        #terminal-text { height: 160px; overflow-y: hidden; display: flex; flex-direction: column; justify-content: flex-end; margin-bottom: 10px; }
+        .log-line { color: #a8a8a8; font-size: 0.85rem; margin-bottom: 2px; white-space: nowrap; overflow: hidden; }
+        .loader-bar-bg { width: 100%; height: 4px; background: #1a1a1a; margin-top: 10px; border-radius: 2px; overflow: hidden; }
+        .loader-bar-fill { height: 100%; background: var(--primary); width: 0%; box-shadow: 0 0 15px var(--primary); transition: width 0.1s linear; }
 
         /* --- SEARCH & PRODUCTS --- */
         .search-container { position: relative; width: 100%; max-width: 400px; margin: 0 auto 30px auto; }
@@ -119,12 +118,6 @@
         </div>
     </div>
 
-    <div class="running-bar">
-        <div class="marquee">
-            🔥 HOT: Server Varesa v3.0 telah diupgrade! Lebih Cepat & Stabil. | ⭐ Join Member sekarang untuk memberi rating & ulasan! | 💬 CS Online 24 Jam.
-        </div>
-    </div>
-
     <div id="modal-overlay" class="modal-overlay" onclick="closeModal(event)">
         <div class="modal-box" onclick="event.stopPropagation()">
             <div class="relative">
@@ -144,15 +137,12 @@
         </div>
     </div>
 
-    <a href="https://wa.me/6287756632352" target="_blank" class="float-wa" title="Chat Owner">
-        <i class="fa-brands fa-whatsapp"></i>
-    </a>
     <button onclick="scrollToTop()" id="btn-scroll" class="scroll-top-btn" title="Kembali ke Atas">
         <i class="fa-solid fa-arrow-up"></i>
     </button>
 
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
-    <aside id="sidebar-menu" class="sidebar-menu flex flex-col p-6 pt-10">
+    <aside id="sidebar-menu" class="sidebar-menu flex flex-col p-6">
         <div class="flex items-center gap-3 mb-8 border-b border-gray-800 pb-6">
             <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-500/30"><i class="fa-solid fa-robot text-white text-lg"></i></div>
             <div>
@@ -177,10 +167,10 @@
                 <i class="fa-solid fa-lock w-6 text-center text-red-500 group-hover:scale-110 transition"></i><span class="font-medium">Admin Panel</span>
             </a>
         </nav>
-        <div class="mt-auto pt-6 border-t border-gray-800 text-center"><p class="text-[10px] text-gray-600 font-mono">System v3.0 Stable</p></div>
+        <div class="mt-auto pt-6 border-t border-gray-800 text-center"><p class="text-[10px] text-gray-600 font-mono">System v3.1 Stable</p></div>
     </aside>
 
-    <nav class="fixed top-[30px] w-full z-50 backdrop-blur-md bg-black/60 border-b border-white/5">
+    <nav class="fixed top-0 w-full z-50 backdrop-blur-md bg-black/60 border-b border-white/5">
         <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
             <div class="flex items-center gap-4">
                 <button onclick="toggleSidebar()" class="text-gray-300 hover:text-white transition p-2 hover:bg-white/10 rounded-lg"><i class="fa-solid fa-bars text-xl"></i></button>
@@ -195,7 +185,7 @@
         </div>
     </nav>
 
-    <div id="main-container" class="min-h-screen relative w-full max-w-6xl mx-auto px-6 pb-20 pt-28">
+    <div id="main-container" class="min-h-screen relative w-full max-w-6xl mx-auto px-6 pb-20 pt-24">
         <div class="absolute inset-0 bg-grid -z-10 h-screen fixed opacity-40"></div>
         <div class="absolute top-0 right-0 w-96 h-96 bg-purple-600/10 rounded-full blur-[100px] -z-10 fixed pointer-events-none"></div>
 
@@ -262,8 +252,12 @@
                     <a href="/login_user.html" class="px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full border border-white/10 transition">Login Member</a>
                 </div>
 
-                <div id="testimonial-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <p class="text-center text-gray-500 col-span-full">Memuat ulasan...</p>
+                <div id="testimonial-grid" class="flex overflow-x-auto gap-6 pb-8 px-4 no-scrollbar snap-x snap-mandatory">
+                    <p class="text-center text-gray-500 w-full py-10">Memuat ulasan...</p>
+                </div>
+                
+                <div class="text-center text-gray-600 text-xs animate-pulse mt-2">
+                    <i class="fa-solid fa-arrow-left"></i> Geser untuk melihat ulasan lain <i class="fa-solid fa-arrow-right"></i>
                 </div>
             </section>
 
@@ -301,7 +295,6 @@
         function toggleSidebar() { document.body.classList.toggle('sidebar-active'); }
         const terminalText = document.getElementById('terminal-text'), progressFill = document.getElementById('progress-fill'), percentText = document.getElementById('percent'), bootStatus = document.getElementById('boot-status'), loader = document.getElementById('loader');
         
-        // BOOTING DATA (Fixed Typing Logic)
         const bootLines = [
             {text:"> BIOS Check... <span class='log-success'>OK</span>",delay:100},
             {text:"> Loading Kernel Modules...",delay:80},
@@ -321,13 +314,10 @@
                 const div=document.createElement('div');
                 div.className='log-line';
                 terminalText.appendChild(div);
-                
-                // Update Status Text below terminal
                 bootStatus.innerText = "Processing: " + line.text.replace(/<[^>]*>/g,'').substring(0,15) + "...";
 
                 let cleanText=line.text, curHTML="", charIdx=0;
                 while(charIdx<cleanText.length){
-                    // Handle HTML tags inside boot text
                     if(cleanText[charIdx]==='<'){
                         const end=cleanText.indexOf('>',charIdx);
                         if(end!==-1){
@@ -339,17 +329,14 @@
                     curHTML+=cleanText[charIdx];
                     div.innerHTML=curHTML;
                     printedChars++;
-                    
-                    // Update Percent & Bar
                     const p=Math.min(Math.round((printedChars/totalChars)*100),100);
                     progressFill.style.width=`${p}%`;
                     percentText.innerText=`${p}%`;
-                    
                     terminalText.scrollTop=terminalText.scrollHeight;
-                    await new Promise(r=>setTimeout(r,Math.random()*15+5)); // Typing delay
+                    await new Promise(r=>setTimeout(r,Math.random()*15+5));
                     charIdx++;
                 }
-                await new Promise(r=>setTimeout(r,line.delay)); // Line delay
+                await new Promise(r=>setTimeout(r,line.delay));
             }
             finishBooting();
         }
@@ -379,7 +366,7 @@
         }
         function doLogout() { localStorage.removeItem('user_session'); window.location.reload(); }
 
-        // --- 3. TESTIMONIAL LOGIC ---
+        // --- 3. TESTIMONIAL LOGIC (HORIZONTAL SLIDER) ---
         let currentRating = 5;
         function setRating(n) {
             currentRating = n; document.getElementById('ratingValue').value = n;
@@ -389,14 +376,14 @@
             try {
                 const res = await fetch('/api/testimonials'); const reviews = await res.json();
                 const grid = document.getElementById('testimonial-grid');
-                if(reviews.length === 0) { grid.innerHTML = '<p class="text-center text-gray-500 col-span-full">Belum ada ulasan.</p>'; return; }
+                if(reviews.length === 0) { grid.innerHTML = '<p class="text-center text-gray-500 w-full py-10">Belum ada ulasan.</p>'; return; }
                 grid.innerHTML = reviews.map(r => `
-                    <div class="glass-card p-6 rounded-xl review-card bg-gradient-to-br from-gray-900 to-black">
+                    <div class="glass-card p-6 rounded-xl review-card bg-gradient-to-br from-gray-900 to-black min-w-[300px] md:min-w-[350px] snap-center flex-shrink-0 border border-gray-800">
                         <div class="flex items-center justify-between mb-4">
                             <div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-white font-bold text-lg">${r.username.charAt(0).toUpperCase()}</div><div><h4 class="font-bold text-white text-sm">${r.username}</h4><p class="text-[10px] text-gray-500">${new Date(r.date).toLocaleDateString()}</p></div></div>
                             <div class="text-yellow-500 text-xs">${Array(r.rating).fill('<i class="fa-solid fa-star"></i>').join('')}</div>
                         </div>
-                        <p class="text-gray-300 text-sm italic">"${r.comment}"</p>
+                        <p class="text-gray-300 text-sm italic line-clamp-4">"${r.comment}"</p>
                     </div>`).join('');
             } catch (error) { console.error("Error reviews", error); }
         }
@@ -468,4 +455,4 @@
         window.onload = () => { setTimeout(startBooting, 500); checkUserLogin(); fetchTestimonials(); setRating(5); };
     </script>
 </body>
-                                </html>
+                                                                                                             </html>
