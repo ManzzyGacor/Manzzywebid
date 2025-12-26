@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manzzy ID Official - Premium Bot Services</title>
     
-    <meta name="description" content="Penyedia layanan hosting bot WhatsApp profesional.">
+    <meta name="description" content="Penyedia layanan hosting bot WhatsApp profesional. Server stabil 24 jam.">
     <meta property="og:image" content="https://manzzy.web.id/image/qris.jpg"> 
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -13,29 +13,32 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
-        /* CONFIG */
+        /* --- CONFIG --- */
         :root { --primary: #8b5cf6; --bg-dark: #050505; --card-bg: #0f0f11; }
         body { font-family: 'Space Grotesk', sans-serif; background-color: var(--bg-dark); color: #e0e0e0; overflow-x: hidden; }
-        ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: #000; } ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
-
-        /* UTILS */
+        
+        /* SCROLLBAR */
+        ::-webkit-scrollbar { width: 8px; } 
+        ::-webkit-scrollbar-track { background: #000; } 
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        
+        /* HIDE SCROLLBAR (SLIDER) */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        /* LIMIT TEXT (Supaya testimoni rapi) */
-        .limit-text {
-            display: -webkit-box;
-            -webkit-line-clamp: 3; /* Maksimal 3 baris */
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: normal;
-        }
 
-        /* GLITCH */
+        /* --- LOADER SYSTEM --- */
+        #loader { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; justify-content: center; align-items: center; font-family: 'JetBrains Mono', monospace; }
+        .terminal-window { width: 90%; max-width: 500px; }
+        #terminal-text { height: 160px; overflow-y: hidden; display: flex; flex-direction: column; justify-content: flex-end; margin-bottom: 10px; }
+        .log-line { color: #a8a8a8; font-size: 0.85rem; margin-bottom: 2px; white-space: nowrap; overflow: hidden; }
+        .loader-bar-bg { width: 100%; height: 4px; background: #1a1a1a; margin-top: 10px; border-radius: 2px; overflow: hidden; }
+        .loader-bar-fill { height: 100%; background: var(--primary); width: 0%; box-shadow: 0 0 15px var(--primary); transition: width 0.1s linear; }
+        .log-success { color: #4ade80; }
+
+        /* --- GLITCH EFFECT --- */
         .glitch-wrapper{display:inline-block;position:relative}.glitch{position:relative;color:white;font-weight:bold;display:inline-block}.glitch::before,.glitch::after{content:attr(data-text);position:absolute;top:0;left:0;width:100%;height:100%}.glitch::before{left:2px;text-shadow:-1px 0 #ff00c1;clip:rect(44px,450px,56px,0);animation:glitch-anim 5s infinite linear alternate-reverse}.glitch::after{left:-2px;text-shadow:-1px 0 #00fff9;clip:rect(44px,450px,56px,0);animation:glitch-anim2 5s infinite linear alternate-reverse}@keyframes glitch-anim{0%{clip:rect(31px,9999px,94px,0);transform:skew(.85deg)}5%{clip:rect(70px,9999px,71px,0);transform:skew(.85deg)}100%{clip:rect(35px,9999px,89px,0);transform:skew(.53deg)}}@keyframes glitch-anim2{0%{clip:rect(65px,9999px,100px,0);transform:skew(.51deg)}100%{clip:rect(40px,9999px,70px,0);transform:skew(.51deg)}}
 
-        /* UI ELEMENTS */
+        /* --- UI COMPONENTS --- */
         .glass-card { background: rgba(20, 20, 25, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; }
         .neon-text { text-shadow: 0 0 30px rgba(139, 92, 246, 0.4); }
         .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); mask-image: linear-gradient(to bottom, transparent, black 20%, black 80%, transparent); }
@@ -44,6 +47,7 @@
         
         /* RATING */
         .star-rating i { cursor: pointer; color: #4b5563; transition: 0.2s; } .star-rating i.active { color: #facc15; } .review-card { border-left: 3px solid var(--primary); }
+        .limit-text { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
 
         /* MODAL & SIDEBAR */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: all 0.3s ease; } .modal-active { opacity: 1; pointer-events: auto; }
@@ -52,7 +56,7 @@
         .sidebar-menu { position: fixed; top: 0; left: 0; height: 100%; width: 280px; background: rgba(10, 10, 12, 0.95); border-right: 1px solid rgba(255,255,255,0.05); z-index: 70; transform: translateX(-100%); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 0 50px rgba(0,0,0,0.8); } .sidebar-active .sidebar-menu { transform: translateX(0); }
 
         /* SCROLL TOP */
-        .scroll-top-btn { position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(139, 92, 246, 0.5); backdrop-filter: blur(5px); border-radius: 12px; color: white; display: flex; align-items: center; justify-content: center; font-size: 20px; z-index: 89; cursor: pointer; transition: 0.3s; opacity: 0; pointer-events: none; transform: translateY(20px); } .scroll-top-btn:hover { background: var(--primary); } .show-scroll-btn { opacity: 1; pointer-events: auto; transform: translateY(0); }
+        .scroll-top-btn { position: fixed; bottom: 30px; right: 35px; width: 50px; height: 50px; background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(139, 92, 246, 0.5); backdrop-filter: blur(5px); border-radius: 12px; color: white; display: flex; align-items: center; justify-content: center; font-size: 20px; z-index: 89; cursor: pointer; transition: 0.3s; opacity: 0; pointer-events: none; transform: translateY(20px); } .scroll-top-btn:hover { background: var(--primary); } .show-scroll-btn { opacity: 1; pointer-events: auto; transform: translateY(0); }
 
         /* SEARCH & PRODUCTS */
         .search-container { position: relative; width: 100%; max-width: 400px; margin: 0 auto 30px auto; }
@@ -71,7 +75,8 @@
         <div class="terminal-window">
             <div id="terminal-text"></div>
             <div class="flex justify-between text-xs text-gray-500 mt-2 font-mono uppercase tracking-wider">
-                <span id="boot-status">Initializing...</span> <span id="percent">0%</span>
+                <span id="boot-status">Initializing...</span>
+                <span id="percent">0%</span>
             </div>
             <div class="loader-bar-bg"><div id="progress-fill" class="loader-bar-fill"></div></div>
         </div>
@@ -126,7 +131,7 @@
                 <i class="fa-solid fa-lock w-6 text-center text-red-500 group-hover:scale-110 transition"></i><span class="font-medium">Admin Panel</span>
             </a>
         </nav>
-        <div class="mt-auto pt-6 border-t border-gray-800 text-center"><p class="text-[10px] text-gray-600 font-mono">System v3.2 Stable</p></div>
+        <div class="mt-auto pt-6 border-t border-gray-800 text-center"><p class="text-[10px] text-gray-600 font-mono">System v3.4 Final</p></div>
     </aside>
 
     <nav class="fixed top-0 w-full z-50 backdrop-blur-md bg-black/60 border-b border-white/5">
@@ -211,7 +216,7 @@
                     <a href="/login_user.html" class="px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full border border-white/10 transition">Login Member</a>
                 </div>
 
-                <div id="testimonial-grid" class="grid grid-rows-3 grid-flow-col gap-4 overflow-x-auto pb-8 px-4 no-scrollbar snap-x snap-mandatory">
+                <div id="testimonial-grid" class="flex overflow-x-auto gap-6 pb-8 px-4 no-scrollbar snap-x snap-mandatory">
                     <p class="text-center text-gray-500 w-full py-10">Memuat ulasan...</p>
                 </div>
                 
@@ -250,30 +255,67 @@
     </div>
 
     <script>
-        // --- 1. BOOTING & LOADER ---
+        // --- 1. BOOTING & LOADER (FIXED) ---
         function toggleSidebar() { document.body.classList.toggle('sidebar-active'); }
         const terminalText = document.getElementById('terminal-text'), progressFill = document.getElementById('progress-fill'), percentText = document.getElementById('percent'), bootStatus = document.getElementById('boot-status'), loader = document.getElementById('loader');
         
-        const bootLines = [{text:"> BIOS Check... <span class='log-success'>OK</span>",delay:100},{text:"> Loading Kernel...",delay:80},{text:"> Mounting System...",delay:100},{text:"> Connecting Manzzy Server...",delay:200},{text:"> Fetching Database...",delay:150},{text:"> <span class='log-success'>ACCESS GRANTED.</span> Welcome.",delay:400}];
-        let totalChars=0,printedChars=0; bootLines.forEach(l=>totalChars+=l.text.replace(/<[^>]*>/g,'').length);
+        const bootLines = [
+            {text:"> BIOS Check... <span class='log-success'>OK</span>",delay:100},
+            {text:"> Loading Kernel Modules...",delay:80},
+            {text:"> Mounting File System...",delay:100},
+            {text:"> Connecting to Manzzy Server...",delay:200},
+            {text:"> Verifying Security Token...",delay:100},
+            {text:"> Fetching Database...",delay:150},
+            {text:"> <span class='log-success'>ACCESS GRANTED.</span> Welcome.",delay:400}
+        ];
+
+        let totalChars=0,printedChars=0;
+        bootLines.forEach(l=>totalChars+=l.text.replace(/<[^>]*>/g,'').length);
 
         async function startBooting(){
             for(let i=0;i<bootLines.length;i++){
-                const line=bootLines[i], div=document.createElement('div');
-                div.className='log-line'; terminalText.appendChild(div);
+                const line=bootLines[i];
+                const div=document.createElement('div');
+                div.className='log-line';
+                terminalText.appendChild(div);
                 bootStatus.innerText = "Processing: " + line.text.replace(/<[^>]*>/g,'').substring(0,15) + "...";
+
                 let cleanText=line.text, curHTML="", charIdx=0;
                 while(charIdx<cleanText.length){
-                    if(cleanText[charIdx]==='<'){ const end=cleanText.indexOf('>',charIdx); curHTML+=cleanText.substring(charIdx,end+1); charIdx=end+1; continue; }
-                    curHTML+=cleanText[charIdx]; div.innerHTML=curHTML; printedChars++;
-                    const p=Math.min(Math.round((printedChars/totalChars)*100),100); progressFill.style.width=`${p}%`; percentText.innerText=`${p}%`;
-                    terminalText.scrollTop=terminalText.scrollHeight; await new Promise(r=>setTimeout(r,Math.random()*15+5)); charIdx++;
+                    if(cleanText[charIdx]==='<'){
+                        const end=cleanText.indexOf('>',charIdx);
+                        if(end!==-1){
+                            curHTML+=cleanText.substring(charIdx,end+1);
+                            charIdx=end+1;
+                            continue;
+                        }
+                    }
+                    curHTML+=cleanText[charIdx];
+                    div.innerHTML=curHTML;
+                    printedChars++;
+                    const p=Math.min(Math.round((printedChars/totalChars)*100),100);
+                    progressFill.style.width=`${p}%`;
+                    percentText.innerText=`${p}%`;
+                    terminalText.scrollTop=terminalText.scrollHeight;
+                    await new Promise(r=>setTimeout(r,Math.random()*15+5));
+                    charIdx++;
                 }
                 await new Promise(r=>setTimeout(r,line.delay));
             }
             finishBooting();
         }
-        function finishBooting(){ bootStatus.innerText="SYSTEM READY"; percentText.innerText="100%"; progressFill.style.width="100%"; setTimeout(()=>{ loader.style.opacity="0"; loader.style.pointerEvents="none"; document.body.style.overflowY="auto"; setTimeout(()=>loader.style.display='none',800); },500); }
+
+        function finishBooting(){
+            bootStatus.innerText="SYSTEM READY";
+            percentText.innerText="100%";
+            progressFill.style.width="100%";
+            setTimeout(()=>{
+                loader.style.opacity="0";
+                loader.style.pointerEvents="none";
+                document.body.style.overflowY="auto";
+                setTimeout(()=>loader.style.display='none',800);
+            },500);
+        }
 
         // --- 2. AUTH & USER LOGIC ---
         const userSession = localStorage.getItem('user_session');
@@ -288,7 +330,7 @@
         }
         function doLogout() { localStorage.removeItem('user_session'); window.location.reload(); }
 
-        // --- 3. TESTIMONIAL LOGIC (FIXED TEXT & LAYOUT) ---
+        // --- 3. TESTIMONIAL LOGIC (HORIZONTAL SLIDER) ---
         let currentRating = 5;
         function setRating(n) { currentRating = n; document.getElementById('ratingValue').value = n; document.querySelectorAll('#star-input i').forEach((s, i) => { if (i < n) s.classList.add('active'); else s.classList.remove('active'); }); }
         
@@ -297,10 +339,8 @@
                 const res = await fetch('/api/testimonials'); const reviews = await res.json();
                 const grid = document.getElementById('testimonial-grid');
                 if(reviews.length === 0) { grid.innerHTML = '<p class="text-center text-gray-500 w-full py-10">Belum ada ulasan.</p>'; return; }
-                
-                // RENDER CARD (Dengan Fix Lebar & Line Clamp)
                 grid.innerHTML = reviews.map(r => `
-                    <div class="glass-card p-6 rounded-xl review-card bg-gradient-to-br from-gray-900 to-black w-[80vw] md:w-[350px] snap-center border border-gray-800 flex flex-col justify-between h-auto min-h-[180px]">
+                    <div class="glass-card p-6 rounded-xl review-card bg-gradient-to-br from-gray-900 to-black min-w-[300px] md:min-w-[350px] snap-center flex-shrink-0 border border-gray-800 flex flex-col justify-between h-auto min-h-[180px]">
                         <div>
                             <div class="flex items-center justify-between mb-3">
                                 <div class="flex items-center gap-3">
@@ -315,7 +355,8 @@
             } catch (error) { console.error("Error reviews", error); }
         }
         async function submitReview(e) {
-            e.preventDefault(); const comment = document.getElementById('reviewComment').value;
+            e.preventDefault();
+            const comment = document.getElementById('reviewComment').value;
             await fetch('/api/testimonials', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: userSession, rating: currentRating, comment }) });
             document.getElementById('reviewComment').value = ''; alert("Ulasan terkirim!"); fetchTestimonials();
         }
@@ -323,14 +364,37 @@
         // --- 4. STORE LOGIC ---
         const ADMIN_WA = "6287756632352"; 
         let allProducts = [], allCategories = [], currentCategory = '';
-        function switchView(target) { const landing = document.getElementById('view-landing'), store = document.getElementById('view-store'); document.body.classList.remove('sidebar-active'); if(target === 'store') { landing.style.opacity='0'; setTimeout(()=>{landing.classList.remove('view-active');store.classList.add('view-active'); loadStoreData();},400); } else { store.style.opacity='0'; setTimeout(()=>{store.classList.remove('view-active');landing.classList.add('view-active');landing.style.opacity='';},400); } }
-        async function loadStoreData() { if(allCategories.length > 0) return; document.getElementById('loading-store').classList.remove('hidden'); document.getElementById('section-categories').classList.add('hidden'); try { const [resCat, resProd] = await Promise.all([fetch('/api/categories'), fetch('/api/products')]); allCategories = await resCat.json(); allProducts = await resProd.json(); renderCategories(); } catch(e){} finally { document.getElementById('loading-store').classList.add('hidden'); } }
-        function renderCategories() { const grid = document.getElementById('grid-categories'); document.getElementById('section-categories').classList.remove('hidden'); document.getElementById('section-products').classList.add('hidden'); if(allCategories.length === 0) { grid.innerHTML = '<p class="text-gray-500">Belum ada kategori.</p>'; return; } grid.innerHTML = allCategories.map(c => `<div class="cat-card group" onclick="openCategory('${c.name}')"><div class="cat-bg" style="background-image: url('${c.imageUrl}');"></div><div class="cat-overlay"><h3 class="text-white font-bold text-lg group-hover:text-purple-400 transition">${c.name}</h3></div></div>`).join(''); grid.innerHTML += `<div class="cat-card group" onclick="openCategory('ALL')"><div class="cat-bg bg-purple-900"></div><div class="cat-overlay"><h3 class="text-white font-bold text-lg">Semua Produk</h3></div></div>`; }
+
+        function switchView(target) {
+            const landing = document.getElementById('view-landing'), store = document.getElementById('view-store');
+            document.body.classList.remove('sidebar-active');
+            if (target === 'store') { landing.style.opacity='0'; setTimeout(()=>{landing.classList.remove('view-active');store.classList.add('view-active'); loadStoreData();},400); } 
+            else { store.style.opacity='0'; setTimeout(()=>{store.classList.remove('view-active');landing.classList.add('view-active');landing.style.opacity='';},400); }
+        }
+        async function loadStoreData() {
+            if(allCategories.length > 0) return; document.getElementById('loading-store').classList.remove('hidden'); document.getElementById('section-categories').classList.add('hidden');
+            try { const [resCat, resProd] = await Promise.all([fetch('/api/categories'), fetch('/api/products')]); allCategories = await resCat.json(); allProducts = await resProd.json(); renderCategories(); } catch(e){} finally { document.getElementById('loading-store').classList.add('hidden'); }
+        }
+        function renderCategories() {
+            const grid = document.getElementById('grid-categories'); document.getElementById('section-categories').classList.remove('hidden'); document.getElementById('section-products').classList.add('hidden');
+            if(allCategories.length === 0) { grid.innerHTML = '<p class="text-gray-500">Belum ada kategori.</p>'; return; }
+            grid.innerHTML = allCategories.map(c => `<div class="cat-card group" onclick="openCategory('${c.name}')"><div class="cat-bg" style="background-image: url('${c.imageUrl}');"></div><div class="cat-overlay"><h3 class="text-white font-bold text-lg group-hover:text-purple-400 transition">${c.name}</h3></div></div>`).join('');
+             grid.innerHTML += `<div class="cat-card group" onclick="openCategory('ALL')"><div class="cat-bg bg-purple-900"></div><div class="cat-overlay"><h3 class="text-white font-bold text-lg">Semua Produk</h3></div></div>`;
+        }
         function openCategory(catName) { currentCategory = catName; document.getElementById('section-categories').classList.add('hidden'); document.getElementById('section-products').classList.remove('hidden'); document.getElementById('current-category-name').innerText = catName==='ALL'?'Semua Produk':catName; document.getElementById('searchInput').value = ''; filterProducts(); }
         function backToCategories() { document.getElementById('section-products').classList.add('hidden'); document.getElementById('section-categories').classList.remove('hidden'); }
-        function filterProducts() { const keyword = document.getElementById('searchInput').value.toLowerCase(); let filtered = currentCategory === 'ALL' ? allProducts : allProducts.filter(p => p.category === currentCategory); if(keyword) filtered = filtered.filter(p => p.name.toLowerCase().includes(keyword)); renderProducts(filtered); }
-        function renderProducts(products) { const grid = document.getElementById('grid-products'); if(products.length === 0) { grid.innerHTML = '<p class="text-gray-500 col-span-full text-center">Produk tidak ditemukan.</p>'; return; } grid.innerHTML = products.map(p => { const isAvailable = p.isAvailable !== false; const imgUrl = p.imageUrl || 'https://via.placeholder.com/400x200?text=No+Image'; const cardClass = isAvailable ? '' : 'unavailable'; const btnClass = isAvailable ? 'bg-white/5 border-white/10 group-hover:bg-purple-600 group-hover:border-purple-600' : 'bg-red-900/20 border-red-900/50 cursor-not-allowed'; const btnText = isAvailable ? 'Lihat Detail' : 'Stok Habis'; const badge = isAvailable ? '' : '<div class="badge-unavailable">HABIS</div>'; const action = isAvailable ? `onclick="openModal('${p._id}')"` : ''; return `<div class="product-card group flex flex-col h-full ${cardClass}">${badge}<div class="product-img-wrapper"><img src="${imgUrl}" class="product-img"><div class="absolute top-3 right-3"><span class="price-badge">${p.price}</span></div></div><div class="p-5 flex flex-col flex-1"><h3 class="text-xl font-bold text-white mb-2 group-hover:text-purple-400 transition">${p.name}</h3><p class="text-sm text-gray-400 mb-6 line-clamp-3 leading-relaxed flex-1">${p.desc}</p><button ${action} class="w-full py-3 rounded-lg border text-white font-bold flex items-center justify-center gap-2 transition-all duration-300 ${btnClass}"><i class="fa-solid fa-eye text-lg"></i> ${btnText}</button></div></div>`; }).join(''); }
-        
+        function filterProducts() {
+            const keyword = document.getElementById('searchInput').value.toLowerCase(); let filtered = currentCategory === 'ALL' ? allProducts : allProducts.filter(p => p.category === currentCategory);
+            if(keyword) filtered = filtered.filter(p => p.name.toLowerCase().includes(keyword)); renderProducts(filtered);
+        }
+        function renderProducts(products) {
+            const grid = document.getElementById('grid-products'); if(products.length === 0) { grid.innerHTML = '<p class="text-gray-500 col-span-full text-center">Produk tidak ditemukan.</p>'; return; }
+            grid.innerHTML = products.map(p => {
+                const isAvailable = p.isAvailable !== false; const imgUrl = p.imageUrl || 'https://via.placeholder.com/400x200?text=No+Image'; const cardClass = isAvailable ? '' : 'unavailable'; const btnClass = isAvailable ? 'bg-white/5 border-white/10 group-hover:bg-purple-600 group-hover:border-purple-600' : 'bg-red-900/20 border-red-900/50 cursor-not-allowed'; const btnText = isAvailable ? 'Lihat Detail' : 'Stok Habis'; const badge = isAvailable ? '' : '<div class="badge-unavailable">HABIS</div>'; const action = isAvailable ? `onclick="openModal('${p._id}')"` : '';
+                return `<div class="product-card group flex flex-col h-full ${cardClass}">${badge}<div class="product-img-wrapper"><img src="${imgUrl}" class="product-img"><div class="absolute top-3 right-3"><span class="price-badge">${p.price}</span></div></div><div class="p-5 flex flex-col flex-1"><h3 class="text-xl font-bold text-white mb-2 group-hover:text-purple-400 transition">${p.name}</h3><p class="text-sm text-gray-400 mb-6 line-clamp-3 leading-relaxed flex-1">${p.desc}</p><button ${action} class="w-full py-3 rounded-lg border text-white font-bold flex items-center justify-center gap-2 transition-all duration-300 ${btnClass}"><i class="fa-solid fa-eye text-lg"></i> ${btnText}</button></div></div>`;
+            }).join('');
+        }
+
         // --- 5. MODAL & SCROLL ---
         function openModal(id) { const product = allProducts.find(p => p._id === id); if(!product) return; document.getElementById('modal-title').innerText = product.name; document.getElementById('modal-price').innerText = product.price; document.getElementById('modal-desc').innerText = product.desc; document.getElementById('modal-img').src = product.imageUrl || 'https://via.placeholder.com/400x200?text=No+Image'; document.getElementById('modal-btn').href = `https://wa.me/${ADMIN_WA}?text=Halo Manzzy, saya mau order *${product.name}* seharga ${product.price}. Apakah stok ready?`; document.getElementById('modal-overlay').classList.add('modal-active'); }
         function closeModalDirect() { document.getElementById('modal-overlay').classList.remove('modal-active'); }
@@ -345,4 +409,4 @@
         window.onload = () => { setTimeout(startBooting, 500); checkUserLogin(); fetchTestimonials(); setRating(5); };
     </script>
 </body>
-                    </html>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              </html>
