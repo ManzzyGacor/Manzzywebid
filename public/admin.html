@@ -3,153 +3,412 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
+    <title>Admin Dashboard - Manzzy ID</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
     <style>
-        body { background-color: #050505; color: #e0e0e0; font-family: sans-serif; }
-        .glass { background: #111; border: 1px solid #333; }
-        input, textarea, select { background: #222; border: 1px solid #444; color: white; width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 6px; }
-        input:focus, textarea:focus, select:focus { outline: none; border-color: #8b5cf6; }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; z-index: 50; }
+        :root { --primary: #8b5cf6; --bg-dark: #050505; --card: #0f0f11; }
+        body { font-family: 'Space Grotesk', sans-serif; background-color: var(--bg-dark); color: #e0e0e0; overflow-x: hidden; }
+        
+        /* Sidebar & Layout */
+        .sidebar { width: 260px; height: 100vh; position: fixed; left: 0; top: 0; background: var(--card); border-right: 1px solid rgba(255,255,255,0.05); z-index: 50; display: flex; flex-direction: column; }
+        .main-content { margin-left: 260px; padding: 30px; min-height: 100vh; }
+        
+        /* Menu Items */
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #a1a1aa; transition: 0.3s; margin-bottom: 4px; border-radius: 8px; cursor: pointer; }
+        .nav-item:hover, .nav-item.active { background: rgba(139, 92, 246, 0.1); color: var(--primary); }
+        .nav-item i { width: 20px; text-align: center; }
+
+        /* UI Components */
+        .glass-panel { background: #111; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+        input, select, textarea { width: 100%; background: #000; border: 1px solid #333; padding: 10px 15px; border-radius: 8px; color: white; outline: none; transition: 0.3s; margin-bottom: 10px; font-size: 0.9rem; }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+        
+        /* Tables */
+        table { w-full; border-collapse: collapse; }
+        th { text-align: left; padding: 12px; color: #6b7280; font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid #333; }
+        td { padding: 14px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.9rem; }
+        tr:hover td { background: rgba(255,255,255,0.02); }
+
+        /* Section Visibility */
+        .section-view { display: none; animation: fadeIn 0.3s ease; }
+        .section-view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Modal */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; align-items: center; justify-content: center; }
         .modal.active { display: flex; }
     </style>
 </head>
-<body class="p-6">
+<body>
 
-    <div class="flex justify-between items-center mb-8 border-b border-gray-800 pb-4">
-        <h1 class="text-2xl font-bold text-white">Admin Panel <span class="text-purple-500">v5.0</span></h1>
-        <button onclick="logout()" class="text-red-500 text-sm hover:underline">Logout</button>
-    </div>
+    <div class="sidebar">
+        <div class="p-6 border-b border-gray-800 mb-4">
+            <h1 class="text-2xl font-bold text-white tracking-widest">MANZZY<span class="text-purple-500">PANEL</span></h1>
+            <p class="text-xs text-gray-500 mt-1">Administrator v2.0</p>
+        </div>
+        
+        <nav class="flex-1 px-4 overflow-y-auto">
+            <div class="text-xs font-bold text-gray-600 uppercase mb-2 mt-2 px-2">Transaksi</div>
+            <div class="nav-item active" onclick="showSection('dashboard')"><i class="fa-solid fa-chart-pie"></i> Dashboard</div>
+            <div class="nav-item" onclick="showSection('orders')"><i class="fa-solid fa-cart-shopping"></i> Riwayat Order</div>
+            <div class="nav-item" onclick="showSection('topups')"><i class="fa-solid fa-money-bill-transfer"></i> Request Topup</div>
+            
+            <div class="text-xs font-bold text-gray-600 uppercase mb-2 mt-6 px-2">Layanan</div>
+            <div class="nav-item" onclick="showSection('actives')"><i class="fa-solid fa-server"></i> Kelola Bot Aktif</div>
+            <div class="nav-item" onclick="showSection('products')"><i class="fa-solid fa-box-open"></i> Kelola Produk</div>
+            <div class="nav-item" onclick="showSection('categories')"><i class="fa-solid fa-tags"></i> Kategori</div>
+            
+            <div class="text-xs font-bold text-gray-600 uppercase mb-2 mt-6 px-2">System</div>
+            <div class="nav-item" onclick="showSection('settings')"><i class="fa-solid fa-gears"></i> Konfigurasi</div>
+        </nav>
 
-    <div class="glass p-6 rounded-xl mb-8 border-l-4 border-l-purple-500">
-        <h2 class="text-lg font-bold text-white mb-4">Riwayat Order (Realtime)</h2>
-        <div class="overflow-x-auto max-h-[300px]">
-            <table class="w-full text-left text-sm">
-                <thead class="bg-gray-800 text-gray-400"><tr><th class="p-3">Inv</th><th class="p-3">User</th><th class="p-3">Item</th><th class="p-3">Data</th><th class="p-3">Status</th></tr></thead>
-                <tbody id="orderList" class="divide-y divide-gray-800"><tr><td colspan="5" class="p-4 text-center">Loading...</td></tr></tbody>
-            </table>
+        <div class="p-4 border-t border-gray-800">
+            <button onclick="logout()" class="w-full py-2 bg-red-900/20 hover:bg-red-900/40 text-red-500 border border-red-900/50 rounded-lg text-sm font-bold transition">
+                <i class="fa-solid fa-sign-out-alt mr-2"></i> Logout
+            </button>
         </div>
     </div>
 
-    <div class="glass p-6 rounded-xl mb-8 border-l-4 border-l-green-500">
-        <h2 class="text-lg font-bold text-white mb-4">Request Top Up</h2>
-        <div class="overflow-x-auto"><table class="w-full text-left text-sm"><tbody id="topupList"></tbody></table></div>
-    </div>
-
-    <div class="glass p-6 rounded-xl mb-8 border-l-4 border-l-blue-500">
-        <details class="bg-gray-900 p-4 rounded-lg border border-gray-800"><summary class="cursor-pointer text-sm font-bold text-gray-400">⚙️ Config Server Bot</summary>
-            <form id="pteroForm" onsubmit="savePteroConfig(event)" class="mt-4 space-y-3">
-                <input type="text" id="pteroUrl" placeholder="URL Panel"><input type="text" id="pteroKey" placeholder="API Key"><input type="text" id="pteroId" placeholder="Server ID"><textarea id="pteroCookie" rows="2" placeholder="Cookie"></textarea>
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded text-sm w-full font-bold">Simpan</button>
-            </form>
-        </details>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div class="lg:col-span-1 glass p-6 rounded-xl mb-6 sticky top-6">
-            <h2 class="text-lg font-bold text-white mb-4">Kategori</h2>
-            <form onsubmit="addCategory(event)"><input type="text" id="catName" placeholder="Nama" required><input type="text" id="catImage" placeholder="URL Gambar" required><button type="submit" class="w-full bg-purple-600 text-white py-2 rounded font-bold">Simpan</button></form>
-            <div id="categoryList" class="space-y-3 mt-4 max-h-[300px] overflow-y-auto"></div>
-        </div>
-        <div class="lg:col-span-2 glass p-6 rounded-xl">
-            <div class="flex justify-between items-center mb-4"><h2 class="text-lg font-bold text-white">Editor Produk</h2><button onclick="resetProductForm()" class="text-xs border px-2 py-1 rounded">Reset</button></div>
-            <form id="prodForm" onsubmit="saveProduct(event)">
-                <input type="hidden" id="editId">
-                <div class="grid grid-cols-2 gap-4">
-                    <select id="prodCategory" required><option value="">-- Kategori --</option></select>
-                    <div class="flex items-center gap-2 h-[42px]"><label for="prodAvailable" class="flex items-center cursor-pointer relative"><input type="checkbox" id="prodAvailable" class="sr-only" checked><div class="w-10 h-6 bg-gray-700 rounded-full shadow-inner"></div><div class="dot absolute w-4 h-4 bg-white rounded-full shadow left-1 top-1 transition"></div></label><span id="statusText" class="text-sm text-green-400 font-bold">Tersedia</span></div>
+    <div class="main-content">
+        
+        <div id="sec-dashboard" class="section-view active">
+            <h2 class="text-2xl font-bold text-white mb-6">Overview</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="glass-panel border-l-4 border-l-purple-500">
+                    <h3 class="text-gray-400 text-sm font-bold uppercase">Total Order</h3>
+                    <p class="text-3xl font-bold text-white mt-2" id="stat-orders">0</p>
                 </div>
-                <input type="text" id="prodName" placeholder="Nama Produk" required>
-                <input type="number" id="prodPrice" placeholder="Harga" required>
-                <input type="text" id="prodImage" placeholder="URL Gambar">
-                <textarea id="prodDesc" rows="3" placeholder="Deskripsi..." required></textarea>
-                
-                <div class="grid grid-cols-2 gap-4 bg-gray-900 p-3 rounded border border-gray-700 mb-4">
-                    <div>
-                        <label class="text-[10px] text-gray-400 uppercase font-bold block mb-1">Mode Order</label>
-                        <select id="prodMode" class="text-sm">
+                <div class="glass-panel border-l-4 border-l-green-500">
+                    <h3 class="text-gray-400 text-sm font-bold uppercase">Pending Topup</h3>
+                    <p class="text-3xl font-bold text-white mt-2" id="stat-topups">0</p>
+                </div>
+                <div class="glass-panel border-l-4 border-l-blue-500">
+                    <h3 class="text-gray-400 text-sm font-bold uppercase">Layanan Aktif</h3>
+                    <p class="text-3xl font-bold text-white mt-2" id="stat-services">0</p>
+                </div>
+            </div>
+            <div class="glass-panel">
+                <h3 class="text-lg font-bold text-white mb-4">Aktivitas Terakhir</h3>
+                <p class="text-gray-500 text-sm">Log aktivitas akan muncul di sini (Next Update).</p>
+            </div>
+        </div>
+
+        <div id="sec-orders" class="section-view">
+            <h2 class="text-2xl font-bold text-white mb-6">Riwayat Order Masuk</h2>
+            <div class="glass-panel overflow-x-auto">
+                <table class="w-full">
+                    <thead><tr><th>Invoice</th><th>User</th><th>Produk</th><th>Detail Form</th><th>Status</th></tr></thead>
+                    <tbody id="list-orders"><tr><td colspan="5" class="text-center text-gray-500 p-4">Loading...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="sec-topups" class="section-view">
+            <h2 class="text-2xl font-bold text-white mb-6">Permintaan Top Up Saldo</h2>
+            <div class="glass-panel overflow-x-auto">
+                <table class="w-full">
+                    <thead><tr><th>User</th><th>Jumlah</th><th>Bukti</th><th>Aksi</th></tr></thead>
+                    <tbody id="list-topups"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="sec-actives" class="section-view">
+            <h2 class="text-2xl font-bold text-white mb-6">Kelola Layanan Bot Aktif</h2>
+            
+            <div class="glass-panel mb-8 border border-blue-500/30">
+                <h3 class="text-blue-400 font-bold mb-4 text-sm uppercase">Aktivasi Layanan Baru</h3>
+                <form onsubmit="addActiveService(event)" class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                    <input type="text" id="svcUser" placeholder="Username User" required>
+                    <input type="text" id="svcProd" placeholder="Nama Produk" required>
+                    <input type="text" id="svcTarget" placeholder="Nomor Target" required>
+                    <input type="text" id="svcIp" placeholder="IP Panel" required>
+                    <div class="flex gap-2">
+                        <input type="number" id="svcDays" placeholder="Hari" value="30" class="w-1/2" required>
+                        <button type="submit" class="w-1/2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded">AKTIFKAN</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="glass-panel overflow-x-auto">
+                <table class="w-full">
+                    <thead><tr><th>User</th><th>Produk/Target</th><th>IP Panel</th><th>Expired</th><th>Aksi</th></tr></thead>
+                    <tbody id="list-services"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="sec-products" class="section-view">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-white">Kelola Produk</h2>
+                <button onclick="resetProductForm()" class="text-xs border border-gray-600 px-3 py-1 rounded text-gray-400 hover:text-white">Reset Form</button>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-1 glass-panel h-fit sticky top-6">
+                    <form id="prodForm" onsubmit="saveProduct(event)">
+                        <input type="hidden" id="editId">
+                        <label class="text-xs text-gray-500 font-bold block mb-1">KATEGORI & STATUS</label>
+                        <div class="grid grid-cols-2 gap-2 mb-2">
+                            <select id="prodCategory" required><option value="">Pilih...</option></select>
+                            <div class="flex items-center justify-center bg-black border border-gray-700 rounded gap-2">
+                                <input type="checkbox" id="prodAvailable" class="w-4 h-4" checked> <span class="text-xs">Ready</span>
+                            </div>
+                        </div>
+
+                        <label class="text-xs text-gray-500 font-bold block mb-1">INFO PRODUK</label>
+                        <input type="text" id="prodName" placeholder="Nama Produk" required>
+                        <input type="number" id="prodPrice" placeholder="Harga (Rp)" required>
+                        <input type="text" id="prodImage" placeholder="URL Gambar">
+                        <textarea id="prodDesc" rows="2" placeholder="Deskripsi..." required></textarea>
+
+                        <label class="text-xs text-blue-400 font-bold block mb-1 mt-2">SETTING ORDER</label>
+                        <select id="prodMode" class="mb-2">
                             <option value="manual">Manual (Lanjut WA)</option>
                             <option value="auto">Otomatis (Masuk Admin)</option>
                         </select>
-                    </div>
-                    <div>
-                        <label class="text-[10px] text-gray-400 uppercase font-bold block mb-1">Form Input (Pisahkan Koma)</label>
-                        <input type="text" id="prodFields" placeholder="No WA, Nama Bot" class="text-sm">
-                    </div>
+                        <input type="text" id="prodFields" placeholder="Form Input (Pisah koma: Nama,No HP)" value="Nomor WhatsApp">
+
+                        <button type="submit" id="btnSaveProd" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded mt-2">Simpan Produk</button>
+                    </form>
                 </div>
 
-                <button type="submit" id="btnSaveProd" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded font-bold">Tambah Produk</button>
-            </form>
+                <div class="lg:col-span-2 glass-panel">
+                    <div id="productList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                </div>
+            </div>
         </div>
-    </div>
-    <div class="mt-8 glass p-6 rounded-xl"><h3 class="text-lg font-bold text-white mb-4">List Produk</h3><div id="productList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div></div>
 
-    <div id="proofModal" class="modal" onclick="this.classList.remove('active')"><img id="proofImg" src="" class="max-w-[90%] max-h-[90vh] rounded-xl border border-white"></div>
+        <div id="sec-categories" class="section-view">
+            <h2 class="text-2xl font-bold text-white mb-6">Kategori Produk</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="glass-panel h-fit">
+                    <form onsubmit="addCategory(event)">
+                        <input type="text" id="catName" placeholder="Nama Kategori" required>
+                        <input type="text" id="catImage" placeholder="URL Background Gambar" required>
+                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded">Tambah Kategori</button>
+                    </form>
+                </div>
+                <div id="categoryList" class="space-y-3"></div>
+            </div>
+        </div>
+
+        <div id="sec-settings" class="section-view">
+            <h2 class="text-2xl font-bold text-white mb-6">Konfigurasi Sistem</h2>
+            <div class="glass-panel max-w-2xl">
+                <h3 class="text-lg font-bold text-white mb-4 border-b border-gray-800 pb-2">Koneksi Pterodactyl (Panel)</h3>
+                <form onsubmit="savePteroConfig(event)">
+                    <label class="text-xs text-gray-500 font-bold block mb-1">PANEL URL</label>
+                    <input type="text" id="pteroUrl" placeholder="https://panel.domain.com" required>
+                    
+                    <label class="text-xs text-gray-500 font-bold block mb-1">CLIENT API KEY (Dari Account API)</label>
+                    <input type="text" id="pteroKey" placeholder="ptlc_xxxx..." required>
+                    
+                    <label class="text-xs text-gray-500 font-bold block mb-1">SERVER ID (Identifier)</label>
+                    <input type="text" id="pteroId" placeholder="ex: 1a2b3c4d" required>
+                    
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded mt-4">Simpan Konfigurasi</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="proofModal" class="modal" onclick="this.classList.remove('active')">
+        <img id="proofImg" src="" class="max-w-[90%] max-h-[90vh] rounded-xl border border-white">
+    </div>
 
     <script>
+        // AUTH CHECK
         if (localStorage.getItem('isAdmin') !== 'true') window.location.href = '/login.html';
         function logout() { localStorage.removeItem('isAdmin'); window.location.href = '/login.html'; }
 
-        // ORDER HISTORY
+        // NAVIGATION LOGIC
+        function showSection(id) {
+            // Hide all
+            document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            // Show target
+            document.getElementById(`sec-${id}`).classList.add('active');
+            
+            // Highlight Menu
+            event.currentTarget.classList.add('active');
+
+            // Auto Refresh Data based on section
+            if(id === 'orders') fetchOrders();
+            if(id === 'topups') fetchTopups();
+            if(id === 'actives') fetchServices();
+            if(id === 'products') { fetchCategories(); fetchProducts(); }
+            if(id === 'categories') fetchCategories();
+            if(id === 'settings') fetchPteroConfig();
+            if(id === 'dashboard') loadDashboardStats();
+        }
+
+        // --- 1. DASHBOARD STATS ---
+        async function loadDashboardStats() {
+            // Simple fetch count (bisa dioptimalkan di backend nanti)
+            const [o, t, s] = await Promise.all([
+                fetch('/api/admin/orders').then(r=>r.json()),
+                fetch('/api/admin/topups').then(r=>r.json()),
+                fetch('/api/admin/all-services').then(r=>r.json())
+            ]);
+            document.getElementById('stat-orders').innerText = o.length;
+            document.getElementById('stat-topups').innerText = t.length;
+            document.getElementById('stat-services').innerText = s.length;
+        }
+
+        // --- 2. ORDERS ---
         async function fetchOrders() {
-            const res = await fetch('/api/admin/orders'); const data = await res.json();
-            const list = document.getElementById('orderList');
-            if(data.length === 0) { list.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">Belum ada order.</td></tr>'; return; }
+            const res = await fetch('/api/admin/orders');
+            const data = await res.json();
+            const list = document.getElementById('list-orders');
+            if(data.length === 0) { list.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">Kosong</td></tr>'; return; }
             list.innerHTML = data.map(o => `
-                <tr class="hover:bg-white/5 border-b border-gray-800">
-                    <td class="p-3 text-purple-400 font-mono text-xs">${o.invoiceId}</td>
+                <tr class="hover:bg-white/5">
+                    <td class="p-3 font-mono text-purple-400">${o.invoiceId}</td>
                     <td class="p-3 font-bold">${o.username}</td>
-                    <td class="p-3 text-xs">${o.productName}<br>Rp ${o.price}</td>
+                    <td class="p-3 text-xs">${o.productName}<br>Rp ${o.price.toLocaleString()}</td>
                     <td class="p-3 text-xs font-mono text-gray-400 whitespace-pre-wrap">${o.formData}</td>
-                    <td class="p-3"><span class="px-2 py-1 rounded text-[10px] font-bold ${o.status==='success'?'bg-green-900 text-green-400':'bg-yellow-900 text-yellow-400'}">${o.mode.toUpperCase()}: ${o.status.toUpperCase()}</span></td>
+                    <td class="p-3"><span class="px-2 py-1 rounded text-[10px] font-bold ${o.status==='success'?'bg-green-900 text-green-400':'bg-yellow-900 text-yellow-400'}">${o.mode.toUpperCase()}</span></td>
                 </tr>`).join('');
         }
 
-        // TOP UP
-        async function fetchTopups() { const res=await fetch('/api/admin/topups'); const data=await res.json(); const list=document.getElementById('topupList'); if(data.length===0){list.innerHTML='<tr><td colspan="4" class="p-4 text-center text-gray-500">Kosong.</td></tr>';return;} list.innerHTML=data.map(t=>`<tr class="hover:bg-white/5"><td class="p-3 font-bold text-white">${t.username}</td><td class="p-3 font-mono text-green-400">Rp ${t.amount.toLocaleString()}</td><td class="p-3"><button onclick="showProof('${t.proofImage}')" class="text-xs bg-blue-900 text-blue-300 px-2 py-1 rounded">Foto</button></td><td class="p-3 flex gap-2"><button onclick="actionTopup('${t._id}','approve')" class="text-green-500"><i class="fa-solid fa-check text-xl"></i></button><button onclick="actionTopup('${t._id}','reject')" class="text-red-500"><i class="fa-solid fa-times text-xl"></i></button></td></tr>`).join(''); }
-        function showProof(img){ document.getElementById('proofImg').src=img; document.getElementById('proofModal').classList.add('active'); }
-        async function actionTopup(id,action){ if(!confirm(`Yakin ${action}?`))return; await fetch('/api/admin/topup-action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,action})}); fetchTopups(); }
+        // --- 3. TOP UP ---
+        async function fetchTopups() {
+            const res = await fetch('/api/admin/topups');
+            const data = await res.json();
+            const list = document.getElementById('list-topups');
+            if(data.length===0){ list.innerHTML='<tr><td colspan="4" class="p-4 text-center text-gray-500">Tidak ada request.</td></tr>'; return; }
+            list.innerHTML = data.map(t => `
+                <tr>
+                    <td class="p-3 font-bold">${t.username}</td>
+                    <td class="p-3 text-green-400 font-mono">Rp ${t.amount.toLocaleString()}</td>
+                    <td class="p-3"><button onclick="viewProof('${t.proofImage}')" class="text-xs bg-blue-900 text-blue-300 px-2 py-1 rounded">Cek Foto</button></td>
+                    <td class="p-3 flex gap-2">
+                        <button onclick="actionTopup('${t._id}', 'approve')" class="text-green-500 hover:scale-110 transition"><i class="fa-solid fa-circle-check text-xl"></i></button>
+                        <button onclick="actionTopup('${t._id}', 'reject')" class="text-red-500 hover:scale-110 transition"><i class="fa-solid fa-circle-xmark text-xl"></i></button>
+                    </td>
+                </tr>`).join('');
+        }
+        function viewProof(img){ document.getElementById('proofImg').src=img; document.getElementById('proofModal').classList.add('active'); }
+        async function actionTopup(id, action) {
+            if(!confirm(`Yakin ${action}?`)) return;
+            await fetch('/api/admin/topup-action', { method: 'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id, action}) });
+            fetchTopups();
+        }
 
-        // PRODUCTS & CATEGORIES
-        let categories=[];
-        async function fetchCategories(){const res=await fetch('/api/categories');categories=await res.json();renderCategories();updateCategorySelect();} async function addCategory(e){e.preventDefault();await fetch('/api/categories',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:document.getElementById('catName').value,imageUrl:document.getElementById('catImage').value})});e.target.reset();fetchCategories();} async function deleteCategory(id){if(!confirm("Hapus?"))return;await fetch(`/api/categories/${id}`,{method:'DELETE'});fetchCategories();} function renderCategories(){document.getElementById('categoryList').innerHTML=categories.map(c=>`<div class="flex items-center justify-between bg-gray-800 p-3 rounded border border-gray-700"><div class="flex items-center gap-3"><img src="${c.imageUrl}" class="w-10 h-10 rounded object-cover"><span class="font-bold text-sm">${c.name}</span></div><button onclick="deleteCategory('${c._id}')" class="text-red-500 hover:text-red-400"><i class="fa-solid fa-trash"></i></button></div>`).join('');} function updateCategorySelect(){document.getElementById('prodCategory').innerHTML='<option value="">-- Kategori --</option>'+categories.map(c=>`<option value="${c.name}">${c.name}</option>`).join('');}
-        async function fetchProducts(){const res=await fetch('/api/products');const products=await res.json();document.getElementById('productList').innerHTML=products.map(p=>`<div class="bg-gray-900 border border-gray-800 p-4 rounded-lg flex gap-4 items-start relative group hover:border-purple-500 transition"><img src="${p.imageUrl||'https://via.placeholder.com/100'}" class="w-20 h-20 rounded object-cover bg-gray-800"><div class="flex-1"><div class="flex justify-between"><span class="text-xs text-purple-400 bg-purple-900/30 px-2 py-0.5 rounded">${p.category||'Uncat'}</span><span class="text-xs font-bold ${p.isAvailable?'text-green-400':'text-red-500'}">${p.isAvailable?'Ready':'Habis'}</span></div><h4 class="font-bold text-white mt-1">${p.name}</h4><p class="text-sm text-gray-400">Rp ${p.price}</p><div class="mt-3 flex gap-2"><button onclick='editProduct(${JSON.stringify(p)})' class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-xs rounded text-white">Edit</button><button onclick="deleteProduct('${p._id}')" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-xs rounded text-white">Hapus</button></div></div></div>`).join('');}
-        
-        async function saveProduct(e) { 
-            e.preventDefault(); const id=document.getElementById('editId').value; 
-            const data={
-                category:document.getElementById('prodCategory').value,
-                isAvailable:document.getElementById('prodAvailable').checked,
-                name:document.getElementById('prodName').value,
-                price:document.getElementById('prodPrice').value,
-                imageUrl:document.getElementById('prodImage').value,
-                desc:document.getElementById('prodDesc').value,
-                orderMode:document.getElementById('prodMode').value, // NEW
-                formFields:document.getElementById('prodFields').value // NEW
+        // --- 4. ACTIVE SERVICES (KELOLA BOT) ---
+        async function fetchServices() {
+            const res = await fetch('/api/admin/all-services');
+            const data = await res.json();
+            const list = document.getElementById('list-services');
+            if(data.length===0) { list.innerHTML='<tr><td colspan="5" class="p-4 text-center text-gray-500">Kosong</td></tr>'; return; }
+            list.innerHTML = data.map(s => `
+                <tr>
+                    <td class="p-3 font-bold">${s.username}</td>
+                    <td class="p-3 text-xs">${s.productName}<br><span class="text-gray-500">${s.targetNumber}</span></td>
+                    <td class="p-3 font-mono text-blue-400 text-xs">${s.serverIp}</td>
+                    <td class="p-3 font-mono text-xs ${new Date(s.expiredDate)<new Date()?'text-red-500':'text-green-400'}">${new Date(s.expiredDate).toLocaleDateString()}</td>
+                    <td class="p-3 flex gap-2">
+                        <button onclick="extendService('${s._id}')" class="bg-yellow-600 hover:bg-yellow-700 text-white px-2 py-1 rounded text-[10px] font-bold">+30 Hari</button>
+                        <button onclick="deleteService('${s._id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>`).join('');
+        }
+        async function addActiveService(e) {
+            e.preventDefault();
+            const data = {
+                username: document.getElementById('svcUser').value,
+                productName: document.getElementById('svcProd').value,
+                targetNumber: document.getElementById('svcTarget').value,
+                serverIp: document.getElementById('svcIp').value,
+                days: document.getElementById('svcDays').value
             };
-            const method=id?'PUT':'POST'; const url=id?`/api/products/${id}`:'/api/products';
-            await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+            await fetch('/api/admin/services', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
+            alert("Berhasil!"); fetchServices(); e.target.reset();
+        }
+        async function extendService(id) {
+            if(!confirm("Perpanjang 30 hari?")) return;
+            await fetch(`/api/admin/services/${id}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'extend', days:30})});
+            fetchServices();
+        }
+        async function deleteService(id) {
+            if(!confirm("Hapus layanan?")) return;
+            await fetch(`/api/admin/services/${id}`, {method:'DELETE'});
+            fetchServices();
+        }
+
+        // --- 5. PRODUCTS & CATEGORIES ---
+        let categories = [];
+        async function fetchCategories() { const res=await fetch('/api/categories'); categories=await res.json(); renderCatList(); updateCatSelect(); }
+        function renderCatList() { document.getElementById('categoryList').innerHTML = categories.map(c => `<div class="flex justify-between bg-gray-800 p-3 rounded items-center"><span class="font-bold text-sm">${c.name}</span><button onclick="delCat('${c._id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button></div>`).join(''); }
+        function updateCatSelect() { document.getElementById('prodCategory').innerHTML = '<option value="">Pilih Kategori</option>' + categories.map(c => `<option value="${c.name}">${c.name}</option>`).join(''); }
+        async function addCategory(e) { e.preventDefault(); await fetch('/api/categories',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:document.getElementById('catName').value, imageUrl:document.getElementById('catImage').value})}); e.target.reset(); fetchCategories(); }
+        async function delCat(id) { if(confirm('Hapus?')) { await fetch(`/api/categories/${id}`,{method:'DELETE'}); fetchCategories(); } }
+
+        async function fetchProducts() {
+            const res = await fetch('/api/products'); const data = await res.json();
+            document.getElementById('productList').innerHTML = data.map(p => `
+                <div class="glass-panel p-3 flex gap-3 relative group border hover:border-purple-500 transition">
+                    <img src="${p.imageUrl||'https://via.placeholder.com/100'}" class="w-16 h-16 object-cover rounded bg-gray-900">
+                    <div class="flex-1">
+                        <div class="flex justify-between"><span class="text-[10px] bg-purple-900 px-2 py-0.5 rounded text-purple-200">${p.category}</span><span class="text-[10px] ${p.isAvailable?'text-green-400':'text-red-500'} font-bold">${p.isAvailable?'Ready':'Habis'}</span></div>
+                        <h4 class="font-bold text-white text-sm mt-1">${p.name}</h4>
+                        <p class="text-xs text-gray-400">Rp ${p.price.toLocaleString()}</p>
+                    </div>
+                    <div class="absolute bottom-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                        <button onclick='editProduct(${JSON.stringify(p)})' class="bg-blue-600 text-white px-2 py-1 rounded text-xs">Edit</button>
+                        <button onclick="delProd('${p._id}')" class="bg-red-600 text-white px-2 py-1 rounded text-xs">Hapus</button>
+                    </div>
+                </div>`).join('');
+        }
+        async function saveProduct(e) {
+            e.preventDefault(); const id = document.getElementById('editId').value;
+            const data = {
+                category: document.getElementById('prodCategory').value,
+                isAvailable: document.getElementById('prodAvailable').checked,
+                name: document.getElementById('prodName').value,
+                price: document.getElementById('prodPrice').value,
+                imageUrl: document.getElementById('prodImage').value,
+                desc: document.getElementById('prodDesc').value,
+                orderMode: document.getElementById('prodMode').value,
+                formFields: document.getElementById('prodFields').value
+            };
+            const method = id ? 'PUT' : 'POST'; const url = id ? `/api/products/${id}` : '/api/products';
+            await fetch(url, {method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
             resetProductForm(); fetchProducts();
         }
-        async function deleteProduct(id){if(!confirm("Hapus?"))return;await fetch(`/api/products/${id}`,{method:'DELETE'});fetchProducts();}
-        function editProduct(p){
-            document.querySelector('.glass').scrollIntoView({behavior:'smooth'});document.getElementById('editId').value=p._id;document.getElementById('prodCategory').value=p.category||'';document.getElementById('prodName').value=p.name;document.getElementById('prodPrice').value=p.price;document.getElementById('prodImage').value=p.imageUrl;document.getElementById('prodDesc').value=p.desc;
-            document.getElementById('prodAvailable').checked=p.isAvailable!==false;
-            // Load New Settings
-            document.getElementById('prodMode').value=p.orderMode||'manual';
-            document.getElementById('prodFields').value=p.formFields||'Nomor WhatsApp';
-            toggleStatusText();
-            const btn=document.getElementById('btnSaveProd');btn.innerHTML='Update';btn.classList.replace('bg-green-600','bg-blue-600');
+        function editProduct(p) {
+            document.getElementById('editId').value = p._id;
+            document.getElementById('prodCategory').value = p.category;
+            document.getElementById('prodName').value = p.name;
+            document.getElementById('prodPrice').value = p.price;
+            document.getElementById('prodImage').value = p.imageUrl;
+            document.getElementById('prodDesc').value = p.desc;
+            document.getElementById('prodAvailable').checked = p.isAvailable !== false;
+            document.getElementById('prodMode').value = p.orderMode || 'manual';
+            document.getElementById('prodFields').value = p.formFields || 'Nomor WhatsApp';
+            document.getElementById('btnSaveProd').innerText = 'Update Produk';
+            document.getElementById('btnSaveProd').classList.replace('bg-purple-600', 'bg-blue-600');
         }
-        function resetProductForm(){document.getElementById('prodForm').reset();document.getElementById('editId').value='';const btn=document.getElementById('btnSaveProd');btn.innerHTML='Tambah';btn.classList.replace('bg-blue-600','bg-green-600');}
-        document.getElementById('prodAvailable').addEventListener('change',toggleStatusText);function toggleStatusText(){const isChecked=document.getElementById('prodAvailable').checked;const text=document.getElementById('statusText');const dot=document.querySelector('.dot');if(isChecked){text.innerText="Tersedia";text.className="text-sm text-green-400 font-bold ml-2";dot.style.transform="translateX(100%)";}else{text.innerText="Tidak Tersedia";text.className="text-sm text-red-500 font-bold ml-2";dot.style.transform="translateX(0)";}}
+        function resetProductForm() {
+            document.getElementById('prodForm').reset(); document.getElementById('editId').value='';
+            document.getElementById('btnSaveProd').innerText='Simpan Produk';
+            document.getElementById('btnSaveProd').classList.replace('bg-blue-600', 'bg-purple-600');
+        }
+        async function delProd(id) { if(confirm('Hapus?')) { await fetch(`/api/products/${id}`,{method:'DELETE'}); fetchProducts(); } }
 
-        // PTERO
-        async function fetchPteroConfig(){ const res=await fetch('/api/ptero/config'); const data=await res.json(); if(data.panelUrl){ document.getElementById('pteroUrl').value=data.panelUrl; document.getElementById('pteroKey').value=data.apiKey; document.getElementById('pteroId').value=data.serverId; document.getElementById('pteroCookie').value=data.cookie||''; } }
-        async function savePteroConfig(e){ e.preventDefault(); const data={panelUrl:document.getElementById('pteroUrl').value,apiKey:document.getElementById('pteroKey').value,serverId:document.getElementById('pteroId').value,cookie:document.getElementById('pteroCookie').value}; await fetch('/api/ptero/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}); alert("Saved!"); }
+        // --- 6. SETTINGS (PTERO) ---
+        async function fetchPteroConfig(){ const r=await fetch('/api/ptero/config'); const d=await r.json(); if(d.panelUrl){ document.getElementById('pteroUrl').value=d.panelUrl; document.getElementById('pteroKey').value=d.apiKey; document.getElementById('pteroId').value=d.serverId; } }
+        async function savePteroConfig(e){ e.preventDefault(); const d={panelUrl:document.getElementById('pteroUrl').value, apiKey:document.getElementById('pteroKey').value, serverId:document.getElementById('pteroId').value}; await fetch('/api/ptero/config',{method:'POST',headers:{'Content-Type':'application/json'}, body:JSON.stringify(d)}); alert("Disimpan!"); }
 
-        fetchPteroConfig(); fetchCategories(); fetchProducts(); fetchTopups(); fetchOrders(); setInterval(()=>{fetchTopups();fetchOrders();},10000);
+        // INIT
+        loadDashboardStats();
     </script>
 </body>
 </html>
