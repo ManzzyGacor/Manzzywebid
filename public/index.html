@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manzzy ID Official - Premium Bot Services</title>
     
-    <meta name="description" content="Penyedia layanan hosting bot WhatsApp profesional. Server stabil 24 jam.">
+    <meta name="description" content="Penyedia layanan hosting bot WhatsApp profesional.">
     <meta property="og:image" content="https://manzzy.web.id/image/qris.jpg"> 
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -17,139 +17,60 @@
 <body>
 
     <div id="loader">
-        <div class="cyber-eye">
-            <div class="cyber-pupil"></div>
-            <div class="cyber-ring"></div>
-        </div>
+        <div class="cyber-eye"><div class="cyber-pupil"></div><div class="cyber-ring"></div></div>
         <div class="loading-text" id="loader-text">SYSTEM INITIALIZING...</div>
     </div>
 
     <div id="modal-overlay" class="modal-overlay" onclick="closeModal(event)">
         <div class="modal-box" onclick="event.stopPropagation()">
             <div class="relative">
-                <button onclick="closeModalDirect()" class="absolute -top-2 -right-2 text-gray-400 hover:text-white bg-gray-800 rounded-full w-8 h-8 flex items-center justify-center border border-gray-600 z-10">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-                
+                <button onclick="closeModalDirect()" class="absolute -top-2 -right-2 text-gray-400 hover:text-white bg-gray-800 rounded-full w-8 h-8 flex items-center justify-center border border-gray-600 z-10"><i class="fa-solid fa-xmark"></i></button>
                 <div id="modal-content-product">
                     <img id="modal-img" src="" class="w-full h-48 object-cover rounded-xl mb-5 border border-gray-800">
-                    
-                    <div class="flex justify-between items-start mb-2">
-                        <h2 id="modal-title" class="text-2xl font-bold text-white leading-tight"></h2>
-                        <span id="modal-price" class="text-purple-400 font-mono font-bold text-lg bg-purple-900/30 px-3 py-1 rounded-lg border border-purple-500/30"></span>
-                    </div>
-                    
-                    <div class="h-px bg-gray-800 w-full my-4"></div>
-                    
-                    <h4 class="text-xs text-gray-500 font-bold uppercase mb-2">Deskripsi Layanan</h4>
-                    <p id="modal-desc" class="text-gray-300 text-sm leading-relaxed mb-6 whitespace-pre-wrap font-sans"></p>
-                    
+                    <div class="flex justify-between items-start mb-2"><h2 id="modal-title" class="text-2xl font-bold text-white leading-tight"></h2><span id="modal-price" class="text-purple-400 font-mono font-bold text-lg bg-purple-900/30 px-3 py-1 rounded-lg border border-purple-500/30"></span></div>
+                    <div class="h-px bg-gray-800 w-full my-4"></div><h4 class="text-xs text-gray-500 font-bold uppercase mb-2">Deskripsi Layanan</h4><p id="modal-desc" class="text-gray-300 text-sm leading-relaxed mb-6 whitespace-pre-wrap font-sans"></p>
                     <form id="orderForm" onsubmit="processOrder(event)" class="space-y-4 mb-4">
                         <div id="dynamic-inputs" class="space-y-3"></div>
-                        
-                        <div class="bg-gray-900 border border-gray-800 p-3 rounded-lg flex justify-between items-center text-sm">
-                            <span class="text-gray-400">Saldo Kamu:</span>
-                            <span id="user-balance-display" class="font-bold font-mono">Loading...</span>
-                        </div>
-
-                        <button type="submit" id="btn-buy" class="w-full py-4 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold flex items-center justify-center gap-3 transition shadow-lg shadow-purple-500/20">
-                            <i class="fa-solid fa-cart-shopping text-lg"></i> Bayar Sekarang
-                        </button>
+                        <div class="bg-gray-900 border border-gray-800 p-3 rounded-lg flex justify-between items-center text-sm"><span class="text-gray-400">Saldo Kamu:</span><span id="user-balance-display" class="font-bold font-mono">Loading...</span></div>
+                        <button type="submit" id="btn-buy" class="w-full py-4 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold flex items-center justify-center gap-3 transition shadow-lg shadow-purple-500/20"><i class="fa-solid fa-cart-shopping text-lg"></i> Bayar Sekarang</button>
                     </form>
                 </div>
-
                 <div id="modal-content-receipt" class="hidden text-center py-4">
-                    <div class="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/30">
-                        <i class="fa-solid fa-check text-4xl text-green-500"></i>
-                    </div>
-                    <h2 class="text-2xl font-bold text-white mb-2">Order Berhasil!</h2>
-                    <p class="text-gray-400 text-sm mb-6">Terima kasih telah berlangganan.</p>
-                    
+                    <div class="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/30"><i class="fa-solid fa-check text-4xl text-green-500"></i></div>
+                    <h2 class="text-2xl font-bold text-white mb-2">Order Berhasil!</h2><p class="text-gray-400 text-sm mb-6">Terima kasih telah berlangganan.</p>
                     <div class="bg-gray-900 p-5 rounded-xl text-left space-y-3 text-sm mb-6 font-mono border border-gray-800">
-                        <div class="flex justify-between border-b border-gray-800 pb-2">
-                            <span class="text-gray-500">Invoice ID</span>
-                            <span id="rec-inv" class="text-purple-400"></span>
-                        </div>
-                        <div class="flex justify-between border-b border-gray-800 pb-2">
-                            <span class="text-gray-500">Layanan</span>
-                            <span id="rec-item" class="text-white font-bold"></span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-500">Status</span>
-                            <span id="rec-mode" class="text-green-400 uppercase font-bold"></span>
-                        </div>
+                        <div class="flex justify-between border-b border-gray-800 pb-2"><span class="text-gray-500">Invoice ID</span><span id="rec-inv" class="text-purple-400"></span></div>
+                        <div class="flex justify-between border-b border-gray-800 pb-2"><span class="text-gray-500">Layanan</span><span id="rec-item" class="text-white font-bold"></span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Status</span><span id="rec-mode" class="text-green-400 uppercase font-bold"></span></div>
                     </div>
-                    
-                    <button id="btn-continue" onclick="closeModalDirect()" class="w-full py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white font-bold border border-gray-700 transition">
-                        Tutup
-                    </button>
+                    <button id="btn-continue" onclick="closeModalDirect()" class="w-full py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white font-bold border border-gray-700 transition">Tutup</button>
                 </div>
-
             </div>
         </div>
     </div>
 
-    <button onclick="scrollToTop()" id="btn-scroll" class="scroll-top-btn" title="Kembali ke Atas">
-        <i class="fa-solid fa-arrow-up"></i>
-    </button>
+    <button onclick="scrollToTop()" id="btn-scroll" class="scroll-top-btn"><i class="fa-solid fa-arrow-up"></i></button>
 
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
     <aside id="sidebar-menu" class="sidebar-menu flex flex-col p-6 pt-10">
-        <div class="flex items-center gap-3 mb-10 border-b border-gray-800 pb-6">
-            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-500/30">
-                <i class="fa-solid fa-robot text-white text-lg"></i>
-            </div>
-            <div>
-                <h3 class="font-bold text-white text-lg leading-none">MANZZY<span class="text-purple-400">ID</span></h3>
-                <p id="user-status-sidebar" class="text-xs text-gray-500 font-mono mt-1">Guest Mode</p>
-            </div>
-        </div>
+        <div class="flex items-center gap-3 mb-10 border-b border-gray-800 pb-6"><div class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-500/30"><i class="fa-solid fa-robot text-white text-lg"></i></div><div><h3 class="font-bold text-white text-lg leading-none">MANZZY<span class="text-purple-400">ID</span></h3><p id="user-status-sidebar" class="text-xs text-gray-500 font-mono mt-1">Guest Mode</p></div></div>
         <nav class="flex-1 space-y-2">
-            <a href="#features" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group">
-                <i class="fa-solid fa-star w-6 text-center text-yellow-500 group-hover:scale-110 transition"></i><span class="font-medium">Keunggulan</span>
-            </a>
-            <a href="#testimonials" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group">
-                <i class="fa-solid fa-comment-dots w-6 text-center text-pink-500 group-hover:scale-110 transition"></i><span class="font-medium">Testimoni</span>
-            </a>
-            
-            <div id="menu-topup" class="hidden">
-                <a href="#" onclick="switchView('topup'); toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group">
-                    <i class="fa-solid fa-wallet w-6 text-center text-green-500 group-hover:scale-110 transition"></i><span class="font-medium">Top Up Saldo</span>
-                </a>
-            </div>
-
-            <a href="#faq" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group">
-                <i class="fa-solid fa-circle-question w-6 text-center text-blue-500 group-hover:scale-110 transition"></i><span class="font-medium">FAQ</span>
-            </a>
-            
+            <a href="#features" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-star w-6 text-center text-yellow-500"></i><span class="font-medium">Keunggulan</span></a>
+            <a href="#testimonials" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-comment-dots w-6 text-center text-pink-500"></i><span class="font-medium">Testimoni</span></a>
+            <div id="menu-topup" class="hidden"><a href="#" onclick="switchView('topup'); toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-wallet w-6 text-center text-green-500"></i><span class="font-medium">Top Up Saldo</span></a></div>
+            <a href="#faq" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-circle-question w-6 text-center text-blue-500"></i><span class="font-medium">FAQ</span></a>
             <div class="h-px bg-gray-800 my-4"></div>
-            
-            <div id="auth-menu">
-                <a href="/login_user.html" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group">
-                    <i class="fa-solid fa-user w-6 text-center text-purple-500 group-hover:scale-110 transition"></i><span class="font-medium">Login Member</span>
-                </a>
-            </div>
-            
-            <a href="/login.html" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group">
-                <i class="fa-solid fa-lock w-6 text-center text-red-500 group-hover:scale-110 transition"></i><span class="font-medium">Admin Panel</span>
-            </a>
+            <div id="auth-menu"><a href="/login_user.html" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-user w-6 text-center text-purple-500"></i><span class="font-medium">Login Member</span></a></div>
+            <a href="/login.html" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-lock w-6 text-center text-red-500"></i><span class="font-medium">Admin Panel</span></a>
         </nav>
-        <div class="mt-auto pt-6 border-t border-gray-800 text-center"><p class="text-[10px] text-gray-600 font-mono">System v11.0 Full</p></div>
+        <div class="mt-auto pt-6 border-t border-gray-800 text-center"><p class="text-[10px] text-gray-600 font-mono">System v12.0 Fixed</p></div>
     </aside>
 
     <nav class="fixed top-0 w-full z-50 backdrop-blur-md bg-black/60 border-b border-white/5">
         <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-4">
-                <button onclick="toggleSidebar()" class="text-gray-300 hover:text-white transition p-2 hover:bg-white/10 rounded-lg">
-                    <i class="fa-solid fa-bars text-xl"></i>
-                </button>
-                <div class="flex items-center gap-2 cursor-pointer" onclick="switchView('landing')">
-                    <div class="w-1 h-6 bg-purple-600 rounded-full"></div>
-                    <h2 class="text-lg font-bold tracking-widest text-white">MANZZY<span class="text-purple-400">ID</span></h2>
-                </div>
-            </div>
+            <div class="flex items-center gap-4"><button onclick="toggleSidebar()" class="text-gray-300 hover:text-white transition p-2 hover:bg-white/10 rounded-lg"><i class="fa-solid fa-bars text-xl"></i></button><div class="flex items-center gap-2 cursor-pointer" onclick="switchView('landing')"><div class="w-1 h-6 bg-purple-600 rounded-full"></div><h2 class="text-lg font-bold tracking-widest text-white">MANZZY<span class="text-purple-400">ID</span></h2></div></div>
             
-            <div id="header-balance" class="hidden md:flex items-center gap-3 px-4 py-2 rounded-full bg-black/50 border border-gray-700 hover:border-purple-500 transition">
+            <div id="header-balance" class="hidden md:flex items-center gap-3 px-4 py-2 rounded-full bg-black/50 border border-gray-700 hover:border-purple-500 transition cursor-default">
                 <i class="fa-solid fa-wallet text-green-400 animate-pulse"></i>
                 <span class="text-sm text-white font-mono font-bold tracking-wide">Rp 0</span>
             </div>
@@ -157,407 +78,119 @@
     </nav>
 
     <div id="main-container" class="min-h-screen relative w-full max-w-6xl mx-auto px-6 pb-20 pt-28">
-        <div class="absolute inset-0 bg-grid -z-10 h-screen fixed opacity-40"></div>
-        <div class="absolute top-0 right-0 w-96 h-96 bg-purple-600/10 rounded-full blur-[100px] -z-10 fixed pointer-events-none"></div>
+        <div class="absolute inset-0 bg-grid -z-10 h-screen fixed opacity-40"></div><div class="absolute top-0 right-0 w-96 h-96 bg-purple-600/10 rounded-full blur-[100px] -z-10 fixed pointer-events-none"></div>
 
         <section id="view-landing" class="view-section view-active">
+            <div class="text-center max-w-4xl mx-auto mt-10 mb-16"><h1 class="text-5xl md:text-8xl font-bold mb-6 leading-tight"><span class="glitch neon-text" data-text="MANZZY ID">MANZZY ID</span> <br> <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">OFFICIAL</span></h1><p class="text-gray-400 text-lg md:text-xl mb-10 max-w-2xl mx-auto">Layanan Hosting Bot WhatsApp Profesional & Terpercaya.</p><div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-8"><button onclick="switchView('store')" class="px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-[0_0_30px_rgba(139,92,246,0.3)] transition hover:scale-105 w-full md:w-auto"><i class="fa-solid fa-store mr-2"></i> Lihat Produk</button></div><div class="flex items-center justify-center gap-4 mb-6"><a href="https://instagram.com/Manzz_Wakeup" target="_blank" class="social-btn"><i class="fa-brands fa-instagram"></i></a><a href="https://wa.me/6287756632352" target="_blank" class="social-btn"><i class="fa-solid fa-user-shield"></i></a></div></div>
             
-            <div class="text-center max-w-4xl mx-auto mt-10 mb-16">
-                <h1 class="text-5xl md:text-8xl font-bold mb-6 leading-tight">
-                    <span class="glitch neon-text" data-text="MANZZY ID">MANZZY ID</span> <br> 
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">OFFICIAL</span>
-                </h1>
-                <p class="text-gray-400 text-lg md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
-                    Layanan Hosting Bot WhatsApp Profesional & Terpercaya.<br>Server stabil, akses cepat, dan aktif 24 jam nonstop.
-                </p>
-                <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-8">
-                    <button onclick="switchView('store')" class="px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-[0_0_30px_rgba(139,92,246,0.3)] transition hover:scale-105 w-full md:w-auto">
-                        <i class="fa-solid fa-store mr-2"></i> Lihat Produk
-                    </button>
-                </div>
-                <div class="flex items-center justify-center gap-4 mb-6">
-                    <a href="https://instagram.com/Manzz_Wakeup" target="_blank" class="social-btn"><i class="fa-brands fa-instagram"></i></a>
-                    <a href="https://wa.me/6287756632352" target="_blank" class="social-btn"><i class="fa-solid fa-user-shield"></i></a>
-                </div>
-            </div>
-
             <div class="w-full max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 mb-24">
-                <div class="glass-card p-6 rounded-2xl flex flex-col justify-between border-l-4 border-l-green-500 space-y-4">
-                    <div class="flex justify-between items-center border-b border-gray-800 pb-3">
-                        <div>
-                            <h4 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">VPS Runtime</h4>
-                            <div class="flex items-center gap-2 text-green-400 font-bold font-mono text-xl">
-                                <i class="fa-solid fa-server"></i> <span id="runtime-vps">0d 0h</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <h4 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Bot Runtime</h4>
-                            <div class="flex items-center gap-2 text-blue-400 font-bold font-mono text-xl">
-                                <i class="fa-solid fa-robot"></i> <span id="runtime-bot">Offline</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="glass-card p-6 rounded-2xl border-l-4 border-l-purple-500">
-                    <div class="flex justify-between items-start mb-4 border-b border-gray-800 pb-3">
-                        <div>
-                            <h4 class="text-white text-sm font-bold flex items-center gap-2"><i class="fa-brands fa-linux"></i> AMD Ryzen™ 7</h4>
-                            <p class="text-[10px] text-gray-500 mt-1">High Performance Node</p>
-                        </div>
-                        <span id="status-badge" class="text-gray-500 text-[10px] animate-pulse bg-gray-900/50 px-2 py-1 rounded border border-gray-700 font-bold">CONNECTING...</span>
-                    </div>
-                    <div class="flex items-center gap-3 text-xs font-mono mb-3">
-                        <span class="w-8 text-purple-300">CPU</span>
-                        <div class="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
-                            <div id="bar-cpu" class="h-full bg-purple-500 transition-all duration-1000" style="width: 0%"></div>
-                        </div>
-                        <span id="text-cpu" class="w-12 text-right text-gray-400">0%</span>
-                    </div>
-                    <div class="flex items-center gap-3 text-xs font-mono mb-3">
-                        <span class="w-8 text-purple-300">RAM</span>
-                        <div class="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
-                            <div id="bar-ram" class="h-full bg-purple-500 transition-all duration-1000" style="width: 0%"></div>
-                        </div>
-                        <span id="text-ram" class="w-12 text-right text-gray-400">0G</span>
-                    </div>
-                    <div class="flex items-center gap-3 text-xs font-mono">
-                        <span class="w-8 text-purple-300">ROM</span>
-                        <div class="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
-                            <div id="bar-rom" class="h-full bg-blue-500 transition-all duration-1000" style="width: 0%"></div>
-                        </div>
-                        <span id="text-rom" class="w-12 text-right text-gray-400">0G</span>
-                    </div>
-                </div>
+                <div class="glass-card p-6 rounded-2xl flex flex-col justify-between border-l-4 border-l-green-500 space-y-4"><div class="flex justify-between items-center border-b border-gray-800 pb-3"><div><h4 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">VPS Runtime</h4><div class="flex items-center gap-2 text-green-400 font-bold font-mono text-xl"><i class="fa-solid fa-server"></i> <span id="runtime-vps">0d 0h</span></div></div></div><div class="flex justify-between items-center"><div><h4 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Bot Runtime</h4><div class="flex items-center gap-2 text-blue-400 font-bold font-mono text-xl"><i class="fa-solid fa-robot"></i> <span id="runtime-bot">Offline</span></div></div></div></div>
+                <div class="glass-card p-6 rounded-2xl border-l-4 border-l-purple-500"><div class="flex justify-between items-start mb-4 border-b border-gray-800 pb-3"><div><h4 class="text-white text-sm font-bold flex items-center gap-2"><i class="fa-brands fa-linux"></i> AMD Ryzen™ 7</h4><p class="text-[10px] text-gray-500 mt-1">High Performance Node</p></div><span id="status-badge" class="text-gray-500 text-[10px] animate-pulse bg-gray-900/50 px-2 py-1 rounded border border-gray-700 font-bold">CONNECTING...</span></div><div class="flex items-center gap-3 text-xs font-mono mb-3"><span class="w-8 text-purple-300">CPU</span><div class="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden"><div id="bar-cpu" class="h-full bg-purple-500 transition-all duration-1000" style="width: 0%"></div></div><span id="text-cpu" class="w-12 text-right text-gray-400">0%</span></div><div class="flex items-center gap-3 text-xs font-mono mb-3"><span class="w-8 text-purple-300">RAM</span><div class="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden"><div id="bar-ram" class="h-full bg-purple-500 transition-all duration-1000" style="width: 0%"></div></div><span id="text-ram" class="w-12 text-right text-gray-400">0G</span></div><div class="flex items-center gap-3 text-xs font-mono"><span class="w-8 text-purple-300">ROM</span><div class="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden"><div id="bar-rom" class="h-full bg-blue-500 transition-all duration-1000" style="width: 0%"></div></div><span id="text-rom" class="w-12 text-right text-gray-400">0G</span></div></div>
             </div>
 
-            <section id="features" class="mb-24 scroll-mt-32">
-                <div class="text-center mb-12">
-                    <h2 class="text-3xl font-bold text-white mb-4">KENAPA MEMILIH <span class="text-purple-500">KAMI?</span></h2>
-                    <p class="text-gray-400 max-w-xl mx-auto">Infrastruktur terbaik untuk memastikan bot WhatsApp Anda berjalan optimal.</p>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div class="glass-card p-8 rounded-2xl text-center hover:-translate-y-2 transition duration-300 border-t-4 border-t-purple-500">
-                        <div class="w-16 h-16 bg-purple-900/30 rounded-xl flex items-center justify-center mx-auto mb-6 neon-text"><i class="fa-solid fa-server text-3xl text-purple-400"></i></div>
-                        <h3 class="text-xl font-bold text-white mb-3">Uptime 99.9%</h3>
-                        <p class="text-gray-400 text-sm leading-relaxed">Server selalu online. Minimalkan downtime bot.</p>
-                    </div>
-                    <div class="glass-card p-8 rounded-2xl text-center hover:-translate-y-2 transition duration-300 border-t-4 border-t-blue-500">
-                        <div class="w-16 h-16 bg-blue-900/30 rounded-xl flex items-center justify-center mx-auto mb-6"><i class="fa-solid fa-bolt text-3xl text-blue-400"></i></div>
-                        <h3 class="text-xl font-bold text-white mb-3">Koneksi Kilat</h3>
-                        <p class="text-gray-400 text-sm leading-relaxed">Jaringan berkecepatan tinggi dan NVMe SSD.</p>
-                    </div>
-                    <div class="glass-card p-8 rounded-2xl text-center hover:-translate-y-2 transition duration-300 border-t-4 border-t-green-500">
-                        <div class="w-16 h-16 bg-green-900/30 rounded-xl flex items-center justify-center mx-auto mb-6"><i class="fa-solid fa-shield-halved text-3xl text-green-400"></i></div>
-                        <h3 class="text-xl font-bold text-white mb-3">Aman & Privat</h3>
-                        <p class="text-gray-400 text-sm leading-relaxed">Data terenkripsi dan privasi terjaga.</p>
-                    </div>
-                </div>
-            </section>
-
-            <section id="testimonials" class="mb-24 scroll-mt-32">
-                <div class="text-center mb-12">
-                    <h2 class="text-3xl font-bold text-white mb-4">ULASAN <span class="text-purple-500">MEMBER</span></h2>
-                    <p class="text-gray-400">Pendapat jujur dari pengguna layanan kami.</p>
-                </div>
-
-                <div id="review-form-container" class="hidden glass-card p-6 rounded-xl max-w-lg mx-auto mb-10 border border-purple-500/30">
-                    <h3 class="text-white font-bold mb-3">Tulis Ulasan</h3>
-                    <form onsubmit="submitReview(event)">
-                        <div class="flex gap-2 mb-4 star-rating" id="star-input">
-                            <i class="fa-solid fa-star text-2xl" onclick="setRating(1)"></i>
-                            <i class="fa-solid fa-star text-2xl" onclick="setRating(2)"></i>
-                            <i class="fa-solid fa-star text-2xl" onclick="setRating(3)"></i>
-                            <i class="fa-solid fa-star text-2xl" onclick="setRating(4)"></i>
-                            <i class="fa-solid fa-star text-2xl" onclick="setRating(5)"></i>
-                        </div>
-                        <input type="hidden" id="ratingValue" value="5">
-                        <textarea id="reviewComment" class="w-full bg-black/50 border border-gray-700 rounded p-3 text-white text-sm mb-3" rows="3" placeholder="Bagaimana pengalaman Anda?" required></textarea>
-                        <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded">Kirim Ulasan</button>
-                    </form>
-                </div>
-
-                <div id="login-prompt" class="text-center mb-10">
-                    <p class="text-gray-500 mb-3">Ingin memberi ulasan?</p>
-                    <a href="/login_user.html" class="px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full border border-white/10 transition">Login Member</a>
-                </div>
-
-                <div id="testimonial-grid" class="grid grid-rows-3 grid-flow-col gap-4 overflow-x-auto pb-8 px-4 no-scrollbar snap-x snap-mandatory">
-                    <p class="text-center text-gray-500 w-full py-10">Memuat ulasan...</p>
-                </div>
-            </section>
-
-            <section id="faq" class="mb-24 scroll-mt-32 max-w-3xl mx-auto">
-                <div class="text-center mb-12"><h2 class="text-3xl font-bold text-white mb-4">PERTANYAAN <span class="text-purple-500">UMUM</span></h2><p class="text-gray-400">Jawaban atas pertanyaan yang sering diajukan.</p></div>
-                <div class="glass-card p-2 rounded-2xl divide-y divide-gray-800/50">
-                    <div class="faq-item p-4"><div class="faq-header" onclick="toggleFaq(this)"><h3 class="font-bold text-white">Metode pembayaran?</h3><i class="fa-solid fa-chevron-down faq-icon text-gray-500"></i></div><div class="faq-content"><p class="text-gray-400 text-sm pb-4">Transfer Bank, E-Wallet, dan QRIS.</p></div></div>
-                    <div class="faq-item p-4"><div class="faq-header" onclick="toggleFaq(this)"><h3 class="font-bold text-white">Berapa lama aktivasi?</h3><i class="fa-solid fa-chevron-down faq-icon text-gray-500"></i></div><div class="faq-content"><p class="text-gray-400 text-sm pb-4">Instan untuk produk otomatis, 1x24 jam untuk manual.</p></div></div>
-                </div>
+            <section id="features" class="mb-24"><div class="text-center mb-12"><h2 class="text-3xl font-bold text-white mb-4">KEUNGGULAN</h2></div><div class="grid grid-cols-1 md:grid-cols-3 gap-8"><div class="glass-card p-8 rounded-2xl text-center border-t-4 border-t-purple-500"><h3 class="text-xl font-bold text-white">Uptime 99%</h3><p class="text-gray-400 text-sm">Server selalu online.</p></div><div class="glass-card p-8 rounded-2xl text-center border-t-4 border-t-blue-500"><h3 class="text-xl font-bold text-white">Cepat</h3><p class="text-gray-400 text-sm">Koneksi stabil.</p></div><div class="glass-card p-8 rounded-2xl text-center border-t-4 border-t-green-500"><h3 class="text-xl font-bold text-white">Aman</h3><p class="text-gray-400 text-sm">Privasi terjaga.</p></div></div></section>
+            
+            <section id="testimonials" class="mb-24">
+                <div class="text-center mb-12"><h2 class="text-3xl font-bold text-white mb-4">ULASAN</h2></div>
+                <div id="review-form-container" class="hidden glass-card p-6 rounded-xl max-w-lg mx-auto mb-10 border border-purple-500/30"><h3 class="text-white font-bold mb-3">Tulis Ulasan</h3><form onsubmit="submitReview(event)"><div class="flex gap-2 mb-4 star-rating" id="star-input"><i class="fa-solid fa-star text-2xl" onclick="setRating(1)"></i><i class="fa-solid fa-star text-2xl" onclick="setRating(2)"></i><i class="fa-solid fa-star text-2xl" onclick="setRating(3)"></i><i class="fa-solid fa-star text-2xl" onclick="setRating(4)"></i><i class="fa-solid fa-star text-2xl" onclick="setRating(5)"></i></div><input type="hidden" id="ratingValue" value="5"><textarea id="reviewComment" class="w-full bg-black/50 border border-gray-700 rounded p-3 text-white text-sm mb-3" rows="3" placeholder="Bagaimana pengalaman Anda?" required></textarea><button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded">Kirim Ulasan</button></form></div>
+                <div id="login-prompt" class="text-center mb-10"><a href="/login_user.html" class="px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full border border-white/10 transition">Login Member</a></div>
+                <div id="testimonial-grid" class="grid grid-rows-3 grid-flow-col gap-4 overflow-x-auto pb-8 px-4 no-scrollbar snap-x snap-mandatory"><p class="text-center text-gray-500 w-full py-10">Memuat ulasan...</p></div>
             </section>
 
             <footer class="text-center text-gray-600 text-xs font-mono py-8 border-t border-gray-900">© 2025 Manzzy ID</footer>
         </section>
 
-        <section id="view-store" class="view-section">
-            <div class="w-full mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <button onclick="switchView('landing')" class="text-gray-400 hover:text-white transition flex items-center gap-2 group">
-                    <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-purple-600 transition"><i class="fa-solid fa-arrow-left"></i></div>
-                    <span class="font-medium">Kembali ke Home</span>
-                </button>
-                <h2 class="text-3xl font-bold text-white">KATALOG <span class="text-purple-500">PRODUK</span></h2>
-            </div>
+        <section id="view-store" class="view-section"><div class="w-full mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4"><button onclick="switchView('landing')" class="text-gray-400 hover:text-white flex items-center gap-2 group"><i class="fa-solid fa-arrow-left"></i> Kembali</button><h2 class="text-3xl font-bold text-white">KATALOG</h2></div><div class="search-container"><input type="text" id="searchInput" onkeyup="filterProducts()" placeholder="Cari..." class="search-input"><i class="fa-solid fa-search search-icon"></i></div><div id="section-categories"><h3 class="text-gray-400 text-sm font-bold uppercase mb-4 pl-3 border-l-4 border-purple-500">Kategori</h3><div id="grid-categories" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12"></div></div><div id="section-products" class="hidden"><div class="flex items-center gap-3 mb-6"><button onclick="backToCategories()" class="text-sm bg-gray-800 px-3 py-1 rounded text-white"><i class="fa-solid fa-chevron-left"></i> Kategori</button><span id="current-category-name" class="text-purple-400 font-bold"></span></div><div id="grid-products" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 pb-20"></div></div><div id="loading-store" class="text-center py-20 hidden"><div class="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mb-4"></div></div></section>
 
-            <div class="search-container">
-                <input type="text" id="searchInput" onkeyup="filterProducts()" placeholder="Cari layanan..." class="search-input">
-                <i class="fa-solid fa-search search-icon"></i>
-            </div>
-
-            <div id="section-categories"><h3 class="text-gray-400 text-sm font-bold uppercase tracking-wider mb-4 border-l-4 border-purple-500 pl-3">Pilih Kategori</h3><div id="grid-categories" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12"></div></div>
-            <div id="section-products" class="hidden"><div class="flex items-center gap-3 mb-6"><button onclick="backToCategories()" class="text-sm bg-gray-800 px-3 py-1 rounded hover:bg-gray-700 text-white"><i class="fa-solid fa-chevron-left"></i> Ganti Kategori</button><span id="current-category-name" class="text-purple-400 font-bold text-lg"></span></div><div id="grid-products" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 pb-20"></div></div>
-            <div id="loading-store" class="text-center py-20 hidden"><div class="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mb-4"></div></div>
-        </section>
-
-        <section id="view-topup" class="view-section">
-            <div class="max-w-lg mx-auto">
-                <button onclick="switchView('landing')" class="mb-6 text-gray-400 hover:text-white flex items-center gap-2 group">
-                    <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-purple-600 transition"><i class="fa-solid fa-arrow-left"></i></div>
-                    <span class="font-medium">Kembali</span>
-                </button>
-                
-                <div class="glass-card p-8 rounded-2xl border-t-4 border-t-green-500">
-                    <h2 class="text-2xl font-bold text-white text-center mb-6">Isi Saldo <span class="text-green-400">Otomatis</span></h2>
-                    
-                    <div class="bg-white p-4 rounded-xl mb-6 mx-auto w-64">
-                        <img src="image/qris.jpg" onerror="this.src='https://via.placeholder.com/300x300?text=Scan+QRIS'" class="w-full h-auto">
-                    </div>
-                    <p class="text-center text-xs text-gray-400 mb-6">Scan QRIS di atas, lalu upload bukti transfer.<br>Admin akan memverifikasi dalam 1x24 jam.</p>
-
-                    <form onsubmit="submitTopUp(event)" class="space-y-4">
-                        <div><label class="text-sm text-gray-400 block mb-1">Nominal Transfer</label><input type="number" id="topupAmount" class="w-full bg-black/50 border border-gray-700 rounded p-3 text-white" placeholder="Contoh: 50000" required></div>
-                        <div><label class="text-sm text-gray-400 block mb-1">Bukti Transfer (Screenshot)</label><input type="file" id="topupProof" accept="image/*" class="w-full text-sm text-gray-400" required></div>
-                        <button type="submit" id="btn-topup" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-lg">Kirim Bukti Transfer</button>
-                    </form>
-                </div>
-            </div>
-        </section>
-
+        <section id="view-topup" class="view-section"><div class="max-w-lg mx-auto"><button onclick="switchView('landing')" class="mb-6 text-gray-400 hover:text-white flex items-center gap-2 group"><i class="fa-solid fa-arrow-left"></i> Kembali</button><div class="glass-card p-8 rounded-2xl border-t-4 border-t-green-500"><h2 class="text-2xl font-bold text-white text-center mb-6">Isi Saldo</h2><div class="bg-white p-4 rounded-xl mb-6 mx-auto w-64"><img src="image/qris.jpg" onerror="this.src='https://via.placeholder.com/300x300?text=Scan+QRIS'" class="w-full h-auto"></div><p class="text-center text-xs text-gray-400 mb-6">Scan QRIS, upload bukti.</p><form onsubmit="submitTopUp(event)" class="space-y-4"><div><label class="text-sm text-gray-400 block mb-1">Nominal</label><input type="number" id="topupAmount" class="w-full bg-black/50 border border-gray-700 rounded p-3 text-white" placeholder="50000" required></div><div><label class="text-sm text-gray-400 block mb-1">Bukti</label><input type="file" id="topupProof" accept="image/*" class="w-full text-sm text-gray-400" required></div><button type="submit" id="btn-topup" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-lg">Kirim Bukti</button></form></div></div></section>
     </div>
 
- 
-<script>
-        // --- 1. CONFIG & UTILS ---
-        function toggleSidebar() { document.body.classList.toggle('sidebar-active'); }
-        function closeModalDirect() { document.getElementById('modal-overlay').classList.remove('modal-active'); } 
-        function closeModal(e) { if(e.target.id === 'modal-overlay') closeModalDirect(); }
-        function toggleFaq(h){ h.parentElement.classList.toggle('faq-active'); }
-        const scrollBtn=document.getElementById('btn-scroll'); 
-        window.onscroll=function(){ scrollBtn.classList.toggle('show-scroll-btn',window.scrollY>300); }; 
-        function scrollToTop(){ window.scrollTo({top:0,behavior:'smooth'}); }
+    <script>
+        // ROBOT LOADER
+        const loader = document.getElementById('loader'), loaderText = document.getElementById('loader-text');
+        async function startRobotBoot() { const s = ["BOOTING SYSTEM...", "CONNECTING...", "SYNC DATA...", "ACCESS GRANTED"]; for (let i = 0; i < s.length; i++) { loaderText.innerText = s[i]; await new Promise(r => setTimeout(r, 1200)); } loader.style.opacity = "0"; setTimeout(() => loader.style.display = "none", 800); }
 
-        // --- 2. ROBOT LOADER SYSTEM (SMOOTH & FIX TIME) ---
-        const loader = document.getElementById('loader');
-        const loaderText = document.getElementById('loader-text');
-        
-        async function startRobotBoot() {
-            // Urutan Teks Animasi (Total durasi +/- 4 detik)
-            const steps = [
-                { text: "INITIALIZING...", delay: 800 },
-                { text: "CHECKING SECURITY...", delay: 1000 },
-                { text: "CONNECTING SERVER...", delay: 1200 },
-                { text: "ACCESS GRANTED.", delay: 800 }
-            ];
-
-            for (let i = 0; i < steps.length; i++) {
-                loaderText.innerText = steps[i].text;
-                // Animasi kedip teks biar kerasa robotik
-                loaderText.style.opacity = 0.5;
-                await new Promise(r => setTimeout(r, 100));
-                loaderText.style.opacity = 1;
-                await new Promise(r => setTimeout(r, steps[i].delay));
-            }
-            
-            finishBooting();
-        }
-
-        function finishBooting() {
-            // Efek Fade Out Smooth
-            loader.style.transition = "opacity 0.8s ease-out";
-            loader.style.opacity = "0";
-            loader.style.pointerEvents = "none"; // Biar bisa diklik tembus
-            
-            // Hapus elemen dari DOM setelah animasi selesai biar ringan
-            setTimeout(() => { loader.style.display = "none"; }, 1000);
-        }
-
-        // --- SAFETY NET (PENTING!) ---
-        // Jika karena suatu alasan script error, paksa loader hilang di detik ke-6
-        setTimeout(() => {
-            if (loader.style.opacity !== "0") {
-                console.log("Force removing loader...");
-                finishBooting();
-            }
-        }, 6000);
-
-
-        // --- 3. DATA FETCHING (BACKGROUND PROCESS) ---
-        // Ini jalan barengan sama animasi, jadi gak saling tunggu
-        const userSession = localStorage.getItem('user_session');
-        let userBalance = 0;
-        let allProducts=[], allCategories=[], currentProduct = null;
-        const ADMIN_WA="6287756632352"; 
-
-        async function initData() {
-            // Panggil semua fungsi ambil data di sini
-            checkUserLogin();
-            fetchTestimonials();
-            updateServerStats();
-            
-            // Interval update data
-            setInterval(updateServerStats, 5000); 
-        }
-
-        // --- AUTH & SALDO ---
-        async function checkUserLogin() {
-            if (userSession) {
+        // CHECK LOGIN & SALDO (THE FIX)
+        const userSession = localStorage.getItem('user_session'); let userBalance = 0;
+        async function checkUserLogin() { 
+            if (userSession) { 
                 try {
-                    const res = await fetch(`/api/user/${userSession}`);
-                    const data = await res.json();
-                    if (data.username) {
+                    const res = await fetch(`/api/user/${userSession}`); const data = await res.json();
+                    if(data.username) {
                         userBalance = data.balance || 0;
-                        const balTxt = `Rp ${userBalance.toLocaleString()}`;
+                        const formatted = `Rp ${userBalance.toLocaleString()}`;
                         
-                        document.getElementById('header-balance').innerHTML = `<i class="fa-solid fa-wallet text-green-400"></i> <span>${balTxt}</span>`;
-                        document.getElementById('header-balance').classList.remove('hidden');
-                        document.getElementById('user-status-sidebar').innerHTML = `Hi, ${userSession}<br><span class="text-green-400 font-bold font-mono">${balTxt}</span>`;
-                        
-                        document.getElementById('review-form-container').classList.remove('hidden');
-                        document.getElementById('login-prompt').classList.add('hidden');
+                        // FIX: Update Navbar Balance
+                        const headerBal = document.getElementById('header-balance');
+                        if(headerBal) {
+                            headerBal.innerHTML = `<i class="fa-solid fa-wallet text-green-400 animate-pulse"></i><span class="text-sm text-white font-mono font-bold tracking-wide">${formatted}</span>`;
+                            headerBal.classList.remove('hidden');
+                        }
+
+                        // FIX: Update Sidebar
+                        document.getElementById('user-status-sidebar').innerHTML = `Hi, ${userSession}<br><span class="text-green-400 font-bold font-mono">${formatted}</span>`;
+                        document.getElementById('review-form-container').classList.remove('hidden'); 
+                        document.getElementById('login-prompt').classList.add('hidden'); 
                         document.getElementById('menu-topup').classList.remove('hidden');
                         document.getElementById('auth-menu').innerHTML = `<a href="#" onclick="doLogout()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:bg-white/5 transition"><i class="fa-solid fa-sign-out-alt text-red-500 w-6 text-center"></i><span class="font-medium">Logout</span></a>`;
                     }
-                } catch(e) { console.log("Login check error (Offline/API Down)"); }
-            }
+                } catch(e) { console.log("User fetch failed"); }
+            } 
         }
         function doLogout() { localStorage.removeItem('user_session'); window.location.reload(); }
 
-        // --- ORDER & MODAL ---
+        // --- CORE FUNCTIONS ---
+        function toggleSidebar() { document.body.classList.toggle('sidebar-active'); }
+        function closeModalDirect() { document.getElementById('modal-overlay').classList.remove('modal-active'); } function closeModal(e) { if(e.target.id === 'modal-overlay') closeModalDirect(); }
+        function toggleFaq(h){ h.parentElement.classList.toggle('faq-active'); }
+        const scrollBtn=document.getElementById('btn-scroll'); window.onscroll=function(){ scrollBtn.classList.toggle('show-scroll-btn',window.scrollY>300); }; function scrollToTop(){ window.scrollTo({top:0,behavior:'smooth'}); }
+        
+        let currentProduct = null;
         function openModal(id) {
             const p = allProducts.find(x => x._id === id); if(!p) return;
             currentProduct = p;
-            document.getElementById('modal-content-product').classList.remove('hidden');
-            document.getElementById('modal-content-receipt').classList.add('hidden');
-            
-            document.getElementById('modal-title').innerText = p.name;
-            document.getElementById('modal-price').innerText = `Rp ${p.price.toLocaleString()}`;
-            document.getElementById('modal-desc').innerText = p.desc;
-            document.getElementById('modal-img').src = p.imageUrl || 'https://via.placeholder.com/400x200?text=No+Image';
-            
-            const balEl = document.getElementById('user-balance-display');
-            balEl.innerText = userSession ? `Rp ${userBalance.toLocaleString()}` : 'Login Dulu';
-            balEl.className = (userSession && userBalance >= p.price) ? 'font-bold font-mono text-green-400' : 'font-bold font-mono text-red-500';
-
+            document.getElementById('modal-content-product').classList.remove('hidden'); document.getElementById('modal-content-receipt').classList.add('hidden');
+            document.getElementById('modal-title').innerText = p.name; document.getElementById('modal-price').innerText = `Rp ${p.price.toLocaleString()}`; document.getElementById('modal-desc').innerText = p.desc; document.getElementById('modal-img').src = p.imageUrl || 'https://via.placeholder.com/400x200';
+            const balText = userSession ? `Rp ${userBalance.toLocaleString()}` : 'Login Dulu';
+            document.getElementById('user-balance-display').innerText = balText; document.getElementById('user-balance-display').className = (userSession && userBalance >= p.price) ? 'font-bold font-mono text-green-400' : 'font-bold font-mono text-red-500';
             const formContainer = document.getElementById('dynamic-inputs'); formContainer.innerHTML = '';
-            const fields = (p.formFields || 'Nomor WhatsApp').split(',');
-            fields.forEach(f => { if(f.trim()) formContainer.innerHTML += `<div><label class="text-[10px] text-gray-500 font-bold block mb-1">${f.trim()}</label><input type="text" name="${f.trim()}" class="w-full bg-black/50 border border-gray-700 rounded-lg p-3 text-white text-sm focus:outline-none focus:border-purple-500 transition" required placeholder="..."></div>`; });
-            
+            (p.formFields || 'Nomor WhatsApp').split(',').forEach(f => { if(f.trim()) formContainer.innerHTML += `<div><label class="text-[10px] text-gray-500 font-bold block mb-1">${f.trim()}</label><input type="text" name="${f.trim()}" class="w-full bg-black/50 border border-gray-700 rounded-lg p-3 text-white text-sm" required></div>`; });
             document.getElementById('modal-overlay').classList.add('modal-active');
         }
-
         async function processOrder(e) {
-            e.preventDefault();
-            if(!userSession) return alert("Silakan Login terlebih dahulu!");
-            if(userBalance < currentProduct.price) return alert("Saldo tidak cukup! Silakan Top Up dulu.");
-            
+            e.preventDefault(); if(!userSession) return alert("Login dulu!"); if(userBalance < currentProduct.price) return alert("Saldo kurang!");
             const btn = document.getElementById('btn-buy'); btn.innerHTML = 'Memproses...'; btn.disabled = true;
             const inputs = document.querySelectorAll('#orderForm input'); let formData = ""; inputs.forEach(i => formData += `${i.name}: ${i.value}\n`);
-
             try {
                 const res = await fetch('/api/order', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ username: userSession, productId: currentProduct._id, formData }) });
                 const result = await res.json();
                 if(result.success) {
                     userBalance -= currentProduct.price; checkUserLogin();
-                    document.getElementById('modal-content-product').classList.add('hidden');
-                    document.getElementById('modal-content-receipt').classList.remove('hidden');
-                    document.getElementById('rec-inv').innerText = result.invoiceId;
-                    document.getElementById('rec-item').innerText = result.productName;
-                    document.getElementById('rec-mode').innerText = result.mode === 'manual' ? 'Berhasil (Manual)' : 'Pending (Auto)';
-                    if(result.mode === 'manual') {
-                        const btnC = document.getElementById('btn-continue'); btnC.innerText = "Lanjut ke WhatsApp Admin";
-                        btnC.onclick = function() { window.open(`https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(`Order Manual:\nInv: ${result.invoiceId}\nItem: ${result.productName}\nData:\n${formData}`)}`, '_blank'); closeModalDirect(); };
-                    } else { document.getElementById('btn-continue').innerText = "Tutup"; document.getElementById('btn-continue').onclick = closeModalDirect; }
+                    document.getElementById('modal-content-product').classList.add('hidden'); document.getElementById('modal-content-receipt').classList.remove('hidden');
+                    document.getElementById('rec-inv').innerText = result.invoiceId; document.getElementById('rec-item').innerText = result.productName; document.getElementById('rec-mode').innerText = result.mode;
+                    if(result.mode === 'manual') { document.getElementById('btn-continue').innerText = "Lanjut WA Admin"; document.getElementById('btn-continue').onclick = function() { window.open(`https://wa.me/6287756632352?text=${encodeURIComponent(`Order Manual:\nInv: ${result.invoiceId}\nItem: ${result.productName}\nData:\n${formData}`)}`, '_blank'); closeModalDirect(); }; } else { document.getElementById('btn-continue').innerText = "Tutup"; document.getElementById('btn-continue').onclick = closeModalDirect; }
                 } else { alert("Gagal: " + result.msg); }
-            } catch(e) { alert("Error koneksi"); } finally { btn.innerHTML = '<i class="fa-solid fa-cart-shopping"></i> Bayar Sekarang'; btn.disabled = false; }
+            } catch(e) { alert("Error"); } finally { btn.innerHTML = 'Bayar Sekarang'; btn.disabled = false; }
         }
-
-        // --- TOP UP ---
-        async function submitTopUp(e) {
-            e.preventDefault(); if(!userSession) return alert("Login dulu!");
-            const btn = document.getElementById('btn-topup'); btn.innerHTML = 'Mengirim...'; btn.disabled = true;
-            const amount = document.getElementById('topupAmount').value; const file = document.getElementById('topupProof').files[0];
-            if(!file) return alert("Pilih foto!");
-            const reader = new FileReader(); reader.readAsDataURL(file);
-            reader.onload = async function () {
-                try { const res = await fetch('/api/topup', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ username: userSession, amount, proofImage: reader.result }) });
-                    if(res.ok) { alert("Terkirim!"); switchView('landing'); } else { alert("Gagal (File terlalu besar > 4MB)"); }
-                } catch(e) { alert("Error"); } finally { btn.innerHTML = 'Kirim Bukti Transfer'; btn.disabled = false; }
-            };
-        }
-
-        // --- STORE & VIEW ---
-        function switchView(target) { const l=document.getElementById('view-landing'), s=document.getElementById('view-store'), t=document.getElementById('view-topup'); document.body.classList.remove('sidebar-active'); l.style.opacity='0'; s.style.opacity='0'; t.style.opacity='0'; setTimeout(() => { l.classList.remove('view-active'); s.classList.remove('view-active'); t.classList.remove('view-active'); if(target==='store') { s.classList.add('view-active'); s.style.opacity=''; loadStoreData(); } else if(target==='topup') { t.classList.add('view-active'); t.style.opacity=''; } else { l.classList.add('view-active'); l.style.opacity=''; } }, 400); }
-        async function loadStoreData(){ if(allCategories.length>0)return; document.getElementById('loading-store').classList.remove('hidden'); document.getElementById('section-categories').classList.add('hidden'); try{ const[c,p]=await Promise.all([fetch('/api/categories'),fetch('/api/products')]); allCategories=await c.json(); allProducts=await p.json(); renderCategories(); }catch(e){}finally{document.getElementById('loading-store').classList.add('hidden');} }
-        function renderCategories(){ const g=document.getElementById('grid-categories'); document.getElementById('section-categories').classList.remove('hidden'); document.getElementById('section-products').classList.add('hidden'); if(allCategories.length===0){g.innerHTML='<p class="text-gray-500">Belum ada kategori.</p>';return;} g.innerHTML=allCategories.map(c=>`<div class="cat-card group" onclick="openCategory('${c.name}')"><div class="cat-bg" style="background-image: url('${c.imageUrl}');"></div><div class="cat-overlay"><h3 class="text-white font-bold text-lg group-hover:text-purple-400 transition">${c.name}</h3></div></div>`).join(''); g.innerHTML+=`<div class="cat-card group" onclick="openCategory('ALL')"><div class="cat-bg bg-purple-900"></div><div class="cat-overlay"><h3 class="text-white font-bold text-lg">Semua Produk</h3></div></div>`; }
-        function openCategory(n){ currentCategory=n; document.getElementById('section-categories').classList.add('hidden'); document.getElementById('section-products').classList.remove('hidden'); document.getElementById('current-category-name').innerText=n==='ALL'?'Semua Produk':n; document.getElementById('searchInput').value=''; filterProducts(); }
-        function backToCategories(){ document.getElementById('section-products').classList.add('hidden'); document.getElementById('section-categories').classList.remove('hidden'); }
-        function filterProducts(){ const k=document.getElementById('searchInput').value.toLowerCase(); let f=currentCategory==='ALL'?allProducts:allProducts.filter(p=>p.category===currentCategory); if(k)f=f.filter(p=>p.name.toLowerCase().includes(k)); renderProducts(f); }
-        function renderProducts(p){ const g=document.getElementById('grid-products'); if(p.length===0){g.innerHTML='<p class="text-gray-500 col-span-full text-center">Produk tidak ditemukan.</p>';return;} g.innerHTML=p.map(x=>{ const a=x.isAvailable!==false; const u=x.imageUrl||'https://via.placeholder.com/400x200'; const c=a?'':'unavailable'; const b=a?'bg-white/5 border-white/10 group-hover:bg-purple-600 group-hover:border-purple-600':'bg-red-900/20 cursor-not-allowed'; const t=a?'Lihat Detail':'Stok Habis'; const bd=a?'':'<div class="badge-unavailable">HABIS</div>'; const act=a?`onclick="openModal('${x._id}')"`:''; return `<div class="product-card group flex flex-col h-full ${c}">${bd}<div class="product-img-wrapper"><img src="${u}" class="product-img"><div class="absolute top-3 right-3"><span class="price-badge">${x.price}</span></div></div><div class="p-5 flex flex-col flex-1"><h3 class="text-xl font-bold text-white mb-2 group-hover:text-purple-400 transition">${x.name}</h3><p class="text-sm text-gray-400 mb-6 line-clamp-3 leading-relaxed flex-1">${x.desc}</p><button ${act} class="w-full py-3 rounded-lg border text-white font-bold flex items-center justify-center gap-2 transition-all duration-300 ${b}"><i class="fa-solid fa-eye text-lg"></i> ${t}</button></div></div>`; }).join(''); }
-
-        // --- TESTIMONIALS ---
+        async function submitTopUp(e) { e.preventDefault(); if(!userSession) return alert("Login dulu!"); const btn = document.getElementById('btn-topup'); btn.innerHTML = 'Mengirim...'; btn.disabled = true; const amount = document.getElementById('topupAmount').value; const file = document.getElementById('topupProof').files[0]; if(!file) return alert("Pilih foto!"); const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = async function () { try { const res = await fetch('/api/topup', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ username: userSession, amount, proofImage: reader.result }) }); if(res.ok) { alert("Terkirim!"); switchView('landing'); } else { alert("Gagal"); } } catch(e) { alert("Error"); } finally { btn.innerHTML = 'Kirim Bukti'; btn.disabled = false; } }; }
+        
         let currentRating=5; function setRating(n){ currentRating=n; document.getElementById('ratingValue').value=n; document.querySelectorAll('#star-input i').forEach((s,i)=>{ if(i<n) s.classList.add('active'); else s.classList.remove('active'); }); }
         async function fetchTestimonials(){ try { const res=await fetch('/api/testimonials'); const reviews=await res.json(); const grid=document.getElementById('testimonial-grid'); if(reviews.length===0){ grid.innerHTML='<p class="text-center text-gray-500 w-full py-10">Belum ada.</p>'; return; } grid.innerHTML=reviews.map(r=>`<div class="glass-card p-6 rounded-xl review-card bg-gradient-to-br from-gray-900 to-black w-[85vw] md:w-[350px] snap-center border border-gray-800 flex flex-col justify-between h-auto min-h-[160px]"><div><div class="flex items-center justify-between mb-3"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-white font-bold text-lg">${r.username.charAt(0).toUpperCase()}</div><div><h4 class="font-bold text-white text-sm">${r.username}</h4><p class="text-[10px] text-gray-500">${new Date(r.date).toLocaleDateString()}</p></div></div><div class="text-yellow-500 text-xs">${Array(r.rating).fill('<i class="fa-solid fa-star"></i>').join('')}</div></div><div class="text-gray-300 text-sm italic limit-text">"${r.comment}"</div></div></div>`).join(''); } catch(e){} }
         async function submitReview(e){ e.preventDefault(); await fetch('/api/testimonials',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:userSession,rating:currentRating,comment:document.getElementById('reviewComment').value})}); document.getElementById('reviewComment').value=''; alert("Terkirim!"); fetchTestimonials(); }
+        const ADMIN_WA="6287756632352"; let allProducts=[],allCategories=[],currentCategory='';
+        function switchView(target) { const l=document.getElementById('view-landing'), s=document.getElementById('view-store'), t=document.getElementById('view-topup'); document.body.classList.remove('sidebar-active'); l.style.opacity='0'; s.style.opacity='0'; t.style.opacity='0'; setTimeout(() => { l.classList.remove('view-active'); s.classList.remove('view-active'); t.classList.remove('view-active'); if(target==='store') { s.classList.add('view-active'); s.style.opacity=''; loadStoreData(); } else if(target==='topup') { t.classList.add('view-active'); t.style.opacity=''; } else { l.classList.add('view-active'); l.style.opacity=''; } }, 400); }
+        async function loadStoreData(){ if(allCategories.length>0)return; document.getElementById('loading-store').classList.remove('hidden'); document.getElementById('section-categories').classList.add('hidden'); try{ const[c,p]=await Promise.all([fetch('/api/categories'),fetch('/api/products')]); allCategories=await c.json(); allProducts=await p.json(); renderCategories(); }catch(e){}finally{document.getElementById('loading-store').classList.add('hidden');} }
+        function renderCategories(){ const g=document.getElementById('grid-categories'); document.getElementById('section-categories').classList.remove('hidden'); document.getElementById('section-products').classList.add('hidden'); if(allCategories.length===0){g.innerHTML='<p class="text-gray-500">Kosong.</p>';return;} g.innerHTML=allCategories.map(c=>`<div class="cat-card group" onclick="openCategory('${c.name}')"><div class="cat-bg" style="background-image: url('${c.imageUrl}');"></div><div class="cat-overlay"><h3 class="text-white font-bold text-lg group-hover:text-purple-400 transition">${c.name}</h3></div></div>`).join(''); g.innerHTML+=`<div class="cat-card group" onclick="openCategory('ALL')"><div class="cat-bg bg-purple-900"></div><div class="cat-overlay"><h3 class="text-white font-bold text-lg">Semua</h3></div></div>`; }
+        function openCategory(n){ currentCategory=n; document.getElementById('section-categories').classList.add('hidden'); document.getElementById('section-products').classList.remove('hidden'); document.getElementById('current-category-name').innerText=n==='ALL'?'Semua Produk':n; document.getElementById('searchInput').value=''; filterProducts(); }
+        function backToCategories(){ document.getElementById('section-products').classList.add('hidden'); document.getElementById('section-categories').classList.remove('hidden'); }
+        function filterProducts(){ const k=document.getElementById('searchInput').value.toLowerCase(); let f=currentCategory==='ALL'?allProducts:allProducts.filter(p=>p.category===currentCategory); if(k)f=f.filter(p=>p.name.toLowerCase().includes(k)); renderProducts(f); }
+        function renderProducts(p){ const g=document.getElementById('grid-products'); if(p.length===0){g.innerHTML='<p class="text-gray-500 col-span-full text-center">Tidak ada produk.</p>';return;} g.innerHTML=p.map(x=>{ const a=x.isAvailable!==false; const u=x.imageUrl||'https://via.placeholder.com/400x200'; const c=a?'':'unavailable'; const b=a?'bg-white/5 border-white/10 group-hover:bg-purple-600 group-hover:border-purple-600':'bg-red-900/20 cursor-not-allowed'; const t=a?'Lihat Detail':'Stok Habis'; const bd=a?'':'<div class="badge-unavailable">HABIS</div>'; const act=a?`onclick="openModal('${x._id}')"`:''; return `<div class="product-card group flex flex-col h-full ${c}">${bd}<div class="product-img-wrapper"><img src="${u}" class="product-img"><div class="absolute top-3 right-3"><span class="price-badge">${x.price}</span></div></div><div class="p-5 flex flex-col flex-1"><h3 class="text-xl font-bold text-white mb-2 group-hover:text-purple-400 transition">${x.name}</h3><p class="text-sm text-gray-400 mb-6 line-clamp-3 leading-relaxed flex-1">${x.desc}</p><button ${act} class="w-full py-3 rounded-lg border text-white font-bold flex items-center justify-center gap-2 transition-all duration-300 ${b}"><i class="fa-solid fa-eye text-lg"></i> ${t}</button></div></div>`; }).join(''); }
+        
+        // SERVER MONITOR
+        let startTime = new Date(); startTime.setDate(startTime.getDate()-12); setInterval(() => { const d=Math.floor((new Date()-startTime)/86400000); document.getElementById('runtime-vps').innerText = `${d}d`; }, 1000);
+        async function updateServerStats() { try { const configRes = await fetch('/api/ptero/config'); const config = await configRes.json(); if (!config.panelUrl) return; const response = await fetch(`${config.panelUrl}/api/client/servers/${config.serverId}/resources`, { headers: { 'Authorization': `Bearer ${config.apiKey}`, 'Accept': 'application/json' } }); if (!response.ok) throw new Error("Err"); const data = await response.json(); const stats = data.attributes.resources; const state = data.attributes.current_state; const badge = document.getElementById('status-badge'); if(state === 'running') { badge.innerText = "● ONLINE"; badge.className = "text-green-500 text-[10px] animate-pulse bg-green-900/50 px-2 py-1 rounded font-bold border border-green-500/30"; } else if(state === 'offline') { badge.innerText = "● OFFLINE"; badge.className = "text-red-500 text-[10px] bg-red-900/50 px-2 py-1 rounded font-bold border border-red-500/30"; } else { badge.innerText = "● " + state.toUpperCase(); badge.className = "text-yellow-500 text-[10px] animate-pulse bg-yellow-900/50 px-2 py-1 rounded font-bold border border-yellow-500/30"; } document.getElementById('bar-cpu').style.width = Math.min(stats.cpu_absolute, 100) + "%"; document.getElementById('text-cpu').innerText = stats.cpu_absolute.toFixed(1) + "%"; const maxRam = 16; const ramPercent = ((stats.memory_bytes/1024/1024/1024)/maxRam)*100; document.getElementById('bar-ram').style.width = Math.min(ramPercent, 100) + "%"; document.getElementById('text-ram').innerText = (stats.memory_bytes/1024/1024/1024).toFixed(1) + "G"; const maxDisk = 50; const diskPercent = ((stats.disk_bytes/1024/1024/1024)/maxDisk)*100; document.getElementById('bar-rom').style.width = Math.min(diskPercent, 100) + "%"; document.getElementById('text-rom').innerText = (stats.disk_bytes/1024/1024/1024).toFixed(1) + "G"; if(stats.uptime > 0) { const sec = Math.floor(stats.uptime / 1000); const bh = Math.floor(sec / 3600); const bm = Math.floor((sec % 3600) / 60); document.getElementById('runtime-bot').innerText = `${bh}h ${bm}m`; document.getElementById('runtime-bot').className = "text-blue-400 font-bold font-mono text-xl"; } else { document.getElementById('runtime-bot').innerText = "Offline"; document.getElementById('runtime-bot').className = "text-red-500 font-bold font-mono text-xl"; } } catch (e) { console.log("Waiting..."); } }
 
-        // --- REAL TIME MONITOR ---
-        let startTime = new Date(); startTime.setDate(startTime.getDate()-12);
-        setInterval(() => { const d=Math.floor((new Date()-startTime)/86400000); document.getElementById('runtime-vps').innerText = `${d}d`; }, 1000);
-        async function updateServerStats() {
-            try {
-                // Fetch Config dulu
-                const configRes = await fetch('/api/ptero/config');
-                const config = await configRes.json();
-                if (!config.panelUrl) return;
-
-                // Lalu Fetch Panel
-                const response = await fetch(`${config.panelUrl}/api/client/servers/${config.serverId}/resources`, {
-                    headers: { 'Authorization': `Bearer ${config.apiKey}`, 'Accept': 'application/json' }
-                });
-                
-                if (!response.ok) throw new Error("Err");
-                const data = await response.json(); const stats = data.attributes.resources; const state = data.attributes.current_state;
-                
-                const badge = document.getElementById('status-badge');
-                if(state === 'running') { badge.innerText = "● ONLINE"; badge.className = "text-green-500 text-[10px] animate-pulse bg-green-900/50 px-2 py-1 rounded font-bold border border-green-500/30"; }
-                else if(state === 'offline') { badge.innerText = "● OFFLINE"; badge.className = "text-red-500 text-[10px] bg-red-900/50 px-2 py-1 rounded font-bold border border-red-500/30"; }
-                else { badge.innerText = "● " + state.toUpperCase(); badge.className = "text-yellow-500 text-[10px] animate-pulse bg-yellow-900/50 px-2 py-1 rounded font-bold border border-yellow-500/30"; }
-
-                document.getElementById('bar-cpu').style.width = Math.min(stats.cpu_absolute, 100) + "%"; document.getElementById('text-cpu').innerText = stats.cpu_absolute.toFixed(1) + "%";
-                const maxRam = 16; const ramPercent = ((stats.memory_bytes/1024/1024/1024)/maxRam)*100; document.getElementById('bar-ram').style.width = Math.min(ramPercent, 100) + "%"; document.getElementById('text-ram').innerText = (stats.memory_bytes/1024/1024/1024).toFixed(1) + "G";
-                const maxDisk = 50; const diskPercent = ((stats.disk_bytes/1024/1024/1024)/maxDisk)*100; document.getElementById('bar-rom').style.width = Math.min(diskPercent, 100) + "%"; document.getElementById('text-rom').innerText = (stats.disk_bytes/1024/1024/1024).toFixed(1) + "G";
-
-                if(stats.uptime > 0) { const sec = Math.floor(stats.uptime / 1000); const bh = Math.floor(sec / 3600); const bm = Math.floor((sec % 3600) / 60); document.getElementById('runtime-bot').innerText = `${bh}h ${bm}m`; document.getElementById('runtime-bot').className = "text-blue-400 font-bold font-mono text-xl"; }
-                else { document.getElementById('runtime-bot').innerText = "Offline"; document.getElementById('runtime-bot').className = "text-red-500 font-bold font-mono text-xl"; }
-            } catch (e) { console.log("Waiting for data..."); }
-        }
-
-        // --- INIT ALL ---
-        window.onload = () => {
-            // 1. Jalankan Animasi
-            startRobotBoot();
-            // 2. Jalankan Data Fetching (Background)
-            initData();
-        };
+        window.onload = () => { startRobotBoot(); checkUserLogin(); fetchTestimonials(); setRating(5); updateServerStats(); setInterval(updateServerStats, 5000); };
     </script>
 </body>
-</html>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  </html>
