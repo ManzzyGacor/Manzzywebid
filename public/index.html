@@ -4,46 +4,61 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manzzy ID Official - Premium Bot Services</title>
-    
-    <meta name="description" content="Penyedia layanan hosting bot WhatsApp profesional.">
-    <meta property="og:image" content="https://manzzy.web.id/image/qris.jpg"> 
-
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    
     <link rel="stylesheet" href="style.css">
+    
+    <style>
+        #loader { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s ease; }
+        .spinner { width: 50px; height: 50px; border: 3px solid rgba(139, 92, 246, 0.3); border-top: 3px solid #8b5cf6; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        .loading-text { font-family: 'JetBrains Mono', monospace; color: #8b5cf6; font-size: 12px; letter-spacing: 2px; animation: pulse 1s infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    </style>
 </head>
 <body>
 
     <div id="loader">
-        <div class="cyber-eye">
-            <div class="cyber-pupil"></div>
-            <div class="cyber-ring"></div>
-        </div>
-        <div class="loading-text" id="loader-text">SYSTEM INITIALIZING...</div>
+        <div class="spinner"></div>
+        <div class="loading-text">LOADING...</div>
     </div>
+
+    <script>
+        // Script ini jalan duluan sebelum file lain diload
+        // Jaminan 100% loader hilang dalam 3 detik
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const l = document.getElementById('loader');
+                if(l) {
+                    l.style.opacity = '0';
+                    l.style.pointerEvents = 'none';
+                    setTimeout(() => { l.style.display = 'none'; }, 500);
+                }
+            }, 3000); // 3 Detik Fix
+        });
+        
+        // Backup Plan: Kalau window load macet, paksa hilang di detik ke-5
+        setTimeout(() => {
+            const l = document.getElementById('loader');
+            if(l && l.style.display !== 'none') l.style.display = 'none';
+        }, 5000);
+    </script>
 
     <div id="modal-overlay" class="modal-overlay" onclick="closeModal(event)">
         <div class="modal-box" onclick="event.stopPropagation()">
             <div class="relative">
                 <button onclick="closeModalDirect()" class="absolute -top-2 -right-2 text-gray-400 hover:text-white bg-gray-800 rounded-full w-8 h-8 flex items-center justify-center border border-gray-600 z-10"><i class="fa-solid fa-xmark"></i></button>
-                
                 <div id="modal-content-product">
                     <img id="modal-img" src="" class="w-full h-48 object-cover rounded-xl mb-5 border border-gray-800">
                     <div class="flex justify-between items-start mb-2"><h2 id="modal-title" class="text-2xl font-bold text-white leading-tight"></h2><span id="modal-price" class="text-purple-400 font-mono font-bold text-lg bg-purple-900/30 px-3 py-1 rounded-lg border border-purple-500/30"></span></div>
                     <div class="h-px bg-gray-800 w-full my-4"></div><h4 class="text-xs text-gray-500 font-bold uppercase mb-2">Deskripsi Layanan</h4><p id="modal-desc" class="text-gray-300 text-sm leading-relaxed mb-6 whitespace-pre-wrap font-sans"></p>
-                    
                     <form id="orderForm" onsubmit="processOrder(event)" class="space-y-4 mb-4">
                         <div id="dynamic-inputs" class="space-y-3"></div>
-                        <div class="bg-gray-900 border border-gray-800 p-3 rounded-lg flex justify-between items-center text-sm">
-                            <span class="text-gray-400">Saldo Kamu:</span>
-                            <span id="user-balance-display" class="font-bold font-mono">Loading...</span>
-                        </div>
+                        <div class="bg-gray-900 border border-gray-800 p-3 rounded-lg flex justify-between items-center text-sm"><span class="text-gray-400">Saldo Kamu:</span><span id="user-balance-display" class="font-bold font-mono">Loading...</span></div>
                         <button type="submit" id="btn-buy" class="w-full py-4 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold flex items-center justify-center gap-3 transition shadow-lg shadow-purple-500/20"><i class="fa-solid fa-cart-shopping text-lg"></i> Bayar Sekarang</button>
                     </form>
                 </div>
-
                 <div id="modal-content-receipt" class="hidden text-center py-4">
                     <div class="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/30"><i class="fa-solid fa-check text-4xl text-green-500"></i></div>
                     <h2 class="text-2xl font-bold text-white mb-2">Order Berhasil!</h2><p class="text-gray-400 text-sm mb-6">Terima kasih telah berlangganan.</p>
@@ -58,34 +73,28 @@
         </div>
     </div>
 
-    <button onclick="scrollToTop()" id="btn-scroll" class="scroll-top-btn" title="Kembali ke Atas"><i class="fa-solid fa-arrow-up"></i></button>
+    <button onclick="scrollToTop()" id="btn-scroll" class="scroll-top-btn"><i class="fa-solid fa-arrow-up"></i></button>
 
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
     <aside id="sidebar-menu" class="sidebar-menu flex flex-col p-6 pt-10">
         <div class="flex items-center gap-3 mb-10 border-b border-gray-800 pb-6"><div class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-500/30"><i class="fa-solid fa-robot text-white text-lg"></i></div><div><h3 class="font-bold text-white text-lg leading-none">MANZZY<span class="text-purple-400">ID</span></h3><p id="user-status-sidebar" class="text-xs text-gray-500 font-mono mt-1">Guest Mode</p></div></div>
         <nav class="flex-1 space-y-2">
-            <a href="#features" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-star w-6 text-center text-yellow-500 group-hover:scale-110 transition"></i><span class="font-medium">Keunggulan</span></a>
-            <a href="#testimonials" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-comment-dots w-6 text-center text-pink-500 group-hover:scale-110 transition"></i><span class="font-medium">Testimoni</span></a>
-            <div id="menu-topup" class="hidden"><a href="#" onclick="switchView('topup'); toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-wallet w-6 text-center text-green-500 group-hover:scale-110 transition"></i><span class="font-medium">Top Up Saldo</span></a></div>
-            <a href="#faq" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-circle-question w-6 text-center text-blue-500 group-hover:scale-110 transition"></i><span class="font-medium">FAQ</span></a>
+            <a href="#features" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-star w-6 text-center text-yellow-500"></i><span class="font-medium">Keunggulan</span></a>
+            <a href="#testimonials" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-comment-dots w-6 text-center text-pink-500"></i><span class="font-medium">Testimoni</span></a>
+            <div id="menu-topup" class="hidden"><a href="#" onclick="switchView('topup'); toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-wallet w-6 text-center text-green-500"></i><span class="font-medium">Top Up Saldo</span></a></div>
+            <div id="menu-myservices" class="hidden"><a href="#" onclick="switchView('myservices'); toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-server w-6 text-center text-blue-500"></i><span class="font-medium">Layanan Saya</span></a></div>
+            <a href="#faq" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-circle-question w-6 text-center text-blue-500"></i><span class="font-medium">FAQ</span></a>
             <div class="h-px bg-gray-800 my-4"></div>
-            <div id="auth-menu"><a href="/login_user.html" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-user w-6 text-center text-purple-500 group-hover:scale-110 transition"></i><span class="font-medium">Login Member</span></a></div>
-            <a href="/login.html" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-lock w-6 text-center text-red-500 group-hover:scale-110 transition"></i><span class="font-medium">Admin Panel</span></a>
+            <div id="auth-menu"><a href="/login_user.html" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-user w-6 text-center text-purple-500"></i><span class="font-medium">Login Member</span></a></div>
+            <a href="/login.html" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-lock w-6 text-center text-red-500"></i><span class="font-medium">Admin Panel</span></a>
         </nav>
-        <div class="mt-auto pt-6 border-t border-gray-800 text-center"><p class="text-[10px] text-gray-600 font-mono">System v15.0 Split</p></div>
+        <div class="mt-auto pt-6 border-t border-gray-800 text-center"><p class="text-[10px] text-gray-600 font-mono">System v17.0 Fixed</p></div>
     </aside>
 
     <nav class="fixed top-0 w-full z-50 backdrop-blur-md bg-black/60 border-b border-white/5">
         <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-4">
-                <button onclick="toggleSidebar()" class="text-gray-300 hover:text-white transition p-2 hover:bg-white/10 rounded-lg"><i class="fa-solid fa-bars text-xl"></i></button>
-                <div class="flex items-center gap-2 cursor-pointer" onclick="switchView('landing')"><div class="w-1 h-6 bg-purple-600 rounded-full"></div><h2 class="text-lg font-bold tracking-widest text-white">MANZZY<span class="text-purple-400">ID</span></h2></div>
-            </div>
-            
-            <div id="header-balance" class="hidden md:flex items-center gap-3 px-4 py-2 rounded-full bg-black/50 border border-gray-700 hover:border-purple-500 transition cursor-default">
-                <i class="fa-solid fa-wallet text-green-400 animate-pulse"></i>
-                <span class="text-sm text-white font-mono font-bold tracking-wide">Loading...</span>
-            </div>
+            <div class="flex items-center gap-4"><button onclick="toggleSidebar()" class="text-gray-300 hover:text-white transition p-2 hover:bg-white/10 rounded-lg"><i class="fa-solid fa-bars text-xl"></i></button><div class="flex items-center gap-2 cursor-pointer" onclick="switchView('landing')"><div class="w-1 h-6 bg-purple-600 rounded-full"></div><h2 class="text-lg font-bold tracking-widest text-white">MANZZY<span class="text-purple-400">ID</span></h2></div></div>
+            <div id="header-balance" class="hidden md:flex items-center gap-3 px-4 py-2 rounded-full bg-black/50 border border-gray-700 hover:border-purple-500 transition cursor-default"><i class="fa-solid fa-wallet text-green-400 animate-pulse"></i><span class="text-sm text-white font-mono font-bold tracking-wide">Loading...</span></div>
         </div>
     </nav>
 
@@ -94,38 +103,20 @@
 
         <section id="view-landing" class="view-section view-active">
             <div class="text-center max-w-4xl mx-auto mt-10 mb-16"><h1 class="text-5xl md:text-8xl font-bold mb-6 leading-tight"><span class="glitch neon-text" data-text="MANZZY ID">MANZZY ID</span> <br> <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">OFFICIAL</span></h1><p class="text-gray-400 text-lg md:text-xl mb-10 max-w-2xl mx-auto">Layanan Hosting Bot WhatsApp Profesional & Terpercaya.</p><div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-8"><button onclick="switchView('store')" class="px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-[0_0_30px_rgba(139,92,246,0.3)] transition hover:scale-105 w-full md:w-auto"><i class="fa-solid fa-store mr-2"></i> Lihat Produk</button></div><div class="flex items-center justify-center gap-4 mb-6"><a href="https://instagram.com/Manzz_Wakeup" target="_blank" class="social-btn"><i class="fa-brands fa-instagram"></i></a><a href="https://wa.me/6287756632352" target="_blank" class="social-btn"><i class="fa-solid fa-user-shield"></i></a></div></div>
-            
-            <div class="w-full max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 mb-24">
-                <div class="glass-card p-6 rounded-2xl flex flex-col justify-between border-l-4 border-l-green-500 space-y-4"><div class="flex justify-between items-center border-b border-gray-800 pb-3"><div><h4 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">VPS Runtime</h4><div class="flex items-center gap-2 text-green-400 font-bold font-mono text-xl"><i class="fa-solid fa-server"></i> <span id="runtime-vps">0d 0h</span></div></div></div><div class="flex justify-between items-center"><div><h4 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Bot Runtime</h4><div class="flex items-center gap-2 text-blue-400 font-bold font-mono text-xl"><i class="fa-solid fa-robot"></i> <span id="runtime-bot">Offline</span></div></div></div></div>
-                <div class="glass-card p-6 rounded-2xl border-l-4 border-l-purple-500"><div class="flex justify-between items-start mb-4 border-b border-gray-800 pb-3"><div><h4 class="text-white text-sm font-bold flex items-center gap-2"><i class="fa-brands fa-linux"></i> AMD Ryzen™ 7</h4><p class="text-[10px] text-gray-500 mt-1">High Performance Node</p></div><span id="status-badge" class="text-gray-500 text-[10px] animate-pulse bg-gray-900/50 px-2 py-1 rounded border border-gray-700 font-bold">CONNECTING...</span></div><div class="flex items-center gap-3 text-xs font-mono mb-3"><span class="w-8 text-purple-300">CPU</span><div class="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden"><div id="bar-cpu" class="h-full bg-purple-500 transition-all duration-1000" style="width: 0%"></div></div><span id="text-cpu" class="w-12 text-right text-gray-400">0%</span></div><div class="flex items-center gap-3 text-xs font-mono mb-3"><span class="w-8 text-purple-300">RAM</span><div class="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden"><div id="bar-ram" class="h-full bg-purple-500 transition-all duration-1000" style="width: 0%"></div></div><span id="text-ram" class="w-12 text-right text-gray-400">0G</span></div><div class="flex items-center gap-3 text-xs font-mono"><span class="w-8 text-purple-300">ROM</span><div class="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden"><div id="bar-rom" class="h-full bg-blue-500 transition-all duration-1000" style="width: 0%"></div></div><span id="text-rom" class="w-12 text-right text-gray-400">0G</span></div></div>
-            </div>
-
+            <div class="w-full max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 mb-24"><div class="glass-card p-6 rounded-2xl flex flex-col justify-between border-l-4 border-l-green-500 space-y-4"><div class="flex justify-between items-center border-b border-gray-800 pb-3"><div><h4 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">VPS Runtime</h4><div class="flex items-center gap-2 text-green-400 font-bold font-mono text-xl"><i class="fa-solid fa-server"></i> <span id="runtime-vps">0d 0h</span></div></div></div><div class="flex justify-between items-center"><div><h4 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Bot Runtime</h4><div class="flex items-center gap-2 text-blue-400 font-bold font-mono text-xl"><i class="fa-solid fa-robot"></i> <span id="runtime-bot">Offline</span></div></div></div></div><div class="glass-card p-6 rounded-2xl border-l-4 border-l-purple-500"><div class="flex justify-between items-start mb-4 border-b border-gray-800 pb-3"><div><h4 class="text-white text-sm font-bold flex items-center gap-2"><i class="fa-brands fa-linux"></i> AMD Ryzen™ 7</h4><p class="text-[10px] text-gray-500 mt-1">High Performance Node</p></div><span id="status-badge" class="text-gray-500 text-[10px] animate-pulse bg-gray-900/50 px-2 py-1 rounded border border-gray-700 font-bold">CONNECTING...</span></div><div class="flex items-center gap-3 text-xs font-mono mb-3"><span class="w-8 text-purple-300">CPU</span><div class="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden"><div id="bar-cpu" class="h-full bg-purple-500 transition-all duration-1000" style="width: 0%"></div></div><span id="text-cpu" class="w-12 text-right text-gray-400">0%</span></div><div class="flex items-center gap-3 text-xs font-mono mb-3"><span class="w-8 text-purple-300">RAM</span><div class="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden"><div id="bar-ram" class="h-full bg-purple-500 transition-all duration-1000" style="width: 0%"></div></div><span id="text-ram" class="w-12 text-right text-gray-400">0G</span></div><div class="flex items-center gap-3 text-xs font-mono"><span class="w-8 text-purple-300">ROM</span><div class="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden"><div id="bar-rom" class="h-full bg-blue-500 transition-all duration-1000" style="width: 0%"></div></div><span id="text-rom" class="w-12 text-right text-gray-400">0G</span></div></div></div>
             <section id="features" class="mb-24 scroll-mt-32"><div class="text-center mb-12"><h2 class="text-3xl font-bold text-white mb-4">KEUNGGULAN</h2></div><div class="grid grid-cols-1 md:grid-cols-3 gap-8"><div class="glass-card p-8 rounded-2xl text-center border-t-4 border-t-purple-500"><h3 class="text-xl font-bold text-white">Uptime 99%</h3><p class="text-gray-400 text-sm">Server selalu online.</p></div><div class="glass-card p-8 rounded-2xl text-center border-t-4 border-t-blue-500"><h3 class="text-xl font-bold text-white">Cepat</h3><p class="text-gray-400 text-sm">Koneksi stabil.</p></div><div class="glass-card p-8 rounded-2xl text-center border-t-4 border-t-green-500"><h3 class="text-xl font-bold text-white">Aman</h3><p class="text-gray-400 text-sm">Privasi terjaga.</p></div></div></section>
-            
-            <section id="testimonials" class="mb-24 scroll-mt-32">
-                <div class="text-center mb-12"><h2 class="text-3xl font-bold text-white mb-4">ULASAN</h2></div>
-                <div id="review-form-container" class="hidden glass-card p-6 rounded-xl max-w-lg mx-auto mb-10 border border-purple-500/30"><h3 class="text-white font-bold mb-3">Tulis Ulasan</h3><form onsubmit="submitReview(event)"><div class="flex gap-2 mb-4 star-rating" id="star-input"><i class="fa-solid fa-star text-2xl" onclick="setRating(1)"></i><i class="fa-solid fa-star text-2xl" onclick="setRating(2)"></i><i class="fa-solid fa-star text-2xl" onclick="setRating(3)"></i><i class="fa-solid fa-star text-2xl" onclick="setRating(4)"></i><i class="fa-solid fa-star text-2xl" onclick="setRating(5)"></i></div><input type="hidden" id="ratingValue" value="5"><textarea id="reviewComment" class="w-full bg-black/50 border border-gray-700 rounded p-3 text-white text-sm mb-3" rows="3" placeholder="Bagaimana pengalaman Anda?" required></textarea><button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded">Kirim Ulasan</button></form></div>
-                <div id="login-prompt" class="text-center mb-10"><a href="/login_user.html" class="px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full border border-white/10 transition">Login Member</a></div>
-                <div id="testimonial-grid" class="grid grid-rows-3 grid-flow-col gap-4 overflow-x-auto pb-8 px-4 no-scrollbar snap-x snap-mandatory"><p class="text-center text-gray-500 w-full py-10">Memuat ulasan...</p></div>
-            </section>
-
-            <section id="faq" class="mb-24 scroll-mt-32 max-w-3xl mx-auto">
-                <div class="text-center mb-12"><h2 class="text-3xl font-bold text-white mb-4">PERTANYAAN</h2></div>
-                <div class="glass-card p-2 rounded-2xl divide-y divide-gray-800/50">
-                    <div class="faq-item p-4"><div class="faq-header" onclick="toggleFaq(this)"><h3 class="font-bold text-white">Metode pembayaran?</h3><i class="fa-solid fa-chevron-down faq-icon text-gray-500"></i></div><div class="faq-content"><p class="text-gray-400 text-sm pb-4">Transfer Bank, E-Wallet, dan QRIS.</p></div></div>
-                    <div class="faq-item p-4"><div class="faq-header" onclick="toggleFaq(this)"><h3 class="font-bold text-white">Berapa lama aktivasi?</h3><i class="fa-solid fa-chevron-down faq-icon text-gray-500"></i></div><div class="faq-content"><p class="text-gray-400 text-sm pb-4">Instan untuk produk otomatis, 1x24 jam untuk manual.</p></div></div>
-                </div>
-            </section>
-
+            <section id="testimonials" class="mb-24 scroll-mt-32"><div class="text-center mb-12"><h2 class="text-3xl font-bold text-white mb-4">ULASAN</h2></div><div id="review-form-container" class="hidden glass-card p-6 rounded-xl max-w-lg mx-auto mb-10 border border-purple-500/30"><h3 class="text-white font-bold mb-3">Tulis Ulasan</h3><form onsubmit="submitReview(event)"><div class="flex gap-2 mb-4 star-rating" id="star-input"><i class="fa-solid fa-star text-2xl" onclick="setRating(1)"></i><i class="fa-solid fa-star text-2xl" onclick="setRating(2)"></i><i class="fa-solid fa-star text-2xl" onclick="setRating(3)"></i><i class="fa-solid fa-star text-2xl" onclick="setRating(4)"></i><i class="fa-solid fa-star text-2xl" onclick="setRating(5)"></i></div><input type="hidden" id="ratingValue" value="5"><textarea id="reviewComment" class="w-full bg-black/50 border border-gray-700 rounded p-3 text-white text-sm mb-3" rows="3" placeholder="Bagaimana pengalaman Anda?" required></textarea><button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded">Kirim Ulasan</button></form></div><div id="login-prompt" class="text-center mb-10"><a href="/login_user.html" class="px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full border border-white/10 transition">Login Member</a></div><div id="testimonial-grid" class="grid grid-rows-3 grid-flow-col gap-4 overflow-x-auto pb-8 px-4 no-scrollbar snap-x snap-mandatory"><p class="text-center text-gray-500 w-full py-10">Memuat ulasan...</p></div></section>
+            <section id="faq" class="mb-24 scroll-mt-32 max-w-3xl mx-auto"><div class="text-center mb-12"><h2 class="text-3xl font-bold text-white mb-4">PERTANYAAN</h2></div><div class="glass-card p-2 rounded-2xl divide-y divide-gray-800/50"><div class="faq-item p-4"><div class="faq-header" onclick="toggleFaq(this)"><h3 class="font-bold text-white">Metode pembayaran?</h3><i class="fa-solid fa-chevron-down faq-icon text-gray-500"></i></div><div class="faq-content"><p class="text-gray-400 text-sm pb-4">Transfer Bank, E-Wallet, dan QRIS.</p></div></div><div class="faq-item p-4"><div class="faq-header" onclick="toggleFaq(this)"><h3 class="font-bold text-white">Berapa lama aktivasi?</h3><i class="fa-solid fa-chevron-down faq-icon text-gray-500"></i></div><div class="faq-content"><p class="text-gray-400 text-sm pb-4">Instan untuk produk otomatis, 1x24 jam untuk manual.</p></div></div></div></section>
             <footer class="text-center text-gray-600 text-xs font-mono py-8 border-t border-gray-900">© 2025 Manzzy ID</footer>
         </section>
 
         <section id="view-store" class="view-section"><div class="w-full mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4"><button onclick="switchView('landing')" class="text-gray-400 hover:text-white flex items-center gap-2 group"><i class="fa-solid fa-arrow-left"></i> Kembali</button><h2 class="text-3xl font-bold text-white">KATALOG</h2></div><div class="search-container"><input type="text" id="searchInput" onkeyup="filterProducts()" placeholder="Cari layanan..." class="search-input"><i class="fa-solid fa-search search-icon"></i></div><div id="section-categories"><h3 class="text-gray-400 text-sm font-bold uppercase mb-4 pl-3 border-l-4 border-purple-500">Kategori</h3><div id="grid-categories" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12"></div></div><div id="section-products" class="hidden"><div class="flex items-center gap-3 mb-6"><button onclick="backToCategories()" class="text-sm bg-gray-800 px-3 py-1 rounded text-white"><i class="fa-solid fa-chevron-left"></i> Kategori</button><span id="current-category-name" class="text-purple-400 font-bold"></span></div><div id="grid-products" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 pb-20"></div></div><div id="loading-store" class="text-center py-20 hidden"><div class="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mb-4"></div></div></section>
 
-        <section id="view-topup" class="view-section"><div class="max-w-lg mx-auto"><button onclick="switchView('landing')" class="mb-6 text-gray-400 hover:text-white flex items-center gap-2 group"><i class="fa-solid fa-arrow-left"></i> Kembali</button><div class="glass-card p-8 rounded-2xl border-t-4 border-t-green-500"><h2 class="text-2xl font-bold text-white text-center mb-6">Isi Saldo</h2><div class="bg-white p-4 rounded-xl mb-6 mx-auto w-64"><img src="qris.jpg" onerror="this.src='https://via.placeholder.com/300x300?text=Scan+QRIS'" class="w-full h-auto"></div><p class="text-center text-xs text-gray-400 mb-6">Scan QRIS, lalu upload bukti transfer.</p><form onsubmit="submitTopUp(event)" class="space-y-4"><div><label class="text-sm text-gray-400 block mb-1">Nominal Transfer</label><input type="number" id="topupAmount" class="w-full bg-black/50 border border-gray-700 rounded p-3 text-white" placeholder="50000" required></div><div><label class="text-sm text-gray-400 block mb-1">Bukti Transfer (Screenshot)</label><input type="file" id="topupProof" accept="image/*" class="w-full text-sm text-gray-400" required></div><button type="submit" id="btn-topup" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-lg">Kirim Bukti Transfer</button></form></div></div></section>
+        <section id="view-topup" class="view-section"><div class="max-w-lg mx-auto"><button onclick="switchView('landing')" class="mb-6 text-gray-400 hover:text-white flex items-center gap-2 group"><i class="fa-solid fa-arrow-left"></i> Kembali</button><div class="glass-card p-8 rounded-2xl border-t-4 border-t-green-500"><h2 class="text-2xl font-bold text-white text-center mb-6">Isi Saldo</h2><div class="bg-white p-4 rounded-xl mb-6 mx-auto w-64"><img src="image/qris.jpg" onerror="this.src='https://via.placeholder.com/300x300?text=Scan+QRIS'" class="w-full h-auto"></div><p class="text-center text-xs text-gray-400 mb-6">Scan QRIS, lalu upload bukti transfer.</p><form onsubmit="submitTopUp(event)" class="space-y-4"><div><label class="text-sm text-gray-400 block mb-1">Nominal Transfer</label><input type="number" id="topupAmount" class="w-full bg-black/50 border border-gray-700 rounded p-3 text-white" placeholder="50000" required></div><div><label class="text-sm text-gray-400 block mb-1">Bukti Transfer (Screenshot)</label><input type="file" id="topupProof" accept="image/*" class="w-full text-sm text-gray-400" required></div><button type="submit" id="btn-topup" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-lg">Kirim Bukti Transfer</button></form></div></div></section>
+
+        <section id="view-myservices" class="view-section"><div class="w-full mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4"><button onclick="switchView('landing')" class="text-gray-400 hover:text-white flex items-center gap-2 group"><i class="fa-solid fa-arrow-left"></i> Kembali</button><h2 class="text-3xl font-bold text-white">BOT <span class="text-blue-500">AKTIF</span></h2></div><div id="myservices-list" class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20"><p class="text-gray-500 col-span-full text-center py-10">Memuat layanan...</p></div></section>
     </div>
 
     <script src="script.js"></script>
-    
 </body>
 </html>
