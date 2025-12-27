@@ -3,125 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Member Area - Manzzy ID</title>
+    <title>Member Area</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Space Grotesk', sans-serif; background: #050505; color: white; }
-        .glass { background: #0f0f11; border: 1px solid #333; }
-        .input-field { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid #333; padding: 12px; border-radius: 8px; color: white; transition: 0.3s; }
-        .input-field:focus { border-color: #8b5cf6; outline: none; }
-        .hidden { display: none; }
-    </style>
+    <style>body{font-family:'Space Grotesk',sans-serif;background:#050505;color:white}.glass{background:#0f0f11;border:1px solid #333}.input-field{width:100%;background:rgba(0,0,0,0.5);border:1px solid #333;padding:12px;border-radius:8px;color:white}.hidden{display:none}</style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-6 relative overflow-hidden">
-    
     <div class="absolute top-0 left-0 w-96 h-96 bg-purple-600/10 rounded-full blur-[100px] -z-10"></div>
-    <div class="absolute bottom-0 right-0 w-96 h-96 bg-blue-600/10 rounded-full blur-[100px] -z-10"></div>
-
     <div class="w-full max-w-md glass p-8 rounded-2xl shadow-2xl relative z-10">
-        
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold mb-2">MANZZY<span class="text-purple-500">ID</span></h1>
-            <p class="text-gray-500 text-sm" id="page-subtitle">Login untuk akses layanan.</p>
-        </div>
-
-        <form id="form-login" onsubmit="handleAuth(event, 'login')" class="space-y-4">
-            <div>
-                <label class="block text-xs text-gray-400 mb-1 font-bold uppercase">Username</label>
-                <input type="text" id="login-user" class="input-field" placeholder="Masukkan username..." required>
-            </div>
-            <div>
-                <label class="block text-xs text-gray-400 mb-1 font-bold uppercase">Password</label>
-                <input type="password" id="login-pass" class="input-field" placeholder="Masukkan password..." required>
-            </div>
-            <button type="submit" id="btn-login" class="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-purple-500/20">
-                Masuk Sekarang
-            </button>
-            <p class="text-center text-xs text-gray-500 mt-4">
-                Belum punya akun? <a href="#" onclick="toggleMode()" class="text-purple-400 hover:text-white font-bold transition">Daftar Disini</a>
-            </p>
+        <div class="text-center mb-8"><h1 class="text-3xl font-bold mb-2">MANZZY<span class="text-purple-500">ID</span></h1><p class="text-gray-500 text-sm" id="page-subtitle">Login untuk akses layanan.</p></div>
+        <form id="form-login" onsubmit="handleAuth(event,'login')" class="space-y-4">
+            <div><label class="block text-xs text-gray-400 mb-1 font-bold">USERNAME</label><input type="text" id="login-user" class="input-field" required></div>
+            <div><label class="block text-xs text-gray-400 mb-1 font-bold">PASSWORD</label><input type="password" id="login-pass" class="input-field" required></div>
+            <button type="submit" id="btn-login" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl transition">Masuk</button>
+            <p class="text-center text-xs text-gray-500 mt-4">Belum punya akun? <a href="#" onclick="toggleMode()" class="text-purple-400 font-bold">Daftar</a></p>
         </form>
-
-        <form id="form-register" onsubmit="handleAuth(event, 'register')" class="space-y-4 hidden">
-            <div>
-                <label class="block text-xs text-gray-400 mb-1 font-bold uppercase">Buat Username Baru</label>
-                <input type="text" id="reg-user" class="input-field" placeholder="Contoh: udin123" required>
-            </div>
-            <div>
-                <label class="block text-xs text-gray-400 mb-1 font-bold uppercase">Buat Password</label>
-                <input type="password" id="reg-pass" class="input-field" placeholder="Minimal 6 karakter" required>
-            </div>
-            <button type="submit" id="btn-register" class="w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-500 hover:to-teal-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-green-500/20">
-                Daftar Akun
-            </button>
-            <p class="text-center text-xs text-gray-500 mt-4">
-                Sudah punya akun? <a href="#" onclick="toggleMode()" class="text-green-400 hover:text-white font-bold transition">Login Disini</a>
-            </p>
+        <form id="form-register" onsubmit="handleAuth(event,'register')" class="space-y-4 hidden">
+            <div><label class="block text-xs text-gray-400 mb-1 font-bold">USERNAME BARU</label><input type="text" id="reg-user" class="input-field" required></div>
+            <div><label class="block text-xs text-gray-400 mb-1 font-bold">PASSWORD</label><input type="password" id="reg-pass" class="input-field" required></div>
+            <button type="submit" id="btn-register" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition">Daftar</button>
+            <p class="text-center text-xs text-gray-500 mt-4">Sudah punya akun? <a href="#" onclick="toggleMode()" class="text-green-400 font-bold">Login</a></p>
         </form>
-
-        <div class="mt-6 pt-6 border-t border-gray-800 text-center">
-            <a href="/" class="text-xs text-gray-500 hover:text-white flex items-center justify-center gap-2 transition">
-                <i class="fa-solid fa-arrow-left"></i> Kembali ke Website Utama
-            </a>
-        </div>
+        <div class="mt-6 pt-6 border-t border-gray-800 text-center"><a href="/" class="text-xs text-gray-500 hover:text-white">← Kembali ke Home</a></div>
     </div>
-
     <script>
-        function toggleMode() {
-            const loginForm = document.getElementById('form-login');
-            const regForm = document.getElementById('form-register');
-            const subtitle = document.getElementById('page-subtitle');
-
-            if (loginForm.classList.contains('hidden')) {
-                loginForm.classList.remove('hidden');
-                regForm.classList.add('hidden');
-                subtitle.innerText = "Login untuk akses layanan.";
-            } else {
-                loginForm.classList.add('hidden');
-                regForm.classList.remove('hidden');
-                subtitle.innerText = "Buat akun baru gratis.";
-            }
-        }
-
-        async function handleAuth(e, type) {
-            e.preventDefault();
-            const btn = document.getElementById(type === 'login' ? 'btn-login' : 'btn-register');
-            const originalText = btn.innerText;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Loading...';
-            btn.disabled = true;
-
-            const username = document.getElementById(type === 'login' ? 'login-user' : 'reg-user').value;
-            const password = document.getElementById(type === 'login' ? 'login-pass' : 'reg-pass').value;
-            const endpoint = type === 'login' ? '/api/login-user' : '/api/register-user';
-
-            try {
-                const res = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                });
-                const data = await res.json();
-
-                if (data.success) {
-                    if (type === 'login') {
-                        localStorage.setItem('user_session', data.username);
-                        window.location.href = '/';
-                    } else {
-                        alert("Registrasi Berhasil! Silakan Login.");
-                        toggleMode();
-                    }
-                } else {
-                    alert("Gagal: " + data.message);
-                }
-            } catch (err) {
-                alert("Error koneksi server.");
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
-        }
+        function toggleMode(){const l=document.getElementById('form-login'),r=document.getElementById('form-register'),s=document.getElementById('page-subtitle');if(l.classList.contains('hidden')){l.classList.remove('hidden');r.classList.add('hidden');s.innerText="Login untuk akses layanan.";}else{l.classList.add('hidden');r.classList.remove('hidden');s.innerText="Buat akun baru gratis.";}}
+        async function handleAuth(e,type){e.preventDefault();const btn=document.getElementById(type==='login'?'btn-login':'btn-register');const txt=btn.innerText;btn.innerText='Loading...';btn.disabled=true;const u=document.getElementById(type==='login'?'login-user':'reg-user').value;const p=document.getElementById(type==='login'?'login-pass':'reg-pass').value;try{const res=await fetch(type==='login'?'/api/login-user':'/api/register-user',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});const data=await res.json();if(data.success){if(type==='login'){localStorage.setItem('user_session',data.username);window.location.href='/';}else{alert("Berhasil! Silakan Login.");toggleMode();}}else{alert("Gagal: "+data.message);}}catch(err){alert("Error server.");}finally{btn.innerText=txt;btn.disabled=false;}}
     </script>
 </body>
 </html>
