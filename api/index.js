@@ -37,7 +37,7 @@ const connectDB = async () => {
 };
 
 // --- ROUTES ---
-app.get('/api', (req, res) => res.send('Manzzy Backend v5.0 Ready'));
+app.get('/api', (req, res) => res.send('Manzzy Backend v5.1 (Cloudflare Bypass) Ready'));
 
 // Auth & User
 app.post('/api/login', async (req, res) => { await connectDB(); const { username, password } = req.body; const admin = await Admin.findOne({ username, password }); if (admin) res.json({ success: true }); else res.status(401).json({ success: false }); });
@@ -55,7 +55,18 @@ app.post('/api/products', async (req, res) => { await connectDB(); try { await n
 app.put('/api/products/:id', async (req, res) => { await connectDB(); try { await Product.findByIdAndUpdate(req.params.id, req.body); res.json({ success: true }); } catch (err) { res.status(500).json({ error: err.message }); } });
 app.delete('/api/products/:id', async (req, res) => { await connectDB(); await Product.findByIdAndDelete(req.params.id); res.json({ success: true }); });
 
-// --- PTERODACTYL REAL-TIME ---
+// --- PTERODACTYL REAL-TIME (DENGAN BYPASS CLOUDFLARE) ---
+
+// Header Penyamaran (Pura-pura jadi Google Chrome Windows)
+const PTERO_HEADERS = (key) => ({
+    'Authorization': `Bearer ${key}`,
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Origin': 'https://google.com',
+    'Referer': 'https://google.com'
+});
+
 app.post('/api/ptero/config', async (req, res) => { await connectDB(); try { await PteroConfig.deleteMany({}); await new PteroConfig(req.body).save(); res.json({ success: true }); } catch (err) { res.status(500).json({ error: err.message }); } });
 app.get('/api/ptero/config', async (req, res) => { await connectDB(); const config = await PteroConfig.findOne(); res.json(config || {}); });
 
@@ -66,22 +77,27 @@ app.get('/api/ptero/stats', async (req, res) => {
 
     try {
         const response = await fetch(`${config.panelUrl}/api/client/servers/${config.serverId}/resources`, {
-            headers: { 'Authorization': `Bearer ${config.apiKey}`, 'Accept': 'application/json' }
+            headers: PTERO_HEADERS(config.apiKey)
         });
         
-        if (!response.ok) throw new Error("Panel Error");
+        if (!response.ok) {
+            console.log("Ptero Error Status:", response.status);
+            throw new Error("Panel Error / Cloudflare Block");
+        }
+
         const data = await response.json();
         const stats = data.attributes.resources;
-        const state = data.attributes.current_state; // running, offline, starting
+        const state = data.attributes.current_state; 
         
         res.json({
             status: state,
             cpu: stats.cpu_absolute.toFixed(1),
             ram: (stats.memory_bytes / 1024 / 1024 / 1024).toFixed(2),
             disk: (stats.disk_bytes / 1024 / 1024 / 1024).toFixed(2),
-            uptime: stats.uptime || 0 // Milliseconds
+            uptime: stats.uptime || 0 
         });
     } catch (err) {
+        console.error("Fetch Stats Error:", err.message);
         res.json({ status: "offline", cpu: "0", ram: "0", disk: "0", uptime: 0 });
     }
 });
@@ -93,10 +109,11 @@ app.post('/api/ptero/power', async (req, res) => {
     try {
         const response = await fetch(`${config.panelUrl}/api/client/servers/${config.serverId}/power`, {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${config.apiKey}`, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            headers: PTERO_HEADERS(config.apiKey),
             body: JSON.stringify({ signal })
         });
-        if (!response.ok) throw new Error("Gagal");
+        
+        if (!response.ok) throw new Error("Gagal / CF Block");
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
