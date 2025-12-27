@@ -26,6 +26,16 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+        /* --- LIMIT TEXT (Solusi Teks Panjang) --- */
+        .limit-text {
+            display: -webkit-box;
+            -webkit-line-clamp: 2; /* Maksimal 2 baris */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            height: 3em; /* Jaga tinggi tetap rapi */
+        }
+
         /* --- LOADER SYSTEM --- */
         #loader { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; justify-content: center; align-items: center; font-family: 'JetBrains Mono', monospace; }
         .terminal-window { width: 90%; max-width: 500px; }
@@ -45,9 +55,8 @@
         .social-btn { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #a8a8a8; font-size: 1.1rem; transition: all 0.3s ease; }
         .social-btn:hover { transform: translateY(-5px); color: white; border-color: var(--primary); box-shadow: 0 0 15px rgba(139, 92, 246, 0.5); }
         
-        /* RATING */
+        /* RATING & REVIEWS */
         .star-rating i { cursor: pointer; color: #4b5563; transition: 0.2s; } .star-rating i.active { color: #facc15; } .review-card { border-left: 3px solid var(--primary); }
-        .limit-text { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
 
         /* MODAL & SIDEBAR */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: all 0.3s ease; } .modal-active { opacity: 1; pointer-events: auto; }
@@ -131,7 +140,7 @@
                 <i class="fa-solid fa-lock w-6 text-center text-red-500 group-hover:scale-110 transition"></i><span class="font-medium">Admin Panel</span>
             </a>
         </nav>
-        <div class="mt-auto pt-6 border-t border-gray-800 text-center"><p class="text-[10px] text-gray-600 font-mono">System v3.4 Final</p></div>
+        <div class="mt-auto pt-6 border-t border-gray-800 text-center"><p class="text-[10px] text-gray-600 font-mono">System v3.6 Stable</p></div>
     </aside>
 
     <nav class="fixed top-0 w-full z-50 backdrop-blur-md bg-black/60 border-b border-white/5">
@@ -216,7 +225,7 @@
                     <a href="/login_user.html" class="px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full border border-white/10 transition">Login Member</a>
                 </div>
 
-                <div id="testimonial-grid" class="flex overflow-x-auto gap-6 pb-8 px-4 no-scrollbar snap-x snap-mandatory">
+                <div id="testimonial-grid" class="grid grid-rows-3 grid-flow-col gap-4 overflow-x-auto pb-8 px-4 no-scrollbar snap-x snap-mandatory">
                     <p class="text-center text-gray-500 w-full py-10">Memuat ulasan...</p>
                 </div>
                 
@@ -255,7 +264,7 @@
     </div>
 
     <script>
-        // --- 1. BOOTING & LOADER (FIXED) ---
+        // --- 1. BOOTING & LOADER (FIXED & SMOOTH) ---
         function toggleSidebar() { document.body.classList.toggle('sidebar-active'); }
         const terminalText = document.getElementById('terminal-text'), progressFill = document.getElementById('progress-fill'), percentText = document.getElementById('percent'), bootStatus = document.getElementById('boot-status'), loader = document.getElementById('loader');
         
@@ -330,7 +339,7 @@
         }
         function doLogout() { localStorage.removeItem('user_session'); window.location.reload(); }
 
-        // --- 3. TESTIMONIAL LOGIC (HORIZONTAL SLIDER) ---
+        // --- 3. TESTIMONIAL LOGIC (3 ROWS + SIDE SCROLL) ---
         let currentRating = 5;
         function setRating(n) { currentRating = n; document.getElementById('ratingValue').value = n; document.querySelectorAll('#star-input i').forEach((s, i) => { if (i < n) s.classList.add('active'); else s.classList.remove('active'); }); }
         
@@ -339,8 +348,10 @@
                 const res = await fetch('/api/testimonials'); const reviews = await res.json();
                 const grid = document.getElementById('testimonial-grid');
                 if(reviews.length === 0) { grid.innerHTML = '<p class="text-center text-gray-500 w-full py-10">Belum ada ulasan.</p>'; return; }
+                
+                // RENDER KARTU (Width Fixed biar bisa scroll horizontal)
                 grid.innerHTML = reviews.map(r => `
-                    <div class="glass-card p-6 rounded-xl review-card bg-gradient-to-br from-gray-900 to-black min-w-[300px] md:min-w-[350px] snap-center flex-shrink-0 border border-gray-800 flex flex-col justify-between h-auto min-h-[180px]">
+                    <div class="glass-card p-6 rounded-xl review-card bg-gradient-to-br from-gray-900 to-black w-[85vw] md:w-[350px] snap-center border border-gray-800 flex flex-col justify-between h-auto min-h-[160px]">
                         <div>
                             <div class="flex items-center justify-between mb-3">
                                 <div class="flex items-center gap-3">
@@ -409,4 +420,4 @@
         window.onload = () => { setTimeout(startBooting, 500); checkUserLogin(); fetchTestimonials(); setRating(5); };
     </script>
 </body>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              </html>
+    </html>
