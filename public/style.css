@@ -1,183 +1,473 @@
-/* --- CONFIG & VARIABLES --- */
-:root { 
-    --primary: #8b5cf6; 
-    --bg-dark: #050505; 
-    --card-bg: #0f0f11; 
+/* =========================================
+   1. CONFIG & GLOBAL SETTINGS
+   ========================================= */
+:root {
+    --primary: #8b5cf6;       /* Warna Ungu Utama */
+    --primary-glow: rgba(139, 92, 246, 0.5);
+    --bg-dark: #050505;       /* Latar Belakang Hitam Pekat */
+    --card-bg: #0f0f11;       /* Latar Belakang Kartu */
+    --text-main: #e0e0e0;
 }
 
-body { 
-    font-family: 'Space Grotesk', sans-serif; 
-    background-color: var(--bg-dark); 
-    color: #e0e0e0; 
-    overflow-x: hidden; 
+body {
+    font-family: 'Space Grotesk', sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    overflow-x: hidden; /* Mencegah scroll samping */
 }
 
-/* --- SCROLLBAR CUSTOM --- */
-::-webkit-scrollbar { width: 8px; } 
-::-webkit-scrollbar-track { background: #000; } 
-::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+/* Font Monospace untuk Angka & Kode */
+.font-mono {
+    font-family: 'JetBrains Mono', monospace;
+}
 
-/* HIDE SCROLLBAR (Untuk Slider Testimoni) */
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+/* =========================================
+   2. CUSTOM SCROLLBAR (Gaya Premium)
+   ========================================= */
+/* Scrollbar Browser Webkit (Chrome, Edge, Safari) */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px; /* Untuk scroll horizontal */
+}
 
-/* --- UTILITIES --- */
+::-webkit-scrollbar-track {
+    background: #000;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 4px;
+    border: 1px solid #000;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+}
+
+/* Utilitas Sembunyikan Scrollbar (Untuk Slider) */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* =========================================
+   3. ROBOT LOADER (CYBER EYE ANIMATION)
+   ========================================= */
+#loader {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 9999; /* Paling atas */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    transition: opacity 0.5s ease;
+}
+
+/* Container Mata */
+.cyber-eye {
+    width: 80px;
+    height: 80px;
+    border: 3px solid var(--primary);
+    border-radius: 50%;
+    position: relative;
+    box-shadow: 0 0 20px var(--primary-glow), inset 0 0 20px var(--primary-glow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 25px;
+    animation: eye-pulse 1.5s infinite alternate;
+}
+
+/* Pupil Mata (Inti) */
+.cyber-pupil {
+    width: 30px;
+    height: 30px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 15px #fff;
+    animation: pupil-scan 2s infinite ease-in-out;
+}
+
+/* Cincin Berputar (Loading Ring) */
+.cyber-ring {
+    position: absolute;
+    width: 110%;
+    height: 110%;
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    animation: ring-rotate 4s linear infinite;
+}
+
+/* Teks Loading Berkedip */
+.loading-text {
+    font-size: 14px;
+    letter-spacing: 4px;
+    color: var(--primary);
+    font-weight: bold;
+    text-shadow: 0 0 10px var(--primary-glow);
+    animation: text-blink 0.5s infinite alternate;
+}
+
+/* Keyframes Animasi Robot */
+@keyframes eye-pulse {
+    0% { box-shadow: 0 0 10px var(--primary-glow); transform: scale(1); }
+    100% { box-shadow: 0 0 30px var(--primary), 0 0 50px var(--primary); transform: scale(1.05); }
+}
+@keyframes pupil-scan {
+    0%, 100% { transform: scale(0.8); opacity: 0.8; }
+    50% { transform: scale(1.3); opacity: 1; }
+}
+@keyframes ring-rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+@keyframes text-blink {
+    from { opacity: 1; }
+    to { opacity: 0.5; }
+}
+
+/* =========================================
+   4. GLITCH EFFECT (JUDUL UTAMA)
+   ========================================= */
+.glitch {
+    position: relative;
+    color: white;
+    font-weight: bold;
+}
+.glitch::before, .glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+.glitch::before {
+    left: 2px;
+    text-shadow: -1px 0 #ff00c1;
+    clip: rect(44px, 450px, 56px, 0);
+    animation: glitch-anim 5s infinite linear alternate-reverse;
+}
+.glitch::after {
+    left: -2px;
+    text-shadow: -1px 0 #00fff9;
+    clip: rect(44px, 450px, 56px, 0);
+    animation: glitch-anim2 5s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-anim {
+    0% { clip: rect(31px, 9999px, 94px, 0); transform: skew(0.85deg); }
+    5% { clip: rect(70px, 9999px, 71px, 0); transform: skew(0.85deg); }
+    100% { clip: rect(35px, 9999px, 89px, 0); transform: skew(0.53deg); }
+}
+@keyframes glitch-anim2 {
+    0% { clip: rect(65px, 9999px, 100px, 0); transform: skew(0.51deg); }
+    100% { clip: rect(40px, 9999px, 70px, 0); transform: skew(0.51deg); }
+}
+
+/* =========================================
+   5. UI COMPONENTS & UTILITIES
+   ========================================= */
+
+/* Efek Kaca (Glassmorphism) */
+.glass-card {
+    background: rgba(20, 20, 25, 0.7);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.glass-card:hover {
+    border-color: rgba(139, 92, 246, 0.3);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+/* Background Grid Cyberpunk */
+.bg-grid {
+    background-size: 40px 40px;
+    background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+}
+
+/* Efek Teks Neon */
+.neon-text {
+    text-shadow: 0 0 20px rgba(139, 92, 246, 0.6);
+}
+
+/* Tombol Sosial Media */
+.social-btn {
+    width: 45px; height: 45px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #a8a8a8;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+}
+.social-btn:hover {
+    transform: translateY(-5px);
+    color: white;
+    border-color: var(--primary);
+    background: var(--primary);
+    box-shadow: 0 0 20px var(--primary-glow);
+}
+
+/* Pembatas Teks (Line Clamp) */
 .limit-text {
     display: -webkit-box;
-    -webkit-line-clamp: 2; /* Batasi 2 baris */
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
-    height: 3em;
-    line-height: 1.5em;
+    line-height: 1.6em;
+    height: 3.2em; /* 2 baris x 1.6em */
 }
 
-/* --- LOADER SYSTEM --- */
-#loader { 
-    position: fixed; inset: 0; background: #000; z-index: 9999; 
-    display: flex; justify-content: center; align-items: center; 
-    font-family: 'JetBrains Mono', monospace; 
+/* =========================================
+   6. SEARCH BAR
+   ========================================= */
+.search-container {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto 40px auto;
 }
-.terminal-window { width: 90%; max-width: 500px; }
-#terminal-text { 
-    height: 160px; overflow-y: hidden; 
-    display: flex; flex-direction: column; justify-content: flex-end; 
-    margin-bottom: 10px; 
+.search-input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 14px 50px 14px 20px;
+    border-radius: 50px;
+    color: white;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+    transition: 0.3s all ease;
 }
-.log-line { 
-    color: #a8a8a8; font-size: 0.85rem; margin-bottom: 2px; 
-    white-space: nowrap; overflow: hidden; 
+.search-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: rgba(0, 0, 0, 0.8);
+    box-shadow: 0 0 20px var(--primary-glow);
 }
-.loader-bar-bg { 
-    width: 100%; height: 4px; background: #1a1a1a; 
-    margin-top: 10px; border-radius: 2px; overflow: hidden; 
-}
-.loader-bar-fill { 
-    height: 100%; background: var(--primary); width: 0%; 
-    box-shadow: 0 0 15px var(--primary); transition: width 0.1s linear; 
-}
-.log-success { color: #4ade80; }
-
-/* --- GLITCH EFFECT --- */
-.glitch-wrapper { display: inline-block; position: relative; }
-.glitch { position: relative; color: white; font-weight: bold; display: inline-block; }
-.glitch::before, .glitch::after { content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-.glitch::before { left: 2px; text-shadow: -1px 0 #ff00c1; clip: rect(44px, 450px, 56px, 0); animation: glitch-anim 5s infinite linear alternate-reverse; }
-.glitch::after { left: -2px; text-shadow: -1px 0 #00fff9; clip: rect(44px, 450px, 56px, 0); animation: glitch-anim2 5s infinite linear alternate-reverse; }
-@keyframes glitch-anim { 0% { clip: rect(31px, 9999px, 94px, 0); transform: skew(0.85deg); } 5% { clip: rect(70px, 9999px, 71px, 0); transform: skew(0.85deg); } 100% { clip: rect(35px, 9999px, 89px, 0); transform: skew(0.53deg); } }
-@keyframes glitch-anim2 { 0% { clip: rect(65px, 9999px, 100px, 0); transform: skew(0.51deg); } 100% { clip: rect(40px, 9999px, 70px, 0); transform: skew(0.51deg); } }
-
-/* --- UI COMPONENTS (Cards & Buttons) --- */
-.glass-card { 
-    background: rgba(20, 20, 25, 0.6); backdrop-filter: blur(12px); 
-    border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; 
-}
-.neon-text { text-shadow: 0 0 30px rgba(139, 92, 246, 0.4); }
-.bg-grid { 
-    background-size: 40px 40px; 
-    background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); 
-    mask-image: linear-gradient(to bottom, transparent, black 20%, black 80%, transparent); 
-}
-.social-btn { 
-    width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; 
-    border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); 
-    color: #a8a8a8; font-size: 1.1rem; transition: all 0.3s ease; 
-}
-.social-btn:hover { transform: translateY(-5px); color: white; border-color: var(--primary); box-shadow: 0 0 15px rgba(139, 92, 246, 0.5); }
-
-/* --- SEARCH BAR (FIXED) --- */
-.search-container { 
-    position: relative; width: 100%; max-width: 400px; margin: 0 auto 30px auto; 
-}
-.search-input { 
-    width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); 
-    padding: 12px 45px 12px 20px; border-radius: 50px; color: white; 
-    font-family: 'Space Grotesk', sans-serif; transition: 0.3s; 
-}
-.search-input:focus { 
-    outline: none; border-color: var(--primary); background: rgba(255,255,255,0.1); 
-    box-shadow: 0 0 15px rgba(139, 92, 246, 0.2); 
-}
-.search-icon { 
-    position: absolute; right: 20px; top: 50%; transform: translateY(-50%); color: gray; 
+.search-icon {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6b7280;
+    pointer-events: none;
 }
 
-/* --- RATING & REVIEWS --- */
-.star-rating i { cursor: pointer; color: #4b5563; transition: 0.2s; } 
-.star-rating i.active { color: #facc15; } 
-.review-card { border-left: 3px solid var(--primary); }
+/* =========================================
+   7. MODAL & SIDEBAR (POP UP)
+   ========================================= */
+/* Overlay Gelap */
+.modal-overlay, .sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+.modal-active, .sidebar-active .sidebar-overlay {
+    opacity: 1;
+    pointer-events: auto;
+}
 
-/* --- MODAL --- */
-.modal-overlay { 
-    position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); 
-    z-index: 100; display: flex; align-items: center; justify-content: center; 
-    opacity: 0; pointer-events: none; transition: all 0.3s ease; 
+/* Kotak Modal */
+.modal-overlay {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-.modal-active { opacity: 1; pointer-events: auto; }
-.modal-box { 
-    background: #111; border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 20px; 
-    width: 90%; max-width: 500px; padding: 25px; transform: scale(0.9); 
-    transition: all 0.3s ease; box-shadow: 0 0 50px rgba(139, 92, 246, 0.15); 
-    max-height: 90vh; overflow-y: auto; 
+.modal-box {
+    background: #111;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: 24px;
+    width: 90%;
+    max-width: 500px;
+    padding: 30px;
+    transform: scale(0.9);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 0 50px rgba(139, 92, 246, 0.15);
+    max-height: 90vh;
+    overflow-y: auto;
 }
-.modal-active .modal-box { transform: scale(1); }
+.modal-active .modal-box {
+    transform: scale(1);
+}
 
-/* --- SIDEBAR --- */
-.sidebar-overlay { 
-    position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); 
-    z-index: 60; opacity: 0; pointer-events: none; transition: 0.3s; 
+/* Sidebar Menu */
+.sidebar-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 280px;
+    background: rgba(10, 10, 12, 0.95);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    z-index: 110;
+    transform: translateX(-100%);
+    transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 10px 0 50px rgba(0, 0, 0, 0.8);
 }
-.sidebar-active .sidebar-overlay { opacity: 1; pointer-events: auto; }
-.sidebar-menu { 
-    position: fixed; top: 0; left: 0; height: 100%; width: 280px; 
-    background: rgba(10, 10, 12, 0.95); border-right: 1px solid rgba(255,255,255,0.05); 
-    z-index: 70; transform: translateX(-100%); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
-    box-shadow: 0 0 50px rgba(0,0,0,0.8); 
+.sidebar-active .sidebar-menu {
+    transform: translateX(0);
 }
-.sidebar-active .sidebar-menu { transform: translateX(0); }
 
-/* --- SCROLL TO TOP --- */
-.scroll-top-btn { 
-    position: fixed; bottom: 30px; right: 35px; width: 50px; height: 50px; 
-    background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(139, 92, 246, 0.5); 
-    backdrop-filter: blur(5px); border-radius: 12px; color: white; 
-    display: flex; align-items: center; justify-content: center; font-size: 20px; 
-    z-index: 89; cursor: pointer; transition: 0.3s; opacity: 0; 
-    pointer-events: none; transform: translateY(20px); 
+/* =========================================
+   8. CARD PRODUCTS & CATEGORIES
+   ========================================= */
+/* Kategori */
+.cat-card {
+    position: relative;
+    height: 140px;
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
 }
-.scroll-top-btn:hover { background: var(--primary); }
-.show-scroll-btn { opacity: 1; pointer-events: auto; transform: translateY(0); }
-
-/* --- PRODUCT CARDS --- */
-.cat-card { 
-    position: relative; height: 150px; border-radius: 12px; overflow: hidden; 
-    cursor: pointer; border: 1px solid rgba(255,255,255,0.1); transition: 0.3s; 
+.cat-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary);
+    box-shadow: 0 10px 30px -10px var(--primary-glow);
 }
-.cat-card:hover { transform: scale(1.02); border-color: var(--primary); box-shadow: 0 10px 30px -10px rgba(139, 92, 246, 0.3); }
-.cat-bg { position: absolute; inset: 0; background-size: cover; background-position: center; transition: transform 0.5s ease; }
+.cat-bg {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center;
+    transition: transform 0.5s ease;
+}
 .cat-card:hover .cat-bg { transform: scale(1.1); }
-.cat-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); display: flex; align-items: flex-end; padding: 15px; }
-
-.product-card { 
-    background: var(--card-bg); border: 1px solid rgba(255,255,255,0.08); 
-    border-radius: 16px; overflow: hidden; position: relative; 
-    transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+.cat-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+    display: flex; align-items: flex-end; padding: 15px;
 }
-.product-card:hover { transform: translateY(-8px); border-color: rgba(139, 92, 246, 0.5); box-shadow: 0 20px 40px -10px rgba(139, 92, 246, 0.15); }
-.product-img-wrapper { overflow: hidden; height: 200px; position: relative; }
-.product-img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s ease; }
-.product-card:hover .product-img { transform: scale(1.1); }
-.price-badge { background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); border: 1px solid rgba(139, 92, 246, 0.3); color: #c4b5fd; padding: 4px 12px; border-radius: 20px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; }
+
+/* Produk */
+.product-card {
+    background: var(--card-bg);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+}
+.product-card:hover {
+    transform: translateY(-8px);
+    border-color: var(--primary);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+}
+.product-img-wrapper {
+    height: 200px;
+    overflow: hidden;
+    position: relative;
+}
+.product-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+.product-card:hover .product-img {
+    transform: scale(1.1);
+}
+
+/* Badge Harga */
+.price-badge {
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    color: #c4b5fd;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: bold;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+/* Status Produk */
+.badge-unavailable {
+    position: absolute; top: 10px; left: 10px;
+    background: #ef4444; color: white;
+    font-weight: bold; padding: 4px 10px;
+    border-radius: 6px; font-size: 0.7rem; z-index: 10;
+    box-shadow: 0 2px 10px rgba(239, 68, 68, 0.4);
+}
 .unavailable { filter: grayscale(100%); opacity: 0.7; pointer-events: none; }
-.badge-unavailable { position: absolute; top: 10px; left: 10px; background: #ef4444; color: white; font-weight: bold; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; z-index: 10; }
 
-/* --- GENERAL & ANIMATIONS --- */
-.view-section { display: none; opacity: 0; transition: opacity 0.5s ease; padding-top: 100px; width: 100%; }
-.view-active { display: block; opacity: 1; animation: fadeInUp 0.6s ease forwards; }
-@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+/* =========================================
+   9. VIEW SWITCHING & ANIMATION
+   ========================================= */
+.view-section {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    width: 100%;
+    padding-bottom: 50px;
+}
+.view-active {
+    display: block;
+    opacity: 1;
+    animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
 
-.faq-item { border-bottom: 1px solid rgba(255,255,255,0.1); }
-.faq-header { cursor: pointer; padding: 20px 0; display: flex; justify-content: space-between; align-items: center; }
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================
+   10. OTHER ELEMENTS
+   ========================================= */
+/* Tombol Scroll Top */
+.scroll-top-btn {
+    position: fixed; bottom: 30px; right: 30px;
+    width: 50px; height: 50px;
+    background: rgba(139, 92, 246, 0.2);
+    border: 1px solid rgba(139, 92, 246, 0.5);
+    backdrop-filter: blur(5px);
+    border-radius: 14px;
+    color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; z-index: 90;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    opacity: 0; pointer-events: none; transform: translateY(20px);
+}
+.scroll-top-btn:hover {
+    background: var(--primary);
+    box-shadow: 0 0 20px var(--primary-glow);
+}
+.show-scroll-btn {
+    opacity: 1; pointer-events: auto; transform: translateY(0);
+}
+
+/* FAQ Accordion */
+.faq-item { border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+.faq-header { cursor: pointer; padding: 20px 0; display: flex; justify-content: space-between; align-items: center; transition: 0.3s; }
+.faq-header:hover { color: var(--primary); }
 .faq-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
 .faq-active .faq-content { max-height: 200px; }
-.faq-active .faq-icon { transform: rotate(180deg); color: var(--primary); }￼Enter
+.faq-active .faq-icon { transform: rotate(180deg); color: var(--primary); }
+
+/* Rating Stars */
+.star-rating i { cursor: pointer; color: #4b5563; transition: 0.2s; font-size: 1.5rem; }
+.star-rating i.active { color: #facc15; transform: scale(1.1); }
+.star-rating i:hover { color: #fde047; }
