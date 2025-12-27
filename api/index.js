@@ -4,15 +4,32 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 
 const app = express();
-app.use(bodyParser.json());
+
+// PENTING: Naikkan limit agar bisa upload gambar (bukti transfer)
+app.use(bodyParser.json({ limit: '10mb' })); 
 app.use(cors());
 
 // --- SCHEMAS ---
 const AdminSchema = new mongoose.Schema({ username: String, password: String });
 const Admin = mongoose.models.Admin || mongoose.model('Admin', AdminSchema);
 
-const UserSchema = new mongoose.Schema({ username: { type: String, required: true, unique: true }, password: { type: String, required: true } });
+// Update User: Tambah Balance
+const UserSchema = new mongoose.Schema({ 
+    username: { type: String, required: true, unique: true }, 
+    password: { type: String, required: true },
+    balance: { type: Number, default: 0 } // Saldo Default 0
+});
 const User = mongoose.models.User || mongoose.model('User', UserSchema);
+
+// Schema TopUp (BARU)
+const TopUpSchema = new mongoose.Schema({
+    username: String,
+    amount: Number,
+    proofImage: String, // Base64 Image
+    status: { type: String, default: 'pending' }, // pending, approved, rejected
+    date: { type: Date, default: Date.now }
+});
+const TopUp = mongoose.models.TopUp || mongoose.model('TopUp', TopUpSchema);
 
 const TestimonialSchema = new mongoose.Schema({ username: String, rating: Number, comment: String, date: { type: Date, default: Date.now } });
 const Testimonial = mongoose.models.Testimonial || mongoose.model('Testimonial', TestimonialSchema);
@@ -23,13 +40,7 @@ const Category = mongoose.models.Category || mongoose.model('Category', Category
 const ProductSchema = new mongoose.Schema({ name: String, price: String, desc: String, imageUrl: String, category: String, isAvailable: { type: Boolean, default: true } });
 const Product = mongoose.models.Product || mongoose.model('Product', ProductSchema);
 
-// UPDATE: Tambah Field Cookie
-const PteroConfigSchema = new mongoose.Schema({ 
-    panelUrl: String, 
-    apiKey: String, 
-    serverId: String,
-    cookie: String // <-- Field Baru
-});
+const PteroConfigSchema = new mongoose.Schema({ panelUrl: String, apiKey: String, serverId: String, cookie: String });
 const PteroConfig = mongoose.models.PteroConfig || mongoose.model('PteroConfig', PteroConfigSchema);
 
 // --- CONNECT DB ---
@@ -43,12 +54,69 @@ const connectDB = async () => {
 };
 
 // --- ROUTES ---
-app.get('/api', (req, res) => res.send('Manzzy Backend v6.0 (Cookie Injector) Ready'));
+app.get('/api', (req, res) => res.send('Manzzy Backend v8.0 (TopUp System) Ready'));
 
-// Auth & Standard Routes
+// Auth & User Info
 app.post('/api/login', async (req, res) => { await connectDB(); const { username, password } = req.body; const admin = await Admin.findOne({ username, password }); if (admin) res.json({ success: true }); else res.status(401).json({ success: false }); });
 app.post('/api/register-user', async (req, res) => { await connectDB(); const { username, password } = req.body; try { const existing = await User.findOne({ username }); if (existing) return res.status(400).json({ success: false, message: "Username sudah dipakai" }); const newUser = new User({ username, password }); await newUser.save(); res.json({ success: true }); } catch (err) { res.status(500).json({ error: err.message }); } });
-app.post('/api/login-user', async (req, res) => { await connectDB(); const { username, password } = req.body; const user = await User.findOne({ username, password }); if (user) res.json({ success: true, username: user.username }); else res.status(401).json({ success: false, message: "Salah" }); });
+app.post('/api/login-user', async (req, res) => { await connectDB(); const { username, password } = req.body; const user = await User.findOne({ username, password }); if (user) res.json({ success: true, username: user.username, balance: user.balance }); else res.status(401).json({ success: false, message: "Salah" }); });
+
+// Get User Balance (Real-time update)
+app.get('/api/user/:username', async (req, res) => {
+    await connectDB();
+    const user = await User.findOne({ username: req.params.username });
+    if (user) res.json({ balance: user.balance });
+    else res.status(404).json({ error: "User not found" });
+});
+
+// --- FITUR TOP UP (BARU) ---
+
+// 1. User Request Top Up
+app.post('/api/topup', async (req, res) => {
+    await connectDB();
+    try {
+        const { username, amount, proofImage } = req.body;
+        const newTopUp = new TopUp({ username, amount: parseInt(amount), proofImage });
+        await newTopUp.save();
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// 2. Admin Get List Pending Top Up
+app.get('/api/admin/topups', async (req, res) => {
+    await connectDB();
+    // Ambil yang pending saja, urutkan dari yang lama
+    const list = await TopUp.find({ status: 'pending' }).sort({ date: 1 });
+    res.json(list);
+});
+
+// 3. Admin Action (Approve/Reject)
+app.post('/api/admin/topup-action', async (req, res) => {
+    await connectDB();
+    const { id, action } = req.body; // action: 'approve' or 'reject'
+    
+    try {
+        const topup = await TopUp.findById(id);
+        if (!topup || topup.status !== 'pending') return res.status(400).json({ error: "Invalid Request" });
+
+        if (action === 'approve') {
+            // Tambah Saldo User
+            const user = await User.findOne({ username: topup.username });
+            if (user) {
+                user.balance += topup.amount;
+                await user.save();
+            }
+            topup.status = 'approved';
+        } else {
+            topup.status = 'rejected';
+        }
+        
+        await topup.save();
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// --- EXISTING ROUTES (Testimoni, Produk, Ptero) ---
 app.get('/api/testimonials', async (req, res) => { await connectDB(); const r = await Testimonial.find().sort({ date: -1 }); res.json(r); });
 app.post('/api/testimonials', async (req, res) => { await connectDB(); try { await new Testimonial(req.body).save(); res.json({ success: true }); } catch (err) { res.status(500).json({ error: err.message }); } });
 app.get('/api/categories', async (req, res) => { await connectDB(); const c = await Category.find(); res.json(c); });
@@ -59,66 +127,8 @@ app.post('/api/products', async (req, res) => { await connectDB(); try { await n
 app.put('/api/products/:id', async (req, res) => { await connectDB(); try { await Product.findByIdAndUpdate(req.params.id, req.body); res.json({ success: true }); } catch (err) { res.status(500).json({ error: err.message }); } });
 app.delete('/api/products/:id', async (req, res) => { await connectDB(); await Product.findByIdAndDelete(req.params.id); res.json({ success: true }); });
 
-// --- PTERODACTYL REAL-TIME (COOKIE INJECTED) ---
-
-// Helper Headers: Pura-pura jadi browser + Bawa Cookie
-const PTERO_HEADERS = (key, cookie) => ({
-    'Authorization': `Bearer ${key}`,
-    'Accept': 'application/json',
-    'Content-Type': 'application/json',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Cookie': cookie || '' // INI KUNCINYA
-});
-
+// Ptero Config & Proxy (Client Fetch Mode - API Config Only)
 app.post('/api/ptero/config', async (req, res) => { await connectDB(); try { await PteroConfig.deleteMany({}); await new PteroConfig(req.body).save(); res.json({ success: true }); } catch (err) { res.status(500).json({ error: err.message }); } });
 app.get('/api/ptero/config', async (req, res) => { await connectDB(); const config = await PteroConfig.findOne(); res.json(config || {}); });
-
-app.get('/api/ptero/stats', async (req, res) => {
-    await connectDB();
-    const config = await PteroConfig.findOne();
-    if (!config) return res.status(404).json({ error: "Config not found" });
-
-    try {
-        const response = await fetch(`${config.panelUrl}/api/client/servers/${config.serverId}/resources`, {
-            headers: PTERO_HEADERS(config.apiKey, config.cookie)
-        });
-        
-        if (!response.ok) {
-            // Log error status untuk debugging
-            console.log("Panel Status Code:", response.status);
-            throw new Error("Panel Blocked/Error");
-        }
-
-        const data = await response.json();
-        const stats = data.attributes.resources;
-        const state = data.attributes.current_state; 
-        
-        res.json({
-            status: state,
-            cpu: stats.cpu_absolute.toFixed(1),
-            ram: (stats.memory_bytes / 1024 / 1024 / 1024).toFixed(2),
-            disk: (stats.disk_bytes / 1024 / 1024 / 1024).toFixed(2),
-            uptime: stats.uptime || 0 
-        });
-    } catch (err) {
-        res.json({ status: "offline", cpu: "0", ram: "0", disk: "0", uptime: 0 });
-    }
-});
-
-app.post('/api/ptero/power', async (req, res) => {
-    await connectDB();
-    const config = await PteroConfig.findOne();
-    const { signal } = req.body;
-    try {
-        const response = await fetch(`${config.panelUrl}/api/client/servers/${config.serverId}/power`, {
-            method: 'POST',
-            headers: PTERO_HEADERS(config.apiKey, config.cookie),
-            body: JSON.stringify({ signal })
-        });
-        
-        if (!response.ok) throw new Error("Gagal / CF Block");
-        res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
 
 module.exports = app;
