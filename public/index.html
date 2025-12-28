@@ -202,24 +202,92 @@
             </div>
         </section>
 
-        <section id="view-nokos" class="view-section">
-            <div class="max-w-4xl mx-auto">
-                <div class="flex items-center justify-between mb-6">
-                    <button onclick="switchView('landing')" class="text-gray-400 hover:text-white flex items-center gap-2"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
-                    <h2 class="text-2xl font-bold text-white">VIRTUAL <span class="text-green-500">NUMBER</span></h2>
+<section id="view-nokos" class="view-section">
+    <div class="max-w-4xl mx-auto pb-20">
+        
+        <div class="flex items-center justify-between mb-6">
+            <button onclick="switchView('landing')" class="text-gray-400 hover:text-white flex items-center gap-2">
+                <i class="fa-solid fa-arrow-left"></i> Kembali
+            </button>
+            <h2 class="text-2xl font-bold text-white">VIRTUAL <span class="text-green-500">NUMBER</span></h2>
+        </div>
+
+        <div class="glass-card p-6 rounded-2xl border-t-4 border-t-green-500 mb-8">
+            
+            <div class="mb-6">
+                <label class="text-xs text-green-400 font-bold mb-3 block uppercase tracking-wider">1. Pilih Aplikasi</label>
+                <div id="nokos-app-grid" class="grid grid-cols-3 md:grid-cols-5 gap-3 max-h-60 overflow-y-auto pr-1 custom-scroll">
+                    <div class="col-span-full text-center py-4 text-gray-500 text-xs">Memuat aplikasi...</div>
                 </div>
-                <div class="glass-card p-6 rounded-2xl border-t-4 border-t-green-500 mb-8">
-                    <h3 class="text-lg font-bold text-white mb-4">Beli Nomor Baru</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div><label class="text-xs text-gray-500 mb-1 block">1. PILIH APLIKASI</label><select id="nokosService" onchange="fetchNokosCountries()" class="w-full bg-black/50 border border-gray-700 rounded p-3 text-white text-sm"><option value="">Pilih Service...</option></select></div>
-                        <div><label class="text-xs text-gray-500 mb-1 block">2. PILIH NEGARA</label><select id="nokosCountry" onchange="fetchNokosOperators()" class="w-full bg-black/50 border border-gray-700 rounded p-3 text-white text-sm" disabled><option value="">Pilih Negara...</option></select></div>
-                        <div class="md:col-span-2"><label class="text-xs text-gray-500 mb-1 block">3. PILIH OPERATOR & HARGA</label><div id="nokosOperatorList" class="grid grid-cols-2 md:grid-cols-4 gap-3"><div class="text-gray-500 text-sm italic p-2">Pilih negara dulu...</div></div></div>
+                <input type="hidden" id="selectedServiceId">
+                <input type="hidden" id="selectedServiceName">
+            </div>
+
+            <div id="step-country" class="mb-6 opacity-50 pointer-events-none transition-all duration-300">
+                <label class="text-xs text-gray-400 font-bold mb-2 block uppercase tracking-wider">2. Pilih Negara</label>
+                <select id="nokosCountry" onchange="fetchNokosOperators()" class="w-full bg-black/50 border border-gray-700 rounded-xl p-3 text-white text-sm focus:border-green-500 outline-none transition">
+                    <option value="">Pilih Aplikasi Dulu...</option>
+                </select>
+            </div>
+
+            <div id="step-operator" class="mb-6 opacity-50 pointer-events-none transition-all duration-300">
+                <label class="text-xs text-gray-400 font-bold mb-3 block uppercase tracking-wider">3. Pilih Operator</label>
+                <div id="nokosOperatorList" class="grid grid-cols-3 md:grid-cols-4 gap-3">
+                    <div class="col-span-full text-gray-500 text-xs italic">Pilih negara dulu...</div>
+                </div>
+            </div>
+
+            <div id="step-checkout" class="hidden bg-green-900/10 border border-green-500/30 rounded-xl p-4 animate-fade-in-up">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <div class="text-xs text-gray-400">Total Harga</div>
+                        <div id="display-price" class="text-2xl font-bold text-white font-mono">Rp 0</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xs text-gray-400">Operator</div>
+                        <div id="display-operator" class="text-sm font-bold text-green-400 uppercase">-</div>
                     </div>
                 </div>
-                <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><span class="animate-pulse w-2 h-2 bg-red-500 rounded-full"></span> Nomor Aktif</h3>
-                <div class="glass-card overflow-hidden rounded-xl"><div class="overflow-x-auto"><table class="w-full text-left"><thead><tr class="bg-white/5 text-xs text-gray-400 uppercase"><th class="p-4">Service</th><th class="p-4">Nomor HP</th><th class="p-4">Kode SMS</th><th class="p-4">Sisa Waktu</th><th class="p-4 text-right">Aksi</th></tr></thead><tbody id="nokos-active-list" class="divide-y divide-gray-800 text-sm"><tr><td colspan="5" class="p-6 text-center text-gray-500">Memuat data...</td></tr></tbody></table></div></div>
+                <button onclick="executeBuyNokos()" id="btn-buy-nokos" class="w-full py-3 rounded-lg bg-green-600 hover:bg-green-500 text-white font-bold transition shadow-lg shadow-green-900/50">
+                    <i class="fa-solid fa-cart-shopping mr-2"></i> BELI SEKARANG
+                </button>
             </div>
-        </section>
+
+        </div>
+
+        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+            <span class="animate-pulse w-2 h-2 bg-red-500 rounded-full"></span> Pesanan Aktif
+        </h3>
+        <div class="glass-card overflow-hidden rounded-xl">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-white/5 text-xs text-gray-400 uppercase">
+                            <th class="p-4">App</th>
+                            <th class="p-4">Nomor HP</th>
+                            <th class="p-4">Kode SMS</th>
+                            <th class="p-4">Waktu</th>
+                            <th class="p-4 text-right">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="nokos-active-list" class="divide-y divide-gray-800 text-sm">
+                        <tr><td colspan="5" class="p-6 text-center text-gray-500">Memuat data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .custom-scroll::-webkit-scrollbar { width: 4px; }
+    .custom-scroll::-webkit-scrollbar-track { background: #111; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+    .active-app-card { border-color: #22c55e !important; background-color: rgba(34, 197, 94, 0.1) !important; box-shadow: 0 0 15px rgba(34, 197, 94, 0.2); }
+    .active-op-card { border-color: #22c55e !important; background-color: rgba(34, 197, 94, 0.2) !important; color: white !important; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-in-up { animation: fadeInUp 0.3s ease-out forwards; }
+</style>
         
         <section id="view-myservices" class="view-section"><div class="w-full mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4"><button onclick="switchView('landing')" class="text-gray-400 hover:text-white flex items-center gap-2 group"><i class="fa-solid fa-arrow-left"></i> Kembali</button><h2 class="text-3xl font-bold text-white">BOT <span class="text-blue-500">AKTIF</span></h2></div><div id="myservices-list" class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20"><p class="text-gray-500 col-span-full text-center py-10">Memuat layanan...</p></div></section>
     </div>
