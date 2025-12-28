@@ -1,6 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const axios = require('axios'); // Pastikan sudah npm install axios
+const https = require('https'); // Pakai bawaan Node.js (Pasti ada!)
 const router = express.Router();
 
 // 1. KONEKSI & SCHEMA
@@ -17,64 +17,83 @@ const NokosConfig = mongoose.models.NokosConfig || mongoose.model('NokosConfig',
     marginPercent: { type: Number, default: 20 }
 }));
 
-// Gunakan Schema User yang sama dengan index.js
 const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({ 
     username: String, balance: Number 
 }));
 
-const NokosTxSchema = new mongoose.Schema({
+const NokosTx = mongoose.models.NokosTx || mongoose.model('NokosTx', new mongoose.Schema({
     invoiceId: String, username: String, refId: String,
     serviceName: String, country: String, phoneNumber: String,
     price: Number, status: { type: String, default: 'waiting' }, 
     smsCode: String, expiresAt: Date, createdAt: { type: Date, default: Date.now }
-});
-const NokosTx = mongoose.models.NokosTx || mongoose.model('NokosTx', NokosTxSchema);
+}));
 
-// 2. HELPER FUNCTION (AXIOS VERSION)
+// 2. FUNGSI REQUEST KE RUMAHOTP (TANPA AXIOS)
 async function callRumahOTP(endpoint, method = 'GET', data = null) {
     await connectDB();
     const config = await NokosConfig.findOne();
-    if (!config || !config.apiKey) throw new Error("API Key Nokos belum disetting!");
+    if (!config || !config.apiKey) throw new Error("API Key belum disetting!");
 
-    // Auto switch V1/V2
-    let baseUrl = `https://www.rumahotp.com/api/v2/${endpoint}`;
-    if (endpoint.startsWith('v1/')) {
-        baseUrl = `https://www.rumahotp.com/api/${endpoint}`;
-    }
+    // Auto switch URL V1/V2
+    let path = `/api/v2/${endpoint}`;
+    if (endpoint.startsWith('v1/')) path = `/api/${endpoint}`;
 
     const options = {
+        hostname: 'www.rumahotp.com',
+        path: path,
         method: method,
-        url: baseUrl,
         headers: {
             'x-apikey': config.apiKey,
             'Accept': 'application/json',
             'Content-Type': 'application/json'
-        },
-        data: data // Axios pakai 'data', bukan 'body'
+        }
     };
 
-    try {
-        const response = await axios(options);
-        return { result: response.data, config };
-    } catch (e) {
-        // Log Error detail ke Terminal biar ketahuan
-        console.error("❌ RUMAH OTP ERROR:", e.response?.data || e.message);
-        throw new Error(e.response?.data?.message || "Koneksi Provider Gagal");
-    }
+    return new Promise((resolve, reject) => {
+        const req = https.request(options, (res) => {
+            let body = '';
+            res.on('data', (chunk) => body += chunk);
+            res.on('end', () => {
+                try {
+                    const json = JSON.parse(body);
+                    resolve({ result: json, config });
+                } catch (e) {
+                    // Kalau bukan JSON, berarti error HTML dari sana
+                    reject(new Error("Respon Server Error (Bukan JSON)"));
+                }
+            });
+        });
+
+        req.on('error', (e) => reject(new Error("Koneksi Error: " + e.message)));
+        
+        // Timeout biar ga loading selamanya
+        req.on('timeout', () => {
+            req.destroy();
+            reject(new Error("Request Timeout"));
+        });
+        
+        if (data && method !== 'GET') {
+            req.write(JSON.stringify(data));
+        }
+        req.end();
+    });
 }
 
 // ==========================================
 // ROUTES
 // ==========================================
 
+// Config
 router.post('/admin/config', async (req, res) => {
     await connectDB(); await NokosConfig.deleteMany({}); await new NokosConfig(req.body).save(); res.json({ success: true });
 });
 
+// List Service
 router.get('/services', async (req, res) => {
     try { const { result } = await callRumahOTP('services'); res.json(result); } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// List Negara (Harga + Margin)
 router.get('/countries', async (req, res) => {
     try {
         const { result, config } = await callRumahOTP(`countries?service_id=${req.query.service_id}`);
@@ -82,7 +101,8 @@ router.get('/countries', async (req, res) => {
             const margin = config.marginPercent || 0;
             result.data.forEach(c => {
                 if(c.pricelist) c.pricelist.forEach(p => {
-                    p.price = Math.ceil(p.price + (p.price * margin / 100)); // Markup
+                    // Hitung Margin
+                    p.price = Math.ceil(p.price + (p.price * margin / 100)); 
                     p.price_format = `Rp${p.price.toLocaleString('id-ID')}`;
                 });
             });
@@ -91,42 +111,37 @@ router.get('/countries', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// List Operator (Fix URL Encode Spasi)
 router.get('/operators', async (req, res) => {
     try { 
-        // Encode URL untuk menangani spasi di nama negara
+        // Encode biar nama negara yg ada spasi tidak error
         const country = encodeURIComponent(req.query.country);
         const { result } = await callRumahOTP(`operators?country=${country}&provider_id=${req.query.provider_id}`); 
         res.json(result); 
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ORDER NOMOR (BUY)
+// ORDER / BUY
 router.post('/buy', async (req, res) => {
     await connectDB();
     const { username, number_id, provider_id, operator_id, service_name } = req.body;
-    
-    console.log(`🛒 Order Masuk: ${username} | Service: ${service_name}`); // Debug Log
 
     try {
         const user = await User.findOne({ username });
-        if (!user) return res.status(404).json({ success: false, msg: "User tidak ditemukan" });
+        if (!user) return res.status(404).json({ success: false, msg: "User error" });
 
-        // Tembak Order V2
         const { result, config } = await callRumahOTP(`order?number_id=${number_id}&provider_id=${provider_id}&operator_id=${operator_id}`);
 
-        if (!result.success) {
-            console.error("❌ Gagal di Provider:", result);
-            return res.status(400).json({ success: false, msg: result.message || "Stok habis / Gangguan pusat." });
-        }
+        if (!result.success) return res.status(400).json({ success: false, msg: result.message || "Gagal order ke pusat." });
 
         // Hitung Harga Jual
         const originalPrice = result.data.price;
         const margin = config.marginPercent || 0;
         const sellingPrice = Math.ceil(originalPrice + (originalPrice * margin / 100));
 
-        if (user.balance < sellingPrice) return res.status(400).json({ success: false, msg: "Saldo akun kamu kurang!" });
+        if (user.balance < sellingPrice) return res.status(400).json({ success: false, msg: "Saldo kurang!" });
 
-        // Potong Saldo & Simpan
+        // Transaksi Sukses
         user.balance -= sellingPrice; await user.save();
         const inv = 'NOK-' + Date.now().toString().slice(-6);
         
@@ -137,16 +152,15 @@ router.post('/buy', async (req, res) => {
             expiresAt: new Date(Date.now() + (result.data.expires_in_minute * 60000))
         }).save();
 
-        console.log(`✅ Sukses Order: ${inv}`);
         res.json({ success: true, invoiceId: inv });
 
     } catch (err) { 
-        console.error("🔥 CRASH BUY:", err.message); // Cek terminal kalau error lagi
-        res.status(500).json({ success: false, msg: err.message || "Server Error" }); 
+        console.error(err);
+        res.status(500).json({ success: false, msg: "Server Error: " + err.message }); 
     }
 });
 
-// CEK STATUS & AMBIL SMS (V1)
+// Status & SMS
 router.get('/status/:invoiceId', async (req, res) => {
     await connectDB();
     const tx = await NokosTx.findOne({ invoiceId: req.params.invoiceId });
@@ -154,14 +168,13 @@ router.get('/status/:invoiceId', async (req, res) => {
 
     try {
         const { result } = await callRumahOTP(`v1/orders/get_status?order_id=${tx.refId}`);
-        
         if(result.success && result.data) {
             const d = result.data;
+            // Update SMS jika ada
             if (d.otp_code && d.otp_code !== '-' && d.otp_code !== tx.smsCode) {
-                tx.smsCode = d.otp_code;
-                tx.status = 'success';
-                await tx.save();
+                tx.smsCode = d.otp_code; tx.status = 'success'; await tx.save();
             }
+            // Auto Refund jika Cancel
             if (d.status === 'canceled' && tx.status !== 'canceled') {
                 tx.status = 'canceled';
                 const user = await User.findOne({ username: tx.username });
@@ -173,13 +186,12 @@ router.get('/status/:invoiceId', async (req, res) => {
     } catch(e) { res.status(500).json({ success: false }); }
 });
 
-// CANCEL ORDER
+// Cancel Manual
 router.post('/cancel', async (req, res) => {
     await connectDB();
     const { invoiceId, username } = req.body;
     const tx = await NokosTx.findOne({ invoiceId, username });
-    
-    if(!tx || tx.status !== 'waiting') return res.status(400).json({ success: false, msg: "Tidak bisa cancel" });
+    if(!tx || tx.status !== 'waiting') return res.status(400).json({ success: false, msg: "Gagal cancel" });
 
     try {
         const { result } = await callRumahOTP(`v1/orders/set_status?order_id=${tx.refId}&status=canceled`);
@@ -189,12 +201,11 @@ router.post('/cancel', async (req, res) => {
             if(user) { user.balance += tx.price; await user.save(); }
             await tx.save();
             res.json({ success: true });
-        } else {
-            res.json({ success: false, msg: "Gagal cancel dari pusat" });
-        }
+        } else { res.json({ success: false, msg: "Gagal dari pusat" }); }
     } catch(e) { res.status(500).json({ success: false }); }
 });
 
+// History
 router.get('/history/:username', async (req, res) => {
     await connectDB();
     const list = await NokosTx.find({ username: req.params.username }).sort({ createdAt: -1 });
