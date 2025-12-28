@@ -1,5 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const axios = require('axios'); // Pastikan sudah npm install axios
 const router = express.Router();
 
 // 1. KONEKSI & SCHEMA
@@ -16,6 +17,7 @@ const NokosConfig = mongoose.models.NokosConfig || mongoose.model('NokosConfig',
     marginPercent: { type: Number, default: 20 }
 }));
 
+// Gunakan Schema User yang sama dengan index.js
 const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({ 
     username: String, balance: Number 
 }));
@@ -23,18 +25,18 @@ const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema(
 const NokosTxSchema = new mongoose.Schema({
     invoiceId: String, username: String, refId: String,
     serviceName: String, country: String, phoneNumber: String,
-    price: Number, status: { type: String, default: 'waiting' }, // waiting, success, canceled
+    price: Number, status: { type: String, default: 'waiting' }, 
     smsCode: String, expiresAt: Date, createdAt: { type: Date, default: Date.now }
 });
 const NokosTx = mongoose.models.NokosTx || mongoose.model('NokosTx', NokosTxSchema);
 
-// 2. HELPER FUNCTION (Support V1 & V2)
+// 2. HELPER FUNCTION (AXIOS VERSION)
 async function callRumahOTP(endpoint, method = 'GET', data = null) {
     await connectDB();
     const config = await NokosConfig.findOne();
     if (!config || !config.apiKey) throw new Error("API Key Nokos belum disetting!");
 
-    // Logika Otomatis pilih versi API
+    // Auto switch V1/V2
     let baseUrl = `https://www.rumahotp.com/api/v2/${endpoint}`;
     if (endpoint.startsWith('v1/')) {
         baseUrl = `https://www.rumahotp.com/api/${endpoint}`;
@@ -42,19 +44,23 @@ async function callRumahOTP(endpoint, method = 'GET', data = null) {
 
     const options = {
         method: method,
+        url: baseUrl,
         headers: {
             'x-apikey': config.apiKey,
             'Accept': 'application/json',
             'Content-Type': 'application/json'
-        }
+        },
+        data: data // Axios pakai 'data', bukan 'body'
     };
-    if (data && method !== 'GET') options.body = JSON.stringify(data);
 
     try {
-        const response = await fetch(baseUrl, options);
-        const result = await response.json();
-        return { result, config };
-    } catch (e) { throw new Error("Koneksi Provider Gagal"); }
+        const response = await axios(options);
+        return { result: response.data, config };
+    } catch (e) {
+        // Log Error detail ke Terminal biar ketahuan
+        console.error("❌ RUMAH OTP ERROR:", e.response?.data || e.message);
+        throw new Error(e.response?.data?.message || "Koneksi Provider Gagal");
+    }
 }
 
 // ==========================================
@@ -76,7 +82,7 @@ router.get('/countries', async (req, res) => {
             const margin = config.marginPercent || 0;
             result.data.forEach(c => {
                 if(c.pricelist) c.pricelist.forEach(p => {
-                    p.price = Math.ceil(p.price + (p.price * margin / 100)); // Markup Harga
+                    p.price = Math.ceil(p.price + (p.price * margin / 100)); // Markup
                     p.price_format = `Rp${p.price.toLocaleString('id-ID')}`;
                 });
             });
@@ -86,29 +92,39 @@ router.get('/countries', async (req, res) => {
 });
 
 router.get('/operators', async (req, res) => {
-    try { const { result } = await callRumahOTP(`operators?country=${req.query.country}&provider_id=${req.query.provider_id}`); res.json(result); } catch (e) { res.status(500).json({ error: e.message }); }
+    try { 
+        // Encode URL untuk menangani spasi di nama negara
+        const country = encodeURIComponent(req.query.country);
+        const { result } = await callRumahOTP(`operators?country=${country}&provider_id=${req.query.provider_id}`); 
+        res.json(result); 
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // ORDER NOMOR (BUY)
 router.post('/buy', async (req, res) => {
     await connectDB();
     const { username, number_id, provider_id, operator_id, service_name } = req.body;
+    
+    console.log(`🛒 Order Masuk: ${username} | Service: ${service_name}`); // Debug Log
 
     try {
         const user = await User.findOne({ username });
-        if (!user) return res.status(404).json({ success: false, msg: "User error" });
+        if (!user) return res.status(404).json({ success: false, msg: "User tidak ditemukan" });
 
         // Tembak Order V2
         const { result, config } = await callRumahOTP(`order?number_id=${number_id}&provider_id=${provider_id}&operator_id=${operator_id}`);
 
-        if (!result.success) return res.status(400).json({ success: false, msg: result.message || "Gagal order." });
+        if (!result.success) {
+            console.error("❌ Gagal di Provider:", result);
+            return res.status(400).json({ success: false, msg: result.message || "Stok habis / Gangguan pusat." });
+        }
 
         // Hitung Harga Jual
         const originalPrice = result.data.price;
         const margin = config.marginPercent || 0;
         const sellingPrice = Math.ceil(originalPrice + (originalPrice * margin / 100));
 
-        if (user.balance < sellingPrice) return res.status(400).json({ success: false, msg: "Saldo kurang!" });
+        if (user.balance < sellingPrice) return res.status(400).json({ success: false, msg: "Saldo akun kamu kurang!" });
 
         // Potong Saldo & Simpan
         user.balance -= sellingPrice; await user.save();
@@ -121,9 +137,13 @@ router.post('/buy', async (req, res) => {
             expiresAt: new Date(Date.now() + (result.data.expires_in_minute * 60000))
         }).save();
 
+        console.log(`✅ Sukses Order: ${inv}`);
         res.json({ success: true, invoiceId: inv });
 
-    } catch (err) { res.status(500).json({ success: false, msg: "Server Error" }); }
+    } catch (err) { 
+        console.error("🔥 CRASH BUY:", err.message); // Cek terminal kalau error lagi
+        res.status(500).json({ success: false, msg: err.message || "Server Error" }); 
+    }
 });
 
 // CEK STATUS & AMBIL SMS (V1)
@@ -133,22 +153,19 @@ router.get('/status/:invoiceId', async (req, res) => {
     if(!tx) return res.status(404).json({ success: false });
 
     try {
-        // Tembak API V1
         const { result } = await callRumahOTP(`v1/orders/get_status?order_id=${tx.refId}`);
         
         if(result.success && result.data) {
             const d = result.data;
-            // Jika ada SMS Code baru (bukan "-"), simpan!
             if (d.otp_code && d.otp_code !== '-' && d.otp_code !== tx.smsCode) {
                 tx.smsCode = d.otp_code;
                 tx.status = 'success';
                 await tx.save();
             }
-            // Jika status cancel dari pusat, refund user
             if (d.status === 'canceled' && tx.status !== 'canceled') {
                 tx.status = 'canceled';
                 const user = await User.findOne({ username: tx.username });
-                if(user) { user.balance += tx.price; await user.save(); } // Refund
+                if(user) { user.balance += tx.price; await user.save(); }
                 await tx.save();
             }
         }
@@ -156,7 +173,7 @@ router.get('/status/:invoiceId', async (req, res) => {
     } catch(e) { res.status(500).json({ success: false }); }
 });
 
-// CANCEL ORDER / REFUND MANUAL (V1)
+// CANCEL ORDER
 router.post('/cancel', async (req, res) => {
     await connectDB();
     const { invoiceId, username } = req.body;
@@ -165,13 +182,11 @@ router.post('/cancel', async (req, res) => {
     if(!tx || tx.status !== 'waiting') return res.status(400).json({ success: false, msg: "Tidak bisa cancel" });
 
     try {
-        // Request Cancel ke Provider
         const { result } = await callRumahOTP(`v1/orders/set_status?order_id=${tx.refId}&status=canceled`);
-        
         if(result.success) {
             tx.status = 'canceled';
             const user = await User.findOne({ username });
-            if(user) { user.balance += tx.price; await user.save(); } // Refund
+            if(user) { user.balance += tx.price; await user.save(); }
             await tx.save();
             res.json({ success: true });
         } else {
@@ -180,7 +195,6 @@ router.post('/cancel', async (req, res) => {
     } catch(e) { res.status(500).json({ success: false }); }
 });
 
-// HISTORY
 router.get('/history/:username', async (req, res) => {
     await connectDB();
     const list = await NokosTx.find({ username: req.params.username }).sort({ createdAt: -1 });
@@ -188,4 +202,3 @@ router.get('/history/:username', async (req, res) => {
 });
 
 module.exports = router;
-
