@@ -406,11 +406,14 @@ async function fetchNokosOperators() {
 
 async function buyNokos(opId) {
     if(!confirm("Beli nomor ini? Saldo akan terpotong.")) return;
+    
     const sSel = document.getElementById('nokosService');
     const cSel = document.getElementById('nokosCountry');
     
+    // [UPDATE] Tambahkan service_id agar backend bisa cek harga dulu
     const payload = {
         username: userSession,
+        service_id: sSel.value, // <--- INI PENTING
         service_name: sSel.options[sSel.selectedIndex].getAttribute('data-name'),
         number_id: cSel.options[cSel.selectedIndex].getAttribute('data-id'),
         provider_id: cSel.options[cSel.selectedIndex].getAttribute('data-prov'),
@@ -424,16 +427,16 @@ async function buyNokos(opId) {
         const d = await res.json();
         
         if(d.success) {
-            alert("Order Berhasil! Tunggu SMS di tabel bawah.");
+            alert("✅ Order Berhasil! Tunggu SMS masuk.");
             checkUserLogin(); fetchNokosHistory();
             document.getElementById('nokosOperatorList').innerHTML = '<div class="text-gray-500 italic">Pilih negara lagi...</div>';
-        } else { 
-            alert("Gagal: " + d.msg); 
-            fetchNokosOperators(); // Balikin list operator
+        } else {
+            // Tampilkan pesan error detail dari server
+            alert("❌ Gagal: " + d.msg); 
+            fetchNokosOperators(); 
         }
     } catch(e) { alert("Error Server"); }
 }
-
 async function fetchNokosHistory() {
     if(!userSession) return;
     const res = await fetch(`/api/nokos/history/${userSession}`); 
