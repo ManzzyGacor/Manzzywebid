@@ -216,36 +216,38 @@
             
             <div class="mb-6">
                 <label class="text-xs text-green-400 font-bold mb-3 block uppercase tracking-wider">1. Pilih Aplikasi</label>
-                <div id="nokos-app-grid" class="grid grid-cols-3 md:grid-cols-5 gap-3 max-h-60 overflow-y-auto pr-1 custom-scroll">
+                <div id="nokos-app-grid" class="grid grid-cols-4 md:grid-cols-6 gap-3 max-h-40 overflow-y-auto pr-1 custom-scroll">
                     <div class="col-span-full text-center py-4 text-gray-500 text-xs">Memuat aplikasi...</div>
                 </div>
-                <input type="hidden" id="selectedServiceId">
-                <input type="hidden" id="selectedServiceName">
             </div>
 
-            <div id="step-country" class="mb-6 opacity-50 pointer-events-none transition-all duration-300">
-                <label class="text-xs text-gray-400 font-bold mb-2 block uppercase tracking-wider">2. Pilih Negara</label>
-                <select id="nokosCountry" onchange="fetchNokosOperators()" class="w-full bg-black/50 border border-gray-700 rounded-xl p-3 text-white text-sm focus:border-green-500 outline-none transition">
-                    <option value="">Pilih Aplikasi Dulu...</option>
-                </select>
+            <div id="step-country" class="mb-6 hidden animate-fade-in-up">
+                <label class="text-xs text-green-400 font-bold mb-3 block uppercase tracking-wider">2. Pilih Negara</label>
+                <div id="nokos-country-grid" class="grid grid-cols-3 md:grid-cols-4 gap-3 max-h-60 overflow-y-auto pr-1 custom-scroll">
+                    </div>
             </div>
 
-            <div id="step-operator" class="mb-6 opacity-50 pointer-events-none transition-all duration-300">
-                <label class="text-xs text-gray-400 font-bold mb-3 block uppercase tracking-wider">3. Pilih Operator</label>
-                <div id="nokosOperatorList" class="grid grid-cols-3 md:grid-cols-4 gap-3">
-                    <div class="col-span-full text-gray-500 text-xs italic">Pilih negara dulu...</div>
-                </div>
+            <div id="step-server" class="mb-6 hidden animate-fade-in-up">
+                <label class="text-xs text-green-400 font-bold mb-3 block uppercase tracking-wider">3. Pilih Server & Harga</label>
+                <div id="nokos-server-list" class="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scroll">
+                    </div>
             </div>
 
-            <div id="step-checkout" class="hidden bg-green-900/10 border border-green-500/30 rounded-xl p-4 animate-fade-in-up">
+            <div id="step-operator" class="mb-6 hidden animate-fade-in-up">
+                <label class="text-xs text-green-400 font-bold mb-3 block uppercase tracking-wider">4. Pilih Operator</label>
+                <div id="nokos-operator-grid" class="grid grid-cols-3 md:grid-cols-5 gap-3">
+                    </div>
+            </div>
+
+            <div id="step-checkout" class="hidden bg-green-900/10 border border-green-500/30 rounded-xl p-4 animate-fade-in-up mt-6">
                 <div class="flex justify-between items-center mb-4">
                     <div>
                         <div class="text-xs text-gray-400">Total Harga</div>
                         <div id="display-price" class="text-2xl font-bold text-white font-mono">Rp 0</div>
                     </div>
                     <div class="text-right">
-                        <div class="text-xs text-gray-400">Operator</div>
-                        <div id="display-operator" class="text-sm font-bold text-green-400 uppercase">-</div>
+                        <div id="display-info" class="text-xs font-bold text-green-400 uppercase">-</div>
+                        <div id="display-server" class="text-[10px] text-gray-500">Server ID: -</div>
                     </div>
                 </div>
                 <button onclick="executeBuyNokos()" id="btn-buy-nokos" class="w-full py-3 rounded-lg bg-green-600 hover:bg-green-500 text-white font-bold transition shadow-lg shadow-green-900/50">
@@ -266,8 +268,8 @@
                             <th class="p-4">App</th>
                             <th class="p-4">Nomor HP</th>
                             <th class="p-4">Kode SMS</th>
-                            <th class="p-4">Waktu</th>
-                            <th class="p-4 text-right">Status</th>
+                            <th class="p-4">Status</th>
+                            <th class="p-4 text-right">Aksi</th>
                         </tr>
                     </thead>
                     <tbody id="nokos-active-list" class="divide-y divide-gray-800 text-sm">
@@ -281,10 +283,9 @@
 
 <style>
     .custom-scroll::-webkit-scrollbar { width: 4px; }
-    .custom-scroll::-webkit-scrollbar-track { background: #111; }
+    .custom-scroll::-webkit-scrollbar-track { background: #000; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
-    .active-app-card { border-color: #22c55e !important; background-color: rgba(34, 197, 94, 0.1) !important; box-shadow: 0 0 15px rgba(34, 197, 94, 0.2); }
-    .active-op-card { border-color: #22c55e !important; background-color: rgba(34, 197, 94, 0.2) !important; color: white !important; }
+    .active-card { border-color: #22c55e !important; background: rgba(34, 197, 94, 0.1) !important; color: white !important; }
     @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     .animate-fade-in-up { animation: fadeInUp 0.3s ease-out forwards; }
 </style>

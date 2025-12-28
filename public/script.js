@@ -312,252 +312,237 @@ async function fetchMyServices() {
         }).join('');
     } catch(e){}
 }
-
 // ============================================
-// 7. NOKOS SYSTEM (NEW DESIGN)
+// 7. NOKOS SYSTEM (PREMIUM FLOW)
 // ============================================
 
 let nokosInterval = null;
-let currentNokosData = {
+let currentNokos = {
     serviceId: null,
     serviceName: null,
-    countryId: null,
+    countryId: null,  // number_id (misal: 62 utk indo di API ini)
+    countryName: null,
     providerId: null,
-    operatorId: null,
-    price: 0
+    serverPrice: 0,
+    operatorId: null
 };
 
+// 1. INIT: LOAD APLIKASI
 async function initNokos() {
     const grid = document.getElementById('nokos-app-grid');
-    
-    // Load Daftar Aplikasi (Service) jika kosong
     if(grid.children.length <= 1) {
-        const res = await fetch('/api/nokos/services');
-        const data = await res.json();
-        
-        if(data.success) {
-            // Mapping Icon Manual biar cantik (Karena API kadang iconnya pecah/kecil)
-            const iconMap = {
-                'WhatsApp': 'https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg',
-                'Telegram': 'https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg',
-                'TikTok': 'https://sf-tb-sg.ibytedtos.com/obj/eden-sg/uhtyvueh7nulogpoguhm/tiktok-icon2.png',
-                'Shopee': 'https://upload.wikimedia.org/wikipedia/commons/0/0e/Shopee_logo.svg',
-                'Gojek': 'https://upload.wikimedia.org/wikipedia/commons/8/86/Gojek_logo_2019.svg',
-                'Facebook': 'https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg',
-                'Instagram': 'https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg',
-                'Google': 'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg'
-            };
-
-            grid.innerHTML = data.data.map(s => {
-                // Gunakan icon dari map saya, kalau gak ada pakai icon API, kalau gak ada pakai default
-                const imgUrl = iconMap[s.service_name] || s.service_img || 'https://via.placeholder.com/50?text=App';
-                return `
-                <div onclick="selectNokosApp(this, '${s.service_code}', '${s.service_name}')" 
-                     class="app-card cursor-pointer bg-black/40 border border-gray-700 rounded-xl p-3 flex flex-col items-center justify-center gap-2 hover:border-gray-500 transition group h-24">
-                    <img src="${imgUrl}" class="w-8 h-8 object-contain group-hover:scale-110 transition">
-                    <span class="text-[10px] text-gray-400 font-bold text-center leading-tight group-hover:text-white">${s.service_name}</span>
-                </div>
-                `;
-            }).join('');
-        }
+        try {
+            const res = await fetch('/api/nokos/services');
+            const data = await res.json();
+            if(data.success) {
+                const iconMap = { 'WhatsApp': 'https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg', 'Telegram': 'https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg', 'TikTok': 'https://sf-tb-sg.ibytedtos.com/obj/eden-sg/uhtyvueh7nulogpoguhm/tiktok-icon2.png', 'Shopee': 'https://upload.wikimedia.org/wikipedia/commons/0/0e/Shopee_logo.svg', 'Gojek': 'https://upload.wikimedia.org/wikipedia/commons/8/86/Gojek_logo_2019.svg', 'Facebook': 'https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg', 'Instagram': 'https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg', 'Google': 'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg' };
+                grid.innerHTML = data.data.map(s => {
+                    const imgUrl = iconMap[s.service_name] || s.service_img || 'https://via.placeholder.com/50';
+                    return `
+                    <div onclick="selectApp(this, '${s.service_code}', '${s.service_name}')" 
+                         class="app-card cursor-pointer bg-black/40 border border-gray-700 rounded-xl p-3 flex flex-col items-center justify-center hover:border-gray-500 transition group h-20">
+                        <img src="${imgUrl}" class="w-6 h-6 object-contain mb-1">
+                        <span class="text-[9px] text-gray-400 font-bold text-center group-hover:text-white uppercase">${s.service_name}</span>
+                    </div>`;
+                }).join('');
+            }
+        } catch(e) { grid.innerHTML = '<div class="col-span-full text-red-500 text-xs">Gagal memuat aplikasi.</div>'; }
     }
-    
     fetchNokosHistory();
     clearInterval(nokosInterval);
     nokosInterval = setInterval(fetchNokosHistory, 5000);
 }
 
-// Langkah 1: User Klik Aplikasi
-async function selectNokosApp(el, id, name) {
-    // Highlight Card
-    document.querySelectorAll('.app-card').forEach(c => c.classList.remove('active-app-card'));
-    el.classList.add('active-app-card');
-
-    // Simpan Data
-    currentNokosData.serviceId = id;
-    currentNokosData.serviceName = name;
+// 2. PILIH APLIKASI -> LOAD NEGARA
+async function selectApp(el, id, name) {
+    document.querySelectorAll('.app-card').forEach(c => c.classList.remove('active-card'));
+    el.classList.add('active-card');
+    currentNokos.serviceId = id;
+    currentNokos.serviceName = name;
     
-    // Reset Langkah Berikutnya
-    document.getElementById('step-checkout').classList.add('hidden');
-    document.getElementById('nokosOperatorList').innerHTML = '<div class="col-span-full text-gray-500 text-xs italic">Pilih negara dulu...</div>';
+    // Reset Steps
+    resetSteps(['step-country', 'step-server', 'step-operator', 'step-checkout']);
     
-    // Buka Step Negara
-    const stepCountry = document.getElementById('step-country');
-    stepCountry.classList.remove('opacity-50', 'pointer-events-none');
-    
-    // Load Negara
-    const cSel = document.getElementById('nokosCountry');
-    cSel.innerHTML = '<option>Memuat Negara...</option>';
-    cSel.disabled = true;
+    // Show Country Grid
+    const countryGrid = document.getElementById('nokos-country-grid');
+    document.getElementById('step-country').classList.remove('hidden');
+    countryGrid.innerHTML = '<div class="col-span-full text-center text-xs text-yellow-500 animate-pulse">Memuat Negara...</div>';
 
     try {
         const res = await fetch(`/api/nokos/countries?service_id=${id}`);
         const data = await res.json();
-        
         if(data.success) {
-            cSel.innerHTML = '<option value="">-- Pilih Negara --</option>' + 
-            data.data.map(c => {
-                const p = c.pricelist[0];
-                // Simpan data di atribut option biar gampang
-                return `<option value="${c.name}" data-id="${c.number_id}" data-prov="${p.provider_id}" data-price="${p.price}">
-                    ${c.name} (+${c.prefix})
-                </option>`;
+            // Simpan data pricelist di element biar gak request ulang
+            countryGrid.innerHTML = data.data.map(c => {
+                const priceData = JSON.stringify(c.pricelist).replace(/"/g, '&quot;'); // Encode JSON
+                return `
+                <div onclick="selectCountry(this, '${c.number_id}', '${c.name}', '${priceData}')" 
+                     class="country-card cursor-pointer bg-black/40 border border-gray-700 rounded-lg p-2 flex items-center gap-3 hover:border-gray-500 transition">
+                    <img src="${c.img}" class="w-6 h-4 rounded-sm object-cover">
+                    <div class="flex-1">
+                        <div class="text-xs font-bold text-white leading-tight">${c.name}</div>
+                        <div class="text-[9px] text-gray-500">Stok: ${c.stock_total || '∞'}</div>
+                    </div>
+                </div>`;
             }).join('');
-            cSel.disabled = false;
         }
-    } catch(e) { cSel.innerHTML = '<option>Error memuat data</option>'; }
+    } catch(e) { countryGrid.innerHTML = '<div class="col-span-full text-red-500 text-xs">Gagal.</div>'; }
 }
 
-// Langkah 2: User Pilih Negara
-async function fetchNokosOperators() {
-    const cSel = document.getElementById('nokosCountry');
-    if(!cSel.value) return;
+// 3. PILIH NEGARA -> TAMPILKAN LIST SERVER/HARGA
+function selectCountry(el, numId, name, priceDataJson) {
+    document.querySelectorAll('.country-card').forEach(c => c.classList.remove('active-card'));
+    el.classList.add('active-card');
+    currentNokos.countryId = numId;
+    currentNokos.countryName = name;
 
-    // Simpan Data Negara
-    const opt = cSel.options[cSel.selectedIndex];
-    currentNokosData.countryId = opt.getAttribute('data-id');
-    currentNokosData.providerId = opt.getAttribute('data-prov');
+    resetSteps(['step-server', 'step-operator', 'step-checkout']);
+    document.getElementById('step-server').classList.remove('hidden');
     
-    // Harga sementara (default any operator)
-    currentNokosData.price = parseInt(opt.getAttribute('data-price'));
+    const serverList = document.getElementById('nokos-server-list');
+    const prices = JSON.parse(priceDataJson); // Decode JSON Price List
 
-    // Buka Step Operator
-    const stepOp = document.getElementById('step-operator');
-    stepOp.classList.remove('opacity-50', 'pointer-events-none');
+    serverList.innerHTML = prices.map(p => `
+    <div onclick="selectServer(this, '${p.provider_id}', '${p.price}')" 
+         class="server-card cursor-pointer bg-black/40 border border-gray-700 rounded-lg p-3 flex justify-between items-center hover:border-green-500 transition group">
+        <div class="flex items-center gap-3">
+            <div class="bg-gray-800 p-2 rounded text-xs font-mono text-gray-400 group-hover:bg-green-900 group-hover:text-green-400">ID:${p.provider_id}</div>
+            <div>
+                <div class="text-xs font-bold text-white">Server ${p.server_id || 'Fast'}</div>
+                <div class="text-[10px] text-gray-500">Stok: ${p.stock}</div>
+            </div>
+        </div>
+        <div class="text-sm font-bold text-green-400">${p.price_format}</div>
+    </div>
+    `).join('');
+}
+
+// 4. PILIH SERVER -> LOAD OPERATOR
+async function selectServer(el, provId, price) {
+    document.querySelectorAll('.server-card').forEach(c => c.classList.remove('active-card'));
+    el.classList.add('active-card');
+    currentNokos.providerId = provId;
+    currentNokos.serverPrice = parseInt(price);
+
+    resetSteps(['step-operator', 'step-checkout']);
+    document.getElementById('step-operator').classList.remove('hidden');
     
-    const div = document.getElementById('nokosOperatorList');
-    div.innerHTML = '<div class="col-span-full text-center text-xs text-yellow-500 animate-pulse">Memuat Operator...</div>';
+    const opGrid = document.getElementById('nokos-operator-grid');
+    opGrid.innerHTML = '<div class="col-span-full text-center text-xs text-yellow-500 animate-pulse">Memuat Operator...</div>';
 
     try {
-        const countryEnc = encodeURIComponent(cSel.value);
-        const res = await fetch(`/api/nokos/operators?country=${countryEnc}&provider_id=${currentNokosData.providerId}`);
+        const countryEnc = encodeURIComponent(currentNokos.countryName);
+        const res = await fetch(`/api/nokos/operators?country=${countryEnc}&provider_id=${provId}`);
         const data = await res.json();
         
         if(data.status || data.success) {
-            div.innerHTML = data.data.map(op => `
-                <div onclick="selectNokosOperator(this, '${op.id}', '${op.name}')" 
-                     class="op-card cursor-pointer bg-black/40 border border-gray-700 rounded-lg p-3 text-center hover:border-gray-500 transition relative overflow-hidden">
-                    <img src="${op.image}" onerror="this.src='https://via.placeholder.com/20'" class="w-6 h-6 mx-auto mb-2 rounded-full bg-white p-0.5">
-                    <div class="text-[10px] text-gray-400 font-bold uppercase truncate">${op.name}</div>
-                </div>
-            `).join('');
+            let html = `
+            <div onclick="selectOperator(this, 'any', 'Any/Acak')" 
+                 class="operator-card cursor-pointer bg-black/40 border border-gray-700 rounded-lg p-3 flex flex-col items-center justify-center gap-1 hover:border-green-500 transition">
+                <div class="w-6 h-6 rounded-full bg-gray-700 text-white flex items-center justify-center font-bold text-xs">?</div>
+                <span class="text-[9px] font-bold text-white">ANY</span>
+            </div>`;
+            
+            html += data.data.map(op => `
+            <div onclick="selectOperator(this, '${op.id}', '${op.name}')" 
+                 class="operator-card cursor-pointer bg-black/40 border border-gray-700 rounded-lg p-3 flex flex-col items-center justify-center gap-1 hover:border-green-500 transition relative overflow-hidden">
+                <img src="${op.image}" onerror="this.src='https://via.placeholder.com/20'" class="w-5 h-5 object-contain">
+                <span class="text-[9px] font-bold text-gray-300 truncate w-full text-center">${op.name}</span>
+            </div>`).join('');
+            
+            opGrid.innerHTML = html;
         } else {
-            div.innerHTML = '<div class="col-span-full text-red-500 text-xs">Gagal memuat operator.</div>';
+            opGrid.innerHTML = '<div class="col-span-full text-red-500 text-xs">Gagal load operator.</div>';
         }
-    } catch(e) {
-        div.innerHTML = '<div class="col-span-full text-red-500 text-xs">Error server.</div>';
-    }
+    } catch(e) { opGrid.innerHTML = '<div class="col-span-full text-red-500 text-xs">Error.</div>'; }
 }
 
-// Langkah 3: User Klik Operator
-function selectNokosOperator(el, opId, opName) {
-    // Highlight Card
-    document.querySelectorAll('.op-card').forEach(c => c.classList.remove('active-op-card'));
-    el.classList.add('active-op-card');
+// 5. PILIH OPERATOR -> CHECKOUT
+function selectOperator(el, opId, opName) {
+    document.querySelectorAll('.operator-card').forEach(c => c.classList.remove('active-card'));
+    el.classList.add('active-card');
+    currentNokos.operatorId = opId;
 
-    currentNokosData.operatorId = opId;
-
-    // Tampilkan Box Checkout (Harga & Tombol)
-    const checkout = document.getElementById('step-checkout');
-    checkout.classList.remove('hidden');
+    document.getElementById('step-checkout').classList.remove('hidden');
+    document.getElementById('display-price').innerText = `Rp ${currentNokos.serverPrice.toLocaleString()}`;
+    document.getElementById('display-info').innerText = opName;
+    document.getElementById('display-server').innerText = `ID: ${currentNokos.providerId}`;
     
-    // Tampilkan Harga & Nama Operator
-    // (Harga di sini masih estimasi dari negara, harga fix nanti dicek backend lagi)
-    document.getElementById('display-price').innerText = `Rp ${currentNokosData.price.toLocaleString()}`;
-    document.getElementById('display-operator').innerText = opName;
+    // Scroll ke tombol beli biar user notice
+    document.getElementById('step-checkout').scrollIntoView({ behavior: 'smooth' });
 }
 
-// Langkah 4: Eksekusi Beli
+// 6. EKSEKUSI BELI
 async function executeBuyNokos() {
-    if(!confirm(`Beli nomor ${currentNokosData.serviceName}?\nSaldo akan terpotong.`)) return;
+    if(!confirm(`Beli nomor ${currentNokos.serviceName} (${currentNokos.countryName})?\nSaldo akan terpotong.`)) return;
     
     const btn = document.getElementById('btn-buy-nokos');
     const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> MEMPROSES...';
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> PROSES...';
     btn.disabled = true;
 
-    const payload = {
-        username: userSession,
-        service_id: currentNokosData.serviceId,
-        service_name: currentNokosData.serviceName,
-        number_id: currentNokosData.countryId,
-        provider_id: currentNokosData.providerId,
-        operator_id: currentNokosData.operatorId
-    };
-
     try {
-        const res = await fetch('/api/nokos/buy', { 
-            method: 'POST', 
-            headers: {'Content-Type':'application/json'}, 
-            body: JSON.stringify(payload) 
-        });
+        const payload = {
+            username: userSession,
+            service_id: currentNokos.serviceId, // Penting buat validasi backend
+            service_name: currentNokos.serviceName,
+            number_id: currentNokos.countryId,
+            provider_id: currentNokos.providerId,
+            operator_id: currentNokos.operatorId
+        };
+
+        const res = await fetch('/api/nokos/buy', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
         const d = await res.json();
         
         if(d.success) {
-            alert("✅ SUKSES! Nomor berhasil dibeli.\nSilakan tunggu SMS masuk di tabel bawah.");
-            checkUserLogin(); 
-            fetchNokosHistory();
-            // Reset UI
-            document.getElementById('step-checkout').classList.add('hidden');
-            document.getElementById('step-operator').classList.add('opacity-50', 'pointer-events-none');
+            alert("✅ SUKSES! Tunggu SMS masuk.");
+            checkUserLogin(); fetchNokosHistory();
+            resetSteps(['step-checkout']); // Sembunyikan checkout biar gak double buy
         } else {
-            // HANDLING ERROR DARI RUMAHOTP
-            // Jika success: false, kita cek pesan errornya
-            let errorMsg = d.msg;
-            
-            // Cek apakah error dari JSON RumahOTP (nested error message)
-            if (d.error && d.error.message) errorMsg = d.error.message;
-            if (d.data && d.data.message) errorMsg = d.data.message;
-            
-            alert("❌ ORDER GAGAL: " + errorMsg);
+            // Parsing Error Message biar rapi
+            let msg = d.msg || "Gagal";
+            if(d.msg && d.msg.includes("Pusat:")) msg = "GAGAL DARI PUSAT: Saldo Server/Stok Habis.";
+            alert("❌ " + msg);
         }
-    } catch(e) { 
-        alert("Terjadi kesalahan koneksi."); 
-    } finally {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-    }
+    } catch(e) { alert("Error koneksi."); } 
+    finally { btn.innerHTML = originalText; btn.disabled = false; }
 }
 
-// Render Tabel History
+// UTILS
+function resetSteps(ids) {
+    ids.forEach(id => document.getElementById(id).classList.add('hidden'));
+}
+
 async function fetchNokosHistory() {
     if(!userSession) return;
     const res = await fetch(`/api/nokos/history/${userSession}`); 
     const list = await res.json();
     const tbody = document.getElementById('nokos-active-list');
     
-    if(list.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-gray-500">Belum ada order.</td></tr>'; return; }
+    if(list.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-gray-500 text-xs">Belum ada order.</td></tr>'; return; }
     
     tbody.innerHTML = await Promise.all(list.map(async (tx) => {
         if(tx.status === 'waiting') await fetch(`/api/nokos/status/${tx.invoiceId}`); 
         
-        const exp = new Date(tx.expiresAt); 
-        const timeLeft = Math.floor((exp - new Date()) / 1000);
+        const exp = new Date(tx.expiresAt); const timeLeft = Math.floor((exp - new Date()) / 1000);
         let timeStr = timeLeft > 0 ? `${Math.floor(timeLeft/60)}m ${timeLeft%60}s` : 'Expired';
-        
-        let smsDisplay = '<span class="text-yellow-500 animate-pulse text-xs">Menunggu SMS...</span>';
-        if(tx.smsCode) smsDisplay = `<span class="text-xl font-mono font-bold text-green-400 tracking-widest bg-green-900/20 px-2 py-1 rounded border border-green-500/30 select-all">${tx.smsCode}</span>`;
-        if(tx.status === 'canceled') smsDisplay = '<span class="text-red-500 text-xs">Refunded</span>';
+        let smsDisplay = '<span class="text-yellow-500 animate-pulse text-[10px]">WAITING...</span>';
+        if(tx.smsCode) smsDisplay = `<span class="bg-green-900/30 text-green-400 px-2 py-1 rounded border border-green-500/30 font-mono font-bold text-sm tracking-widest select-all">${tx.smsCode}</span>`;
+        if(tx.status === 'canceled') smsDisplay = '<span class="text-red-500 text-[10px]">REFUND</span>';
         
         let btnAction = '';
-        if(tx.status === 'waiting' && timeLeft > 0) btnAction = `<button onclick="cancelNokos('${tx.invoiceId}')" class="bg-red-900/50 hover:bg-red-600 text-red-200 px-3 py-1 rounded text-[10px] border border-red-500/30 transition">CANCEL</button>`;
-        else if (tx.status === 'success') btnAction = `<span class="text-green-500 font-bold text-xs"><i class="fa-solid fa-check"></i></span>`;
-        
-        return `<tr class="hover:bg-white/5 border-b border-gray-800">
-            <td class="p-4 font-bold text-white text-xs">${tx.serviceName}</td>
-            <td class="p-4 font-mono text-sm text-purple-300 select-all">${tx.phoneNumber}</td>
-            <td class="p-4">${smsDisplay}</td>
-            <td class="p-4 font-mono text-xs text-gray-400">${timeStr}</td>
-            <td class="p-4 text-right">${btnAction}</td>
-        </tr>`;
+        if(tx.status === 'waiting' && timeLeft > 0) btnAction = `<button onclick="cancelNokos('${tx.invoiceId}')" class="text-red-400 hover:text-white text-[10px] border border-red-500/30 px-2 py-1 rounded bg-red-900/20">CANCEL</button>`;
+        else if (tx.status === 'success') btnAction = `<i class="fa-solid fa-check text-green-500"></i>`;
+
+        return `<tr class="hover:bg-white/5 border-b border-gray-800"><td class="p-4 font-bold text-white text-xs">${tx.serviceName}<div class="text-[9px] text-gray-500">${tx.country}</div></td><td class="p-4 font-mono text-xs text-purple-300 select-all">${tx.phoneNumber}</td><td class="p-4">${smsDisplay}</td><td class="p-4 font-mono text-[10px] text-gray-400">${timeStr}</td><td class="p-4 text-right">${btnAction}</td></tr>`;
     })).then(rows => rows.join(''));
 }
 
 async function cancelNokos(invId) {
-    if(!confirm("Batalkan nomor & refund?")) return;
-    const res = await fetch('/api/nokos/cancel', { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ invoiceId: invId, username: userSession }) });
-    const d = await res.json();
-    if(d.success) { alert("Berhasil."); fetchNokosHistory(); checkUserLogin(); } else alert("Gagal: " + d.msg);
+    if(!confirm("Batalkan & Refund?")) return;
+    const res = await fetch('/api/nokos/cancel', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({invoiceId:invId, username:userSession})});
+    const d=await res.json();
+    if(d.success) { alert("Sukses Cancel."); fetchNokosHistory(); checkUserLogin(); } else alert("Gagal.");
 }
 
 // ============================================
