@@ -16,7 +16,7 @@
 <meta property="twitter:title" content="Manzzy ID - Jagonya Bot WA">
 <meta property="twitter:description" content="Hosting Bot WhatsApp Murah & Berkualitas. Cek sekarang!">
 <meta property="twitter:image" content="https://raw.githubusercontent.com/ManzzyGacor/Urlmanzzy/main/file_1766890211382_23.jpg">
-    
+ 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -37,7 +37,7 @@
         <div class="loading-text">LOADING...</div>
     </div>
 
-    <script>
+        <script>
         // Script ini jalan duluan sebelum file lain diload
         window.addEventListener('load', () => {
             setTimeout(() => {
@@ -55,6 +55,7 @@
         }, 5000);
     </script>
 
+    
     <div id="modal-overlay" class="modal-overlay" onclick="closeModal(event)">
         <div class="modal-box" onclick="event.stopPropagation()">
             <div class="relative">
@@ -87,29 +88,48 @@
 
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
     <aside id="sidebar-menu" class="sidebar-menu flex flex-col p-6 pt-10">
-        <div class="flex items-center gap-3 mb-10 border-b border-gray-800 pb-6"><div class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-500/30"><i class="fa-solid fa-robot text-white text-lg"></i></div><div><h3 class="font-bold text-white text-lg leading-none">MANZZY<span class="text-purple-400">ID</span></h3><p id="user-status-sidebar" class="text-xs text-gray-500 font-mono mt-1">Guest Mode</p></div></div>
+        <div class="flex items-center gap-3 mb-10 border-b border-gray-800 pb-6">
+            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-500/30"><i class="fa-solid fa-robot text-white text-lg"></i></div>
+            <div><h3 class="font-bold text-white text-lg leading-none">MANZZY<span class="text-purple-400">ID</span></h3><p id="user-status-sidebar" class="text-xs text-gray-500 font-mono mt-1">Guest Mode</p></div>
+        </div>
         <nav class="flex-1 space-y-2">
             <a href="#features" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-star w-6 text-center text-yellow-500"></i><span class="font-medium">Keunggulan</span></a>
-            <a href="#testimonials" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-comment-dots w-6 text-center text-pink-500"></i><span class="font-medium">Testimoni</span></a>
+            
             <div id="menu-topup" class="hidden"><a href="#" onclick="switchView('topup'); toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-wallet w-6 text-center text-green-500"></i><span class="font-medium">Top Up Saldo</span></a></div>
+            
             <div id="menu-myservices" class="hidden"><a href="#" onclick="switchView('myservices'); toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-server w-6 text-center text-blue-500"></i><span class="font-medium">Layanan Saya</span></a></div>
+            
+            <div id="menu-nokos" class="hidden">
+                <a href="#" onclick="switchView('nokos'); toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group">
+                    <i class="fa-solid fa-sim-card w-6 text-center text-pink-500"></i>
+                    <span class="font-medium">Virtual Number</span>
+                </a>
+            </div>
+
             <div id="menu-history" class="hidden">
-    <a href="#" onclick="switchView('history'); toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group">
-        <i class="fa-solid fa-clock-rotate-left w-6 text-center text-orange-500"></i>
-        <span class="font-medium">Riwayat Transaksi</span>
-    </a>
-</div>
+                <a href="#" onclick="switchView('history'); toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group">
+                    <i class="fa-solid fa-clock-rotate-left w-6 text-center text-orange-500"></i>
+                    <span class="font-medium">Riwayat Transaksi</span>
+                </a>
+            </div>
+            
+            <a href="#testimonials" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-comment-dots w-6 text-center text-pink-500"></i><span class="font-medium">Testimoni</span></a>
             <a href="#faq" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-circle-question w-6 text-center text-blue-500"></i><span class="font-medium">FAQ</span></a>
+            
             <div class="h-px bg-gray-800 my-4"></div>
+            
             <div id="auth-menu"><a href="/login_user.html" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-user w-6 text-center text-purple-500"></i><span class="font-medium">Login Member</span></a></div>
             <a href="/login.html" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-lock w-6 text-center text-red-500"></i><span class="font-medium">Admin Panel</span></a>
         </nav>
-        <div class="mt-auto pt-6 border-t border-gray-800 text-center"><p class="text-[10px] text-gray-600 font-mono">System v17.0 Fixed</p></div>
+        <div class="mt-auto pt-6 border-t border-gray-800 text-center"><p class="text-[10px] text-gray-600 font-mono">System v18.0 Nokos Ready</p></div>
     </aside>
 
     <nav class="fixed top-0 w-full z-50 backdrop-blur-md bg-black/60 border-b border-white/5">
         <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-4"><button onclick="toggleSidebar()" class="text-gray-300 hover:text-white transition p-2 hover:bg-white/10 rounded-lg"><i class="fa-solid fa-bars text-xl"></i></button><div class="flex items-center gap-2 cursor-pointer" onclick="switchView('landing')"><div class="w-1 h-6 bg-purple-600 rounded-full"></div><h2 class="text-lg font-bold tracking-widest text-white">MANZZY<span class="text-purple-400">ID</span></h2></div></div>
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="text-gray-300 hover:text-white transition p-2 hover:bg-white/10 rounded-lg"><i class="fa-solid fa-bars text-xl"></i></button>
+                <div class="flex items-center gap-2 cursor-pointer" onclick="switchView('landing')"><div class="w-1 h-6 bg-purple-600 rounded-full"></div><h2 class="text-lg font-bold tracking-widest text-white">MANZZY<span class="text-purple-400">ID</span></h2></div>
+            </div>
             <div id="header-balance" class="hidden md:flex items-center gap-3 px-4 py-2 rounded-full bg-black/50 border border-gray-700 hover:border-purple-500 transition cursor-default"><i class="fa-solid fa-wallet text-green-400 animate-pulse"></i><span class="text-sm text-white font-mono font-bold tracking-wide">Loading...</span></div>
         </div>
     </nav>
@@ -158,22 +178,17 @@
         <section id="view-topup" class="view-section">
             <div class="max-w-lg mx-auto">
                 <button onclick="switchView('landing')" class="mb-6 text-gray-400 hover:text-white flex items-center gap-2 group"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
-                
                 <div class="glass-card p-6 rounded-2xl border-l-4 border-l-blue-500 mb-6 relative overflow-hidden group">
                     <div class="absolute -right-6 -top-6 text-9xl text-blue-500/5 group-hover:text-blue-500/10 transition rotate-12"><i class="fa-solid fa-ticket"></i></div>
                     <div class="relative z-10">
                         <h3 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-gift text-blue-400"></i> Punya Kode Promo?</h3>
                         <p class="text-xs text-gray-400 mb-4">Masukkan kode voucher untuk klaim saldo gratis.</p>
                         <form onsubmit="redeemCode(event)" class="flex gap-2">
-                            <div class="relative flex-1">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-tag text-gray-500 text-xs"></i></div>
-                                <input type="text" id="redeemInput" class="w-full bg-black/50 border border-gray-700 rounded-xl py-3 pl-10 pr-3 text-white text-sm uppercase font-mono tracking-wider focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition" placeholder="MANZZY10K" required>
-                            </div>
+                            <div class="relative flex-1"><div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-tag text-gray-500 text-xs"></i></div><input type="text" id="redeemInput" class="w-full bg-black/50 border border-gray-700 rounded-xl py-3 pl-10 pr-3 text-white text-sm uppercase font-mono tracking-wider focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition" placeholder="MANZZY10K" required></div>
                             <button type="submit" id="btn-redeem" class="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-bold px-6 rounded-xl shadow-lg shadow-blue-500/20 transition transform active:scale-95 text-sm">Klaim</button>
                         </form>
                     </div>
                 </div>
-                
                 <div class="glass-card p-8 rounded-2xl border-t-4 border-t-green-500">
                     <h2 class="text-2xl font-bold text-white text-center mb-6">Isi Saldo Manual</h2>
                     <div class="bg-white p-4 rounded-xl mb-6 mx-auto w-64"><img src="qris.jpg" onerror="this.src='https://via.placeholder.com/300x300?text=Scan+QRIS'" class="w-full h-auto"></div>
@@ -188,96 +203,43 @@
         </section>
 
         <section id="view-nokos" class="view-section">
-    <div class="max-w-4xl mx-auto">
-        <div class="flex items-center justify-between mb-6">
-            <button onclick="switchView('landing')" class="text-gray-400 hover:text-white flex items-center gap-2">
-                <i class="fa-solid fa-arrow-left"></i> Kembali
-            </button>
-            <h2 class="text-2xl font-bold text-white">VIRTUAL <span class="text-green-500">NUMBER</span></h2>
-        </div>
-
-        <div class="glass-card p-6 rounded-2xl border-t-4 border-t-green-500 mb-8">
-            <h3 class="text-lg font-bold text-white mb-4">Beli Nomor Baru</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="text-xs text-gray-500 mb-1 block">1. PILIH APLIKASI</label>
-                    <select id="nokosService" onchange="fetchNokosCountries()" class="w-full bg-black/50 border border-gray-700 rounded p-3 text-white text-sm">
-                        <option value="">Pilih Service...</option>
-                    </select>
+            <div class="max-w-4xl mx-auto">
+                <div class="flex items-center justify-between mb-6">
+                    <button onclick="switchView('landing')" class="text-gray-400 hover:text-white flex items-center gap-2"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
+                    <h2 class="text-2xl font-bold text-white">VIRTUAL <span class="text-green-500">NUMBER</span></h2>
                 </div>
-                <div>
-                    <label class="text-xs text-gray-500 mb-1 block">2. PILIH NEGARA</label>
-                    <select id="nokosCountry" onchange="fetchNokosOperators()" class="w-full bg-black/50 border border-gray-700 rounded p-3 text-white text-sm" disabled>
-                        <option value="">Pilih Negara...</option>
-                    </select>
-                </div>
-                <div class="md:col-span-2">
-                    <label class="text-xs text-gray-500 mb-1 block">3. PILIH OPERATOR & HARGA</label>
-                    <div id="nokosOperatorList" class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <div class="text-gray-500 text-sm italic p-2">Pilih negara dulu...</div>
+                <div class="glass-card p-6 rounded-2xl border-t-4 border-t-green-500 mb-8">
+                    <h3 class="text-lg font-bold text-white mb-4">Beli Nomor Baru</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div><label class="text-xs text-gray-500 mb-1 block">1. PILIH APLIKASI</label><select id="nokosService" onchange="fetchNokosCountries()" class="w-full bg-black/50 border border-gray-700 rounded p-3 text-white text-sm"><option value="">Pilih Service...</option></select></div>
+                        <div><label class="text-xs text-gray-500 mb-1 block">2. PILIH NEGARA</label><select id="nokosCountry" onchange="fetchNokosOperators()" class="w-full bg-black/50 border border-gray-700 rounded p-3 text-white text-sm" disabled><option value="">Pilih Negara...</option></select></div>
+                        <div class="md:col-span-2"><label class="text-xs text-gray-500 mb-1 block">3. PILIH OPERATOR & HARGA</label><div id="nokosOperatorList" class="grid grid-cols-2 md:grid-cols-4 gap-3"><div class="text-gray-500 text-sm italic p-2">Pilih negara dulu...</div></div></div>
                     </div>
                 </div>
+                <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><span class="animate-pulse w-2 h-2 bg-red-500 rounded-full"></span> Nomor Aktif</h3>
+                <div class="glass-card overflow-hidden rounded-xl"><div class="overflow-x-auto"><table class="w-full text-left"><thead><tr class="bg-white/5 text-xs text-gray-400 uppercase"><th class="p-4">Service</th><th class="p-4">Nomor HP</th><th class="p-4">Kode SMS</th><th class="p-4">Sisa Waktu</th><th class="p-4 text-right">Aksi</th></tr></thead><tbody id="nokos-active-list" class="divide-y divide-gray-800 text-sm"><tr><td colspan="5" class="p-6 text-center text-gray-500">Memuat data...</td></tr></tbody></table></div></div>
             </div>
-        </div>
-
-        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-            <span class="animate-pulse w-2 h-2 bg-red-500 rounded-full"></span> Nomor Aktif
-        </h3>
-        <div class="glass-card overflow-hidden rounded-xl">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead>
-                        <tr class="bg-white/5 text-xs text-gray-400 uppercase">
-                            <th class="p-4">Service</th>
-                            <th class="p-4">Nomor HP</th>
-                            <th class="p-4">Kode SMS</th>
-                            <th class="p-4">Sisa Waktu</th>
-                            <th class="p-4 text-right">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="nokos-active-list" class="divide-y divide-gray-800 text-sm">
-                        <tr><td colspan="5" class="p-6 text-center text-gray-500">Memuat data...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</section>
+        </section>
         
         <section id="view-myservices" class="view-section"><div class="w-full mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4"><button onclick="switchView('landing')" class="text-gray-400 hover:text-white flex items-center gap-2 group"><i class="fa-solid fa-arrow-left"></i> Kembali</button><h2 class="text-3xl font-bold text-white">BOT <span class="text-blue-500">AKTIF</span></h2></div><div id="myservices-list" class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20"><p class="text-gray-500 col-span-full text-center py-10">Memuat layanan...</p></div></section>
     </div>
-<section id="view-history" class="view-section" style="margin-top: -720px !important;">
-    <div class="max-w-4xl mx-auto min-h-[50vh]">
-        
-        <div class="flex items-center justify-between mb-4 mt-8 border-b border-gray-800 pb-4">
-            <button onclick="switchView('myservices')" class="text-gray-400 hover:text-white text-sm flex items-center gap-2 transition group">
-                <i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition"></i> Kembali
-            </button>
-            <h2 class="text-lg md:text-xl font-bold text-white tracking-widest uppercase">
-                Riwayat <span class="text-purple-500">Transaksi</span>
-            </h2>
-        </div>
 
-        <div class="glass-card rounded-xl overflow-hidden border border-gray-800/50 relative z-10">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-white/5 text-[10px] text-gray-500 uppercase tracking-wider">
-                            <th class="p-3 pl-4">Waktu</th>
-                            <th class="p-3">Keterangan</th>
-                            <th class="p-3 text-right">Nominal</th>
-                            <th class="p-3 text-center pr-4">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="history-list" class="divide-y divide-gray-800 text-sm">
-                        <tr><td colspan="4" class="p-6 text-center text-gray-500 text-xs">Memuat data...</td></tr>
-                    </tbody>
-                </table>
+    <section id="view-history" class="view-section" style="margin-top: -120px !important;">
+        <div class="max-w-4xl mx-auto min-h-[50vh]">
+            <div class="flex items-center justify-between mb-4 mt-8 border-b border-gray-800 pb-4">
+                <button onclick="switchView('myservices')" class="text-gray-400 hover:text-white text-sm flex items-center gap-2 transition group"><i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition"></i> Kembali</button>
+                <h2 class="text-lg md:text-xl font-bold text-white tracking-widest uppercase">Riwayat <span class="text-purple-500">Transaksi</span></h2>
+            </div>
+            <div class="glass-card rounded-xl overflow-hidden border border-gray-800/50 relative z-10">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead><tr class="bg-white/5 text-[10px] text-gray-500 uppercase tracking-wider"><th class="p-3 pl-4">Waktu</th><th class="p-3">Keterangan</th><th class="p-3 text-right">Nominal</th><th class="p-3 text-center pr-4">Status</th></tr></thead>
+                        <tbody id="history-list" class="divide-y divide-gray-800 text-sm"><tr><td colspan="4" class="p-6 text-center text-gray-500 text-xs">Memuat data...</td></tr></tbody>
+                    </table>
+                </div>
             </div>
         </div>
-        
-    </div>
-</section>
+    </section>
 
     <script src="script.js"></script>
 </body>
