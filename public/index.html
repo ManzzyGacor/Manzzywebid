@@ -27,26 +27,25 @@
     <link rel="stylesheet" href="style.css">
     
     <style>
-        /* LOADER STYLE */
+        /* LOADER */
         #loader { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s ease; }
         .spinner { width: 50px; height: 50px; border: 3px solid rgba(139, 92, 246, 0.3); border-top: 3px solid #8b5cf6; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
         .loading-text { font-family: 'JetBrains Mono', monospace; color: #8b5cf6; font-size: 12px; letter-spacing: 2px; animation: pulse 1s infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-        /* TOAST ANIMATION */
+        /* TOAST */
         .toast-enter { transform: translateX(100%); opacity: 0; }
         .toast-active { transform: translateX(0); opacity: 1; }
         .toast-exit { transform: translateX(100%); opacity: 0; }
 
-        /* NOKOS SCROLLBAR */
+        /* NOKOS SCROLL */
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: #000; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
         .active-card { border-color: #22c55e !important; background: rgba(34, 197, 94, 0.1) !important; color: white !important; }
-        
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in-up { animation: fadeInUp 0.3s ease-out forwards; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -55,23 +54,14 @@
         <div class="spinner"></div>
         <div class="loading-text">LOADING...</div>
     </div>
-
     <script>
-        // Script Loader (Jalan duluan)
         window.addEventListener('load', () => {
             setTimeout(() => {
                 const l = document.getElementById('loader');
-                if(l) {
-                    l.style.opacity = '0';
-                    l.style.pointerEvents = 'none';
-                    setTimeout(() => { l.style.display = 'none'; }, 500);
-                }
+                if(l) { l.style.opacity = '0'; l.style.pointerEvents = 'none'; setTimeout(() => { l.style.display = 'none'; }, 500); }
             }, 3000); 
         });
-        setTimeout(() => {
-            const l = document.getElementById('loader');
-            if(l && l.style.display !== 'none') l.style.display = 'none';
-        }, 5000);
+        setTimeout(() => { const l = document.getElementById('loader'); if(l && l.style.display !== 'none') l.style.display = 'none'; }, 5000);
     </script>
 
     <div id="toast-container" class="fixed top-24 right-5 z-[100] flex flex-col gap-3 pointer-events-none"></div>
@@ -108,10 +98,7 @@
 
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
     <aside id="sidebar-menu" class="sidebar-menu flex flex-col p-6 pt-10">
-        <div class="flex items-center gap-3 mb-10 border-b border-gray-800 pb-6">
-            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-500/30"><i class="fa-solid fa-robot text-white text-lg"></i></div>
-            <div><h3 class="font-bold text-white text-lg leading-none">MANZZY<span class="text-purple-400">ID</span></h3><p id="user-status-sidebar" class="text-xs text-gray-500 font-mono mt-1">Guest Mode</p></div>
-        </div>
+        <div class="flex items-center gap-3 mb-10 border-b border-gray-800 pb-6"><div class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-500/30"><i class="fa-solid fa-robot text-white text-lg"></i></div><div><h3 class="font-bold text-white text-lg leading-none">MANZZY<span class="text-purple-400">ID</span></h3><p id="user-status-sidebar" class="text-xs text-gray-500 font-mono mt-1">Guest Mode</p></div></div>
         <nav class="flex-1 space-y-2">
             <a href="#features" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-star w-6 text-center text-yellow-500"></i><span class="font-medium">Keunggulan</span></a>
             <a href="#testimonials" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-comment-dots w-6 text-center text-pink-500"></i><span class="font-medium">Testimoni</span></a>
@@ -122,21 +109,16 @@
             <div id="menu-history" class="hidden"><a href="#" onclick="switchView('history'); toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-clock-rotate-left w-6 text-center text-orange-500"></i><span class="font-medium">Riwayat Transaksi</span></a></div>
             
             <a href="#faq" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-circle-question w-6 text-center text-blue-500"></i><span class="font-medium">FAQ</span></a>
-            
             <div class="h-px bg-gray-800 my-4"></div>
-            
             <div id="auth-menu"><a href="/login_user.html" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-user w-6 text-center text-purple-500"></i><span class="font-medium">Login Member</span></a></div>
             <a href="/login.html" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-lock w-6 text-center text-red-500"></i><span class="font-medium">Admin Panel</span></a>
         </nav>
-        <div class="mt-auto pt-6 border-t border-gray-800 text-center"><p class="text-[10px] text-gray-600 font-mono">© Manzzy ID Official</p></div>
+        <div class="mt-auto pt-6 border-t border-gray-800 text-center"><p class="text-[10px] text-gray-600 font-mono">System v18.0 (Final)</p></div>
     </aside>
 
     <nav class="fixed top-0 w-full z-50 backdrop-blur-md bg-black/60 border-b border-white/5">
         <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-4">
-                <button onclick="toggleSidebar()" class="text-gray-300 hover:text-white transition p-2 hover:bg-white/10 rounded-lg"><i class="fa-solid fa-bars text-xl"></i></button>
-                <div class="flex items-center gap-2 cursor-pointer" onclick="switchView('landing')"><div class="w-1 h-6 bg-purple-600 rounded-full"></div><h2 class="text-lg font-bold tracking-widest text-white">MANZZY<span class="text-purple-400">ID</span></h2></div>
-            </div>
+            <div class="flex items-center gap-4"><button onclick="toggleSidebar()" class="text-gray-300 hover:text-white transition p-2 hover:bg-white/10 rounded-lg"><i class="fa-solid fa-bars text-xl"></i></button><div class="flex items-center gap-2 cursor-pointer" onclick="switchView('landing')"><div class="w-1 h-6 bg-purple-600 rounded-full"></div><h2 class="text-lg font-bold tracking-widest text-white">MANZZY<span class="text-purple-400">ID</span></h2></div></div>
             <div id="header-balance" class="hidden md:flex items-center gap-3 px-4 py-2 rounded-full bg-black/50 border border-gray-700 hover:border-purple-500 transition cursor-default"><i class="fa-solid fa-wallet text-green-400 animate-pulse"></i><span class="text-sm text-white font-mono font-bold tracking-wide">Loading...</span></div>
         </div>
     </nav>
@@ -145,7 +127,22 @@
         <div class="absolute inset-0 bg-grid -z-10 h-screen fixed opacity-40"></div><div class="absolute top-0 right-0 w-96 h-96 bg-purple-600/10 rounded-full blur-[100px] -z-10 fixed pointer-events-none"></div>
 
         <section id="view-landing" class="view-section view-active">
-            <div class="text-center max-w-4xl mx-auto mt-10 mb-16"><h1 class="text-5xl md:text-8xl font-bold mb-6 leading-tight"><span class="glitch neon-text" data-text="MANZZY ID">MANZZY ID</span> <br> <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">OFFICIAL</span></h1><p class="text-gray-400 text-lg md:text-xl mb-10 max-w-2xl mx-auto">Layanan Hosting Bot WhatsApp Profesional & Terpercaya.</p><div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-8"><button onclick="switchView('store')" class="px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-[0_0_30px_rgba(139,92,246,0.3)] transition hover:scale-105 w-full md:w-auto"><i class="fa-solid fa-store mr-2"></i> Lihat Produk</button></div><div class="flex items-center justify-center gap-4 mb-6"><a href="https://instagram.com/Manzz_Wakeup" target="_blank" class="social-btn"><i class="fa-brands fa-instagram"></i></a><a href="https://wa.me/6287756632352" target="_blank" class="social-btn"><i class="fa-solid fa-user-shield"></i></a></div></div>
+            <div class="text-center max-w-4xl mx-auto mt-10 mb-16">
+                <h1 class="text-5xl md:text-8xl font-bold mb-6 leading-tight"><span class="glitch neon-text" data-text="MANZZY ID">MANZZY ID</span> <br> <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">OFFICIAL</span></h1>
+                <p class="text-gray-400 text-lg md:text-xl mb-10 max-w-2xl mx-auto">Layanan Hosting Bot WhatsApp Profesional & Terpercaya.</p>
+                
+                <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-8">
+                    <button onclick="switchView('store')" class="px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-[0_0_30px_rgba(139,92,246,0.3)] transition hover:scale-105 w-full md:w-auto">
+                        <i class="fa-solid fa-store mr-2"></i> Lihat Produk
+                    </button>
+                    <button onclick="switchView('nokos')" class="px-8 py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-[0_0_30px_rgba(34,197,94,0.3)] transition hover:scale-105 w-full md:w-auto">
+                        <i class="fa-solid fa-sim-card mr-2"></i> Beli Nomor
+                    </button>
+                </div>
+
+                <div class="flex items-center justify-center gap-4 mb-6"><a href="https://instagram.com/Manzz_Wakeup" target="_blank" class="social-btn"><i class="fa-brands fa-instagram"></i></a><a href="https://wa.me/6287756632352" target="_blank" class="social-btn"><i class="fa-solid fa-user-shield"></i></a></div>
+            </div>
+            
             <div class="w-full max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 mb-24"><div class="glass-card p-6 rounded-2xl flex flex-col justify-between border-l-4 border-l-green-500 space-y-4"><div class="flex justify-between items-center border-b border-gray-800 pb-3"><div><h4 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">VPS Runtime</h4><div class="flex items-center gap-2 text-green-400 font-bold font-mono text-xl"><i class="fa-solid fa-server"></i> <span id="runtime-vps">0d 0h</span></div></div></div><div class="flex justify-between items-center"><div><h4 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Bot Runtime</h4><div class="flex items-center gap-2 text-blue-400 font-bold font-mono text-xl"><i class="fa-solid fa-robot"></i> <span id="runtime-bot">Offline</span></div></div></div></div><div class="glass-card p-6 rounded-2xl border-l-4 border-l-purple-500"><div class="flex justify-between items-start mb-4 border-b border-gray-800 pb-3"><div><h4 class="text-white text-sm font-bold flex items-center gap-2"><i class="fa-brands fa-linux"></i> AMD Ryzen™ 7</h4><p class="text-[10px] text-gray-500 mt-1">High Performance Node</p></div><span id="status-badge" class="text-gray-500 text-[10px] animate-pulse bg-gray-900/50 px-2 py-1 rounded border border-gray-700 font-bold">CONNECTING...</span></div><div class="flex items-center gap-3 text-xs font-mono mb-3"><span class="w-8 text-purple-300">CPU</span><div class="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden"><div id="bar-cpu" class="h-full bg-purple-500 transition-all duration-1000" style="width: 0%"></div></div><span id="text-cpu" class="w-12 text-right text-gray-400">0%</span></div><div class="flex items-center gap-3 text-xs font-mono mb-3"><span class="w-8 text-purple-300">RAM</span><div class="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden"><div id="bar-ram" class="h-full bg-purple-500 transition-all duration-1000" style="width: 0%"></div></div><span id="text-ram" class="w-12 text-right text-gray-400">0G</span></div><div class="flex items-center gap-3 text-xs font-mono"><span class="w-8 text-purple-300">ROM</span><div class="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden"><div id="bar-rom" class="h-full bg-blue-500 transition-all duration-1000" style="width: 0%"></div></div><span id="text-rom" class="w-12 text-right text-gray-400">0G</span></div></div></div>
             
             <section id="features" class="mb-24 scroll-mt-32"><div class="text-center mb-12"><h2 class="text-3xl font-bold text-white mb-4">KEUNGGULAN</h2></div><div class="grid grid-cols-1 md:grid-cols-3 gap-8"><div class="glass-card p-8 rounded-2xl text-center border-t-4 border-t-purple-500"><h3 class="text-xl font-bold text-white">Uptime 99%</h3><p class="text-gray-400 text-sm">Server selalu online.</p></div><div class="glass-card p-8 rounded-2xl text-center border-t-4 border-t-blue-500"><h3 class="text-xl font-bold text-white">Cepat</h3><p class="text-gray-400 text-sm">Koneksi stabil.</p></div><div class="glass-card p-8 rounded-2xl text-center border-t-4 border-t-green-500"><h3 class="text-xl font-bold text-white">Aman</h3><p class="text-gray-400 text-sm">Privasi terjaga.</p></div></div></section>
@@ -271,7 +268,7 @@
         
         <section id="view-myservices" class="view-section"><div class="w-full mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4"><button onclick="switchView('landing')" class="text-gray-400 hover:text-white flex items-center gap-2 group"><i class="fa-solid fa-arrow-left"></i> Kembali</button><h2 class="text-3xl font-bold text-white">BOT <span class="text-blue-500">AKTIF</span></h2></div><div id="myservices-list" class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20"><p class="text-gray-500 col-span-full text-center py-10">Memuat layanan...</p></div></section>
     
-        <section id="view-history" class="view-section">
+        <section id="view-history" class="view-section" style="margin-top: -720px !important;">
             <div class="max-w-4xl mx-auto min-h-[50vh]">
                 <div class="flex items-center justify-between mb-4 mt-8 border-b border-gray-800 pb-4">
                     <button onclick="switchView('myservices')" class="text-gray-400 hover:text-white text-sm flex items-center gap-2 transition group">
