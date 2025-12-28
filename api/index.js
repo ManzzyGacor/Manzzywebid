@@ -78,6 +78,15 @@ const Testimonial = mongoose.models.Testimonial || mongoose.model('Testimonial',
 const PteroConfigSchema = new mongoose.Schema({ panelUrl: String, apiKey: String, serverId: String, cookie: String });
 const PteroConfig = mongoose.models.PteroConfig || mongoose.model('PteroConfig', PteroConfigSchema);
 
+const VoucherSchema = new mongoose.Schema({
+    code: { type: String, unique: true },
+    amount: Number,
+    expiredDate: Date,
+    maxUsage: { type: Number, default: 1 }, // Berapa orang bisa pakai (1 = unik, 100 = event)
+    usedBy: [String] // Menyimpan list username yang sudah redeem
+});
+const Voucher = mongoose.models.Voucher || mongoose.model('Voucher', VoucherSchema);
+
 // =========================================
 // API ROUTES
 // =========================================
@@ -215,6 +224,84 @@ app.get('/api/admin/all-services', async (req, res) => {
     res.json(list);
 });
 
+// 1. ADMIN: BUAT VOUCHER
+app.post('/api/admin/vouchers', async (req, res) => {
+    await connectDB();
+    const { code, amount, days, maxUsage } = req.body;
+    
+    // Hitung tanggal expired
+    const expDate = new Date();
+    expDate.setDate(expDate.getDate() + parseInt(days));
+
+    try {
+        await new Voucher({ 
+            code, 
+            amount, 
+            expiredDate: expDate, 
+            maxUsage: maxUsage || 1 
+        }).save();
+        res.json({ success: true });
+    } catch (e) {
+        res.status(400).json({ success: false, msg: "Kode sudah ada / Error" });
+    }
+});
+
+// 2. ADMIN: LIHAT LIST VOUCHER
+app.get('/api/admin/vouchers', async (req, res) => {
+    await connectDB();
+    const list = await Voucher.find().sort({ expiredDate: 1 });
+    res.json(list);
+});
+
+// 3. ADMIN: HAPUS VOUCHER
+app.delete('/api/admin/vouchers/:id', async (req, res) => {
+    await connectDB();
+    await Voucher.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+});
+
+// 4. USER: KLAIM / REDEEM VOUCHER
+app.post('/api/redeem', async (req, res) => {
+    await connectDB();
+    const { username, code } = req.body;
+
+    try {
+        const voucher = await Voucher.findOne({ code });
+        if (!voucher) return res.status(404).json({ success: false, msg: "Kode tidak ditemukan!" });
+
+        // Cek Expired
+        if (new Date() > new Date(voucher.expiredDate)) {
+            return res.status(400).json({ success: false, msg: "Kode sudah kadaluarsa!" });
+        }
+
+        // Cek Kuota Pemakaian
+        if (voucher.usedBy.length >= voucher.maxUsage) {
+            return res.status(400).json({ success: false, msg: "Kuota voucher habis!" });
+        }
+
+        // Cek Apakah User Sudah Pernah Pakai
+        if (voucher.usedBy.includes(username)) {
+            return res.status(400).json({ success: false, msg: "Kamu sudah pakai kode ini!" });
+        }
+
+        // Eksekusi Tambah Saldo
+        const user = await User.findOne({ username });
+        if (!user) return res.status(404).json({ success: false, msg: "User error" });
+
+        user.balance += voucher.amount;
+        await user.save();
+
+        // Catat User & Simpan Voucher
+        voucher.usedBy.push(username);
+        await voucher.save();
+
+        res.json({ success: true, newBalance: user.balance, amount: voucher.amount });
+
+    } catch (err) {
+        res.status(500).json({ success: false, msg: "Server Error" });
+    }
+});
+
 // 5. MISC (ADMIN LOGIN, CATEGORIES, TESTI, PTERO)
 app.post('/api/login', async (req, res) => { await connectDB(); const admin = await Admin.findOne(req.body); if(admin) res.json({success:true}); else res.status(401).json({success:false}); });
 app.get('/api/admin/orders', async (req, res) => { await connectDB(); const list = await Order.find().sort({ date: -1 }).limit(50); res.json(list); });
@@ -226,4 +313,49 @@ app.post('/api/testimonials', async (req, res) => { await connectDB(); await new
 app.post('/api/ptero/config', async (req, res) => { await connectDB(); await PteroConfig.deleteMany({}); await new PteroConfig(req.body).save(); res.json({ success: true }); });
 app.get('/api/ptero/config', async (req, res) => { await connectDB(); const config = await PteroConfig.findOne(); res.json(config || {}); });
 
+// 6. USER HISTORY (RIWAYAT TRANSAKSI)
+app.get('/api/history/:username', async (req, res) => {
+    await connectDB();
+    const { username } = req.params;
+
+    try {
+        // 1. Ambil data Topup (Uang Masuk)
+        const topups = await TopUp.find({ username }).lean(); 
+        const historyTopup = topups.map(t => ({
+            type: 'IN', // Uang Masuk
+            desc: 'Top Up Saldo',
+            amount: t.amount,
+            status: t.status || 'pending',
+            date: t.date || t._id.getTimestamp()
+        }));
+
+        // 2. Ambil data Order (Uang Keluar)
+        const orders = await Order.find({ username }).lean();
+        const historyOrder = orders.map(o => ({
+            type: 'OUT', // Uang Keluar
+            desc: `Beli ${o.productName}`,
+            amount: o.price,
+            status: o.status || 'success',
+            date: o.date || o._id.getTimestamp()
+        }));
+
+        // 3. Gabung dan Urutkan dari yang Terbaru (Newest First)
+        const fullHistory = [...historyTopup, ...historyOrder].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        res.json(fullHistory);
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json([]);
+    }
+});
+
+// ======================================================
+//    BATAS AKHIR KODE (Jangan tempel di bawah ini) 👇
+// ======================================================
+
+// Jika di paling bawah ada module.exports = app; atau app.listen(...), biarkan itu tetap di paling bawah.
+if (require.main === module) {
+    app.listen(3000, () => console.log('Server running on port 3000'));
+}
 module.exports = app;
