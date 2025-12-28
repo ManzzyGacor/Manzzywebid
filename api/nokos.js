@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const https = require('https');
 const router = express.Router();
 
-// 1. KONEKSI & SCHEMA
+// 1. KONEKSI DB & SCHEMA
 let isConnected = false;
 const connectDB = async () => {
     if (isConnected) return;
@@ -17,11 +17,12 @@ const NokosConfig = mongoose.models.NokosConfig || mongoose.model('NokosConfig',
     marginPercent: { type: Number, default: 20 }
 }));
 
-const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({ 
+const UserSchema = new mongoose.Schema({ 
     username: { type: String, required: true, unique: true }, 
-    password: { type: String, required: true },
+    password: { type: String, required: true }, 
     balance: { type: Number, default: 0 } 
-}));
+});
+const User = mongoose.models.User || mongoose.model('User', UserSchema);
 
 const NokosTx = mongoose.models.NokosTx || mongoose.model('NokosTx', new mongoose.Schema({
     invoiceId: String, username: String, refId: String,
@@ -36,9 +37,8 @@ async function callRumahOTP(endpoint, method = 'GET', data = null) {
     const config = await NokosConfig.findOne();
     if (!config || !config.apiKey) throw new Error("API Key belum disetting!");
 
-    // Auto Path (Support V1 & V2)
     let path = `/api/v2/${endpoint}`;
-    if (endpoint.startsWith('/')) path = `/api${endpoint}`; 
+    if (endpoint.startsWith('/')) path = `/api${endpoint}`;
     if (endpoint.startsWith('v1/')) path = `/api/${endpoint}`;
 
     const options = {
@@ -161,19 +161,27 @@ router.post('/buy', async (req, res) => {
     } catch (err) { res.status(500).json({ success: false, msg: "Error: " + err.message }); }
 });
 
-// STATUS
+// [FIX 1] CEK STATUS & AUTO REFUND (Atomic Lock)
 router.get('/status/:invoiceId', async (req, res) => {
     await connectDB();
     const tx = await NokosTx.findOne({ invoiceId: req.params.invoiceId });
     if(!tx) return res.status(404).json({ success: false });
 
-    // Auto Refund if Expired
+    // LOGIC A: Cek Expired Local (Pake Atomic Lock biar ga double)
     if (tx.status === 'waiting' && new Date() > new Date(tx.expiresAt)) {
-        tx.status = 'canceled';
-        const user = await User.findOne({ username: tx.username });
-        if(user) { user.balance += tx.price; await user.save(); } 
-        await tx.save();
-        return res.json({ success: true, data: tx, msg: "Expired" });
+        // Hanya update jika status di DB masih 'waiting'
+        const expiredTx = await NokosTx.findOneAndUpdate(
+            { _id: tx._id, status: 'waiting' },
+            { status: 'canceled' },
+            { new: true }
+        );
+
+        // Jika berhasil di-lock (berarti ini request pertama yg mengubahnya)
+        if (expiredTx) {
+            const user = await User.findOne({ username: tx.username });
+            if(user) { user.balance += tx.price; await user.save(); } // Refund aman
+            return res.json({ success: true, data: expiredTx, msg: "Waktu habis. Refund sukses." });
+        }
     }
 
     try {
@@ -183,54 +191,79 @@ router.get('/status/:invoiceId', async (req, res) => {
             if (d.otp_code && d.otp_code !== '-' && d.otp_code !== tx.smsCode) {
                 tx.smsCode = d.otp_code; tx.status = 'success'; await tx.save();
             }
+            // Jika Pusat Cancel (Stok habis/gangguan) - Pake Atomic Lock juga
             if (d.status === 'canceled' && tx.status !== 'canceled') {
-                tx.status = 'canceled';
-                const user = await User.findOne({ username: tx.username });
-                if(user) { user.balance += tx.price; await user.save(); } 
-                await tx.save();
+                const canceledTx = await NokosTx.findOneAndUpdate(
+                    { _id: tx._id, status: 'waiting' },
+                    { status: 'canceled' }
+                );
+                if(canceledTx) {
+                    const user = await User.findOne({ username: tx.username });
+                    if(user) { user.balance += tx.price; await user.save(); }
+                }
             }
         }
-        res.json({ success: true, data: tx });
+        // Kirim data terbaru
+        const freshData = await NokosTx.findById(tx._id);
+        res.json({ success: true, data: freshData });
     } catch(e) { res.status(500).json({ success: false }); }
 });
 
-// [FIX] ACTION HANDLER (CANCEL, DONE, RESEND)
+// [FIX 2] ACTION (CANCEL/DONE/RESEND) - Anti Double Refund
 router.post('/action', async (req, res) => {
     await connectDB();
-    const { invoiceId, username, action } = req.body; 
-    // action yang dikirim frontend: 'cancel', 'done', 'resend'
+    const { invoiceId, username, action } = req.body;
     
     const tx = await NokosTx.findOne({ invoiceId, username });
     if(!tx) return res.status(404).json({ success: false, msg: "Order not found" });
 
-    // Validasi Cancel (4 Menit)
+    // FAST CHECK: Jika status sudah bukan waiting, tolak request!
+    if (tx.status !== 'waiting') {
+        return res.status(400).json({ success: false, msg: "Transaksi sudah selesai/batal." });
+    }
+
     if (action === 'cancel') {
         const timeDiff = Date.now() - new Date(tx.createdAt).getTime();
-        if (timeDiff < 240000) { // 240 detik
+        if (timeDiff < 240000) {
             const sisa = Math.ceil((240000 - timeDiff) / 1000);
             return res.status(400).json({ success: false, msg: `Tunggu ${sisa} detik lagi.` });
         }
     }
 
     try {
-        // Tembak API dengan status sesuai request user ('cancel', 'done', 'resend')
         const { result } = await callRumahOTP(`/v1/orders/set_status?order_id=${tx.refId}&status=${action}`);
         
         if (result.success) {
             if (action === 'cancel') {
-                tx.status = 'canceled';
-                const user = await User.findOne({ username });
-                if(user) { user.balance += tx.price; await user.save(); } // Refund
-                await tx.save();
-                res.json({ success: true, msg: "Sukses Cancel & Refund." });
+                // [KUNCI RAHASIA ANTI DOUBLE]
+                // Hanya update & refund JIKA status di DB saat ini masih 'waiting'
+                // findOneAndUpdate bersifat atomic (sekali jalan)
+                const processedTx = await NokosTx.findOneAndUpdate(
+                    { _id: tx._id, status: 'waiting' }, 
+                    { status: 'canceled' },
+                    { new: true }
+                );
+
+                if (processedTx) {
+                    // Hanya masuk sini 1x seumur hidup order
+                    const user = await User.findOne({ username });
+                    if(user) { user.balance += tx.price; await user.save(); } // Refund
+                    res.json({ success: true, msg: "Sukses Cancel & Refund." });
+                } else {
+                    res.json({ success: false, msg: "Sudah diproses sebelumnya." });
+                }
 
             } else if (action === 'done') {
-                tx.status = 'success'; 
-                await tx.save();
-                res.json({ success: true, msg: "Pesanan Selesai." });
+                // Lock juga biar ga bisa dicancel setelah done
+                const processedTx = await NokosTx.findOneAndUpdate(
+                    { _id: tx._id, status: 'waiting' }, 
+                    { status: 'success' }
+                );
+                if(processedTx) res.json({ success: true, msg: "Pesanan Selesai." });
+                else res.json({ success: false, msg: "Status sudah berubah." });
 
             } else if (action === 'resend') {
-                res.json({ success: true, msg: "Resend SMS dikirim." });
+                res.json({ success: true, msg: "Request Resend dikirim." });
             }
         } else {
             const msg = result.message || (result.data ? result.data.message : "Gagal dari pusat");
