@@ -583,6 +583,7 @@ function buyNokosAgain() {
 // 8. HISTORY GABUNGAN & SERVICES
 // ============================================
 
+// [UPDATE] HISTORY DIBATASI 10 DATA
 async function fetchHistory() {
     if(!userSession) return;
     const list = document.getElementById('history-list');
@@ -593,12 +594,16 @@ async function fetchHistory() {
         const dataGen = await resGen.json();
         const dataNok = await resNok.json();
 
+        // Ambil Nokos yg statusnya success/canceled/failed (History)
         const finishedNokos = dataNok.filter(tx => tx.status !== 'waiting').map(tx => ({
             date: tx.createdAt, desc: `Nokos ${tx.serviceName} (${tx.phoneNumber})`, amount: tx.price, type: 'OUT', 
             status: tx.status === 'success' ? 'success' : 'canceled' 
         }));
 
-        const combined = [...dataGen, ...finishedNokos].sort((a, b) => new Date(b.date) - new Date(a.date));
+        // Gabungkan -> Sortir Terbaru -> AMBIL 10 TERATAS SAJA
+        const combined = [...dataGen, ...finishedNokos]
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .slice(0, 10); // <--- INI KUNCINYA (Limit Tampilan)
 
         if (combined.length === 0) { list.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-500 italic text-xs">Belum ada riwayat.</td></tr>'; return; }
 
