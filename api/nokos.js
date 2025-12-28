@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const https = require('https');
 const router = express.Router();
 
-// 1. KONEKSI DB & SCHEMA
+// 1. KONEKSI & SCHEMA
 let isConnected = false;
 const connectDB = async () => {
     if (isConnected) return;
@@ -17,16 +17,11 @@ const NokosConfig = mongoose.models.NokosConfig || mongoose.model('NokosConfig',
     marginPercent: { type: Number, default: 20 }
 }));
 
-// [FIX BUG LOGIN] Schema User HARUS LENGKAP (Ada Password)
-// Agar tidak konflik dengan api/index.js
-const UserSchema = new mongoose.Schema({ 
+const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({ 
     username: { type: String, required: true, unique: true }, 
-    password: { type: String, required: true }, // <--- INI YG KEMAREN HILANG
+    password: { type: String, required: true },
     balance: { type: Number, default: 0 } 
-});
-
-// Cek apakah model sudah ada, kalau belum buat baru
-const User = mongoose.models.User || mongoose.model('User', UserSchema);
+}));
 
 const NokosTx = mongoose.models.NokosTx || mongoose.model('NokosTx', new mongoose.Schema({
     invoiceId: String, username: String, refId: String,
@@ -41,8 +36,9 @@ async function callRumahOTP(endpoint, method = 'GET', data = null) {
     const config = await NokosConfig.findOne();
     if (!config || !config.apiKey) throw new Error("API Key belum disetting!");
 
+    // Auto Path (Support V1 & V2)
     let path = `/api/v2/${endpoint}`;
-    if (endpoint.startsWith('/')) path = `/api${endpoint}`;
+    if (endpoint.startsWith('/')) path = `/api${endpoint}`; 
     if (endpoint.startsWith('v1/')) path = `/api/${endpoint}`;
 
     const options = {
@@ -171,6 +167,7 @@ router.get('/status/:invoiceId', async (req, res) => {
     const tx = await NokosTx.findOne({ invoiceId: req.params.invoiceId });
     if(!tx) return res.status(404).json({ success: false });
 
+    // Auto Refund if Expired
     if (tx.status === 'waiting' && new Date() > new Date(tx.expiresAt)) {
         tx.status = 'canceled';
         const user = await User.findOne({ username: tx.username });
@@ -197,33 +194,49 @@ router.get('/status/:invoiceId', async (req, res) => {
     } catch(e) { res.status(500).json({ success: false }); }
 });
 
-// CANCEL
-router.post('/cancel', async (req, res) => {
+// [FIX] ACTION HANDLER (CANCEL, DONE, RESEND)
+router.post('/action', async (req, res) => {
     await connectDB();
-    const { invoiceId, username } = req.body;
-    const tx = await NokosTx.findOne({ invoiceId, username });
+    const { invoiceId, username, action } = req.body; 
+    // action yang dikirim frontend: 'cancel', 'done', 'resend'
     
-    if(!tx || tx.status !== 'waiting') return res.status(400).json({ success: false, msg: "Status invalid" });
+    const tx = await NokosTx.findOne({ invoiceId, username });
+    if(!tx) return res.status(404).json({ success: false, msg: "Order not found" });
 
-    const timeDiff = Date.now() - new Date(tx.createdAt).getTime();
-    if (timeDiff < 240000) {
-        const sisa = Math.ceil((240000 - timeDiff) / 1000);
-        return res.status(400).json({ success: false, msg: `Tunggu ${sisa} detik.` });
+    // Validasi Cancel (4 Menit)
+    if (action === 'cancel') {
+        const timeDiff = Date.now() - new Date(tx.createdAt).getTime();
+        if (timeDiff < 240000) { // 240 detik
+            const sisa = Math.ceil((240000 - timeDiff) / 1000);
+            return res.status(400).json({ success: false, msg: `Tunggu ${sisa} detik lagi.` });
+        }
     }
 
     try {
-        const { result } = await callRumahOTP(`/v1/orders/set_status?order_id=${tx.refId}&status=canceled`);
-        if(result.success) {
-            tx.status = 'canceled';
-            const user = await User.findOne({ username });
-            if(user) { user.balance += tx.price; await user.save(); }
-            await tx.save();
-            res.json({ success: true, msg: "Refund Sukses" });
+        // Tembak API dengan status sesuai request user ('cancel', 'done', 'resend')
+        const { result } = await callRumahOTP(`/v1/orders/set_status?order_id=${tx.refId}&status=${action}`);
+        
+        if (result.success) {
+            if (action === 'cancel') {
+                tx.status = 'canceled';
+                const user = await User.findOne({ username });
+                if(user) { user.balance += tx.price; await user.save(); } // Refund
+                await tx.save();
+                res.json({ success: true, msg: "Sukses Cancel & Refund." });
+
+            } else if (action === 'done') {
+                tx.status = 'success'; 
+                await tx.save();
+                res.json({ success: true, msg: "Pesanan Selesai." });
+
+            } else if (action === 'resend') {
+                res.json({ success: true, msg: "Resend SMS dikirim." });
+            }
         } else {
             const msg = result.message || (result.data ? result.data.message : "Gagal dari pusat");
             res.json({ success: false, msg: msg });
         }
-    } catch(e) { res.status(500).json({ success: false, msg: "Error" }); }
+    } catch(e) { res.status(500).json({ success: false, msg: "Server Error" }); }
 });
 
 router.get('/history/:username', async (req, res) => {
