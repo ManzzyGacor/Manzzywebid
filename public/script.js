@@ -581,7 +581,7 @@ function buyNokosAgain() {
 
 // ============================================
 // 8. HISTORY GABUNGAN & SERVICES
-// ============================================
+// ==========================================
 
 // [UPDATE] HISTORY DIBATASI 10 DATA
 async function fetchHistory() {
