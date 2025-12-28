@@ -203,58 +203,54 @@ async function redeemCode(e) {
     }
 }
 
-// --- [NEW] LOGIKA HISTORY ---
-
-// 1. Panggil fungsi ini saat switchView('history') dipanggil
-// (Nanti kita update switchView dikit)
-
 async function fetchHistory() {
     if(!userSession) return;
     
     const list = document.getElementById('history-list');
-    list.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-500"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</td></tr>';
+    // Loader kecil biar ga makan tempat
+    list.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-gray-500 text-xs"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Loading...</td></tr>';
 
     try {
         const res = await fetch(`/api/history/${userSession}`);
         const data = await res.json();
 
         if (data.length === 0) {
-            list.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-500 italic">Belum ada transaksi.</td></tr>';
+            list.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-500 italic text-xs">Belum ada riwayat transaksi.</td></tr>';
             return;
         }
 
         list.innerHTML = data.map(item => {
-            const date = new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: '2-digit', hour: '2-digit', minute:'2-digit' });
+            // Format Tanggal Pendek (Tgl/Bln Jam:Mnt)
+            const d = new Date(item.date);
+            const dateStr = `${d.getDate()}/${d.getMonth()+1} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
             
-            // Warna & Simbol beda buat Masuk vs Keluar
             const isIn = item.type === 'IN';
             const colorClass = isIn ? 'text-green-400' : 'text-red-400';
             const symbol = isIn ? '+' : '-';
             
-            // Badge Status
-            let statusBadge = '';
-            if(item.status === 'success') statusBadge = '<span class="bg-green-900/50 text-green-400 px-2 py-1 rounded text-[10px] font-bold">SUKSES</span>';
-            else if(item.status === 'pending') statusBadge = '<span class="bg-yellow-900/50 text-yellow-400 px-2 py-1 rounded text-[10px] font-bold">PROSES</span>';
-            else statusBadge = '<span class="bg-red-900/50 text-red-400 px-2 py-1 rounded text-[10px] font-bold">GAGAL</span>';
+            // Badge Status Logic
+            let badge = '';
+            if(item.status === 'success') badge = '<span class="text-[10px] font-bold text-green-500 bg-green-900/20 px-2 py-1 rounded border border-green-500/20">SUKSES</span>';
+            else if(item.status === 'failed') badge = '<span class="text-[10px] font-bold text-red-500 bg-red-900/20 px-2 py-1 rounded border border-red-500/20">GAGAL</span>';
+            else badge = '<span class="text-[10px] font-bold text-yellow-500 bg-yellow-900/20 px-2 py-1 rounded border border-yellow-500/20">PROSES</span>';
 
             return `
             <tr class="hover:bg-white/5 transition">
-                <td class="p-4 text-gray-400 font-mono text-xs whitespace-nowrap">${date}</td>
-                <td class="p-4 font-bold text-white">
+                <td class="p-3 text-gray-500 font-mono text-xs whitespace-nowrap align-middle">${dateStr}</td>
+                <td class="p-3 font-medium text-white text-xs align-middle">
                     ${item.desc}
-                    <div class="md:hidden text-[10px] text-gray-500 mt-1">${item.type === 'IN' ? 'Uang Masuk' : 'Pembelian'}</div>
+                    <div class="md:hidden text-[10px] text-gray-600 mt-0.5">${item.type === 'IN' ? 'Top Up' : 'Order'}</div>
                 </td>
-                <td class="p-4 text-right font-mono font-bold ${colorClass}">
-                    ${symbol} Rp ${item.amount.toLocaleString()}
+                <td class="p-3 text-right font-mono font-bold text-xs align-middle ${colorClass}">
+                    ${symbol}Rp ${item.amount.toLocaleString()}
                 </td>
-                <td class="p-4 text-center">${statusBadge}</td>
+                <td class="p-3 text-center align-middle">${badge}</td>
             </tr>
             `;
         }).join('');
 
     } catch (err) {
-        console.error(err);
-        list.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-red-500">Gagal memuat data.</td></tr>';
+        list.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-red-500 text-xs">Gagal memuat data.</td></tr>';
     }
 }
 
@@ -267,9 +263,88 @@ async function fetchMyServices() {
     } catch(e){}
 }
 
-// 6. MONITOR & ETC
-async function updateServerStats() { try { const r=await fetch('/api/ptero/config'); const c=await r.json(); if(!c.panelUrl)return; const res=await fetch(`${c.panelUrl}/api/client/servers/${c.serverId}/resources`,{headers:{'Authorization':`Bearer ${c.apiKey}`,'Accept':'application/json'}}); const d=await res.json(); const s=d.attributes.resources; document.getElementById('bar-cpu').style.width=Math.min(s.cpu_absolute,100)+"%"; document.getElementById('text-cpu').innerText=s.cpu_absolute.toFixed(1)+"%"; } catch(e){} }
+// --- 6. MONITOR SYSTEM (MANUAL & PERSISTENT) ---
+let statsInterval = null;
 
+async function updateServerStats() {
+    try {
+        const res = await fetch('/api/system/status');
+        const data = await res.json();
+        
+        // 1. UPDATE VPS RUNTIME
+        const vpsEl = document.getElementById('runtime-vps');
+        const statusBadge = document.getElementById('status-badge');
+        
+        // CPU & RAM BAR (Animasi Fake biar terlihat hidup kalau Online)
+        const cpuBar = document.getElementById('bar-cpu');
+        const ramBar = document.getElementById('bar-ram');
+        const cpuTxt = document.getElementById('text-cpu');
+        const ramTxt = document.getElementById('text-ram');
+
+        if (data.vpsActive) {
+            // Hitung Durasi (Sekarang - Waktu Mulai di DB)
+            const start = new Date(data.vpsStartTime).getTime();
+            const now = new Date().getTime();
+            const diff = now - start;
+            
+            // Konversi ke Hari Jam Menit Detik
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000); // Opsional kalau mau detik
+
+            if(vpsEl) vpsEl.innerText = `${days}d ${hours}h ${minutes}m`;
+            if(statusBadge) {
+                statusBadge.innerText = "ONLINE";
+                statusBadge.className = "text-green-400 text-[10px] bg-green-900/50 px-2 py-1 rounded border border-green-500 font-bold";
+            }
+
+            // Fake Stats (Biar ganteng, random 20-50% kalau online)
+            if(cpuBar) {
+                const randCpu = Math.floor(Math.random() * 30) + 10; 
+                cpuBar.style.width = randCpu + "%";
+                cpuTxt.innerText = randCpu + "%";
+            }
+            if(ramBar) {
+                 const randRam = Math.floor(Math.random() * 40) + 20;
+                 ramBar.style.width = randRam + "%";
+                 ramTxt.innerText = "8G"; // Statik aja
+            }
+
+        } else {
+            if(vpsEl) vpsEl.innerText = "OFFLINE";
+            if(statusBadge) {
+                statusBadge.innerText = "MAINTENANCE";
+                statusBadge.className = "text-red-500 text-[10px] bg-red-900/50 px-2 py-1 rounded border border-red-500 font-bold animate-pulse";
+            }
+            if(cpuBar) { cpuBar.style.width = "0%"; cpuTxt.innerText = "0%"; }
+            if(ramBar) { ramBar.style.width = "0%"; ramTxt.innerText = "0G"; }
+        }
+
+        // 2. UPDATE BOT RUNTIME
+        const botEl = document.getElementById('runtime-bot');
+        if (data.botActive) {
+            const start = new Date(data.botStartTime).getTime();
+            const now = new Date().getTime();
+            const diff = now - start;
+            
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            
+            if(botEl) {
+                botEl.innerHTML = `<span class="text-blue-400">${days}d ${hours}h</span>`;
+            }
+        } else {
+            if(botEl) botEl.innerText = "OFFLINE";
+        }
+
+    } catch(e) { console.log(e); }
+}
+
+// Update setiap 1 detik biar jam nya jalan di mata user
+// (Tapi datanya tetap ambil base time dari DB, jadi pas refresh ga reset)
+clearInterval(statsInterval);
+statsInterval = setInterval(updateServerStats, 1000);
 // 1. Fungsi Set Rating (Visual Bintang & Input Value)
 function setRating(n) {
     const inputVal = document.getElementById('ratingValue');
