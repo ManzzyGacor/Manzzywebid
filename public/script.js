@@ -1,4 +1,4 @@
-// ============================================
+1// ============================================
 // 1. SYSTEM INITIALIZATION & LOADER
 // ============================================
 
@@ -453,12 +453,15 @@ function resetSteps(ids) { ids.forEach(id => document.getElementById(id).classLi
 // 7. ACTIVE ORDERS (CARD STYLE) & CANCEL
 // ============================================
 
+// ... (bagian atas kode tetap sama)
+
 async function fetchNokosHistory() {
     if(!userSession) return;
     
     const res = await fetch(`/api/nokos/history/${userSession}`); 
     const list = await res.json();
     const container = document.getElementById('nokos-active-container');
+    
     const activeList = list.filter(tx => tx.status === 'waiting');
 
     if(activeList.length === 0) { 
@@ -467,6 +470,7 @@ async function fetchNokosHistory() {
     }
     
     container.innerHTML = await Promise.all(activeList.map(async (tx) => {
+        // Cek status
         await fetch(`/api/nokos/status/${tx.invoiceId}`); 
         
         const exp = new Date(tx.expiresAt); 
@@ -475,31 +479,43 @@ async function fetchNokosHistory() {
         const timeLeft = Math.floor((exp - now) / 1000);
         let timeDisplay = timeLeft > 0 ? `${Math.floor(timeLeft/60)}:${(timeLeft%60).toString().padStart(2,'0')}` : '00:00';
         
-        const elapsedSeconds = Math.floor((now - created) / 1000);
-        const waitTime = 240; 
         let footerHtml = '';
-
-        if (elapsedSeconds < waitTime) {
-            const waitLeft = waitTime - elapsedSeconds;
-            const waitMin = Math.floor(waitLeft/60);
-            const waitSec = (waitLeft % 60).toString().padStart(2,'0');
+        
+        // JIKA ADA SMS -> Tombol 'done' & 'resend'
+        if (tx.smsCode) {
             footerHtml = `
-                <div class="text-[10px] text-gray-400 mb-2">Tunggu <span class="text-yellow-500 font-bold">${waitMin}:${waitSec}</span> sebelum batal.</div>
+                <div class="text-[10px] text-green-400 mb-2 font-bold animate-pulse">OTP Diterima! Klik Selesai jika berhasil.</div>
                 <div class="flex gap-2">
-                    <button onclick="buyNokosAgain()" class="flex-1 py-2 rounded-lg border border-blue-500/50 text-blue-400 text-xs font-bold hover:bg-blue-500/10 transition"><i class="fa-solid fa-cart-plus mr-1"></i> Beli Lagi</button>
-                    <button disabled class="flex-1 py-2 rounded-lg border border-red-500/20 text-gray-600 text-xs font-bold cursor-not-allowed"><i class="fa-solid fa-ban mr-1"></i> Batal</button>
+                    <button onclick="nokosAction('${tx.invoiceId}', 'resend')" class="flex-1 py-2 rounded-lg border border-yellow-500/50 text-yellow-400 text-xs font-bold hover:bg-yellow-500/10 transition"><i class="fa-solid fa-rotate-right mr-1"></i> Resend</button>
+                    <button onclick="nokosAction('${tx.invoiceId}', 'done')" class="flex-1 py-2 rounded-lg border border-green-500 text-green-500 text-xs font-bold hover:bg-green-500/10 transition shadow-lg shadow-green-500/20"><i class="fa-solid fa-check mr-1"></i> Selesai</button>
                 </div>`;
-        } else {
+        } 
+        // JIKA BELUM ADA SMS -> Tombol 'cancel' (Timer) & 'resend'
+        else {
+            const elapsedSeconds = Math.floor((now - created) / 1000);
+            const waitTime = 240; 
+            
+            let cancelBtn = '';
+            if (elapsedSeconds < waitTime) {
+                const waitLeft = waitTime - elapsedSeconds;
+                const waitMin = Math.floor(waitLeft/60);
+                const waitSec = (waitLeft % 60).toString().padStart(2,'0');
+                cancelBtn = `<button disabled class="flex-1 py-2 rounded-lg border border-gray-600 text-gray-500 text-xs font-bold cursor-not-allowed">Wait ${waitMin}:${waitSec}</button>`;
+            } else {
+                // KIRIM 'cancel' (sesuai request)
+                cancelBtn = `<button onclick="nokosAction('${tx.invoiceId}', 'cancel')" class="flex-1 py-2 rounded-lg border border-red-500 text-red-500 text-xs font-bold hover:bg-red-500/10 transition"><i class="fa-solid fa-xmark mr-1"></i> Batal</button>`;
+            }
+
             footerHtml = `
-                <div class="text-[10px] text-gray-400 mb-2">Jika SMS tidak masuk, silakan batalkan.</div>
+                <div class="text-[10px] text-gray-400 mb-2">Belum ada SMS? Tunggu atau Resend.</div>
                 <div class="flex gap-2">
-                    <button onclick="buyNokosAgain()" class="flex-1 py-2 rounded-lg border border-blue-500/50 text-blue-400 text-xs font-bold hover:bg-blue-500/10 transition"><i class="fa-solid fa-cart-plus mr-1"></i> Beli Lagi</button>
-                    <button onclick="cancelNokos('${tx.invoiceId}')" class="flex-1 py-2 rounded-lg border border-red-500 text-red-500 text-xs font-bold hover:bg-red-500/10 transition"><i class="fa-solid fa-xmark mr-1"></i> Batal</button>
+                    <button onclick="nokosAction('${tx.invoiceId}', 'resend')" class="flex-1 py-2 rounded-lg border border-blue-500/50 text-blue-400 text-xs font-bold hover:bg-blue-500/10 transition"><i class="fa-solid fa-rotate-right mr-1"></i> Resend</button>
+                    ${cancelBtn}
                 </div>`;
         }
 
         let smsSection = `<div class="flex items-center gap-2 text-yellow-500 animate-pulse"><i class="fa-regular fa-envelope"></i><span class="text-xs font-bold">menunggu sms...</span></div>`;
-        if(tx.smsCode) smsSection = `<div class="flex flex-col"><span class="text-[10px] text-gray-400">Kode OTP:</span><span class="text-2xl font-mono font-bold text-green-400 tracking-[0.2em] select-all cursor-pointer">${tx.smsCode}</span></div>`;
+        if(tx.smsCode) smsSection = `<div class="flex flex-col"><span class="text-[10px] text-gray-400">Kode OTP:</span><span class="text-2xl font-mono font-bold text-green-400 tracking-[0.2em] select-all cursor-pointer bg-green-900/20 px-2 rounded">${tx.smsCode}</span></div>`;
 
         const appIcons = {'WhatsApp': 'https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg', 'Telegram': 'https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg', 'TikTok': 'https://sf-tb-sg.ibytedtos.com/obj/eden-sg/uhtyvueh7nulogpoguhm/tiktok-icon2.png'};
         const appIcon = appIcons[tx.serviceName] || 'https://via.placeholder.com/30?text=App';
@@ -518,20 +534,44 @@ async function fetchNokosHistory() {
                 <div class="flex items-center gap-3"><img src="${appIcon}" class="w-8 h-8 object-contain"><div><div class="text-white font-bold text-sm">${tx.serviceName}</div><div class="text-[10px] text-gray-400">${tx.country}</div></div></div>
                 <div class="text-right">${smsSection}</div>
             </div>
-            <div class="bg-black/30 rounded-lg p-3 border border-white/5">${footerHtml}</div>
+            <div class="bg-black/30 rounded-lg p-3 border border-white/5 transition-all duration-300">${footerHtml}</div>
         </div>`;
     })).then(rows => rows.join(''));
 }
 
-async function cancelNokos(invId) {
-    if(!confirm("Yakin batalkan nomor ini?")) return;
-    showToast("Memproses pembatalan...", "info");
+// FUNGSI AKSI BARU
+async function nokosAction(invId, actionType) {
+    let msg = "Proses...";
+    if(actionType === 'cancel') { if(!confirm("Batalkan nomor & Refund?")) return; msg = "Membatalkan..."; }
+    if(actionType === 'done') { if(!confirm("Selesaikan pesanan ini?")) return; msg = "Menyelesaikan..."; }
+    if(actionType === 'resend') { msg = "Meminta kirim ulang SMS..."; }
+
+    showToast(msg, "info");
+
     try {
-        const res = await fetch('/api/nokos/cancel', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({invoiceId:invId, username:userSession})});
+        // Kirim actionType yang sesuai ('cancel', 'done', 'resend')
+        const res = await fetch('/api/nokos/action', {
+            method: 'POST', 
+            headers: {'Content-Type':'application/json'}, 
+            body: JSON.stringify({
+                invoiceId: invId, 
+                username: userSession,
+                action: actionType 
+            })
+        });
+        
         const d = await res.json();
-        if(d.success) { showToast(d.msg, "success"); fetchNokosHistory(); checkUserLogin(); } 
-        else { showToast(d.msg, "error"); }
-    } catch(e) { showToast("Gagal koneksi.", "error"); }
+        
+        if(d.success) { 
+            showToast("✅ " + d.msg, "success"); 
+            fetchNokosHistory(); 
+            if(actionType === 'cancel') checkUserLogin(); 
+        } else { 
+            showToast("❌ " + d.msg, "error"); 
+        }
+    } catch(e) { 
+        showToast("Gagal koneksi.", "error"); 
+    }
 }
 
 function buyNokosAgain() {
