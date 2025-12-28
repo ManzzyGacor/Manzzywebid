@@ -64,6 +64,7 @@
             
             <div class="text-xs font-bold text-gray-600 uppercase mb-2 mt-6 px-2">System</div>
             <div class="nav-item" onclick="showSection('settings')"><i class="fa-solid fa-gears"></i> Konfigurasi</div>
+            <div class="nav-item" onclick="showSection('vouchers')"><i class="fa-solid fa-ticket"></i> Kelola Voucher</div>
         </nav>
 
         <div class="p-4 border-t border-gray-800">
@@ -142,6 +143,38 @@
             </div>
         </div>
 
+        <div id="sec-vouchers" class="section-view">
+    <h2 class="text-2xl font-bold text-white mb-6">Kelola Kode Voucher</h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="glass-panel h-fit">
+            <h3 class="text-purple-400 font-bold mb-4 text-sm uppercase">Buat Voucher Baru</h3>
+            <form onsubmit="createVoucher(event)">
+                <label class="text-xs text-gray-500 font-bold block mb-1">KODE UNIK</label>
+                <input type="text" id="vCode" placeholder="Contoh: MANZZY10K" class="uppercase" required>
+                
+                <label class="text-xs text-gray-500 font-bold block mb-1">NOMINAL SALDO (RP)</label>
+                <input type="number" id="vAmount" placeholder="10000" required>
+                
+                <label class="text-xs text-gray-500 font-bold block mb-1">MASA AKTIF (HARI)</label>
+                <input type="number" id="vDays" value="3" required>
+
+                <label class="text-xs text-gray-500 font-bold block mb-1">KUOTA PENGGUNA</label>
+                <input type="number" id="vMax" value="1" placeholder="1 = Sekali Pakai" required>
+
+                <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded mt-2">Buat Voucher</button>
+            </form>
+        </div>
+
+        <div class="col-span-2 glass-panel overflow-x-auto">
+            <table class="w-full">
+                <thead><tr><th>Kode</th><th>Nominal</th><th>Exp</th><th>Terpakai</th><th>Aksi</th></tr></thead>
+                <tbody id="list-vouchers"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+        
         <div id="sec-products" class="section-view">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-bold text-white">Kelola Produk</h2>
@@ -244,9 +277,11 @@
             if(id === 'topups') fetchTopups();
             if(id === 'actives') fetchServices();
             if(id === 'products') { fetchCategories(); fetchProducts(); }
-            if(id === 'categories') fetchCategories();
-            if(id === 'settings') fetchPteroConfig();
-            if(id === 'dashboard') loadDashboardStats();
+            // Cari baris ini di dalam showSection:
+if(id === 'categories') fetchCategories();
+if(id === 'settings') fetchPteroConfig();
+if(id === 'dashboard') loadDashboardStats();
+if(id === 'vouchers') fetchVouchers();
         }
 
         // --- 1. DASHBOARD STATS ---
@@ -407,6 +442,82 @@
         async function fetchPteroConfig(){ const r=await fetch('/api/ptero/config'); const d=await r.json(); if(d.panelUrl){ document.getElementById('pteroUrl').value=d.panelUrl; document.getElementById('pteroKey').value=d.apiKey; document.getElementById('pteroId').value=d.serverId; } }
         async function savePteroConfig(e){ e.preventDefault(); const d={panelUrl:document.getElementById('pteroUrl').value, apiKey:document.getElementById('pteroKey').value, serverId:document.getElementById('pteroId').value}; await fetch('/api/ptero/config',{method:'POST',headers:{'Content-Type':'application/json'}, body:JSON.stringify(d)}); alert("Disimpan!"); }
 
+    // --- [NEW] LOGIKA VOUCHER ---
+
+async function fetchVouchers() {
+    try {
+        const res = await fetch('/api/admin/vouchers');
+        const data = await res.json();
+        const list = document.getElementById('list-vouchers');
+        
+        if(data.length === 0) { 
+            list.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">Belum ada voucher aktif.</td></tr>'; 
+            return; 
+        }
+        
+        list.innerHTML = data.map(v => {
+            const isExp = new Date() > new Date(v.expiredDate);
+            const expClass = isExp ? 'text-red-500 opacity-50' : 'text-gray-400';
+            
+            return `
+            <tr class="hover:bg-white/5 border-b border-gray-800">
+                <td class="p-3 font-bold text-white font-mono tracking-wider">${v.code}</td>
+                <td class="p-3 text-green-400 font-bold">Rp ${v.amount.toLocaleString()}</td>
+                <td class="p-3 text-xs ${expClass}">
+                    ${new Date(v.expiredDate).toLocaleDateString()} ${isExp ? '(Expired)' : ''}
+                </td>
+                <td class="p-3 text-xs text-center font-mono">
+                    <span class="bg-gray-800 px-2 py-1 rounded">${v.usedBy ? v.usedBy.length : 0} / ${v.maxUsage}</span>
+                </td>
+                <td class="p-3">
+                    <button onclick="deleteVoucher('${v._id}')" class="text-red-500 hover:text-red-400 hover:bg-red-900/20 p-2 rounded transition">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>
+            </tr>`;
+        }).join('');
+    } catch(e) { console.error(e); }
+}
+
+async function createVoucher(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('button');
+    const oriText = btn.innerText;
+    btn.innerText = 'Memproses...'; btn.disabled = true;
+
+    const data = {
+        code: document.getElementById('vCode').value.toUpperCase(),
+        amount: document.getElementById('vAmount').value,
+        days: document.getElementById('vDays').value,
+        maxUsage: document.getElementById('vMax').value
+    };
+    
+    try {
+        const res = await fetch('/api/admin/vouchers', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        
+        const json = await res.json();
+        if(json.success) { 
+            alert("✅ Voucher Berhasil Dibuat!"); 
+            fetchVouchers(); 
+            e.target.reset(); 
+        } else { 
+            alert("❌ Gagal: " + json.msg); 
+        }
+    } catch(err) { alert("Error Server"); }
+    finally { btn.innerText = oriText; btn.disabled = false; }
+}
+
+async function deleteVoucher(id) {
+    if(!confirm("Yakin hapus voucher ini? User tidak akan bisa redeem lagi.")) return;
+    
+    await fetch(`/api/admin/vouchers/${id}`, {method:'DELETE'});
+    fetchVouchers();
+}
+    
         // INIT
         loadDashboardStats();
     </script>
