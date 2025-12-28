@@ -17,9 +17,16 @@ const NokosConfig = mongoose.models.NokosConfig || mongoose.model('NokosConfig',
     marginPercent: { type: Number, default: 20 }
 }));
 
-const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({ 
-    username: String, balance: Number 
-}));
+// [FIX BUG LOGIN] Schema User HARUS LENGKAP (Ada Password)
+// Agar tidak konflik dengan api/index.js
+const UserSchema = new mongoose.Schema({ 
+    username: { type: String, required: true, unique: true }, 
+    password: { type: String, required: true }, // <--- INI YG KEMAREN HILANG
+    balance: { type: Number, default: 0 } 
+});
+
+// Cek apakah model sudah ada, kalau belum buat baru
+const User = mongoose.models.User || mongoose.model('User', UserSchema);
 
 const NokosTx = mongoose.models.NokosTx || mongoose.model('NokosTx', new mongoose.Schema({
     invoiceId: String, username: String, refId: String,
@@ -34,9 +41,9 @@ async function callRumahOTP(endpoint, method = 'GET', data = null) {
     const config = await NokosConfig.findOne();
     if (!config || !config.apiKey) throw new Error("API Key belum disetting!");
 
-    // Auto Path (Support V1 & V2)
     let path = `/api/v2/${endpoint}`;
-    if (endpoint.startsWith('/')) path = `/api${endpoint}`; // Override manual
+    if (endpoint.startsWith('/')) path = `/api${endpoint}`;
+    if (endpoint.startsWith('v1/')) path = `/api/${endpoint}`;
 
     const options = {
         hostname: 'www.rumahotp.com',
@@ -115,10 +122,8 @@ router.post('/buy', async (req, res) => {
         const user = await User.findOne({ username });
         if (!user) return res.status(404).json({ success: false, msg: "User error" });
 
-        // Cek Harga Dulu
         const { result: priceRes, config } = await callRumahOTP(`countries?service_id=${service_id}`);
-        let originalPrice = 0;
-        let found = false;
+        let originalPrice = 0; let found = false;
 
         if (priceRes.success && priceRes.data) {
             for (let c of priceRes.data) {
@@ -129,14 +134,13 @@ router.post('/buy', async (req, res) => {
             }
         }
 
-        if (!found) return res.status(400).json({ success: false, msg: "Gagal cek harga terbaru." });
+        if (!found) return res.status(400).json({ success: false, msg: "Gagal cek harga." });
 
         const margin = config.marginPercent || 0;
         const sellingPrice = Math.ceil(originalPrice + (originalPrice * margin / 100));
 
-        if (user.balance < sellingPrice) return res.status(400).json({ success: false, msg: `Saldo kurang! Butuh Rp${sellingPrice.toLocaleString()}` });
+        if (user.balance < sellingPrice) return res.status(400).json({ success: false, msg: `Saldo kurang!` });
 
-        // Eksekusi Beli
         const { result } = await callRumahOTP(`orders?number_id=${number_id}&provider_id=${provider_id}&operator_id=${operator_id}`);
 
         if (!result.success) {
@@ -161,32 +165,27 @@ router.post('/buy', async (req, res) => {
     } catch (err) { res.status(500).json({ success: false, msg: "Error: " + err.message }); }
 });
 
-// CEK STATUS (Auto Refund Expired)
+// STATUS
 router.get('/status/:invoiceId', async (req, res) => {
     await connectDB();
     const tx = await NokosTx.findOne({ invoiceId: req.params.invoiceId });
     if(!tx) return res.status(404).json({ success: false });
 
-    // 1. Cek apakah expired di database lokal
     if (tx.status === 'waiting' && new Date() > new Date(tx.expiresAt)) {
         tx.status = 'canceled';
         const user = await User.findOne({ username: tx.username });
         if(user) { user.balance += tx.price; await user.save(); } 
         await tx.save();
-        return res.json({ success: true, data: tx, msg: "Waktu habis. Refund sukses." });
+        return res.json({ success: true, data: tx, msg: "Expired" });
     }
 
     try {
-        // 2. Cek ke RumahOTP
         const { result } = await callRumahOTP(`/v1/orders/get_status?order_id=${tx.refId}`);
-        
         if(result.success && result.data) {
             const d = result.data;
-            // Ada SMS
             if (d.otp_code && d.otp_code !== '-' && d.otp_code !== tx.smsCode) {
                 tx.smsCode = d.otp_code; tx.status = 'success'; await tx.save();
             }
-            // Pusat Cancel
             if (d.status === 'canceled' && tx.status !== 'canceled') {
                 tx.status = 'canceled';
                 const user = await User.findOne({ username: tx.username });
@@ -198,37 +197,33 @@ router.get('/status/:invoiceId', async (req, res) => {
     } catch(e) { res.status(500).json({ success: false }); }
 });
 
-// CANCEL MANUAL (PERBAIKAN ERROR MESSAGE)
+// CANCEL
 router.post('/cancel', async (req, res) => {
     await connectDB();
     const { invoiceId, username } = req.body;
     const tx = await NokosTx.findOne({ invoiceId, username });
     
-    if(!tx || tx.status !== 'waiting') return res.status(400).json({ success: false, msg: "Transaksi tidak valid." });
+    if(!tx || tx.status !== 'waiting') return res.status(400).json({ success: false, msg: "Status invalid" });
 
-    // Cek 4 Menit
     const timeDiff = Date.now() - new Date(tx.createdAt).getTime();
     if (timeDiff < 240000) {
-        const sisaDetik = Math.ceil((240000 - timeDiff) / 1000);
-        return res.status(400).json({ success: false, msg: `Mohon tunggu ${sisaDetik} detik lagi.` });
+        const sisa = Math.ceil((240000 - timeDiff) / 1000);
+        return res.status(400).json({ success: false, msg: `Tunggu ${sisa} detik.` });
     }
 
     try {
-        // Tembak API Cancel RumahOTP
         const { result } = await callRumahOTP(`/v1/orders/set_status?order_id=${tx.refId}&status=canceled`);
-        
         if(result.success) {
             tx.status = 'canceled';
             const user = await User.findOne({ username });
-            if(user) { user.balance += tx.price; await user.save(); } // Refund
+            if(user) { user.balance += tx.price; await user.save(); }
             await tx.save();
-            res.json({ success: true, msg: "Sukses Cancel & Refund." });
+            res.json({ success: true, msg: "Refund Sukses" });
         } else {
-            // [FIX] Ambil pesan error asli dari RumahOTP
-            const errorReason = result.message || (result.data ? result.data.message : "Ditolak oleh Server Pusat.");
-            res.json({ success: false, msg: errorReason });
+            const msg = result.message || (result.data ? result.data.message : "Gagal dari pusat");
+            res.json({ success: false, msg: msg });
         }
-    } catch(e) { res.status(500).json({ success: false, msg: "Server Error" }); }
+    } catch(e) { res.status(500).json({ success: false, msg: "Error" }); }
 });
 
 router.get('/history/:username', async (req, res) => {
