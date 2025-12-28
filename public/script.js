@@ -3,7 +3,6 @@
 // ============================================
 
 window.addEventListener('load', () => {
-    // Hilangkan loader setelah halaman selesai dimuat
     setTimeout(() => {
         const l = document.getElementById('loader');
         if(l) { 
@@ -18,16 +17,16 @@ async function initData() {
     checkUserLogin();
     fetchTestimonials();
     updateServerStats();
-    // Update status server setiap 5 detik
     setInterval(updateServerStats, 5000);
 }
 
 // ============================================
-// 2. AUTHENTICATION (LOGIN/LOGOUT)
+// 2. AUTHENTICATION
 // ============================================
 
 const userSession = localStorage.getItem('user_session');
 let userBalance = 0;
+const ADMIN_WA = "6287756632352";
 
 async function checkUserLogin() {
     if (!userSession) return;
@@ -38,26 +37,26 @@ async function checkUserLogin() {
             userBalance = data.balance || 0;
             const formatted = `Rp ${userBalance.toLocaleString()}`;
             
-            // Update Header Balance
+            // Header Balance
             const headerBal = document.getElementById('header-balance');
             if(headerBal) {
                 headerBal.innerHTML = `<i class="fa-solid fa-wallet text-green-400 animate-pulse"></i><span class="text-sm text-white font-mono font-bold tracking-wide">${formatted}</span>`;
                 headerBal.classList.remove('hidden');
             }
             
-            // Update Sidebar User Info
+            // Sidebar User Info
             const sidebar = document.getElementById('user-status-sidebar');
             if(sidebar) sidebar.innerHTML = `Hi, ${userSession}<br><span class="text-green-400 font-bold font-mono">${formatted}</span>`;
             
-            // Tampilkan Menu Khusus Member
+            // Show Member Menus
             document.getElementById('review-form-container')?.classList.remove('hidden');
             document.getElementById('login-prompt')?.classList.add('hidden');
             document.getElementById('menu-topup')?.classList.remove('hidden');
             document.getElementById('menu-myservices')?.classList.remove('hidden');
             document.getElementById('menu-history')?.classList.remove('hidden');
-            document.getElementById('menu-nokos')?.classList.remove('hidden'); // Menu Nokos
+            document.getElementById('menu-nokos')?.classList.remove('hidden');
             
-            // Ganti tombol login jadi logout
+            // Logout Button
             document.getElementById('auth-menu').innerHTML = `<a href="#" onclick="doLogout()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:bg-white/5 transition"><i class="fa-solid fa-sign-out-alt text-red-500 w-6 text-center"></i><span class="font-medium">Logout</span></a>`;
         }
     } catch(e) {}
@@ -69,21 +68,38 @@ function doLogout() {
 }
 
 // ============================================
-// 3. UI NAVIGATION (SWITCH VIEW)
+// 3. UI HELPER (TOAST, SIDEBAR, MODAL)
 // ============================================
+
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    
+    let colors = type === 'success' ? 'border-green-500 bg-green-900/90 text-green-100' : 
+                 type === 'error' ? 'border-red-500 bg-red-900/90 text-red-100' : 
+                 'border-blue-500 bg-blue-900/90 text-blue-100';
+    
+    let icon = type === 'success' ? '<i class="fa-solid fa-check-circle text-green-400 text-xl"></i>' : 
+               type === 'error' ? '<i class="fa-solid fa-circle-exclamation text-red-400 text-xl"></i>' : 
+               '<i class="fa-solid fa-circle-info text-blue-400 text-xl"></i>';
+
+    toast.className = `flex items-center gap-4 p-4 rounded-xl border-l-4 shadow-2xl backdrop-blur-md transition-all duration-500 toast-enter ${colors} pointer-events-auto min-w-[320px] max-w-md`;
+    toast.innerHTML = `<div>${icon}</div><div class="text-sm font-medium leading-snug">${message}</div>`;
+
+    container.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.remove('toast-enter'));
+    setTimeout(() => { toast.classList.add('toast-exit'); setTimeout(() => toast.remove(), 500); }, 4000);
+}
 
 function toggleSidebar() { document.body.classList.toggle('sidebar-active'); }
 function closeModalDirect() { document.getElementById('modal-overlay').classList.remove('modal-active'); }
 function closeModal(e) { if(e.target.id === 'modal-overlay') closeModalDirect(); }
 function toggleFaq(h){ h.parentElement.classList.toggle('faq-active'); }
-
-// Scroll to Top Button
 const scrollBtn = document.getElementById('btn-scroll'); 
 window.onscroll = function() { if(scrollBtn) scrollBtn.classList.toggle('show-scroll-btn', window.scrollY > 300); };
 function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
 function switchView(viewId) {
-    // 1. Sembunyikan Semua Halaman
     const views = document.querySelectorAll('.view-section');
     views.forEach(view => {
         view.classList.remove('view-active');
@@ -91,35 +107,29 @@ function switchView(viewId) {
         view.style.opacity = '0'; 
     });
 
-    // 2. Tutup Sidebar Mobile
     document.body.classList.remove('sidebar-active');
     const overlay = document.getElementById('sidebar-overlay');
     if(overlay) overlay.classList.remove('active');
 
-    // 3. Tampilkan Halaman Tujuan
     const target = document.getElementById(`view-${viewId}`);
     if (target) {
         target.classList.add('view-active');
         target.style.display = 'block';
         setTimeout(() => target.style.opacity = '1', 50);
 
-        // --- UPDATE DATA PER HALAMAN ---
         if (viewId === 'store') loadStoreData();
         if (viewId === 'myservices') fetchMyServices();
         if (viewId === 'history') fetchHistory();
-        if (viewId === 'nokos') initNokos(); // Load Nokos saat dibuka
+        if (viewId === 'nokos') initNokos();
     }
-    
-    // 4. Scroll ke Atas
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ============================================
-// 4. STORE / KATALOG LOGIC
+// 4. STORE & KATALOG
 // ============================================
 
 let allProducts=[], allCategories=[], currentProduct=null;
-const ADMIN_WA = "6287756632352";
 
 async function loadStoreData() {
     if(allCategories.length > 0) return;
@@ -138,9 +148,7 @@ function renderCategories() {
     const grid = document.getElementById('grid-categories');
     document.getElementById('section-categories').classList.remove('hidden');
     document.getElementById('section-products').classList.add('hidden');
-    
     if(allCategories.length === 0) { grid.innerHTML = '<p class="text-gray-500">Kosong.</p>'; return; }
-    
     let html = allCategories.map(c => `<div class="cat-card group" onclick="openCategory('${c.name}')"><div class="cat-bg" style="background-image: url('${c.imageUrl}');"></div><div class="cat-overlay"><h3 class="text-white font-bold text-lg group-hover:text-purple-400 transition">${c.name}</h3></div></div>`).join('');
     html += `<div class="cat-card group" onclick="openCategory('ALL')"><div class="cat-bg bg-purple-900"></div><div class="cat-overlay"><h3 class="text-white font-bold text-lg">Semua</h3></div></div>`;
     grid.innerHTML = html;
@@ -187,39 +195,29 @@ function openModal(id) {
     document.getElementById('modal-desc').innerText = p.desc; 
     document.getElementById('modal-img').src = p.imageUrl || 'https://via.placeholder.com/400';
     document.getElementById('user-balance-display').innerText = userSession ? `Rp ${userBalance.toLocaleString()}` : 'Login Dulu';
-    
     const form = document.getElementById('dynamic-inputs'); form.innerHTML = '';
-    (p.formFields||'No WA').split(',').forEach(f => { 
-        if(f.trim()) form.innerHTML += `<div><label class="text-[10px] text-gray-500 font-bold block mb-1">${f.trim()}</label><input type="text" name="${f.trim()}" class="w-full bg-black/50 border border-gray-700 rounded-lg p-3 text-white text-sm" required></div>`; 
-    });
+    (p.formFields||'No WA').split(',').forEach(f => { if(f.trim()) form.innerHTML += `<div><label class="text-[10px] text-gray-500 font-bold block mb-1">${f.trim()}</label><input type="text" name="${f.trim()}" class="w-full bg-black/50 border border-gray-700 rounded-lg p-3 text-white text-sm" required></div>`; });
     document.getElementById('modal-overlay').classList.add('modal-active');
 }
 
 async function processOrder(e) {
     e.preventDefault(); 
-    if(!userSession) return alert("Login dulu!"); 
-    if(userBalance < currentProduct.price) return alert("Saldo kurang!");
+    if(!userSession) return showToast("Login dulu!", "error"); 
+    if(userBalance < currentProduct.price) return showToast("Saldo kurang!", "error");
     
     const btn=document.getElementById('btn-buy'); btn.innerHTML='Proses...'; btn.disabled=true;
     const inputs=document.querySelectorAll('#orderForm input'); let fd=""; inputs.forEach(i=>fd+=`${i.name}: ${i.value}\n`);
     
     try { 
-        const res=await fetch('/api/order',{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({username:userSession,productId:currentProduct._id,formData:fd})
-        }); 
+        const res=await fetch('/api/order',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:userSession,productId:currentProduct._id,formData:fd})}); 
         const r=await res.json(); 
-        
         if(r.success){ 
-            userBalance-=currentProduct.price; 
-            checkUserLogin(); 
+            userBalance-=currentProduct.price; checkUserLogin(); 
             document.getElementById('modal-content-product').classList.add('hidden'); 
             document.getElementById('modal-content-receipt').classList.remove('hidden'); 
             document.getElementById('rec-inv').innerText=r.invoiceId; 
             document.getElementById('rec-item').innerText=r.productName; 
             document.getElementById('rec-mode').innerText=r.mode; 
-            
             if(r.mode==='manual'){ 
                 const b=document.getElementById('btn-continue'); b.innerText="Lanjut WA"; 
                 b.onclick=()=>{ window.open(`https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(`Order:\nInv: ${r.invoiceId}\n${fd}`)}`,'_blank'); closeModalDirect(); }; 
@@ -227,33 +225,29 @@ async function processOrder(e) {
                 document.getElementById('btn-continue').innerText="Tutup"; 
                 document.getElementById('btn-continue').onclick=closeModalDirect; 
             } 
-        } else { alert(r.msg); } 
-    } catch(e){alert("Error");} 
+        } else { showToast(r.msg, "error"); } 
+    } catch(e){showToast("Error", "error");} 
     finally { btn.innerHTML='Bayar'; btn.disabled=false; }
 }
 
 // ============================================
-// 5. TOP UP & REDEEM CODE
+// 5. TOP UP & REDEEM
 // ============================================
 
 async function submitTopUp(e) {
-    e.preventDefault(); if(!userSession) return alert("Login dulu!");
+    e.preventDefault(); if(!userSession) return showToast("Login dulu!", "error");
     const btn=document.getElementById('btn-topup'); btn.innerHTML='Mengirim...'; btn.disabled=true;
     const reader=new FileReader(); reader.readAsDataURL(document.getElementById('topupProof').files[0]);
-    
     reader.onload=async()=>{ 
         try{ 
-            const res=await fetch('/api/topup',{
-                method:'POST',headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({username:userSession,amount:document.getElementById('topupAmount').value,proofImage:reader.result})
-            }); 
-            if(res.ok){ alert("Terkirim! Saldo masuk setelah dicek admin."); switchView('landing'); } else { alert("Gagal"); } 
-        }catch(e){} finally{ btn.innerHTML='Kirim'; btn.disabled=false; } 
+            const res=await fetch('/api/topup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:userSession,amount:document.getElementById('topupAmount').value,proofImage:reader.result})}); 
+            if(res.ok){ showToast("Terkirim! Saldo akan masuk setelah dicek admin.", "success"); switchView('landing'); } else { showToast("Gagal mengirim bukti.", "error"); } 
+        }catch(e){} finally{ btn.innerHTML='Kirim Bukti Transfer'; btn.disabled=false; } 
     };
 }
 
 async function redeemCode(e) {
-    e.preventDefault(); if(!userSession) return alert("Silakan login member terlebih dahulu!");
+    e.preventDefault(); if(!userSession) return showToast("Login dulu!", "error");
     const input = document.getElementById('redeemInput'); const btn = document.getElementById('btn-redeem'); 
     const code = input.value.trim(); if(!code) return;
     
@@ -261,66 +255,19 @@ async function redeemCode(e) {
     try { 
         const res = await fetch('/api/redeem', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ username: userSession, code: code })}); 
         const data = await res.json();
-        if(data.success) { alert(`🎉 Voucher Sukses! Saldo +Rp ${data.amount.toLocaleString()}`); input.value = ''; checkUserLogin(); } else { alert("❌ GAGAL: " + data.msg); }
-    } catch(err) { alert("Error koneksi."); } finally { btn.innerHTML = originalText; btn.disabled = false; }
+        if(data.success) { showToast(`Voucher Sukses! +Rp ${data.amount.toLocaleString()}`, "success"); input.value = ''; checkUserLogin(); } else { showToast(data.msg, "error"); }
+    } catch(err) { showToast("Koneksi error.", "error"); } finally { btn.innerHTML = originalText; btn.disabled = false; }
 }
 
 // ============================================
-// 6. HISTORY & MY SERVICES
-// ============================================
-
-async function fetchHistory() {
-    if(!userSession) return;
-    const list = document.getElementById('history-list'); 
-    list.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-gray-500 text-xs"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Loading...</td></tr>';
-    
-    try { 
-        const res = await fetch(`/api/history/${userSession}`); 
-        const data = await res.json();
-        
-        if (data.length === 0) { list.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-500 italic text-xs">Belum ada transaksi.</td></tr>'; return; }
-        
-        list.innerHTML = data.map(item => {
-            const d = new Date(item.date); const dateStr = `${d.getDate()}/${d.getMonth()+1} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
-            const colorClass = item.type === 'IN' ? 'text-green-400' : 'text-red-400';
-            const symbol = item.type === 'IN' ? '+' : '-';
-            
-            let badge = '';
-            if(item.status === 'success') badge = '<span class="text-green-500 bg-green-900/20 px-2 py-1 rounded text-[10px] font-bold">SUKSES</span>';
-            else if(item.status === 'failed' || item.status === 'canceled') badge = '<span class="text-red-500 bg-red-900/20 px-2 py-1 rounded text-[10px] font-bold">GAGAL</span>';
-            else badge = '<span class="text-yellow-500 bg-yellow-900/20 px-2 py-1 rounded text-[10px] font-bold">PROSES</span>';
-            
-            return `<tr class="hover:bg-white/5 transition"><td class="p-3 text-gray-500 font-mono text-xs whitespace-nowrap align-middle">${dateStr}</td><td class="p-3 font-medium text-white text-xs align-middle">${item.desc}<div class="md:hidden text-[10px] text-gray-600 mt-0.5">${item.type==='IN'?'Top Up':'Order'}</div></td><td class="p-3 text-right font-mono font-bold text-xs align-middle ${colorClass}">${symbol}Rp ${item.amount.toLocaleString()}</td><td class="p-3 text-center align-middle">${badge}</td></tr>`;
-        }).join('');
-    } catch (err) { list.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-red-500 text-xs">Gagal memuat data.</td></tr>'; }
-}
-
-async function fetchMyServices() {
-    if(!userSession) return;
-    const c=document.getElementById('myservices-list'); c.innerHTML='<div class="col-span-full text-center">Loading...</div>';
-    
-    try { 
-        const res=await fetch(`/api/services/${userSession}`); const s=await res.json();
-        if(s.length===0) { c.innerHTML=`<div class="col-span-full text-center py-10 glass-card rounded-xl"><p class="text-gray-400">Belum ada layanan.</p></div>`; return; }
-        
-        c.innerHTML=s.map(i=>{ 
-            const exp=new Date(i.expiredDate); const diff=Math.ceil((exp-new Date())/(1000*60*60*24)); 
-            let st='ACTIVE', cl='text-green-400'; 
-            if(diff<=0){st='EXPIRED';cl='text-red-500';} else if(diff<=3){st=`EXP ${diff} HARI`;cl='text-yellow-400';} 
-            
-            return `<div class="glass-card p-6 rounded-xl border border-white/10 relative group hover:bg-white/5 transition"><div class="flex justify-between items-start mb-4"><div><h3 class="text-lg font-bold text-white">${i.productName}</h3><p class="text-xs text-gray-400 font-mono mt-1">ID: ${i._id.substr(-6)}</p></div><span class="text-xs font-bold px-2 py-1 rounded bg-black/50 ${cl} border border-white/10">● ${st}</span></div><div class="space-y-3 mb-6"><div class="flex justify-between text-sm"><span class="text-gray-500">Target</span><span class="text-white font-mono">${i.targetNumber}</span></div><div class="flex justify-between text-sm"><span class="text-gray-500">IP</span><span class="text-blue-400 font-mono">${i.serverIp}</span></div><div class="flex justify-between text-sm"><span class="text-gray-500">Expired</span><span class="text-white font-mono">${exp.toLocaleDateString()}</span></div></div><a href="https://wa.me/${ADMIN_WA}?text=Perpanjang%20${i.productName}" target="_blank" class="block w-full py-2 text-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg transition">Perpanjang</a></div>`; 
-        }).join('');
-    } catch(e){}
-}
-// ============================================
-// 7. NOKOS SYSTEM (PREMIUM FLOW)
+// 6. NOKOS SYSTEM (PREMIUM FLOW)
 // ============================================
 
 let nokosInterval = null;
 let currentNokos = {
     serviceId: null,
     serviceName: null,
-    countryId: null,  // number_id (misal: 62 utk indo di API ini)
+    countryId: null, 
     countryName: null,
     providerId: null,
     serverPrice: 0,
@@ -360,10 +307,8 @@ async function selectApp(el, id, name) {
     currentNokos.serviceId = id;
     currentNokos.serviceName = name;
     
-    // Reset Steps
     resetSteps(['step-country', 'step-server', 'step-operator', 'step-checkout']);
     
-    // Show Country Grid
     const countryGrid = document.getElementById('nokos-country-grid');
     document.getElementById('step-country').classList.remove('hidden');
     countryGrid.innerHTML = '<div class="col-span-full text-center text-xs text-yellow-500 animate-pulse">Memuat Negara...</div>';
@@ -372,9 +317,8 @@ async function selectApp(el, id, name) {
         const res = await fetch(`/api/nokos/countries?service_id=${id}`);
         const data = await res.json();
         if(data.success) {
-            // Simpan data pricelist di element biar gak request ulang
             countryGrid.innerHTML = data.data.map(c => {
-                const priceData = JSON.stringify(c.pricelist).replace(/"/g, '&quot;'); // Encode JSON
+                const priceData = JSON.stringify(c.pricelist).replace(/"/g, '&quot;'); 
                 return `
                 <div onclick="selectCountry(this, '${c.number_id}', '${c.name}', '${priceData}')" 
                      class="country-card cursor-pointer bg-black/40 border border-gray-700 rounded-lg p-2 flex items-center gap-3 hover:border-gray-500 transition">
@@ -389,7 +333,7 @@ async function selectApp(el, id, name) {
     } catch(e) { countryGrid.innerHTML = '<div class="col-span-full text-red-500 text-xs">Gagal.</div>'; }
 }
 
-// 3. PILIH NEGARA -> TAMPILKAN LIST SERVER/HARGA
+// 3. PILIH NEGARA -> LIST SERVER
 function selectCountry(el, numId, name, priceDataJson) {
     document.querySelectorAll('.country-card').forEach(c => c.classList.remove('active-card'));
     el.classList.add('active-card');
@@ -400,7 +344,7 @@ function selectCountry(el, numId, name, priceDataJson) {
     document.getElementById('step-server').classList.remove('hidden');
     
     const serverList = document.getElementById('nokos-server-list');
-    const prices = JSON.parse(priceDataJson); // Decode JSON Price List
+    const prices = JSON.parse(priceDataJson); 
 
     serverList.innerHTML = prices.map(p => `
     <div onclick="selectServer(this, '${p.provider_id}', '${p.price}')" 
@@ -417,7 +361,7 @@ function selectCountry(el, numId, name, priceDataJson) {
     `).join('');
 }
 
-// 4. PILIH SERVER -> LOAD OPERATOR
+// 4. PILIH SERVER -> LIST OPERATOR
 async function selectServer(el, provId, price) {
     document.querySelectorAll('.server-card').forEach(c => c.classList.remove('active-card'));
     el.classList.add('active-card');
@@ -451,9 +395,7 @@ async function selectServer(el, provId, price) {
             </div>`).join('');
             
             opGrid.innerHTML = html;
-        } else {
-            opGrid.innerHTML = '<div class="col-span-full text-red-500 text-xs">Gagal load operator.</div>';
-        }
+        } else { opGrid.innerHTML = '<div class="col-span-full text-red-500 text-xs">Gagal.</div>'; }
     } catch(e) { opGrid.innerHTML = '<div class="col-span-full text-red-500 text-xs">Error.</div>'; }
 }
 
@@ -467,14 +409,12 @@ function selectOperator(el, opId, opName) {
     document.getElementById('display-price').innerText = `Rp ${currentNokos.serverPrice.toLocaleString()}`;
     document.getElementById('display-info').innerText = opName;
     document.getElementById('display-server').innerText = `ID: ${currentNokos.providerId}`;
-    
-    // Scroll ke tombol beli biar user notice
     document.getElementById('step-checkout').scrollIntoView({ behavior: 'smooth' });
 }
 
-// 6. EKSEKUSI BELI
+// 6. EXECUTE BUY
 async function executeBuyNokos() {
-    if(!confirm(`Beli nomor ${currentNokos.serviceName} (${currentNokos.countryName})?\nSaldo akan terpotong.`)) return;
+    if(!confirm(`Beli nomor ${currentNokos.serviceName}?\nPastikan saldo cukup.`)) return;
     
     const btn = document.getElementById('btn-buy-nokos');
     const originalText = btn.innerHTML;
@@ -484,7 +424,7 @@ async function executeBuyNokos() {
     try {
         const payload = {
             username: userSession,
-            service_id: currentNokos.serviceId, // Penting buat validasi backend
+            service_id: currentNokos.serviceId,
             service_name: currentNokos.serviceName,
             number_id: currentNokos.countryId,
             provider_id: currentNokos.providerId,
@@ -495,58 +435,161 @@ async function executeBuyNokos() {
         const d = await res.json();
         
         if(d.success) {
-            alert("✅ SUKSES! Tunggu SMS masuk.");
+            showToast("SUKSES! Menunggu SMS...", "success");
             checkUserLogin(); fetchNokosHistory();
-            resetSteps(['step-checkout']); // Sembunyikan checkout biar gak double buy
+            resetSteps(['step-checkout']);
         } else {
-            // Parsing Error Message biar rapi
             let msg = d.msg || "Gagal";
-            if(d.msg && d.msg.includes("Pusat:")) msg = "GAGAL DARI PUSAT: Saldo Server/Stok Habis.";
-            alert("❌ " + msg);
+            if(d.msg && d.msg.includes("Pusat:")) msg = "GAGAL MENGAMBIL STOCK / STOCK HABIS, Tunggu beberapa saat lagi.";
+            showToast(msg, "error");
         }
-    } catch(e) { alert("Error koneksi."); } 
+    } catch(e) { showToast("Koneksi Error.", "error"); } 
     finally { btn.innerHTML = originalText; btn.disabled = false; }
 }
 
-// UTILS
-function resetSteps(ids) {
-    ids.forEach(id => document.getElementById(id).classList.add('hidden'));
-}
+function resetSteps(ids) { ids.forEach(id => document.getElementById(id).classList.add('hidden')); }
+
+// ============================================
+// 7. ACTIVE ORDERS (CARD STYLE) & CANCEL
+// ============================================
 
 async function fetchNokosHistory() {
     if(!userSession) return;
+    
     const res = await fetch(`/api/nokos/history/${userSession}`); 
     const list = await res.json();
-    const tbody = document.getElementById('nokos-active-list');
-    
-    if(list.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-gray-500 text-xs">Belum ada order.</td></tr>'; return; }
-    
-    tbody.innerHTML = await Promise.all(list.map(async (tx) => {
-        if(tx.status === 'waiting') await fetch(`/api/nokos/status/${tx.invoiceId}`); 
-        
-        const exp = new Date(tx.expiresAt); const timeLeft = Math.floor((exp - new Date()) / 1000);
-        let timeStr = timeLeft > 0 ? `${Math.floor(timeLeft/60)}m ${timeLeft%60}s` : 'Expired';
-        let smsDisplay = '<span class="text-yellow-500 animate-pulse text-[10px]">WAITING...</span>';
-        if(tx.smsCode) smsDisplay = `<span class="bg-green-900/30 text-green-400 px-2 py-1 rounded border border-green-500/30 font-mono font-bold text-sm tracking-widest select-all">${tx.smsCode}</span>`;
-        if(tx.status === 'canceled') smsDisplay = '<span class="text-red-500 text-[10px]">REFUND</span>';
-        
-        let btnAction = '';
-        if(tx.status === 'waiting' && timeLeft > 0) btnAction = `<button onclick="cancelNokos('${tx.invoiceId}')" class="text-red-400 hover:text-white text-[10px] border border-red-500/30 px-2 py-1 rounded bg-red-900/20">CANCEL</button>`;
-        else if (tx.status === 'success') btnAction = `<i class="fa-solid fa-check text-green-500"></i>`;
+    const container = document.getElementById('nokos-active-container');
+    const activeList = list.filter(tx => tx.status === 'waiting');
 
-        return `<tr class="hover:bg-white/5 border-b border-gray-800"><td class="p-4 font-bold text-white text-xs">${tx.serviceName}<div class="text-[9px] text-gray-500">${tx.country}</div></td><td class="p-4 font-mono text-xs text-purple-300 select-all">${tx.phoneNumber}</td><td class="p-4">${smsDisplay}</td><td class="p-4 font-mono text-[10px] text-gray-400">${timeStr}</td><td class="p-4 text-right">${btnAction}</td></tr>`;
+    if(activeList.length === 0) { 
+        container.innerHTML = '<div class="col-span-full text-center py-10 text-gray-500 italic bg-white/5 rounded-xl border border-white/5">Tidak ada pesanan aktif.</div>'; 
+        return; 
+    }
+    
+    container.innerHTML = await Promise.all(activeList.map(async (tx) => {
+        await fetch(`/api/nokos/status/${tx.invoiceId}`); 
+        
+        const exp = new Date(tx.expiresAt); 
+        const created = new Date(tx.createdAt);
+        const now = new Date();
+        const timeLeft = Math.floor((exp - now) / 1000);
+        let timeDisplay = timeLeft > 0 ? `${Math.floor(timeLeft/60)}:${(timeLeft%60).toString().padStart(2,'0')}` : '00:00';
+        
+        const elapsedSeconds = Math.floor((now - created) / 1000);
+        const waitTime = 240; 
+        let footerHtml = '';
+
+        if (elapsedSeconds < waitTime) {
+            const waitLeft = waitTime - elapsedSeconds;
+            const waitMin = Math.floor(waitLeft/60);
+            const waitSec = (waitLeft % 60).toString().padStart(2,'0');
+            footerHtml = `
+                <div class="text-[10px] text-gray-400 mb-2">Tunggu <span class="text-yellow-500 font-bold">${waitMin}:${waitSec}</span> sebelum batal.</div>
+                <div class="flex gap-2">
+                    <button onclick="buyNokosAgain()" class="flex-1 py-2 rounded-lg border border-blue-500/50 text-blue-400 text-xs font-bold hover:bg-blue-500/10 transition"><i class="fa-solid fa-cart-plus mr-1"></i> Beli Lagi</button>
+                    <button disabled class="flex-1 py-2 rounded-lg border border-red-500/20 text-gray-600 text-xs font-bold cursor-not-allowed"><i class="fa-solid fa-ban mr-1"></i> Batal</button>
+                </div>`;
+        } else {
+            footerHtml = `
+                <div class="text-[10px] text-gray-400 mb-2">Jika SMS tidak masuk, silakan batalkan.</div>
+                <div class="flex gap-2">
+                    <button onclick="buyNokosAgain()" class="flex-1 py-2 rounded-lg border border-blue-500/50 text-blue-400 text-xs font-bold hover:bg-blue-500/10 transition"><i class="fa-solid fa-cart-plus mr-1"></i> Beli Lagi</button>
+                    <button onclick="cancelNokos('${tx.invoiceId}')" class="flex-1 py-2 rounded-lg border border-red-500 text-red-500 text-xs font-bold hover:bg-red-500/10 transition"><i class="fa-solid fa-xmark mr-1"></i> Batal</button>
+                </div>`;
+        }
+
+        let smsSection = `<div class="flex items-center gap-2 text-yellow-500 animate-pulse"><i class="fa-regular fa-envelope"></i><span class="text-xs font-bold">menunggu sms...</span></div>`;
+        if(tx.smsCode) smsSection = `<div class="flex flex-col"><span class="text-[10px] text-gray-400">Kode OTP:</span><span class="text-2xl font-mono font-bold text-green-400 tracking-[0.2em] select-all cursor-pointer">${tx.smsCode}</span></div>`;
+
+        const appIcons = {'WhatsApp': 'https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg', 'Telegram': 'https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg', 'TikTok': 'https://sf-tb-sg.ibytedtos.com/obj/eden-sg/uhtyvueh7nulogpoguhm/tiktok-icon2.png'};
+        const appIcon = appIcons[tx.serviceName] || 'https://via.placeholder.com/30?text=App';
+
+        return `
+        <div class="bg-white/5 border border-white/10 rounded-xl p-4 relative overflow-hidden group hover:border-gray-600 transition">
+            <div class="flex justify-between items-start mb-3 border-b border-gray-700 pb-3">
+                <div class="flex items-center gap-2">
+                    <div class="w-6 h-4 bg-gray-700 rounded-sm overflow-hidden relative"><i class="fa-solid fa-globe text-gray-400 text-[10px] absolute inset-0 flex items-center justify-center"></i></div>
+                    <span class="font-mono text-lg text-white font-bold tracking-wide select-all">${tx.phoneNumber}</span>
+                    <button onclick="navigator.clipboard.writeText('${tx.phoneNumber}')" class="text-gray-500 hover:text-white transition"><i class="fa-regular fa-copy"></i></button>
+                </div>
+                <div class="bg-yellow-500/20 text-yellow-500 px-2 py-1 rounded text-xs font-mono font-bold flex items-center gap-1"><i class="fa-regular fa-clock"></i> ${timeDisplay}</div>
+            </div>
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center gap-3"><img src="${appIcon}" class="w-8 h-8 object-contain"><div><div class="text-white font-bold text-sm">${tx.serviceName}</div><div class="text-[10px] text-gray-400">${tx.country}</div></div></div>
+                <div class="text-right">${smsSection}</div>
+            </div>
+            <div class="bg-black/30 rounded-lg p-3 border border-white/5">${footerHtml}</div>
+        </div>`;
     })).then(rows => rows.join(''));
 }
 
 async function cancelNokos(invId) {
-    if(!confirm("Batalkan & Refund?")) return;
-    const res = await fetch('/api/nokos/cancel', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({invoiceId:invId, username:userSession})});
-    const d=await res.json();
-    if(d.success) { alert("Sukses Cancel."); fetchNokosHistory(); checkUserLogin(); } else alert("Gagal.");
+    if(!confirm("Yakin batalkan nomor ini?")) return;
+    showToast("Memproses pembatalan...", "info");
+    try {
+        const res = await fetch('/api/nokos/cancel', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({invoiceId:invId, username:userSession})});
+        const d = await res.json();
+        if(d.success) { showToast(d.msg, "success"); fetchNokosHistory(); checkUserLogin(); } 
+        else { showToast(d.msg, "error"); }
+    } catch(e) { showToast("Gagal koneksi.", "error"); }
+}
+
+function buyNokosAgain() {
+    document.getElementById('view-nokos').scrollIntoView({ behavior: 'smooth' });
+    initNokos();
 }
 
 // ============================================
-// 8. SERVER STATS (MANUAL CONTROL) & TESTIMONI
+// 8. HISTORY GABUNGAN & SERVICES
+// ============================================
+
+async function fetchHistory() {
+    if(!userSession) return;
+    const list = document.getElementById('history-list');
+    list.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-gray-500 text-xs"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Loading...</td></tr>';
+
+    try {
+        const [resGen, resNok] = await Promise.all([fetch(`/api/history/${userSession}`), fetch(`/api/nokos/history/${userSession}`)]);
+        const dataGen = await resGen.json();
+        const dataNok = await resNok.json();
+
+        const finishedNokos = dataNok.filter(tx => tx.status !== 'waiting').map(tx => ({
+            date: tx.createdAt, desc: `Nokos ${tx.serviceName} (${tx.phoneNumber})`, amount: tx.price, type: 'OUT', 
+            status: tx.status === 'success' ? 'success' : 'canceled' 
+        }));
+
+        const combined = [...dataGen, ...finishedNokos].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        if (combined.length === 0) { list.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-500 italic text-xs">Belum ada riwayat.</td></tr>'; return; }
+
+        list.innerHTML = combined.map(item => {
+            const d = new Date(item.date);
+            const dateStr = `${d.getDate()}/${d.getMonth()+1} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+            const isTopup = item.type === 'IN';
+            const colorClass = isTopup ? 'text-green-400' : 'text-red-400';
+            const symbol = isTopup ? '+' : '-';
+            
+            let badge = '';
+            if(item.status === 'success') badge = '<span class="text-[10px] font-bold text-green-500 bg-green-900/20 px-2 py-1 rounded">SUKSES</span>';
+            else if(item.status === 'canceled') badge = '<span class="text-[10px] font-bold text-red-400 bg-red-900/20 px-2 py-1 rounded">REFUND</span>';
+            else badge = '<span class="text-[10px] font-bold text-yellow-500 bg-yellow-900/20 px-2 py-1 rounded">PROSES</span>';
+
+            return `<tr class="hover:bg-white/5 transition border-b border-gray-800/50"><td class="p-3 text-gray-500 font-mono text-xs whitespace-nowrap">${dateStr}</td><td class="p-3"><div class="font-medium text-white text-xs">${item.desc}</div><div class="md:hidden text-[10px] text-gray-600">${isTopup ? 'Deposit' : 'Pembelian'}</div></td><td class="p-3 text-right font-mono font-bold text-xs ${colorClass}">${symbol}Rp ${item.amount.toLocaleString()}</td><td class="p-3 text-center">${badge}</td></tr>`;
+        }).join('');
+    } catch (err) { list.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-red-500 text-xs">Gagal.</td></tr>'; }
+}
+
+async function fetchMyServices() {
+    if(!userSession) return;
+    const c=document.getElementById('myservices-list'); c.innerHTML='<div class="col-span-full text-center">Loading...</div>';
+    try { const res=await fetch(`/api/services/${userSession}`); const s=await res.json();
+        if(s.length===0) { c.innerHTML=`<div class="col-span-full text-center py-10 glass-card rounded-xl"><p class="text-gray-400">Belum ada layanan.</p></div>`; return; }
+        c.innerHTML=s.map(i=>{ const exp=new Date(i.expiredDate); const diff=Math.ceil((exp-new Date())/(1000*60*60*24)); let st='ACTIVE', cl='text-green-400'; if(diff<=0){st='EXPIRED';cl='text-red-500';} else if(diff<=3){st=`EXP ${diff} HARI`;cl='text-yellow-400';} return `<div class="glass-card p-6 rounded-xl border border-white/10 relative group hover:bg-white/5 transition"><div class="flex justify-between items-start mb-4"><div><h3 class="text-lg font-bold text-white">${i.productName}</h3><p class="text-xs text-gray-400 font-mono mt-1">ID: ${i._id.substr(-6)}</p></div><span class="text-xs font-bold px-2 py-1 rounded bg-black/50 ${cl} border border-white/10">● ${st}</span></div><div class="space-y-3 mb-6"><div class="flex justify-between text-sm"><span class="text-gray-500">Target</span><span class="text-white font-mono">${i.targetNumber}</span></div><div class="flex justify-between text-sm"><span class="text-gray-500">IP</span><span class="text-blue-400 font-mono">${i.serverIp}</span></div><div class="flex justify-between text-sm"><span class="text-gray-500">Expired</span><span class="text-white font-mono">${exp.toLocaleDateString()}</span></div></div><a href="https://wa.me/${ADMIN_WA}?text=Perpanjang%20${i.productName}" target="_blank" class="block w-full py-2 text-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg transition">Perpanjang</a></div>`; }).join('');
+    } catch(e){}
+}
+
+// ============================================
+// 9. SYSTEM STATS & TESTIMONI
 // ============================================
 
 async function updateServerStats() {
@@ -554,63 +597,52 @@ async function updateServerStats() {
         const res = await fetch('/api/system/status');
         const data = await res.json();
         const vpsEl = document.getElementById('runtime-vps');
-        const botEl = document.getElementById('runtime-bot');
         const statusBadge = document.getElementById('status-badge');
+        const botEl = document.getElementById('runtime-bot');
         
         if (data.vpsActive) {
-            const diff = new Date().getTime() - new Date(data.vpsStartTime).getTime();
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            
-            if(vpsEl) vpsEl.innerText = `${days}d ${hours}h ${minutes}m`;
+            const start = new Date(data.vpsStartTime).getTime();
+            const diff = new Date().getTime() - start;
+            const days = Math.floor(diff/(1000*60*60*24));
+            const hours = Math.floor((diff%(1000*60*60*24))/(1000*60*60));
+            const mins = Math.floor((diff%(1000*60*60))/(1000*60));
+            if(vpsEl) vpsEl.innerText = `${days}d ${hours}h ${mins}m`;
             if(statusBadge) { statusBadge.innerText = "ONLINE"; statusBadge.className = "text-green-400 text-[10px] bg-green-900/50 px-2 py-1 rounded border border-green-500 font-bold"; }
-            
-            // Fake Animations
-            if(document.getElementById('bar-cpu')) document.getElementById('bar-cpu').style.width = (Math.floor(Math.random()*30)+10) + "%";
-            if(document.getElementById('text-cpu')) document.getElementById('text-cpu').innerText = (Math.floor(Math.random()*30)+10) + "%";
+            const cpuBar = document.getElementById('bar-cpu'), cpuTxt = document.getElementById('text-cpu');
+            if(cpuBar) { const r = Math.floor(Math.random()*30)+10; cpuBar.style.width = r+"%"; cpuTxt.innerText = r+"%"; }
         } else {
             if(vpsEl) vpsEl.innerText = "OFFLINE";
             if(statusBadge) { statusBadge.innerText = "MAINTENANCE"; statusBadge.className = "text-red-500 text-[10px] bg-red-900/50 px-2 py-1 rounded border border-red-500 font-bold animate-pulse"; }
-            if(document.getElementById('bar-cpu')) document.getElementById('bar-cpu').style.width = "0%";
         }
-
-        if (data.botActive) {
-            const diff = new Date().getTime() - new Date(data.botStartTime).getTime();
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            if(botEl) botEl.innerHTML = `<span class="text-blue-400">${days}d ${hours}h</span>`;
-        } else {
-            if(botEl) botEl.innerText = "OFFLINE";
-        }
+        if (data.botActive && botEl) {
+            const start = new Date(data.botStartTime).getTime();
+            const diff = new Date().getTime() - start;
+            const days = Math.floor(diff/(1000*60*60*24));
+            const hours = Math.floor((diff%(1000*60*60*24))/(1000*60*60));
+            botEl.innerHTML = `<span class="text-blue-400">${days}d ${hours}h</span>`;
+        } else if(botEl) { botEl.innerText = "OFFLINE"; }
     } catch(e) {}
 }
 
-// Testimonials
-function setRating(n) { document.getElementById('ratingValue').value = n; document.getElementById('rating-text').innerText = n + ".0"; for (let i = 1; i <= 5; i++) { const s=document.getElementById(`star-${i}`); if(i<=n){s.classList.remove('text-gray-600');s.classList.add('text-yellow-500');}else{s.classList.remove('text-yellow-500');s.classList.add('text-gray-600');} } }
+function setRating(n) { document.getElementById('ratingValue').value = n; document.getElementById('rating-text').innerText = n + ".0"; for (let i = 1; i <= 5; i++) { const s=document.getElementById(`star-${i}`); if(i<=n){s.classList.remove('text-gray-600');s.classList.add('text-yellow-500'); s.style.transform="scale(1.4)"; setTimeout(()=>s.style.transform="scale(1)", 200); }else{s.classList.remove('text-yellow-500');s.classList.add('text-gray-600');} } }
 
 async function submitReview(e) { 
     e.preventDefault(); 
-    if(!userSession) return alert("Login dulu."); 
+    if(!userSession) return showToast("Login dulu.", "error"); 
     const btn=document.getElementById('btn-submit-review'); btn.innerHTML='Mengirim...'; btn.disabled=true; 
     try { 
-        const res=await fetch('/api/testimonials',{
-            method:'POST',headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({username:userSession,rating:parseInt(document.getElementById('ratingValue').value),comment:document.getElementById('reviewComment').value})
-        }); 
-        if((await res.json()).success){alert("Terkirim!"); fetchTestimonials();} else alert("Gagal"); 
-    } catch(e){} 
-    finally{ btn.innerHTML='Kirim Ulasan'; btn.disabled=false; } 
+        const res=await fetch('/api/testimonials',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:userSession,rating:parseInt(document.getElementById('ratingValue').value),comment:document.getElementById('reviewComment').value})}); 
+        if((await res.json()).success){showToast("Ulasan terkirim!", "success"); document.getElementById('reviewComment').value=''; setRating(5); fetchTestimonials();} else showToast("Gagal.", "error"); 
+    } catch(e){} finally{ btn.innerHTML='Kirim Ulasan'; btn.disabled=false; } 
 }
 
 async function fetchTestimonials() { 
     try { 
         const d = await (await fetch('/api/testimonials')).json(); 
         const g=document.getElementById('testimonial-grid'); 
-        if(d.length===0){g.innerHTML='...';return;} 
-        g.innerHTML=d.map(x=>`<div class="glass-card p-5 rounded-xl w-[300px] flex-none snap-center border-l-2 border-l-purple-500"><div class="flex justify-between mb-2"><h4 class="font-bold text-white">${x.username}</h4><span class="text-yellow-500 text-xs">★ ${x.rating}.0</span></div><p class="text-gray-400 text-sm italic">"${x.comment}"</p></div>`).join(''); 
+        if(d.length===0){g.innerHTML='<div class="w-full text-center text-gray-500 italic py-10">Belum ada ulasan.</div>';return;} 
+        g.innerHTML=d.map(x=>`<div class="glass-card p-5 rounded-xl w-[85vw] md:w-[320px] flex-none snap-center border-l-2 border-l-purple-500"><div class="flex justify-between mb-2"><h4 class="font-bold text-white text-sm">${x.username}</h4><span class="text-yellow-500 text-xs">★ ${x.rating}.0</span></div><p class="text-gray-300 text-sm italic">"${x.comment}"</p></div>`).join(''); 
     } catch(e){} 
 }
 
-// JALANKAN SAAT SCRIPT DIMUAT
 initData();

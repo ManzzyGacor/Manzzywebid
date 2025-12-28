@@ -3,31 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
     <title>Manzzy ID Official - Premium Bot Services</title>
     
     <meta name="description" content="Layanan Hosting Bot WhatsApp Terbaik, Murah & Cepat. Sewa VPS, Panel Pterodactyl, dan Bot WA 24 Jam Nonstop.">
-<meta name="keywords" content="hosting bot wa, panel pterodactyl, sewa bot wa, manzzy id, vps murah">
-<meta name="author" content="Manzzy ID">
+    <meta name="keywords" content="hosting bot wa, panel pterodactyl, sewa bot wa, manzzy id, vps murah">
+    <meta name="author" content="Manzzy ID">
 
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://manzzy.web.id/"> <meta property="og:title" content="Manzzy ID - Premium Bot Services">
-<meta property="og:description" content="Layanan Hosting Bot WhatsApp Aktif 24 Jam. Top Up Otomatis, Server Cepat & Stabil. Mulai Rp 5.000!">
-<meta property="og:image" content="https://raw.githubusercontent.com/ManzzyGacor/Urlmanzzy/main/file_1766890211382_23.jpg"> <meta property="twitter:card" content="summary_large_image">
-<meta property="twitter:title" content="Manzzy ID - Jagonya Bot WA">
-<meta property="twitter:description" content="Hosting Bot WhatsApp Murah & Berkualitas. Cek sekarang!">
-<meta property="twitter:image" content="https://raw.githubusercontent.com/ManzzyGacor/Urlmanzzy/main/file_1766890211382_23.jpg">
- 
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://manzzy.web.id/"> 
+    <meta property="og:title" content="Manzzy ID - Premium Bot Services">
+    <meta property="og:description" content="Layanan Hosting Bot WhatsApp Aktif 24 Jam. Top Up Otomatis, Server Cepat & Stabil. Mulai Rp 5.000!">
+    <meta property="og:image" content="https://raw.githubusercontent.com/ManzzyGacor/Urlmanzzy/main/file_1766890211382_23.jpg"> 
+    
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="Manzzy ID - Jagonya Bot WA">
+    <meta property="twitter:description" content="Hosting Bot WhatsApp Murah & Berkualitas. Cek sekarang!">
+    <meta property="twitter:image" content="https://raw.githubusercontent.com/ManzzyGacor/Urlmanzzy/main/file_1766890211382_23.jpg">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     
     <style>
+        /* LOADER STYLE */
         #loader { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s ease; }
         .spinner { width: 50px; height: 50px; border: 3px solid rgba(139, 92, 246, 0.3); border-top: 3px solid #8b5cf6; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
         .loading-text { font-family: 'JetBrains Mono', monospace; color: #8b5cf6; font-size: 12px; letter-spacing: 2px; animation: pulse 1s infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        /* TOAST ANIMATION */
+        .toast-enter { transform: translateX(100%); opacity: 0; }
+        .toast-active { transform: translateX(0); opacity: 1; }
+        .toast-exit { transform: translateX(100%); opacity: 0; }
+
+        /* NOKOS SCROLLBAR */
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #000; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        .active-card { border-color: #22c55e !important; background: rgba(34, 197, 94, 0.1) !important; color: white !important; }
+        
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in-up { animation: fadeInUp 0.3s ease-out forwards; }
     </style>
 </head>
 <body>
@@ -37,8 +56,8 @@
         <div class="loading-text">LOADING...</div>
     </div>
 
-        <script>
-        // Script ini jalan duluan sebelum file lain diload
+    <script>
+        // Script Loader (Jalan duluan)
         window.addEventListener('load', () => {
             setTimeout(() => {
                 const l = document.getElementById('loader');
@@ -55,7 +74,8 @@
         }, 5000);
     </script>
 
-    
+    <div id="toast-container" class="fixed top-24 right-5 z-[100] flex flex-col gap-3 pointer-events-none"></div>
+
     <div id="modal-overlay" class="modal-overlay" onclick="closeModal(event)">
         <div class="modal-box" onclick="event.stopPropagation()">
             <div class="relative">
@@ -94,26 +114,13 @@
         </div>
         <nav class="flex-1 space-y-2">
             <a href="#features" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-star w-6 text-center text-yellow-500"></i><span class="font-medium">Keunggulan</span></a>
+            <a href="#testimonials" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-comment-dots w-6 text-center text-pink-500"></i><span class="font-medium">Testimoni</span></a>
             
             <div id="menu-topup" class="hidden"><a href="#" onclick="switchView('topup'); toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-wallet w-6 text-center text-green-500"></i><span class="font-medium">Top Up Saldo</span></a></div>
-            
             <div id="menu-myservices" class="hidden"><a href="#" onclick="switchView('myservices'); toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-server w-6 text-center text-blue-500"></i><span class="font-medium">Layanan Saya</span></a></div>
+            <div id="menu-nokos" class="hidden"><a href="#" onclick="switchView('nokos'); toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-sim-card w-6 text-center text-purple-500"></i><span class="font-medium">Virtual Number</span></a></div>
+            <div id="menu-history" class="hidden"><a href="#" onclick="switchView('history'); toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-clock-rotate-left w-6 text-center text-orange-500"></i><span class="font-medium">Riwayat Transaksi</span></a></div>
             
-            <div id="menu-nokos" class="hidden">
-                <a href="#" onclick="switchView('nokos'); toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group">
-                    <i class="fa-solid fa-sim-card w-6 text-center text-pink-500"></i>
-                    <span class="font-medium">Virtual Number</span>
-                </a>
-            </div>
-
-            <div id="menu-history" class="hidden">
-                <a href="#" onclick="switchView('history'); toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group">
-                    <i class="fa-solid fa-clock-rotate-left w-6 text-center text-orange-500"></i>
-                    <span class="font-medium">Riwayat Transaksi</span>
-                </a>
-            </div>
-            
-            <a href="#testimonials" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-comment-dots w-6 text-center text-pink-500"></i><span class="font-medium">Testimoni</span></a>
             <a href="#faq" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-circle-question w-6 text-center text-blue-500"></i><span class="font-medium">FAQ</span></a>
             
             <div class="h-px bg-gray-800 my-4"></div>
@@ -121,7 +128,7 @@
             <div id="auth-menu"><a href="/login_user.html" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-user w-6 text-center text-purple-500"></i><span class="font-medium">Login Member</span></a></div>
             <a href="/login.html" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-lock w-6 text-center text-red-500"></i><span class="font-medium">Admin Panel</span></a>
         </nav>
-        <div class="mt-auto pt-6 border-t border-gray-800 text-center"><p class="text-[10px] text-gray-600 font-mono">System v18.0 Nokos Ready</p></div>
+        <div class="mt-auto pt-6 border-t border-gray-800 text-center"><p class="text-[10px] text-gray-600 font-mono">© Manzzy ID Official</p></div>
     </aside>
 
     <nav class="fixed top-0 w-full z-50 backdrop-blur-md bg-black/60 border-b border-white/5">
@@ -202,113 +209,100 @@
             </div>
         </section>
 
-<section id="view-nokos" class="view-section">
-    <div class="max-w-4xl mx-auto pb-20">
-        
-        <div class="flex items-center justify-between mb-6">
-            <button onclick="switchView('landing')" class="text-gray-400 hover:text-white flex items-center gap-2">
-                <i class="fa-solid fa-arrow-left"></i> Kembali
-            </button>
-            <h2 class="text-2xl font-bold text-white">VIRTUAL <span class="text-green-500">NUMBER</span></h2>
-        </div>
+        <section id="view-nokos" class="view-section">
+            <div class="max-w-4xl mx-auto pb-20">
+                
+                <div class="flex items-center justify-between mb-6">
+                    <button onclick="switchView('landing')" class="text-gray-400 hover:text-white flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-left"></i> Kembali
+                    </button>
+                    <h2 class="text-2xl font-bold text-white">VIRTUAL <span class="text-green-500">NUMBER</span></h2>
+                </div>
 
-        <div class="glass-card p-6 rounded-2xl border-t-4 border-t-green-500 mb-8">
-            
-            <div class="mb-6">
-                <label class="text-xs text-green-400 font-bold mb-3 block uppercase tracking-wider">1. Pilih Aplikasi</label>
-                <div id="nokos-app-grid" class="grid grid-cols-4 md:grid-cols-6 gap-3 max-h-40 overflow-y-auto pr-1 custom-scroll">
-                    <div class="col-span-full text-center py-4 text-gray-500 text-xs">Memuat aplikasi...</div>
+                <div class="glass-card p-6 rounded-2xl border-t-4 border-t-green-500 mb-8">
+                    
+                    <div class="mb-6">
+                        <label class="text-xs text-green-400 font-bold mb-3 block uppercase tracking-wider">1. Pilih Aplikasi</label>
+                        <div id="nokos-app-grid" class="grid grid-cols-4 md:grid-cols-6 gap-3 max-h-40 overflow-y-auto pr-1 custom-scroll">
+                            <div class="col-span-full text-center py-4 text-gray-500 text-xs">Memuat aplikasi...</div>
+                        </div>
+                    </div>
+
+                    <div id="step-country" class="mb-6 hidden animate-fade-in-up">
+                        <label class="text-xs text-green-400 font-bold mb-3 block uppercase tracking-wider">2. Pilih Negara</label>
+                        <div id="nokos-country-grid" class="grid grid-cols-3 md:grid-cols-4 gap-3 max-h-60 overflow-y-auto pr-1 custom-scroll"></div>
+                    </div>
+
+                    <div id="step-server" class="mb-6 hidden animate-fade-in-up">
+                        <label class="text-xs text-green-400 font-bold mb-3 block uppercase tracking-wider">3. Pilih Server & Harga</label>
+                        <div id="nokos-server-list" class="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scroll"></div>
+                    </div>
+
+                    <div id="step-operator" class="mb-6 hidden animate-fade-in-up">
+                        <label class="text-xs text-green-400 font-bold mb-3 block uppercase tracking-wider">4. Pilih Operator</label>
+                        <div id="nokos-operator-grid" class="grid grid-cols-3 md:grid-cols-5 gap-3"></div>
+                    </div>
+
+                    <div id="step-checkout" class="hidden bg-green-900/10 border border-green-500/30 rounded-xl p-4 animate-fade-in-up mt-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <div class="text-xs text-gray-400">Total Harga</div>
+                                <div id="display-price" class="text-2xl font-bold text-white font-mono">Rp 0</div>
+                            </div>
+                            <div class="text-right">
+                                <div id="display-info" class="text-xs font-bold text-green-400 uppercase">-</div>
+                                <div id="display-server" class="text-[10px] text-gray-500">Server ID: -</div>
+                            </div>
+                        </div>
+                        <button onclick="executeBuyNokos()" id="btn-buy-nokos" class="w-full py-3 rounded-lg bg-green-600 hover:bg-green-500 text-white font-bold transition shadow-lg shadow-green-900/50">
+                            <i class="fa-solid fa-cart-shopping mr-2"></i> BELI SEKARANG
+                        </button>
+                    </div>
+                </div>
+
+                <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2 mt-8">
+                    <span class="animate-pulse w-2 h-2 bg-yellow-500 rounded-full"></span> Pesanan Pending
+                </h3>
+                <div id="nokos-active-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="col-span-full text-center py-10 text-gray-500 italic">Tidak ada pesanan aktif.</div>
                 </div>
             </div>
-
-            <div id="step-country" class="mb-6 hidden animate-fade-in-up">
-                <label class="text-xs text-green-400 font-bold mb-3 block uppercase tracking-wider">2. Pilih Negara</label>
-                <div id="nokos-country-grid" class="grid grid-cols-3 md:grid-cols-4 gap-3 max-h-60 overflow-y-auto pr-1 custom-scroll">
-                    </div>
-            </div>
-
-            <div id="step-server" class="mb-6 hidden animate-fade-in-up">
-                <label class="text-xs text-green-400 font-bold mb-3 block uppercase tracking-wider">3. Pilih Server & Harga</label>
-                <div id="nokos-server-list" class="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scroll">
-                    </div>
-            </div>
-
-            <div id="step-operator" class="mb-6 hidden animate-fade-in-up">
-                <label class="text-xs text-green-400 font-bold mb-3 block uppercase tracking-wider">4. Pilih Operator</label>
-                <div id="nokos-operator-grid" class="grid grid-cols-3 md:grid-cols-5 gap-3">
-                    </div>
-            </div>
-
-            <div id="step-checkout" class="hidden bg-green-900/10 border border-green-500/30 rounded-xl p-4 animate-fade-in-up mt-6">
-                <div class="flex justify-between items-center mb-4">
-                    <div>
-                        <div class="text-xs text-gray-400">Total Harga</div>
-                        <div id="display-price" class="text-2xl font-bold text-white font-mono">Rp 0</div>
-                    </div>
-                    <div class="text-right">
-                        <div id="display-info" class="text-xs font-bold text-green-400 uppercase">-</div>
-                        <div id="display-server" class="text-[10px] text-gray-500">Server ID: -</div>
-                    </div>
-                </div>
-                <button onclick="executeBuyNokos()" id="btn-buy-nokos" class="w-full py-3 rounded-lg bg-green-600 hover:bg-green-500 text-white font-bold transition shadow-lg shadow-green-900/50">
-                    <i class="fa-solid fa-cart-shopping mr-2"></i> BELI SEKARANG
-                </button>
-            </div>
-
-        </div>
-
-        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-            <span class="animate-pulse w-2 h-2 bg-red-500 rounded-full"></span> Pesanan Aktif
-        </h3>
-        <div class="glass-card overflow-hidden rounded-xl">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead>
-                        <tr class="bg-white/5 text-xs text-gray-400 uppercase">
-                            <th class="p-4">App</th>
-                            <th class="p-4">Nomor HP</th>
-                            <th class="p-4">Kode SMS</th>
-                            <th class="p-4">Status</th>
-                            <th class="p-4 text-right">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="nokos-active-list" class="divide-y divide-gray-800 text-sm">
-                        <tr><td colspan="5" class="p-6 text-center text-gray-500">Memuat data...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</section>
-
-<style>
-    .custom-scroll::-webkit-scrollbar { width: 4px; }
-    .custom-scroll::-webkit-scrollbar-track { background: #000; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
-    .active-card { border-color: #22c55e !important; background: rgba(34, 197, 94, 0.1) !important; color: white !important; }
-    @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .animate-fade-in-up { animation: fadeInUp 0.3s ease-out forwards; }
-</style>
+        </section>
         
         <section id="view-myservices" class="view-section"><div class="w-full mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4"><button onclick="switchView('landing')" class="text-gray-400 hover:text-white flex items-center gap-2 group"><i class="fa-solid fa-arrow-left"></i> Kembali</button><h2 class="text-3xl font-bold text-white">BOT <span class="text-blue-500">AKTIF</span></h2></div><div id="myservices-list" class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20"><p class="text-gray-500 col-span-full text-center py-10">Memuat layanan...</p></div></section>
-    </div>
+    
+        <section id="view-history" class="view-section">
+            <div class="max-w-4xl mx-auto min-h-[50vh]">
+                <div class="flex items-center justify-between mb-4 mt-8 border-b border-gray-800 pb-4">
+                    <button onclick="switchView('myservices')" class="text-gray-400 hover:text-white text-sm flex items-center gap-2 transition group">
+                        <i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition"></i> Kembali
+                    </button>
+                    <h2 class="text-lg md:text-xl font-bold text-white tracking-widest uppercase">
+                        Riwayat <span class="text-purple-500">Transaksi</span>
+                    </h2>
+                </div>
 
-    <section id="view-history" class="view-section" style="margin-top: -120px !important;">
-        <div class="max-w-4xl mx-auto min-h-[50vh]">
-            <div class="flex items-center justify-between mb-4 mt-8 border-b border-gray-800 pb-4">
-                <button onclick="switchView('myservices')" class="text-gray-400 hover:text-white text-sm flex items-center gap-2 transition group"><i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition"></i> Kembali</button>
-                <h2 class="text-lg md:text-xl font-bold text-white tracking-widest uppercase">Riwayat <span class="text-purple-500">Transaksi</span></h2>
-            </div>
-            <div class="glass-card rounded-xl overflow-hidden border border-gray-800/50 relative z-10">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead><tr class="bg-white/5 text-[10px] text-gray-500 uppercase tracking-wider"><th class="p-3 pl-4">Waktu</th><th class="p-3">Keterangan</th><th class="p-3 text-right">Nominal</th><th class="p-3 text-center pr-4">Status</th></tr></thead>
-                        <tbody id="history-list" class="divide-y divide-gray-800 text-sm"><tr><td colspan="4" class="p-6 text-center text-gray-500 text-xs">Memuat data...</td></tr></tbody>
-                    </table>
+                <div class="glass-card rounded-xl overflow-hidden border border-gray-800/50 relative z-10">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-white/5 text-[10px] text-gray-500 uppercase tracking-wider">
+                                    <th class="p-3 pl-4">Waktu</th>
+                                    <th class="p-3">Keterangan</th>
+                                    <th class="p-3 text-right">Nominal</th>
+                                    <th class="p-3 text-center pr-4">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-list" class="divide-y divide-gray-800 text-sm">
+                                <tr><td colspan="4" class="p-6 text-center text-gray-500 text-xs">Memuat data...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
+
+    </div>
 
     <script src="script.js"></script>
 </body>
