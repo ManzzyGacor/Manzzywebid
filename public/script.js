@@ -56,52 +56,55 @@ function toggleFaq(h){ h.parentElement.classList.toggle('faq-active'); }
 const scrollBtn = document.getElementById('btn-scroll'); window.onscroll = function() { if(scrollBtn) scrollBtn.classList.toggle('show-scroll-btn', window.scrollY > 300); };
 function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
-// --- NAVIGASI HALAMAN (SWITCH VIEW) ---
+// SWITCH VIEW
 function switchView(viewId) {
-    // 1. Sembunyikan Semua Halaman
-    // (Otomatis cari semua elemen yang punya class 'view-section')
+    // 1. Reset Tampilan (Sembunyikan semua page)
     const views = document.querySelectorAll('.view-section');
     views.forEach(view => {
         view.classList.remove('view-active');
         view.style.display = 'none'; 
+        view.style.opacity = '0'; 
     });
 
-    // 2. Tutup Sidebar (Jika sedang terbuka di mobile)
+    // 2. Tutup Sidebar Mobile (Jika ada)
     document.body.classList.remove('sidebar-active');
-    const sidebarOverlay = document.getElementById('sidebar-overlay');
-    const sidebarMenu = document.getElementById('sidebar-menu');
-    if(sidebarOverlay) sidebarOverlay.classList.remove('active');
-    if(sidebarMenu) sidebarMenu.classList.remove('active');
+    const overlay = document.getElementById('sidebar-overlay');
+    if(overlay) overlay.classList.remove('active');
 
     // 3. Tampilkan Halaman Tujuan
     const target = document.getElementById(`view-${viewId}`);
     if (target) {
         target.classList.add('view-active');
         target.style.display = 'block';
-        
-        // Efek Fade In Halus
-        target.style.opacity = '0';
         setTimeout(() => target.style.opacity = '1', 50);
-    }
 
+        // --- UPDATE LOGIC PER HALAMAN ---
+        
+        // Jika ke halaman Store
+        if (viewId === 'store') {
+            if(typeof loadStoreData === 'function') loadStoreData();
+        }
+        
+        // Jika ke halaman Layanan Saya
+        if (viewId === 'myservices') {
+            if(typeof fetchMyServices === 'function') fetchMyServices();
+        }
+        
+        // Jika ke halaman Riwayat
+        if (viewId === 'history') {
+            if(typeof fetchHistory === 'function') fetchHistory();
+        }
+
+        // [BARU] Jika ke halaman Nokos
+        if (viewId === 'nokos') {
+            if(typeof initNokos === 'function') initNokos();
+        }
+    }
+    
     // 4. Scroll ke Atas
     window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    // 5. Auto Refresh Data (Logika Baru)
-    if (viewId === 'store') {
-        // Panggil fungsi load produk jika ada (opsional, tergantung script kamu sebelumnya)
-        if (typeof loadStoreData === 'function') loadStoreData();
-        if (typeof filterProducts === 'function') filterProducts(); 
-    }
-    
-    if (viewId === 'myservices') {
-        if (typeof fetchMyServices === 'function') fetchMyServices();
-    }
-    
-    if (viewId === 'history') {
-        if (typeof fetchHistory === 'function') fetchHistory();
-    }
 }
+
 // 4. STORE
 let allProducts=[], allCategories=[], currentProduct=null;
 const ADMIN_WA = "6287756632352";
@@ -261,6 +264,169 @@ async function fetchMyServices() {
         if(s.length===0) { c.innerHTML=`<div class="col-span-full text-center py-10 glass-card rounded-xl"><p class="text-gray-400">Belum ada layanan.</p></div>`; return; }
         c.innerHTML=s.map(i=>{ const exp=new Date(i.expiredDate); const diff=Math.ceil((exp-new Date())/(1000*60*60*24)); let st='ACTIVE', cl='text-green-400'; if(diff<=0){st='EXPIRED';cl='text-red-500';} else if(diff<=3){st=`EXP ${diff} HARI`;cl='text-yellow-400';} return `<div class="glass-card p-6 rounded-xl border border-white/10 relative group hover:bg-white/5 transition"><div class="flex justify-between items-start mb-4"><div><h3 class="text-lg font-bold text-white">${i.productName}</h3><p class="text-xs text-gray-400 font-mono mt-1">ID: ${i._id.substr(-6)}</p></div><span class="text-xs font-bold px-2 py-1 rounded bg-black/50 ${cl} border border-white/10">● ${st}</span></div><div class="space-y-3 mb-6"><div class="flex justify-between text-sm"><span class="text-gray-500">Target</span><span class="text-white font-mono">${i.targetNumber}</span></div><div class="flex justify-between text-sm"><span class="text-gray-500">IP</span><span class="text-blue-400 font-mono">${i.serverIp}</span></div><div class="flex justify-between text-sm"><span class="text-gray-500">Expired</span><span class="text-white font-mono">${exp.toLocaleDateString()}</span></div></div><a href="https://wa.me/${ADMIN_WA}?text=Perpanjang%20${i.productName}" target="_blank" class="block w-full py-2 text-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg transition">Perpanjang</a></div>`; }).join('');
     } catch(e){}
+}
+
+// --- LOGIKA NOKOS / VIRTUAL NUMBER ---
+
+let nokosInterval = null;
+
+async function initNokos() {
+    // Load Service List saat pertama buka menu
+    const sel = document.getElementById('nokosService');
+    if(sel.options.length <= 1) {
+        const res = await fetch('/api/nokos/services');
+        const data = await res.json();
+        if(data.success) {
+            sel.innerHTML = '<option value="">Pilih Service...</option>' + 
+            data.data.map(s => `<option value="${s.service_code}" data-name="${s.service_name}">${s.service_name}</option>`).join('');
+        }
+    }
+    fetchNokosHistory(); // Load tabel bawah
+    
+    // Auto Refresh SMS setiap 5 detik
+    clearInterval(nokosInterval);
+    nokosInterval = setInterval(fetchNokosHistory, 5000);
+}
+
+async function fetchNokosCountries() {
+    const sId = document.getElementById('nokosService').value;
+    const cSel = document.getElementById('nokosCountry');
+    cSel.innerHTML = '<option>Loading...</option>'; cSel.disabled = true;
+    
+    const res = await fetch(`/api/nokos/countries?service_id=${sId}`);
+    const data = await res.json();
+    
+    if(data.success) {
+        cSel.innerHTML = '<option value="">Pilih Negara...</option>' + 
+        data.data.map(c => {
+            // Kita simpan data penting di attribute option biar gampang diambil
+            const priceData = c.pricelist[0]; 
+            return `<option value="${c.name}" data-prov="${priceData.provider_id}" data-id="${c.number_id}">${c.name} (${priceData.price_format})</option>`;
+        }).join('');
+        cSel.disabled = false;
+    }
+}
+
+async function fetchNokosOperators() {
+    const cSel = document.getElementById('nokosCountry');
+    const country = cSel.value;
+    const providerId = cSel.options[cSel.selectedIndex].getAttribute('data-prov');
+    
+    const div = document.getElementById('nokosOperatorList');
+    div.innerHTML = 'Loading...';
+    
+    const res = await fetch(`/api/nokos/operators?country=${country}&provider_id=${providerId}`);
+    const data = await res.json();
+    
+    if(data.status) { // API V2 return "status": true
+        div.innerHTML = data.data.map(op => `
+            <div onclick="buyNokos('${op.id}')" class="bg-black/40 border border-gray-700 hover:border-green-500 p-3 rounded-lg cursor-pointer text-center transition group">
+                <img src="${op.image}" class="w-6 h-6 mx-auto mb-2 rounded-full">
+                <div class="text-xs font-bold text-white group-hover:text-green-400">${op.name}</div>
+                <div class="text-[10px] text-gray-500">Klik Beli</div>
+            </div>
+        `).join('');
+    }
+}
+
+async function buyNokos(opId) {
+    if(!confirm("Beli nomor ini? Saldo akan terpotong.")) return;
+    
+    const sSel = document.getElementById('nokosService');
+    const cSel = document.getElementById('nokosCountry');
+    
+    const payload = {
+        username: userSession,
+        service_name: sSel.options[sSel.selectedIndex].getAttribute('data-name'),
+        number_id: cSel.options[cSel.selectedIndex].getAttribute('data-id'),
+        provider_id: cSel.options[cSel.selectedIndex].getAttribute('data-prov'),
+        operator_id: opId
+    };
+    
+    // UI Loading
+    document.getElementById('nokosOperatorList').innerHTML = '<div class="text-yellow-500 animate-pulse">Sedang Memproses Order...</div>';
+    
+    try {
+        const res = await fetch('/api/nokos/buy', {
+            method: 'POST', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify(payload)
+        });
+        const d = await res.json();
+        
+        if(d.success) {
+            alert("Order Berhasil! Tunggu SMS di tabel bawah.");
+            checkUserLogin(); // Update saldo header
+            fetchNokosHistory(); // Update tabel
+            // Reset Form
+            document.getElementById('nokosOperatorList').innerHTML = '<div class="text-gray-500 italic">Pilih negara lagi...</div>';
+        } else {
+            alert("Gagal: " + d.msg);
+            fetchNokosOperators(); // Balikin list operator
+        }
+    } catch(e) { alert("Error Server"); }
+}
+
+async function fetchNokosHistory() {
+    if(!userSession) return;
+    // Panggil Check Status untuk semua nomor yg waiting (biar update SMS)
+    // Di real production, ini sebaiknya via WebSocket/Interval satu per satu
+    // Tapi untuk simpel, kita fetch list, lalu loop check status di backend via endpoint individual
+    
+    // Ambil list history DB lokal
+    const res = await fetch(`/api/nokos/history/${userSession}`);
+    const list = await res.json();
+    
+    const tbody = document.getElementById('nokos-active-list');
+    if(list.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-gray-500">Belum ada order.</td></tr>'; return; }
+    
+    // Render Tabel
+    tbody.innerHTML = await Promise.all(list.map(async (tx) => {
+        // Jika status waiting, kita tembak endpoint cek status biar update
+        if(tx.status === 'waiting') {
+            await fetch(`/api/nokos/status/${tx.invoiceId}`); 
+            // Note: Data yang dirender di bawah masih data lama sebelum update, 
+            // tapi karena interval jalan tiap 5 detik, detik berikutnya bakal ke-update.
+        }
+        
+        // Hitung Timer
+        const exp = new Date(tx.expiresAt);
+        const timeLeft = Math.floor((exp - new Date()) / 1000);
+        let timeStr = timeLeft > 0 ? `${Math.floor(timeLeft/60)}m ${timeLeft%60}s` : 'Expired';
+        
+        // Tampilan SMS Code
+        let smsDisplay = '<span class="text-yellow-500 animate-pulse">Menunggu SMS...</span>';
+        if(tx.smsCode) smsDisplay = `<span class="text-2xl font-mono font-bold text-green-400 tracking-widest">${tx.smsCode}</span>`;
+        if(tx.status === 'canceled') smsDisplay = '<span class="text-red-500">Dibatalkan / Refunded</span>';
+        
+        // Tombol Cancel (Hanya jika waiting)
+        let btnAction = '';
+        if(tx.status === 'waiting' && timeLeft > 0) {
+            btnAction = `<button onclick="cancelNokos('${tx.invoiceId}')" class="bg-red-900/50 hover:bg-red-600 text-red-200 hover:text-white px-3 py-1 rounded text-xs border border-red-500/30 transition">Cancel & Refund</button>`;
+        } else if (tx.status === 'success') {
+            btnAction = `<span class="text-green-500 font-bold text-xs">✅ Selesai</span>`;
+        }
+
+        return `
+        <tr class="hover:bg-white/5 border-b border-gray-800">
+            <td class="p-4 font-bold text-white">${tx.serviceName}<div class="text-[10px] text-gray-500">${tx.country}</div></td>
+            <td class="p-4 font-mono text-lg text-purple-300">${tx.phoneNumber}</td>
+            <td class="p-4">${smsDisplay}</td>
+            <td class="p-4 font-mono text-xs text-gray-400">${timeStr}</td>
+            <td class="p-4 text-right">${btnAction}</td>
+        </tr>
+        `;
+    })).then(rows => rows.join(''));
+}
+
+async function cancelNokos(invId) {
+    if(!confirm("Batalkan nomor ini dan refund saldo?")) return;
+    const res = await fetch('/api/nokos/cancel', {
+        method: 'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ invoiceId: invId, username: userSession })
+    });
+    const d = await res.json();
+    if(d.success) { alert("Berhasil dicancel. Saldo dikembalikan."); fetchNokosHistory(); checkUserLogin(); }
+    else alert("Gagal cancel: " + d.msg);
 }
 
 // --- 6. MONITOR SYSTEM (MANUAL & PERSISTENT) ---

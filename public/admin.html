@@ -21,7 +21,6 @@
         }
         .main-content { margin-left: 260px; padding: 30px; min-height: 100vh; transition: margin-left 0.3s; }
         
-        /* Mobile Specific */
         @media (max-width: 768px) {
             .sidebar { transform: translateX(-100%); z-index: 100; box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
             .sidebar.active { transform: translateX(0); }
@@ -34,29 +33,14 @@
             .overlay-sidebar.active { display: block; }
         }
 
-        /* Nav Items */
         .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #a1a1aa; transition: 0.3s; margin-bottom: 4px; border-radius: 8px; cursor: pointer; }
         .nav-item:hover, .nav-item.active { background: rgba(139, 92, 246, 0.1); color: var(--primary); }
-        .nav-item i { width: 20px; text-align: center; }
-
-        /* Components */
         .glass-panel { background: #111; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
         input, select, textarea { width: 100%; background: #000; border: 1px solid #333; padding: 10px 15px; border-radius: 8px; color: white; outline: none; transition: 0.3s; margin-bottom: 10px; font-size: 0.9rem; }
-        input:focus, select:focus { border-color: var(--primary); }
-        
         .section-view { display: none; animation: fadeIn 0.3s ease; }
         .section-view.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Mobile Header */
-        .mobile-header { 
-            display: none; position: fixed; top: 0; left: 0; right: 0; 
-            height: 60px; background: rgba(15, 15, 17, 0.9); backdrop-filter: blur(10px); 
-            z-index: 40; border-bottom: 1px solid rgba(255,255,255,0.1);
-            align-items: center; padding: 0 20px; justify-content: space-between;
-        }
-
-        /* Modal Image */
+        .mobile-header { display: none; position: fixed; top: 0; left: 0; right: 0; height: 60px; background: rgba(15, 15, 17, 0.9); backdrop-filter: blur(10px); z-index: 40; border-bottom: 1px solid rgba(255,255,255,0.1); align-items: center; padding: 0 20px; justify-content: space-between; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 200; align-items: center; justify-content: center; }
         .modal.active { display: flex; }
     </style>
@@ -67,15 +51,13 @@
         <h1 class="text-xl font-bold text-white">MANZZY<span class="text-purple-500">PANEL</span></h1>
         <button onclick="toggleSidebar()" class="text-white text-2xl"><i class="fa-solid fa-bars"></i></button>
     </div>
-
     <div id="overlay" class="overlay-sidebar" onclick="toggleSidebar()"></div>
 
     <div class="sidebar" id="sidebar">
         <div class="p-6 border-b border-gray-800 mb-4 hidden md:block">
             <h1 class="text-2xl font-bold text-white tracking-widest">MANZZY<span class="text-purple-500">PANEL</span></h1>
-            <p class="text-xs text-gray-500 mt-1">Administrator v2.1 Mobile</p>
+            <p class="text-xs text-gray-500 mt-1">Administrator v3.0</p>
         </div>
-        
         <nav class="flex-1 px-4 overflow-y-auto pt-4 md:pt-0">
             <div class="text-xs font-bold text-gray-600 uppercase mb-2 mt-2 px-2">Transaksi</div>
             <div class="nav-item active" onclick="showSection('dashboard')"><i class="fa-solid fa-chart-pie"></i> Dashboard</div>
@@ -91,96 +73,48 @@
             <div class="text-xs font-bold text-gray-600 uppercase mb-2 mt-6 px-2">System</div>
             <div class="nav-item" onclick="showSection('settings')"><i class="fa-solid fa-gears"></i> Kontrol Sistem</div>
         </nav>
-
         <div class="p-4 border-t border-gray-800">
-            <button onclick="logout()" class="w-full py-2 bg-red-900/20 hover:bg-red-900/40 text-red-500 border border-red-900/50 rounded-lg text-sm font-bold transition">
-                <i class="fa-solid fa-sign-out-alt mr-2"></i> Logout
-            </button>
+            <button onclick="logout()" class="w-full py-2 bg-red-900/20 text-red-500 border border-red-900/50 rounded-lg text-sm font-bold">Logout</button>
         </div>
     </div>
 
     <div class="main-content">
-        
         <div id="sec-dashboard" class="section-view active">
             <h2 class="text-2xl font-bold text-white mb-6">Overview</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="glass-panel border-l-4 border-l-purple-500">
-                    <h3 class="text-gray-400 text-sm font-bold uppercase">Total Order</h3>
-                    <p class="text-3xl font-bold text-white mt-2" id="stat-orders">0</p>
-                </div>
-                <div class="glass-panel border-l-4 border-l-green-500">
-                    <h3 class="text-gray-400 text-sm font-bold uppercase">Pending Topup</h3>
-                    <p class="text-3xl font-bold text-white mt-2" id="stat-topups">0</p>
-                </div>
-                <div class="glass-panel border-l-4 border-l-blue-500">
-                    <h3 class="text-gray-400 text-sm font-bold uppercase">Layanan Aktif</h3>
-                    <p class="text-3xl font-bold text-white mt-2" id="stat-services">0</p>
-                </div>
+                <div class="glass-panel border-l-4 border-l-purple-500"><h3 class="text-gray-400 text-sm font-bold uppercase">Total Order</h3><p class="text-3xl font-bold text-white mt-2" id="stat-orders">0</p></div>
+                <div class="glass-panel border-l-4 border-l-green-500"><h3 class="text-gray-400 text-sm font-bold uppercase">Pending Topup</h3><p class="text-3xl font-bold text-white mt-2" id="stat-topups">0</p></div>
+                <div class="glass-panel border-l-4 border-l-blue-500"><h3 class="text-gray-400 text-sm font-bold uppercase">Layanan Aktif</h3><p class="text-3xl font-bold text-white mt-2" id="stat-services">0</p></div>
             </div>
         </div>
 
         <div id="sec-orders" class="section-view">
             <h2 class="text-2xl font-bold text-white mb-6">Riwayat Order</h2>
-            <div class="glass-panel overflow-x-auto">
-                <table class="w-full min-w-[600px]">
-                    <thead><tr><th>Invoice</th><th>User</th><th>Produk</th><th>Detail</th><th>Status</th></tr></thead>
-                    <tbody id="list-orders"></tbody>
-                </table>
-            </div>
+            <div class="glass-panel overflow-x-auto"><table class="w-full min-w-[600px]"><thead><tr><th>Invoice</th><th>User</th><th>Produk</th><th>Detail</th><th>Status</th></tr></thead><tbody id="list-orders"></tbody></table></div>
         </div>
 
         <div id="sec-topups" class="section-view">
             <h2 class="text-2xl font-bold text-white mb-6">Request Top Up</h2>
-            <div class="glass-panel overflow-x-auto">
-                <table class="w-full min-w-[500px]">
-                    <thead><tr><th>User</th><th>Jumlah</th><th>Bukti</th><th>Aksi</th></tr></thead>
-                    <tbody id="list-topups"></tbody>
-                </table>
-            </div>
+            <div class="glass-panel overflow-x-auto"><table class="w-full min-w-[500px]"><thead><tr><th>User</th><th>Jumlah</th><th>Bukti</th><th>Aksi</th></tr></thead><tbody id="list-topups"></tbody></table></div>
         </div>
 
         <div id="sec-actives" class="section-view">
             <h2 class="text-2xl font-bold text-white mb-6">Bot Aktif</h2>
             <div class="glass-panel mb-8 border border-blue-500/30">
-                <h3 class="text-blue-400 font-bold mb-4 text-sm uppercase">Aktivasi Manual</h3>
-                <form onsubmit="addActiveService(event)" class="grid grid-cols-1 md:grid-cols-5 gap-3">
-                    <input type="text" id="svcUser" placeholder="Username" required>
-                    <input type="text" id="svcProd" placeholder="Produk" required>
-                    <input type="text" id="svcTarget" placeholder="Target No" required>
-                    <input type="text" id="svcIp" placeholder="IP Panel" required>
-                    <div class="flex gap-2">
-                        <input type="number" id="svcDays" placeholder="Hari" value="30" class="w-1/2" required>
-                        <button type="submit" class="w-1/2 bg-blue-600 text-white font-bold rounded">ADD</button>
-                    </div>
-                </form>
+                <form onsubmit="addActiveService(event)" class="grid grid-cols-1 md:grid-cols-5 gap-3"><input type="text" id="svcUser" placeholder="Username" required><input type="text" id="svcProd" placeholder="Produk" required><input type="text" id="svcTarget" placeholder="Target No" required><input type="text" id="svcIp" placeholder="IP Panel" required><div class="flex gap-2"><input type="number" id="svcDays" placeholder="Hari" value="30" class="w-1/2" required><button type="submit" class="w-1/2 bg-blue-600 text-white font-bold rounded">ADD</button></div></form>
             </div>
-            <div class="glass-panel overflow-x-auto">
-                <table class="w-full min-w-[700px]">
-                    <thead><tr><th>User</th><th>Produk</th><th>IP</th><th>Exp</th><th>Aksi</th></tr></thead>
-                    <tbody id="list-services"></tbody>
-                </table>
-            </div>
+            <div class="glass-panel overflow-x-auto"><table class="w-full min-w-[700px]"><thead><tr><th>User</th><th>Produk</th><th>IP</th><th>Exp</th><th>Aksi</th></tr></thead><tbody id="list-services"></tbody></table></div>
         </div>
 
         <div id="sec-products" class="section-view">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-white">Kelola Produk</h2>
-                <button onclick="resetProductForm()" class="text-xs border border-gray-600 px-3 py-1 rounded text-gray-400">Reset</button>
-            </div>
+            <div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold text-white">Kelola Produk</h2><button onclick="resetProductForm()" class="text-xs border border-gray-600 px-3 py-1 rounded text-gray-400">Reset</button></div>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div class="lg:col-span-1 glass-panel h-fit sticky top-6">
                     <form id="prodForm" onsubmit="saveProduct(event)">
-                        <input type="hidden" id="editId">
-                        <select id="prodCategory" required class="mb-2"><option value="">Pilih Kategori...</option></select>
-                        <div class="flex items-center gap-2 mb-2 bg-black p-2 rounded border border-gray-700">
-                            <input type="checkbox" id="prodAvailable" class="w-4 h-4" checked> <span class="text-xs">Ready</span>
-                        </div>
-                        <input type="text" id="prodName" placeholder="Nama Produk" required>
-                        <input type="number" id="prodPrice" placeholder="Harga" required>
-                        <input type="text" id="prodImage" placeholder="URL Gambar">
-                        <textarea id="prodDesc" rows="2" placeholder="Deskripsi..." required></textarea>
-                        <select id="prodMode" class="mb-2"><option value="manual">Manual (WA)</option><option value="auto">Otomatis (Success)</option></select>
-                        <input type="text" id="prodFields" placeholder="Form: No HP, Nickname" value="Nomor WhatsApp">
+                        <input type="hidden" id="editId"><select id="prodCategory" required class="mb-2"><option value="">Pilih Kategori...</option></select>
+                        <div class="flex items-center gap-2 mb-2 bg-black p-2 rounded border border-gray-700"><input type="checkbox" id="prodAvailable" class="w-4 h-4" checked> <span class="text-xs">Ready</span></div>
+                        <input type="text" id="prodName" placeholder="Nama Produk" required><input type="number" id="prodPrice" placeholder="Harga" required><input type="text" id="prodImage" placeholder="URL Gambar"><textarea id="prodDesc" rows="2" placeholder="Deskripsi..." required></textarea>
+                        <select id="prodMode" class="mb-2"><option value="manual">Manual (WA)</option><option value="auto">Otomatis (Success)</option></select><input type="text" id="prodFields" placeholder="Form: No HP, Nickname" value="Nomor WhatsApp">
                         <button type="submit" id="btnSaveProd" class="w-full bg-purple-600 text-white font-bold py-2 rounded">Simpan</button>
                     </form>
                 </div>
@@ -190,37 +124,12 @@
 
         <div id="sec-categories" class="section-view">
             <h2 class="text-2xl font-bold text-white mb-6">Kategori</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="glass-panel h-fit">
-                    <form onsubmit="addCategory(event)">
-                        <input type="text" id="catName" placeholder="Nama" required>
-                        <input type="text" id="catImage" placeholder="URL Background" required>
-                        <button type="submit" class="w-full bg-green-600 text-white font-bold py-2 rounded">Tambah</button>
-                    </form>
-                </div>
-                <div id="categoryList" class="space-y-3"></div>
-            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8"><div class="glass-panel h-fit"><form onsubmit="addCategory(event)"><input type="text" id="catName" placeholder="Nama" required><input type="text" id="catImage" placeholder="URL Background" required><button type="submit" class="w-full bg-green-600 text-white font-bold py-2 rounded">Tambah</button></form></div><div id="categoryList" class="space-y-3"></div></div>
         </div>
 
         <div id="sec-vouchers" class="section-view">
             <h2 class="text-2xl font-bold text-white mb-6">Kelola Voucher</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="glass-panel h-fit">
-                    <form onsubmit="createVoucher(event)">
-                        <input type="text" id="vCode" placeholder="Kode (ex: DISKON10)" class="uppercase" required>
-                        <input type="number" id="vAmount" placeholder="Nominal Rp" required>
-                        <input type="number" id="vDays" value="3" placeholder="Aktif (Hari)" required>
-                        <input type="number" id="vMax" value="1" placeholder="Kuota" required>
-                        <button type="submit" class="w-full bg-purple-600 text-white font-bold py-2 rounded mt-2">Buat Voucher</button>
-                    </form>
-                </div>
-                <div class="col-span-2 glass-panel overflow-x-auto">
-                    <table class="w-full min-w-[500px]">
-                        <thead><tr><th>Kode</th><th>Nominal</th><th>Exp</th><th>Quota</th><th>Aksi</th></tr></thead>
-                        <tbody id="list-vouchers"></tbody>
-                    </table>
-                </div>
-            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8"><div class="glass-panel h-fit"><form onsubmit="createVoucher(event)"><input type="text" id="vCode" placeholder="Kode (ex: DISKON10)" class="uppercase" required><input type="number" id="vAmount" placeholder="Nominal Rp" required><input type="number" id="vDays" value="3" placeholder="Aktif (Hari)" required><input type="number" id="vMax" value="1" placeholder="Kuota" required><button type="submit" class="w-full bg-purple-600 text-white font-bold py-2 rounded mt-2">Buat Voucher</button></form></div><div class="col-span-2 glass-panel overflow-x-auto"><table class="w-full min-w-[500px]"><thead><tr><th>Kode</th><th>Nominal</th><th>Exp</th><th>Quota</th><th>Aksi</th></tr></thead><tbody id="list-vouchers"></tbody></table></div></div>
         </div>
 
         <div id="sec-settings" class="section-view">
@@ -229,22 +138,32 @@
                 <div class="glass-panel text-center border-t-4 border-t-purple-500">
                     <h3 class="text-white font-bold text-lg mb-2">VPS SERVER</h3>
                     <div id="status-display-vps" class="text-xs font-mono mb-4 text-gray-400">LOADING...</div>
-                    <div class="flex gap-2 justify-center">
-                        <button onclick="toggleSystem('vps', 'on')" class="bg-green-600 text-white px-6 py-2 rounded-lg font-bold">ON</button>
-                        <button onclick="toggleSystem('vps', 'off')" class="bg-red-600 text-white px-6 py-2 rounded-lg font-bold">OFF</button>
-                    </div>
+                    <div class="flex gap-2 justify-center"><button onclick="toggleSystem('vps', 'on')" class="bg-green-600 text-white px-6 py-2 rounded-lg font-bold">ON</button><button onclick="toggleSystem('vps', 'off')" class="bg-red-600 text-white px-6 py-2 rounded-lg font-bold">OFF</button></div>
                 </div>
                 <div class="glass-panel text-center border-t-4 border-t-blue-500">
                     <h3 class="text-white font-bold text-lg mb-2">BOT WHATSAPP</h3>
                     <div id="status-display-bot" class="text-xs font-mono mb-4 text-gray-400">LOADING...</div>
-                    <div class="flex gap-2 justify-center">
-                        <button onclick="toggleSystem('bot', 'on')" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">ON</button>
-                        <button onclick="toggleSystem('bot', 'off')" class="bg-red-600 text-white px-6 py-2 rounded-lg font-bold">OFF</button>
-                    </div>
+                    <div class="flex gap-2 justify-center"><button onclick="toggleSystem('bot', 'on')" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">ON</button><button onclick="toggleSystem('bot', 'off')" class="bg-red-600 text-white px-6 py-2 rounded-lg font-bold">OFF</button></div>
                 </div>
             </div>
+            
+            <div class="glass-panel mt-8 border-t-4 border-t-green-500">
+                <h3 class="text-white font-bold text-lg mb-4">Konfigurasi RumahOTP (Nokos)</h3>
+                <form onsubmit="saveNokosConfig(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="text-xs text-gray-400 mb-1 block">API Key RumahOTP</label>
+                        <input type="text" id="nokosKey" placeholder="Tempel API Key disini..." required class="font-mono text-sm">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 mb-1 block">Margin Keuntungan (%)</label>
+                        <input type="number" id="nokosMargin" placeholder="Contoh: 20" value="20" required>
+                    </div>
+                    <div class="md:col-span-3">
+                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded w-full transition">SIMPAN KONFIGURASI NOKOS</button>
+                    </div>
+                </form>
+            </div>
         </div>
-
     </div>
 
     <div id="proofModal" class="modal" onclick="this.classList.remove('active')"><img id="proofImg" src="" class="max-w-[90%] max-h-[90vh] rounded-xl border border-white"></div>
@@ -252,44 +171,24 @@
     <script>
         if (localStorage.getItem('isAdmin') !== 'true') window.location.href = '/login.html';
         function logout() { localStorage.removeItem('isAdmin'); window.location.href = '/login.html'; }
-        
-        // RESPONSIVE SIDEBAR LOGIC
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('active');
-            document.getElementById('overlay').classList.toggle('active');
-        }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); document.getElementById('overlay').classList.toggle('active'); }
 
         function showSection(id) {
             document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            document.getElementById(`sec-${id}`).classList.add('active');
-            event.currentTarget.classList.add('active');
-            
-            // Auto Close Sidebar on Mobile
+            document.getElementById(`sec-${id}`).classList.add('active'); event.currentTarget.classList.add('active');
             if(window.innerWidth <= 768) toggleSidebar();
-
-            if(id === 'orders') fetchOrders();
-            if(id === 'topups') fetchTopups();
-            if(id === 'actives') fetchServices();
-            if(id === 'products') { fetchCategories(); fetchProducts(); }
-            if(id === 'categories') fetchCategories();
-            if(id === 'vouchers') fetchVouchers();
-            if(id === 'settings') fetchSystemStatus();
-            if(id === 'dashboard') loadDashboardStats();
+            if(id === 'orders') fetchOrders(); if(id === 'topups') fetchTopups(); if(id === 'actives') fetchServices(); if(id === 'products') { fetchCategories(); fetchProducts(); } if(id === 'categories') fetchCategories(); if(id === 'vouchers') fetchVouchers(); if(id === 'settings') fetchSystemStatus(); if(id === 'dashboard') loadDashboardStats();
         }
 
-        async function loadDashboardStats() {
-            try { const [o, t, s] = await Promise.all([fetch('/api/admin/orders').then(r=>r.json()), fetch('/api/admin/topups').then(r=>r.json()), fetch('/api/admin/all-services').then(r=>r.json())]);
-            document.getElementById('stat-orders').innerText = o.length; document.getElementById('stat-topups').innerText = t.length; document.getElementById('stat-services').innerText = s.length; } catch(e){}
-        }
+        async function loadDashboardStats() { try { const [o, t, s] = await Promise.all([fetch('/api/admin/orders').then(r=>r.json()), fetch('/api/admin/topups').then(r=>r.json()), fetch('/api/admin/all-services').then(r=>r.json())]); document.getElementById('stat-orders').innerText = o.length; document.getElementById('stat-topups').innerText = t.length; document.getElementById('stat-services').innerText = s.length; } catch(e){} }
 
-        async function fetchOrders() { const r=await fetch('/api/admin/orders'); const d=await r.json(); document.getElementById('list-orders').innerHTML=d.map(o=>`<tr><td class="p-3 font-mono text-purple-400">${o.invoiceId}</td><td class="p-3 font-bold">${o.username}</td><td class="p-3 text-xs">${o.productName}</td><td class="p-3 text-xs font-mono text-gray-400 whitespace-pre-wrap">${o.formData}</td><td class="p-3"><span class="px-2 py-1 rounded text-[10px] font-bold ${o.status==='success'?'bg-green-900 text-green-400':'bg-yellow-900 text-yellow-400'}">${o.status.toUpperCase()}</span></td></tr>`).join(''); }
-        
-        async function fetchTopups() { const r=await fetch('/api/admin/topups'); const d=await r.json(); document.getElementById('list-topups').innerHTML=d.map(t=>`<tr><td class="p-3 font-bold">${t.username}</td><td class="p-3 text-green-400 font-mono">Rp ${t.amount.toLocaleString()}</td><td class="p-3"><button onclick="viewProof('${t.proofImage}')" class="text-xs bg-blue-900 text-blue-300 px-2 py-1 rounded">Cek</button></td><td class="p-3 flex gap-2"><button onclick="actionTopup('${t._id}', 'approve')" class="text-green-500"><i class="fa-solid fa-check"></i></button><button onclick="actionTopup('${t._id}', 'reject')" class="text-red-500"><i class="fa-solid fa-xmark"></i></button></td></tr>`).join(''); }
+        async function fetchOrders() { const d=await (await fetch('/api/admin/orders')).json(); document.getElementById('list-orders').innerHTML=d.map(o=>`<tr><td class="p-3 font-mono text-purple-400">${o.invoiceId}</td><td class="p-3 font-bold">${o.username}</td><td class="p-3 text-xs">${o.productName}</td><td class="p-3 text-xs font-mono text-gray-400 whitespace-pre-wrap">${o.formData}</td><td class="p-3"><span class="px-2 py-1 rounded text-[10px] font-bold ${o.status==='success'?'bg-green-900 text-green-400':'bg-yellow-900 text-yellow-400'}">${o.status.toUpperCase()}</span></td></tr>`).join(''); }
+        async function fetchTopups() { const d=await (await fetch('/api/admin/topups')).json(); document.getElementById('list-topups').innerHTML=d.map(t=>`<tr><td class="p-3 font-bold">${t.username}</td><td class="p-3 text-green-400 font-mono">Rp ${t.amount.toLocaleString()}</td><td class="p-3"><button onclick="viewProof('${t.proofImage}')" class="text-xs bg-blue-900 text-blue-300 px-2 py-1 rounded">Cek</button></td><td class="p-3 flex gap-2"><button onclick="actionTopup('${t._id}', 'approve')" class="text-green-500"><i class="fa-solid fa-check"></i></button><button onclick="actionTopup('${t._id}', 'reject')" class="text-red-500"><i class="fa-solid fa-xmark"></i></button></td></tr>`).join(''); }
         function viewProof(img){ document.getElementById('proofImg').src=img; document.getElementById('proofModal').classList.add('active'); }
         async function actionTopup(id, action) { await fetch('/api/admin/topup-action', { method: 'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id, action}) }); fetchTopups(); }
 
-        async function fetchServices() { const r=await fetch('/api/admin/all-services'); const d=await r.json(); document.getElementById('list-services').innerHTML=d.map(s=>`<tr><td class="p-3 font-bold">${s.username}</td><td class="p-3 text-xs">${s.productName}<br>${s.targetNumber}</td><td class="p-3 font-mono text-blue-400 text-xs">${s.serverIp}</td><td class="p-3 font-mono text-xs ${new Date(s.expiredDate)<new Date()?'text-red-500':'text-green-400'}">${new Date(s.expiredDate).toLocaleDateString()}</td><td class="p-3"><button onclick="deleteService('${s._id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button></td></tr>`).join(''); }
+        async function fetchServices() { const d=await (await fetch('/api/admin/all-services')).json(); document.getElementById('list-services').innerHTML=d.map(s=>`<tr><td class="p-3 font-bold">${s.username}</td><td class="p-3 text-xs">${s.productName}<br>${s.targetNumber}</td><td class="p-3 font-mono text-blue-400 text-xs">${s.serverIp}</td><td class="p-3 font-mono text-xs ${new Date(s.expiredDate)<new Date()?'text-red-500':'text-green-400'}">${new Date(s.expiredDate).toLocaleDateString()}</td><td class="p-3"><button onclick="deleteService('${s._id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button></td></tr>`).join(''); }
         async function addActiveService(e) { e.preventDefault(); await fetch('/api/admin/services', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:document.getElementById('svcUser').value, productName:document.getElementById('svcProd').value, targetNumber:document.getElementById('svcTarget').value, serverIp:document.getElementById('svcIp').value, days:document.getElementById('svcDays').value})}); fetchServices(); e.target.reset(); }
         async function deleteService(id) { if(confirm("Hapus?")) { await fetch(`/api/admin/services/${id}`, {method:'DELETE'}); fetchServices(); } }
 
@@ -309,6 +208,8 @@
 
         async function fetchSystemStatus() { const d=await (await fetch('/api/system/status')).json(); document.getElementById('status-display-vps').innerHTML=d.vpsActive?`<span class="text-green-400 font-bold">ONLINE</span> sejak ${new Date(d.vpsStartTime).toLocaleTimeString()}`:`<span class="text-red-500 font-bold">OFFLINE</span>`; document.getElementById('status-display-bot').innerHTML=d.botActive?`<span class="text-blue-400 font-bold">ONLINE</span> sejak ${new Date(d.botStartTime).toLocaleTimeString()}`:`<span class="text-red-500 font-bold">OFFLINE</span>`; }
         async function toggleSystem(type, action) { if(confirm("Yakin ubah status?")) { await fetch('/api/admin/system/toggle',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,action})}); fetchSystemStatus(); } }
+
+        async function saveNokosConfig(e) { e.preventDefault(); const apiKey = document.getElementById('nokosKey').value; const margin = document.getElementById('nokosMargin').value; if(!confirm("Simpan Config Nokos?")) return; try { const res = await fetch('/api/nokos/admin/config', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey, margin})}); const d=await res.json(); if(d.success) alert("✅ Berhasil!"); else alert("Gagal."); } catch(e){alert("Error.");} }
 
         loadDashboardStats();
     </script>
