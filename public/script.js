@@ -357,19 +357,50 @@ async function fetchNokosCountries() {
 async function fetchNokosOperators() {
     const cSel = document.getElementById('nokosCountry');
     const div = document.getElementById('nokosOperatorList');
-    div.innerHTML = 'Loading...';
     
-    const res = await fetch(`/api/nokos/operators?country=${cSel.value}&provider_id=${cSel.options[cSel.selectedIndex].getAttribute('data-prov')}`);
-    const data = await res.json();
+    // Validasi: Pastikan negara sudah dipilih
+    if (!cSel.value) {
+        div.innerHTML = '<div class="text-gray-500 italic p-2">Pilih negara dulu...</div>';
+        return;
+    }
+
+    div.innerHTML = '<div class="col-span-full text-center text-yellow-500 animate-pulse">Sedang memuat operator...</div>';
     
-    if(data.status) {
-        div.innerHTML = data.data.map(op => `
-            <div onclick="buyNokos('${op.id}')" class="bg-black/40 border border-gray-700 hover:border-green-500 p-3 rounded-lg cursor-pointer text-center transition group">
-                <img src="${op.image}" class="w-6 h-6 mx-auto mb-2 rounded-full">
-                <div class="text-xs font-bold text-white group-hover:text-green-400">${op.name}</div>
-                <div class="text-[10px] text-gray-500">Klik Beli</div>
-            </div>
-        `).join('');
+    try {
+        // Ambil data dari atribut option yang dipilih
+        const selectedOpt = cSel.options[cSel.selectedIndex];
+        const countryName = encodeURIComponent(cSel.value); // Encode biar aman (spasi jadi %20)
+        const providerId = selectedOpt.getAttribute('data-prov');
+
+        if (!providerId) throw new Error("ID Provider tidak ditemukan.");
+
+        const res = await fetch(`/api/nokos/operators?country=${countryName}&provider_id=${providerId}`);
+        const data = await res.json();
+        
+        // Cek status (Support 'status' maupun 'success')
+        if (data.status || data.success) {
+            if (data.data.length === 0) {
+                div.innerHTML = '<div class="col-span-full text-center text-red-400">Operator kosong untuk negara ini.</div>';
+                return;
+            }
+
+            div.innerHTML = data.data.map(op => `
+                <div onclick="buyNokos('${op.id}')" class="bg-black/40 border border-gray-700 hover:border-green-500 p-3 rounded-lg cursor-pointer text-center transition group relative overflow-hidden">
+                    <div class="absolute inset-0 bg-green-500/10 opacity-0 group-hover:opacity-100 transition"></div>
+                    <img src="${op.image}" onerror="this.src='https://via.placeholder.com/30'" class="w-8 h-8 mx-auto mb-2 rounded-full bg-white p-0.5">
+                    <div class="text-xs font-bold text-white group-hover:text-green-400 relative z-10">${op.name}</div>
+                    <div class="text-[10px] text-gray-500 mt-1 relative z-10">Klik Beli</div>
+                </div>
+            `).join('');
+        } else {
+            throw new Error(data.msg || "Gagal mengambil data.");
+        }
+    } catch (e) {
+        console.error(e);
+        div.innerHTML = `<div class="col-span-full text-center text-red-500 text-xs p-2 border border-red-500/30 rounded bg-red-900/10">
+            Gagal: ${e.message}<br>
+            <button onclick="fetchNokosOperators()" class="mt-2 text-white bg-red-600 px-3 py-1 rounded hover:bg-red-700">Coba Lagi</button>
+        </div>`;
     }
 }
 
