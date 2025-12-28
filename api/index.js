@@ -3,6 +3,9 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
+// --- IMPORT ROUTE NOKOS (Pastikan file api/nokos.js ada!) ---
+const nokosRoute = require('./nokos');
+
 const app = express();
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(cors());
@@ -74,7 +77,7 @@ const VoucherSchema = new mongoose.Schema({
 });
 const Voucher = mongoose.models.Voucher || mongoose.model('Voucher', VoucherSchema);
 
-// [NEW] SYSTEM STATUS (MANUAL CONTROL)
+// SYSTEM STATUS (MANUAL CONTROL)
 const SystemStatusSchema = new mongoose.Schema({
     id: { type: String, default: 'main' },
     botActive: { type: Boolean, default: true },
@@ -93,7 +96,10 @@ const Testimonial = mongoose.models.Testimonial || mongoose.model('Testimonial',
 // API ROUTES
 // =========================================
 
-app.get('/api', (req, res) => res.send('Manzzy Backend v12.0 (Manual Control + Mobile Admin)'));
+app.get('/api', (req, res) => res.send('Manzzy Backend v13.0 (Nokos Integrated)'));
+
+// --- [PENTING] MOUNT ROUTE NOKOS ---
+app.use('/api/nokos', nokosRoute);
 
 // 1. AUTH
 app.post('/api/register-user', async (req, res) => { await connectDB(); const { username, password } = req.body; try { const existing = await User.findOne({ username }); if (existing) return res.status(400).json({ success: false, message: "Username sudah dipakai" }); const newUser = new User({ username, password }); await newUser.save(); res.json({ success: true }); } catch (err) { res.status(500).json({ error: err.message }); } });
@@ -118,6 +124,7 @@ app.post('/api/order', async (req, res) => {
         user.balance -= product.price; await user.save();
         const inv = 'INV-' + Date.now().toString().slice(-6);
         let status = 'pending';
+        // Auto Success untuk mode auto & manual (agar history rapi)
         if (product.orderMode === 'auto' || product.orderMode === 'manual') status = 'success'; 
         await new Order({ invoiceId: inv, username: user.username, productName: product.name, price: product.price, formData, mode: product.orderMode, status }).save();
         res.json({ success: true, invoiceId: inv, mode: product.orderMode, productName: product.name, formData });
@@ -147,7 +154,7 @@ app.get('/api/admin/vouchers', async (req, res) => { await connectDB(); const li
 app.delete('/api/admin/vouchers/:id', async (req, res) => { await connectDB(); await Voucher.findByIdAndDelete(req.params.id); res.json({ success: true }); });
 app.post('/api/redeem', async (req, res) => { await connectDB(); const { username, code } = req.body; try { const voucher = await Voucher.findOne({ code }); if (!voucher) return res.status(404).json({ success: false, msg: "Kode Salah!" }); if (new Date() > new Date(voucher.expiredDate)) return res.status(400).json({ success: false, msg: "Kode Kadaluarsa!" }); if (voucher.usedBy.length >= voucher.maxUsage) return res.status(400).json({ success: false, msg: "Voucher Habis!" }); if (voucher.usedBy.includes(username)) return res.status(400).json({ success: false, msg: "Sudah Dipakai!" }); const user = await User.findOne({ username }); if (!user) return res.status(404).json({ success: false, msg: "User Error" }); user.balance += voucher.amount; await user.save(); voucher.usedBy.push(username); await voucher.save(); res.json({ success: true, amount: voucher.amount }); } catch (err) { res.status(500).json({ success: false, msg: "Server Error" }); } });
 
-// 5. MANUAL SYSTEM CONTROL (NEW)
+// 5. MANUAL SYSTEM CONTROL
 app.get('/api/system/status', async (req, res) => { await connectDB(); const status = await SystemStatus.findOne({ id: 'main' }); res.json(status || {}); });
 app.post('/api/admin/system/toggle', async (req, res) => { await connectDB(); const { type, action } = req.body; const status = await SystemStatus.findOne({ id: 'main' }); if (!status) return res.status(404).json({ success: false }); const now = new Date(); if (type === 'bot') { if (action === 'on' && !status.botActive) status.botStartTime = now; status.botActive = (action === 'on'); } else if (type === 'vps') { if (action === 'on' && !status.vpsActive) status.vpsStartTime = now; status.vpsActive = (action === 'on'); } await status.save(); res.json({ success: true, status }); });
 
@@ -157,7 +164,29 @@ app.post('/api/admin/services', async (req, res) => { await connectDB(); const {
 app.put('/api/admin/services/:id', async (req, res) => { await connectDB(); const service = await ActiveService.findById(req.params.id); if(service){ const d = new Date(service.expiredDate); d.setDate(d.getDate() + parseInt(req.body.days)); service.expiredDate = d; service.status='active'; await service.save(); } res.json({ success: true }); });
 app.delete('/api/admin/services/:id', async (req, res) => { await connectDB(); await ActiveService.findByIdAndDelete(req.params.id); res.json({ success: true }); });
 app.get('/api/admin/all-services', async (req, res) => { await connectDB(); const list = await ActiveService.find().sort({ createdDate: -1 }); res.json(list); });
-app.get('/api/history/:username', async (req, res) => { await connectDB(); try { const topups = await TopUp.find({ username: req.params.username }).lean(); const historyTopup = topups.map(t => ({ type: 'IN', desc: 'Top Up Saldo', amount: t.amount, status: t.status === 'approved' ? 'success' : (t.status === 'rejected' ? 'failed' : 'pending'), date: t.date || t._id.getTimestamp() })); const orders = await Order.find({ username: req.params.username }).lean(); const historyOrder = orders.map(o => ({ type: 'OUT', desc: o.productName, amount: o.price, status: o.status || 'success', date: o.date || o._id.getTimestamp() })); const fullHistory = [...historyTopup, ...historyOrder].sort((a, b) => new Date(b.date) - new Date(a.date)); res.json(fullHistory); } catch (err) { res.status(500).json([]); } });
+
+app.get('/api/history/:username', async (req, res) => { 
+    await connectDB(); 
+    try { 
+        // Topup
+        const topups = await TopUp.find({ username: req.params.username }).lean(); 
+        const historyTopup = topups.map(t => ({ 
+            type: 'IN', desc: 'Top Up Saldo', amount: t.amount, 
+            status: t.status === 'approved' ? 'success' : (t.status === 'rejected' ? 'failed' : 'pending'), 
+            date: t.date || t._id.getTimestamp() 
+        })); 
+        
+        // Order
+        const orders = await Order.find({ username: req.params.username }).lean(); 
+        const historyOrder = orders.map(o => ({ 
+            type: 'OUT', desc: o.productName, amount: o.price, 
+            status: o.status || 'success', date: o.date || o._id.getTimestamp() 
+        })); 
+
+        const fullHistory = [...historyTopup, ...historyOrder].sort((a, b) => new Date(b.date) - new Date(a.date)); 
+        res.json(fullHistory); 
+    } catch (err) { res.status(500).json([]); } 
+});
 
 // 7. MISC
 app.post('/api/login', async (req, res) => { await connectDB(); const admin = await Admin.findOne(req.body); if(admin) res.json({success:true}); else res.status(401).json({success:false}); });
