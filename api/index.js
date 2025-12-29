@@ -4,9 +4,9 @@ const cors = require('cors');
 const app = express();
 
 app.use(cors());
-app.use(express.json({ limit: '10mb' })); // Limit besar untuk upload bukti transfer
+app.use(express.json({ limit: '10mb' })); 
 
-// 1. KONEKSI DATABASE
+// 1. KONEKSI DB
 let isConnected = false;
 const connectDB = async () => {
     if (isConnected) return;
@@ -14,30 +14,42 @@ const connectDB = async () => {
     catch (err) { console.error("DB Error:", err); }
 };
 
-// 2. SCHEMA DEFINITIONS (SAMA DENGAN NOKOS.JS)
+// 2. SCHEMA DEFINITIONS
 const UserSchema = new mongoose.Schema({ 
     username: { type: String, required: true, unique: true }, 
     password: { type: String, required: true }, 
     balance: { type: Number, default: 0 },
-    role: { type: String, default: 'member' } // member / admin
+    role: { type: String, default: 'member' } 
 });
 const User = mongoose.models.User || mongoose.model('User', UserSchema);
 
+// Schema Layanan Aktif (VPS/Bot) - Agar admin bisa input data
+const ActiveServiceSchema = new mongoose.Schema({
+    username: String, productName: String, targetNumber: String,
+    serverIp: String, expiredDate: Date
+});
+const ActiveService = mongoose.models.ActiveService || mongoose.model('ActiveService', ActiveServiceSchema);
+
 const TopUpSchema = new mongoose.Schema({
-    username: String,
-    amount: Number,
-    proofImage: String, // Base64
-    status: { type: String, default: 'pending' }, // pending, success, failed
-    createdAt: { type: Date, default: Date.now }
+    username: String, amount: Number, proofImage: String, 
+    status: { type: String, default: 'pending' }, createdAt: { type: Date, default: Date.now }
 });
 const TopUp = mongoose.models.TopUp || mongoose.model('TopUp', TopUpSchema);
 
 const ProductSchema = new mongoose.Schema({
     name: String, category: String, price: Number,
-    desc: String, imageUrl: String, formFields: String,
-    isAvailable: { type: Boolean, default: true }
+    desc: String, imageUrl: String, formFields: String, isAvailable: { type: Boolean, default: true },
+    orderMode: { type: String, default: 'manual' }
 });
 const Product = mongoose.models.Product || mongoose.model('Product', ProductSchema);
+
+// VOUCHER PERSEN (%)
+const VoucherSchema = new mongoose.Schema({
+    code: { type: String, required: true, unique: true },
+    percent: { type: Number, required: true },
+    createdAt: { type: Date, default: Date.now }
+});
+const Voucher = mongoose.models.Voucher || mongoose.model('Voucher', VoucherSchema);
 
 const CategorySchema = new mongoose.Schema({ name: String, imageUrl: String });
 const Category = mongoose.models.Category || mongoose.model('Category', CategorySchema);
@@ -46,26 +58,23 @@ const TestimonialSchema = new mongoose.Schema({ username: String, rating: Number
 const Testimonial = mongoose.models.Testimonial || mongoose.model('Testimonial', TestimonialSchema);
 
 const TransactionSchema = new mongoose.Schema({
-    invoiceId: String, username: String, productName: String,
-    amount: Number, status: { type: String, default: 'success' },
-    createdAt: { type: Date, default: Date.now }
+    invoiceId: String, username: String, productName: String, formData: String,
+    amount: Number, status: { type: String, default: 'success' }, createdAt: { type: Date, default: Date.now }
 });
 const Transaction = mongoose.models.Transaction || mongoose.model('Transaction', TransactionSchema);
 
 // ==========================================
-// ROUTES AUTH
+// ROUTES AUTH & ADMIN SETUP
 // ==========================================
 
-app.post('/api/register-user', async (req, res) => {
+// RUN SEKALI DI BROWSER: /api/setup-admin
+app.get('/api/setup-admin', async (req, res) => {
     await connectDB();
-    const { username, password } = req.body;
     try {
-        const exist = await User.findOne({ username });
-        if (exist) return res.status(400).json({ success: false, message: "Username sudah dipakai" });
-        
-        await new User({ username, password, balance: 0 }).save();
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+        await User.findOneAndDelete({ username: 'admin' });
+        await new User({ username: 'man', password: '112233', role: 'admin', balance: 999999 }).save();
+        res.json({ success: true, msg: "Admin Reset: User 'man', Pass '112233'" });
+    } catch(e) { res.json({ error: e.message }); }
 });
 
 app.post('/api/login-user', async (req, res) => {
@@ -73,199 +82,135 @@ app.post('/api/login-user', async (req, res) => {
     const { username, password } = req.body;
     try {
         const user = await User.findOne({ username, password });
-        if (!user) return res.status(400).json({ success: false, message: "Username/Password Salah" });
+        if (!user) return res.status(400).json({ success: false, message: "Gagal Login" });
         res.json({ success: true, username: user.username, balance: user.balance, role: user.role });
     } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+app.post('/api/register-user', async (req, res) => {
+    await connectDB();
+    const { username, password } = req.body;
+    try {
+        const exist = await User.findOne({ username });
+        if (exist) return res.status(400).json({ success: false, message: "Username ada" });
+        await new User({ username, password }).save();
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ success: false }); }
 });
 
 app.get('/api/user/:username', async (req, res) => {
     await connectDB();
     const user = await User.findOne({ username: req.params.username });
-    if(user) res.json(user); else res.json({});
+    res.json(user || {});
 });
 
 // ==========================================
-// ROUTES TOPUP (DENGAN ANTI DOUBLE)
+// ROUTES ADMIN DASHBOARD DATA
 // ==========================================
 
-// User Request Topup
-app.post('/api/topup', async (req, res) => {
-    await connectDB();
-    try {
-        await new TopUp(req.body).save();
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ success: false }); }
-});
+app.get('/api/admin/orders', async (req, res) => { await connectDB(); res.json(await Transaction.find().sort({ createdAt: -1 }).limit(50)); });
+app.get('/api/admin/topups', async (req, res) => { await connectDB(); res.json(await TopUp.find().sort({ createdAt: -1 })); });
 
-// Admin Get List Topup
-app.get('/api/admin/topups', async (req, res) => {
-    await connectDB();
-    const list = await TopUp.find().sort({ createdAt: -1 });
-    res.json(list);
-});
-
-// [FIX] ADMIN APPROVE/REJECT (ATOMIC LOCK)
-// [FIX] ADMIN APPROVE/REJECT + HEMAT PENYIMPANAN (Hapus Gambar Setelah Proses)
+// ACTION TOPUP
 app.post('/api/admin/topup/action', async (req, res) => {
     await connectDB();
-    const { id, action } = req.body; // action: 'approve' / 'reject'
-
+    const { id, action } = req.body;
     try {
         if (action === 'approve') {
-            // 1. Update Status jadi Success & KOSONGKAN proofImage (Biar Hemat DB)
-            const tx = await TopUp.findOneAndUpdate(
-                { _id: id, status: 'pending' }, 
-                { 
-                    status: 'success',
-                    proofImage: null // <--- INI KUNCINYA (Hapus gambar setelah selesai)
-                },
-                { new: true }
-            );
-
-            if (!tx) {
-                return res.status(400).json({ success: false, message: "Sudah diproses sebelumnya!" });
-            }
-
-            // 2. Tambah Saldo User
+            const tx = await TopUp.findOneAndUpdate({ _id: id, status: 'pending' }, { status: 'success', proofImage: null }, { new: true });
+            if (!tx) return res.status(400).json({ success: false, message: "Sudah diproses" });
+            
             const user = await User.findOne({ username: tx.username });
-            if (user) {
+            if(user) {
                 user.balance += tx.amount;
-                
-                await new Transaction({
-                    invoiceId: 'TOP-' + Date.now().toString().slice(-6),
-                    username: user.username,
-                    productName: 'Deposit Saldo',
-                    amount: tx.amount,
-                    status: 'success'
-                }).save();
-
+                await new Transaction({ invoiceId: 'TOP', username: user.username, productName: 'Deposit', amount: tx.amount, status: 'success' }).save();
                 await user.save();
             }
             res.json({ success: true });
-
         } else {
-            // REJECT (Hapus juga gambarnya biar gak nyampah)
-            const tx = await TopUp.findOneAndUpdate(
-                { _id: id, status: 'pending' }, 
-                { 
-                    status: 'failed',
-                    proofImage: null // <--- Hapus gambar sampah
-                }
-            );
-            if (!tx) return res.status(400).json({ success: false, message: "Sudah diproses!" });
+            await TopUp.findOneAndUpdate({ _id: id, status: 'pending' }, { status: 'failed', proofImage: null });
             res.json({ success: true });
         }
-    } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+    } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// ==========================================
-// ROUTES PRODUCT & ORDER
-// ==========================================
+// ACTIVE SERVICES (VPS/BOT)
+app.get('/api/admin/all-services', async (req, res) => { await connectDB(); res.json(await ActiveService.find().sort({ expiredDate: 1 })); });
+app.post('/api/admin/services', async (req, res) => {
+    await connectDB();
+    const { username, productName, targetNumber, serverIp, days } = req.body;
+    const exp = new Date(); exp.setDate(exp.getDate() + parseInt(days));
+    await new ActiveService({ username, productName, targetNumber, serverIp, expiredDate: exp }).save();
+    res.json({ success: true });
+});
+app.delete('/api/admin/services/:id', async (req, res) => { await connectDB(); await ActiveService.findByIdAndDelete(req.params.id); res.json({ success: true }); });
 
-app.get('/api/categories', async (req, res) => {
-    await connectDB(); res.json(await Category.find());
+// CLIENT GET SERVICES
+app.get('/api/services/:username', async (req, res) => { await connectDB(); res.json(await ActiveService.find({ username: req.params.username })); });
+
+// PRODUCTS CRUD
+app.get('/api/products', async (req, res) => { await connectDB(); res.json(await Product.find()); });
+app.post('/api/products', async (req, res) => { await connectDB(); await new Product(req.body).save(); res.json({ success: true }); });
+app.put('/api/products/:id', async (req, res) => { await connectDB(); await Product.findByIdAndUpdate(req.params.id, req.body); res.json({ success: true }); });
+app.delete('/api/products/:id', async (req, res) => { await connectDB(); await Product.findByIdAndDelete(req.params.id); res.json({ success: true }); });
+
+// CATEGORIES
+app.get('/api/categories', async (req, res) => { await connectDB(); res.json(await Category.find()); });
+app.post('/api/categories', async (req, res) => { await connectDB(); await new Category(req.body).save(); res.json({ success: true }); });
+app.delete('/api/categories/:id', async (req, res) => { await connectDB(); await Category.findByIdAndDelete(req.params.id); res.json({ success: true }); });
+
+// VOUCHERS (%)
+app.get('/api/admin/vouchers', async (req, res) => { await connectDB(); res.json(await Voucher.find()); });
+app.post('/api/admin/voucher', async (req, res) => { await connectDB(); try { await new Voucher(req.body).save(); res.json({success:true}); } catch(e){ res.json({success:false}); } });
+app.delete('/api/admin/voucher/:id', async (req, res) => { await connectDB(); await Voucher.findByIdAndDelete(req.params.id); res.json({success:true}); });
+
+app.post('/api/check-voucher', async (req, res) => {
+    await connectDB();
+    const v = await Voucher.findOne({ code: req.body.code });
+    if(v) res.json({ success: true, percent: v.percent }); else res.json({ success: false });
 });
 
-app.get('/api/products', async (req, res) => {
-    await connectDB(); res.json(await Product.find());
-});
+// SYSTEM TOGGLE (Mockup)
+app.post('/api/admin/system/toggle', (req, res) => res.json({ success: true }));
+app.get('/api/system/status', (req, res) => res.json({ vpsActive: true, vpsStartTime: new Date(Date.now()-36000000), botActive: true, botStartTime: new Date(Date.now()-18000000) }));
 
+// CLIENT ACTIONS
+app.post('/api/topup', async (req, res) => { await connectDB(); await new TopUp(req.body).save(); res.json({ success: true }); });
 app.post('/api/order', async (req, res) => {
     await connectDB();
-    const { username, productId, formData } = req.body;
-    
+    const { username, productId, formData, voucherCode } = req.body;
     const user = await User.findOne({ username });
-    const product = await Product.findById(productId);
+    const prod = await Product.findById(productId);
     
-    if(!user || !product) return res.json({ success: false, msg: "Data invalid" });
-    if(user.balance < product.price) return res.json({ success: false, msg: "Saldo kurang" });
+    if(!user || !prod) return res.json({ success: false, msg: "Error" });
+    
+    let price = prod.price;
+    let note = "";
+    if(voucherCode) {
+        const v = await Voucher.findOne({ code: voucherCode });
+        if(v) { price = price - Math.ceil(price * (v.percent/100)); note = `(Disc ${v.percent}%)`; }
+    }
 
-    // Potong Saldo
-    user.balance -= product.price;
-    await user.save();
+    if(user.balance < price) return res.json({ success: false, msg: "Saldo kurang" });
+    user.balance -= price; await user.save();
 
-    // Buat Invoice
-    const invId = 'INV-' + Date.now().toString().slice(-6);
-    await new Transaction({
-        invoiceId: invId,
-        username: user.username,
-        productName: product.name,
-        amount: product.price,
-        status: 'success' // Sukses bayar (status pengerjaan urusan admin)
-    }).save();
-
-    // Cek apakah produk otomatis (misal Nokos) atau manual
-    // Di sini kita anggap manual dulu sesuai flow standar
-    res.json({ 
-        success: true, 
-        invoiceId: invId, 
-        productName: product.name,
-        mode: 'manual' 
-    });
+    const inv = 'INV-' + Date.now().toString().slice(-6);
+    await new Transaction({ invoiceId: inv, username, productName: `${prod.name} ${note}`, formData, amount: price }).save();
+    res.json({ success: true, invoiceId: inv, productName: prod.name, mode: prod.orderMode });
 });
 
-// ==========================================
-// ROUTES SYSTEM / HISTORY / TESTI
-// ==========================================
-
-// History Gabungan (Topup & Order Web)
 app.get('/api/history/:username', async (req, res) => {
     await connectDB();
-    // Cari Transaksi Pembelian (Limit 20 biar ringan)
-    const txs = await Transaction.find({ username: req.params.username })
-        .sort({ createdAt: -1 })
-        .limit(20); // <--- TAMBAHAN LIMIT DB
-    
-    // Map data agar seragam
-    const list = txs.map(t => ({
-        date: t.createdAt,
-        desc: t.productName,
-        amount: t.amount,
-        status: t.status,
-        type: t.productName === 'Deposit Saldo' ? 'IN' : 'OUT'
-    }));
-    
-    res.json(list);
+    const txs = await Transaction.find({ username: req.params.username }).sort({ createdAt: -1 }).limit(20);
+    res.json(txs.map(t => ({ date: t.createdAt, desc: t.productName, amount: t.amount, status: t.status, type: t.productName==='Deposit'?'IN':'OUT' })));
 });
 
-app.post('/api/testimonials', async (req, res) => {
-    await connectDB(); await new Testimonial(req.body).save(); res.json({ success: true });
-});
-app.get('/api/testimonials', async (req, res) => {
-    await connectDB(); res.json(await Testimonial.find().sort({ createdAt: -1 }).limit(10));
-});
+// TESTIMONIALS
+app.post('/api/testimonials', async (req, res) => { await connectDB(); await new Testimonial(req.body).save(); res.json({ success: true }); });
+app.get('/api/testimonials', async (req, res) => { await connectDB(); res.json(await Testimonial.find().sort({ createdAt: -1 }).limit(10)); });
 
-// System Status (Mockup)
-app.get('/api/system/status', (req, res) => {
-    res.json({
-        vpsActive: true, vpsStartTime: new Date(Date.now() - 36000000),
-        botActive: true, botStartTime: new Date(Date.now() - 18000000)
-    });
-});
-
-// REDEEM CODE
-app.post('/api/redeem', async (req, res) => {
-    await connectDB();
-    const { username, code } = req.body;
-    if(code === 'MANZZY10K') {
-        // Cek apakah user sudah pernah redeem (opsional, disini simple aja)
-        const user = await User.findOne({ username });
-        if(user) {
-            user.balance += 10000;
-            await user.save();
-            await new Transaction({
-                invoiceId: 'GIFT-' + Date.now().toString().slice(-4),
-                username, productName: 'Voucher Code', amount: 10000, status: 'success'
-            }).save();
-            return res.json({ success: true, amount: 10000 });
-        }
-    }
-    res.json({ success: false, msg: "Kode salah / habis" });
-});
-
-// LOAD NOKOS MODULE
+// NOKOS MODULE
 const nokosRouter = require('./nokos');
 app.use('/api/nokos', nokosRouter);
 
-// EXECUTE
 module.exports = app;
