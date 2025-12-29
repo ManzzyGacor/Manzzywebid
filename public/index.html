@@ -3,56 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
     <title>Manzzy ID Official - Premium Bot Services</title>
-    
-    <meta name="description" content="Layanan Hosting Bot WhatsApp Terbaik, Murah & Cepat. Sewa VPS, Panel Pterodactyl, dan Bot WA 24 Jam Nonstop.">
-    <meta name="keywords" content="hosting bot wa, panel pterodactyl, sewa bot wa, manzzy id, vps murah">
-    <meta name="author" content="Manzzy ID">
-
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://manzzy.web.id/"> 
-    <meta property="og:title" content="Manzzy ID - Premium Bot Services">
-    <meta property="og:description" content="Layanan Hosting Bot WhatsApp Aktif 24 Jam. Top Up Otomatis, Server Cepat & Stabil. Mulai Rp 5.000!">
-    <meta property="og:image" content="https://raw.githubusercontent.com/ManzzyGacor/Urlmanzzy/main/file_1766890211382_23.jpg"> 
-    
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:title" content="Manzzy ID - Jagonya Bot WA">
-    <meta property="twitter:description" content="Hosting Bot WhatsApp Murah & Berkualitas. Cek sekarang!">
-    <meta property="twitter:image" content="https://raw.githubusercontent.com/ManzzyGacor/Urlmanzzy/main/file_1766890211382_23.jpg">
+    <meta name="description" content="Layanan Hosting Bot WhatsApp Terbaik.">
+    <meta name="keywords" content="hosting bot wa, nokos wa, vps murah">
+    <meta property="og:title" content="Manzzy ID - Premium Services">
+    <meta property="og:image" content="https://raw.githubusercontent.com/ManzzyGacor/Urlmanzzy/main/file_1766890211382_23.jpg">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     
-    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
-
     <style>
-        /* BACKGROUND PARTICLES */
-        #particles-js {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            z-index: -5; /* Di belakang konten, tapi di depan background hitam */
-            pointer-events: none; /* Agar klik tembus ke bawahnya */
-        }
-
-        /* LOADER */
         #loader { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s ease; }
         .spinner { width: 50px; height: 50px; border: 3px solid rgba(139, 92, 246, 0.3); border-top: 3px solid #8b5cf6; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
         .loading-text { font-family: 'JetBrains Mono', monospace; color: #8b5cf6; font-size: 12px; letter-spacing: 2px; animation: pulse 1s infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-
-        /* TOAST */
         .toast-enter { transform: translateX(100%); opacity: 0; }
         .toast-active { transform: translateX(0); opacity: 1; }
         .toast-exit { transform: translateX(100%); opacity: 0; }
-
-        /* NOKOS SCROLL */
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: #000; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
@@ -62,23 +32,9 @@
     </style>
 </head>
 <body>
-
-    <div id="loader">
-        <div class="spinner"></div>
-        <div class="loading-text">LOADING...</div>
-    </div>
-    <script>
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                const l = document.getElementById('loader');
-                if(l) { l.style.opacity = '0'; l.style.pointerEvents = 'none'; setTimeout(() => { l.style.display = 'none'; }, 500); }
-            }, 3000); 
-        });
-        setTimeout(() => { const l = document.getElementById('loader'); if(l && l.style.display !== 'none') l.style.display = 'none'; }, 5000);
-    </script>
-
-    <div id="particles-js"></div>
-
+    <div id="loader"><div class="spinner"></div><div class="loading-text">LOADING...</div></div>
+    <script>window.addEventListener('load',()=>{setTimeout(()=>{const l=document.getElementById('loader');if(l){l.style.opacity='0';l.style.pointerEvents='none';setTimeout(()=>{l.style.display='none'},500)}},3000)});setTimeout(()=>{const l=document.getElementById('loader');if(l&&l.style.display!=='none')l.style.display='none'},5000);</script>
+    
     <div id="toast-container" class="fixed top-24 right-5 z-[100] flex flex-col gap-3 pointer-events-none"></div>
 
     <div id="modal-overlay" class="modal-overlay" onclick="closeModal(event)">
@@ -91,6 +47,13 @@
                     <div class="h-px bg-gray-800 w-full my-4"></div><h4 class="text-xs text-gray-500 font-bold uppercase mb-2">Deskripsi Layanan</h4><p id="modal-desc" class="text-gray-300 text-sm leading-relaxed mb-6 whitespace-pre-wrap font-sans"></p>
                     <form id="orderForm" onsubmit="processOrder(event)" class="space-y-4 mb-4">
                         <div id="dynamic-inputs" class="space-y-3"></div>
+                        
+                        <div class="flex gap-2 items-end pt-2">
+                            <div class="flex-1"><label class="text-[10px] text-gray-500 font-bold block mb-1">KODE PROMO (Opsional)</label><input type="text" id="voucherInput" class="w-full bg-black/50 border border-gray-700 rounded-lg p-3 text-white text-sm uppercase font-mono tracking-wider focus:border-purple-500 outline-none" placeholder="Masukan Kode"></div>
+                            <button type="button" onclick="checkVoucher()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-600 rounded-lg px-4 py-3 text-xs font-bold h-[46px] transition">Cek</button>
+                        </div>
+                        <div id="voucher-msg" class="text-[10px] hidden mb-2"></div>
+                        <div class="bg-gray-900 border border-gray-800 p-3 rounded-lg flex justify-between items-center text-sm mt-2"><span class="text-gray-400">Total Bayar:</span><div class="text-right"><span id="price-original" class="hidden text-xs text-gray-500 line-through mr-1"></span><span id="price-final" class="font-bold font-mono text-white">Loading...</span></div></div>
                         <div class="bg-gray-900 border border-gray-800 p-3 rounded-lg flex justify-between items-center text-sm"><span class="text-gray-400">Saldo Kamu:</span><span id="user-balance-display" class="font-bold font-mono">Loading...</span></div>
                         <button type="submit" id="btn-buy" class="w-full py-4 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold flex items-center justify-center gap-3 transition shadow-lg shadow-purple-500/20"><i class="fa-solid fa-cart-shopping text-lg"></i> Bayar Sekarang</button>
                     </form>
@@ -117,12 +80,10 @@
         <nav class="flex-1 space-y-2">
             <a href="#features" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-star w-6 text-center text-yellow-500"></i><span class="font-medium">Keunggulan</span></a>
             <a href="#testimonials" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-comment-dots w-6 text-center text-pink-500"></i><span class="font-medium">Testimoni</span></a>
-            
             <div id="menu-topup" class="hidden"><a href="#" onclick="switchView('topup'); toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-wallet w-6 text-center text-green-500"></i><span class="font-medium">Top Up Saldo</span></a></div>
             <div id="menu-myservices" class="hidden"><a href="#" onclick="switchView('myservices'); toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-server w-6 text-center text-blue-500"></i><span class="font-medium">Layanan Saya</span></a></div>
             <div id="menu-nokos" class="hidden"><a href="#" onclick="switchView('nokos'); toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-sim-card w-6 text-center text-purple-500"></i><span class="font-medium">Virtual Number</span></a></div>
             <div id="menu-history" class="hidden"><a href="#" onclick="switchView('history'); toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-clock-rotate-left w-6 text-center text-orange-500"></i><span class="font-medium">Riwayat Transaksi</span></a></div>
-            
             <a href="#faq" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-circle-question w-6 text-center text-blue-500"></i><span class="font-medium">FAQ</span></a>
             <div class="h-px bg-gray-800 my-4"></div>
             <div id="auth-menu"><a href="/login_user.html" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-user w-6 text-center text-purple-500"></i><span class="font-medium">Login Member</span></a></div>
@@ -139,26 +100,18 @@
     </nav>
 
     <div id="main-container" class="min-h-screen relative w-full max-w-6xl mx-auto px-6 pb-20 pt-28">
-        <div class="absolute inset-0 bg-grid -z-10 h-screen fixed opacity-40"></div>
-        <div class="absolute top-0 right-0 w-96 h-96 bg-purple-600/10 rounded-full blur-[100px] -z-10 fixed pointer-events-none"></div>
+        <div class="absolute inset-0 bg-grid -z-10 h-screen fixed opacity-40"></div><div class="absolute top-0 right-0 w-96 h-96 bg-purple-600/10 rounded-full blur-[100px] -z-10 fixed pointer-events-none"></div>
 
         <section id="view-landing" class="view-section view-active">
             <div class="text-center max-w-4xl mx-auto mt-10 mb-16">
                 <h1 class="text-5xl md:text-8xl font-bold mb-6 leading-tight"><span class="glitch neon-text" data-text="MANZZY ID">MANZZY ID</span> <br> <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">OFFICIAL</span></h1>
                 <p class="text-gray-400 text-lg md:text-xl mb-10 max-w-2xl mx-auto">Layanan Hosting Bot WhatsApp Profesional & Terpercaya.</p>
-                
                 <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-8">
-                    <button onclick="switchView('store')" class="px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-[0_0_30px_rgba(139,92,246,0.3)] transition hover:scale-105 w-full md:w-auto">
-                        <i class="fa-solid fa-store mr-2"></i> Lihat Produk
-                    </button>
-                    <button onclick="switchView('nokos')" class="px-8 py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-[0_0_30px_rgba(34,197,94,0.3)] transition hover:scale-105 w-full md:w-auto">
-                        <i class="fa-solid fa-sim-card mr-2"></i> Beli Nomor
-                    </button>
+                    <button onclick="switchView('store')" class="px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-[0_0_30px_rgba(139,92,246,0.3)] transition hover:scale-105 w-full md:w-auto"><i class="fa-solid fa-store mr-2"></i> Lihat Produk</button>
+                    <button onclick="switchView('nokos')" class="px-8 py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-[0_0_30px_rgba(34,197,94,0.3)] transition hover:scale-105 w-full md:w-auto"><i class="fa-solid fa-sim-card mr-2"></i> Beli Nomor</button>
                 </div>
-
                 <div class="flex items-center justify-center gap-4 mb-6"><a href="https://instagram.com/Manzz_Wakeup" target="_blank" class="social-btn"><i class="fa-brands fa-instagram"></i></a><a href="https://wa.me/6287756632352" target="_blank" class="social-btn"><i class="fa-solid fa-user-shield"></i></a></div>
             </div>
-            
             <div class="w-full max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 mb-24"><div class="glass-card p-6 rounded-2xl flex flex-col justify-between border-l-4 border-l-green-500 space-y-4"><div class="flex justify-between items-center border-b border-gray-800 pb-3"><div><h4 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">VPS Runtime</h4><div class="flex items-center gap-2 text-green-400 font-bold font-mono text-xl"><i class="fa-solid fa-server"></i> <span id="runtime-vps">0d 0h</span></div></div></div><div class="flex justify-between items-center"><div><h4 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Bot Runtime</h4><div class="flex items-center gap-2 text-blue-400 font-bold font-mono text-xl"><i class="fa-solid fa-robot"></i> <span id="runtime-bot">Offline</span></div></div></div></div><div class="glass-card p-6 rounded-2xl border-l-4 border-l-purple-500"><div class="flex justify-between items-start mb-4 border-b border-gray-800 pb-3"><div><h4 class="text-white text-sm font-bold flex items-center gap-2"><i class="fa-brands fa-linux"></i> AMD Ryzen™ 7</h4><p class="text-[10px] text-gray-500 mt-1">High Performance Node</p></div><span id="status-badge" class="text-gray-500 text-[10px] animate-pulse bg-gray-900/50 px-2 py-1 rounded border border-gray-700 font-bold">CONNECTING...</span></div><div class="flex items-center gap-3 text-xs font-mono mb-3"><span class="w-8 text-purple-300">CPU</span><div class="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden"><div id="bar-cpu" class="h-full bg-purple-500 transition-all duration-1000" style="width: 0%"></div></div><span id="text-cpu" class="w-12 text-right text-gray-400">0%</span></div><div class="flex items-center gap-3 text-xs font-mono mb-3"><span class="w-8 text-purple-300">RAM</span><div class="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden"><div id="bar-ram" class="h-full bg-purple-500 transition-all duration-1000" style="width: 0%"></div></div><span id="text-ram" class="w-12 text-right text-gray-400">0G</span></div><div class="flex items-center gap-3 text-xs font-mono"><span class="w-8 text-purple-300">ROM</span><div class="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden"><div id="bar-rom" class="h-full bg-blue-500 transition-all duration-1000" style="width: 0%"></div></div><span id="text-rom" class="w-12 text-right text-gray-400">0G</span></div></div></div>
             
             <section id="features" class="mb-24 scroll-mt-32"><div class="text-center mb-12"><h2 class="text-3xl font-bold text-white mb-4">KEUNGGULAN</h2></div><div class="grid grid-cols-1 md:grid-cols-3 gap-8"><div class="glass-card p-8 rounded-2xl text-center border-t-4 border-t-purple-500"><h3 class="text-xl font-bold text-white">Uptime 99%</h3><p class="text-gray-400 text-sm">Server selalu online.</p></div><div class="glass-card p-8 rounded-2xl text-center border-t-4 border-t-blue-500"><h3 class="text-xl font-bold text-white">Cepat</h3><p class="text-gray-400 text-sm">Koneksi stabil.</p></div><div class="glass-card p-8 rounded-2xl text-center border-t-4 border-t-green-500"><h3 class="text-xl font-bold text-white">Aman</h3><p class="text-gray-400 text-sm">Privasi terjaga.</p></div></div></section>
@@ -198,17 +151,6 @@
         <section id="view-topup" class="view-section">
             <div class="max-w-lg mx-auto">
                 <button onclick="switchView('landing')" class="mb-6 text-gray-400 hover:text-white flex items-center gap-2 group"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
-                <div class="glass-card p-6 rounded-2xl border-l-4 border-l-blue-500 mb-6 relative overflow-hidden group">
-                    <div class="absolute -right-6 -top-6 text-9xl text-blue-500/5 group-hover:text-blue-500/10 transition rotate-12"><i class="fa-solid fa-ticket"></i></div>
-                    <div class="relative z-10">
-                        <h3 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-gift text-blue-400"></i> Punya Kode Promo?</h3>
-                        <p class="text-xs text-gray-400 mb-4">Masukkan kode voucher untuk klaim saldo gratis.</p>
-                        <form onsubmit="redeemCode(event)" class="flex gap-2">
-                            <div class="relative flex-1"><div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-tag text-gray-500 text-xs"></i></div><input type="text" id="redeemInput" class="w-full bg-black/50 border border-gray-700 rounded-xl py-3 pl-10 pr-3 text-white text-sm uppercase font-mono tracking-wider focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition" placeholder="MANZZY10K" required></div>
-                            <button type="submit" id="btn-redeem" class="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-bold px-6 rounded-xl shadow-lg shadow-blue-500/20 transition transform active:scale-95 text-sm">Klaim</button>
-                        </form>
-                    </div>
-                </div>
                 <div class="glass-card p-8 rounded-2xl border-t-4 border-t-green-500">
                     <h2 class="text-2xl font-bold text-white text-center mb-6">Isi Saldo Manual</h2>
                     <div class="bg-white p-4 rounded-xl mb-6 mx-auto w-64"><img src="qris.jpg" onerror="this.src='https://via.placeholder.com/300x300?text=Scan+QRIS'" class="w-full h-auto"></div>
@@ -224,61 +166,19 @@
 
         <section id="view-nokos" class="view-section">
             <div class="max-w-4xl mx-auto pb-20">
-                
-                <div class="flex items-center justify-between mb-6">
-                    <button onclick="switchView('landing')" class="text-gray-400 hover:text-white flex items-center gap-2">
-                        <i class="fa-solid fa-arrow-left"></i> Kembali
-                    </button>
-                    <h2 class="text-2xl font-bold text-white">VIRTUAL <span class="text-green-500">NUMBER</span></h2>
-                </div>
-
+                <div class="flex items-center justify-between mb-6"><button onclick="switchView('landing')" class="text-gray-400 hover:text-white flex items-center gap-2"><i class="fa-solid fa-arrow-left"></i> Kembali</button><h2 class="text-2xl font-bold text-white">VIRTUAL <span class="text-green-500">NUMBER</span></h2></div>
                 <div class="glass-card p-6 rounded-2xl border-t-4 border-t-green-500 mb-8">
-                    
-                    <div class="mb-6">
-                        <label class="text-xs text-green-400 font-bold mb-3 block uppercase tracking-wider">1. Pilih Aplikasi</label>
-                        <div id="nokos-app-grid" class="grid grid-cols-4 md:grid-cols-6 gap-3 max-h-40 overflow-y-auto pr-1 custom-scroll">
-                            <div class="col-span-full text-center py-4 text-gray-500 text-xs">Memuat aplikasi...</div>
-                        </div>
-                    </div>
-
-                    <div id="step-country" class="mb-6 hidden animate-fade-in-up">
-                        <label class="text-xs text-green-400 font-bold mb-3 block uppercase tracking-wider">2. Pilih Negara</label>
-                        <div id="nokos-country-grid" class="grid grid-cols-3 md:grid-cols-4 gap-3 max-h-60 overflow-y-auto pr-1 custom-scroll"></div>
-                    </div>
-
-                    <div id="step-server" class="mb-6 hidden animate-fade-in-up">
-                        <label class="text-xs text-green-400 font-bold mb-3 block uppercase tracking-wider">3. Pilih Server & Harga</label>
-                        <div id="nokos-server-list" class="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scroll"></div>
-                    </div>
-
-                    <div id="step-operator" class="mb-6 hidden animate-fade-in-up">
-                        <label class="text-xs text-green-400 font-bold mb-3 block uppercase tracking-wider">4. Pilih Operator</label>
-                        <div id="nokos-operator-grid" class="grid grid-cols-3 md:grid-cols-5 gap-3"></div>
-                    </div>
-
+                    <div class="mb-6"><label class="text-xs text-green-400 font-bold mb-3 block uppercase tracking-wider">1. Pilih Aplikasi</label><div id="nokos-app-grid" class="grid grid-cols-4 md:grid-cols-6 gap-3 max-h-40 overflow-y-auto pr-1 custom-scroll"><div class="col-span-full text-center py-4 text-gray-500 text-xs">Memuat aplikasi...</div></div></div>
+                    <div id="step-country" class="mb-6 hidden animate-fade-in-up"><label class="text-xs text-green-400 font-bold mb-3 block uppercase tracking-wider">2. Pilih Negara</label><div id="nokos-country-grid" class="grid grid-cols-3 md:grid-cols-4 gap-3 max-h-60 overflow-y-auto pr-1 custom-scroll"></div></div>
+                    <div id="step-server" class="mb-6 hidden animate-fade-in-up"><label class="text-xs text-green-400 font-bold mb-3 block uppercase tracking-wider">3. Pilih Server & Harga</label><div id="nokos-server-list" class="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scroll"></div></div>
+                    <div id="step-operator" class="mb-6 hidden animate-fade-in-up"><label class="text-xs text-green-400 font-bold mb-3 block uppercase tracking-wider">4. Pilih Operator</label><div id="nokos-operator-grid" class="grid grid-cols-3 md:grid-cols-5 gap-3"></div></div>
                     <div id="step-checkout" class="hidden bg-green-900/10 border border-green-500/30 rounded-xl p-4 animate-fade-in-up mt-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <div>
-                                <div class="text-xs text-gray-400">Total Harga</div>
-                                <div id="display-price" class="text-2xl font-bold text-white font-mono">Rp 0</div>
-                            </div>
-                            <div class="text-right">
-                                <div id="display-info" class="text-xs font-bold text-green-400 uppercase">-</div>
-                                <div id="display-server" class="text-[10px] text-gray-500">Server ID: -</div>
-                            </div>
-                        </div>
-                        <button onclick="executeBuyNokos()" id="btn-buy-nokos" class="w-full py-3 rounded-lg bg-green-600 hover:bg-green-500 text-white font-bold transition shadow-lg shadow-green-900/50">
-                            <i class="fa-solid fa-cart-shopping mr-2"></i> BELI SEKARANG
-                        </button>
+                        <div class="flex justify-between items-center mb-4"><div><div class="text-xs text-gray-400">Total Harga</div><div id="display-price" class="text-2xl font-bold text-white font-mono">Rp 0</div></div><div class="text-right"><div id="display-info" class="text-xs font-bold text-green-400 uppercase">-</div><div id="display-server" class="text-[10px] text-gray-500">Server ID: -</div></div></div>
+                        <button onclick="executeBuyNokos()" id="btn-buy-nokos" class="w-full py-3 rounded-lg bg-green-600 hover:bg-green-500 text-white font-bold transition shadow-lg shadow-green-900/50"><i class="fa-solid fa-cart-shopping mr-2"></i> BELI SEKARANG</button>
                     </div>
                 </div>
-
-                <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2 mt-8">
-                    <span class="animate-pulse w-2 h-2 bg-yellow-500 rounded-full"></span> Pesanan Pending
-                </h3>
-                <div id="nokos-active-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="col-span-full text-center py-10 text-gray-500 italic">Tidak ada pesanan aktif.</div>
-                </div>
+                <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2 mt-8"><span class="animate-pulse w-2 h-2 bg-yellow-500 rounded-full"></span> Pesanan Pending</h3>
+                <div id="nokos-active-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="col-span-full text-center py-10 text-gray-500 italic">Tidak ada pesanan aktif.</div></div>
             </div>
         </section>
         
@@ -286,57 +186,14 @@
     
         <section id="view-history" class="view-section" style="margin-top: -720px !important;">
             <div class="max-w-4xl mx-auto min-h-[50vh]">
-                <div class="flex items-center justify-between mb-4 mt-8 border-b border-gray-800 pb-4">
-                    <button onclick="switchView('myservices')" class="text-gray-400 hover:text-white text-sm flex items-center gap-2 transition group">
-                        <i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition"></i> Kembali
-                    </button>
-                    <h2 class="text-lg md:text-xl font-bold text-white tracking-widest uppercase">
-                        Riwayat <span class="text-purple-500">Transaksi</span>
-                    </h2>
-                </div>
-
+                <div class="flex items-center justify-between mb-4 mt-8 border-b border-gray-800 pb-4"><button onclick="switchView('myservices')" class="text-gray-400 hover:text-white text-sm flex items-center gap-2 transition group"><i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition"></i> Kembali</button><h2 class="text-lg md:text-xl font-bold text-white tracking-widest uppercase">Riwayat <span class="text-purple-500">Transaksi</span></h2></div>
                 <div class="glass-card rounded-xl overflow-hidden border border-gray-800/50 relative z-10">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-white/5 text-[10px] text-gray-500 uppercase tracking-wider">
-                                    <th class="p-3 pl-4">Waktu</th>
-                                    <th class="p-3">Keterangan</th>
-                                    <th class="p-3 text-right">Nominal</th>
-                                    <th class="p-3 text-center pr-4">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="history-list" class="divide-y divide-gray-800 text-sm">
-                                <tr><td colspan="4" class="p-6 text-center text-gray-500 text-xs">Memuat data...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <div class="overflow-x-auto"><table class="w-full text-left border-collapse"><thead><tr class="bg-white/5 text-[10px] text-gray-500 uppercase tracking-wider"><th class="p-3 pl-4">Waktu</th><th class="p-3">Keterangan</th><th class="p-3 text-right">Nominal</th><th class="p-3 text-center pr-4">Status</th></tr></thead><tbody id="history-list" class="divide-y divide-gray-800 text-sm"><tr><td colspan="4" class="p-6 text-center text-gray-500 text-xs">Memuat data...</td></tr></tbody></table></div>
                 </div>
             </div>
         </section>
 
     </div>
-
-    <script>
-        particlesJS("particles-js", {
-          "particles": {
-            "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
-            "color": { "value": "#ffffff" },
-            "shape": { "type": "circle", "stroke": { "width": 0, "color": "#000000" }, "polygon": { "nb_sides": 5 } },
-            "opacity": { "value": 0.5, "random": false, "anim": { "enable": false, "speed": 1, "opacity_min": 0.1, "sync": false } },
-            "size": { "value": 3, "random": true, "anim": { "enable": false, "speed": 40, "size_min": 0.1, "sync": false } },
-            "line_linked": { "enable": true, "distance": 150, "color": "#ffffff", "opacity": 0.4, "width": 1 },
-            "move": { "enable": true, "speed": 3, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false, "attract": { "enable": false, "rotateX": 600, "rotateY": 1200 } }
-          },
-          "interactivity": {
-            "detect_on": "canvas",
-            "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": true, "mode": "push" }, "resize": true },
-            "modes": { "grab": { "distance": 140, "line_linked": { "opacity": 1 } }, "bubble": { "distance": 400, "size": 40, "duration": 2, "opacity": 8, "speed": 3 }, "repulse": { "distance": 200, "duration": 0.4 }, "push": { "particles_nb": 4 }, "remove": { "particles_nb": 2 } }
-          },
-          "retina_detect": true
-        });
-    </script>
-
     <script src="script.js"></script>
 </body>
 </html>

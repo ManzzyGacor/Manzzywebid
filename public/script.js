@@ -1,4 +1,4 @@
-1// ============================================
+// ============================================
 // 1. SYSTEM INITIALIZATION & LOADER
 // ============================================
 
@@ -17,6 +17,7 @@ async function initData() {
     checkUserLogin();
     fetchTestimonials();
     updateServerStats();
+    startLiveNotif(); // Jalankan notifikasi sosial proof
     setInterval(updateServerStats, 5000);
 }
 
@@ -126,10 +127,10 @@ function switchView(viewId) {
 }
 
 // ============================================
-// 4. STORE & KATALOG
+// 4. STORE, VOUCHER & KATALOG
 // ============================================
 
-let allProducts=[], allCategories=[], currentProduct=null;
+let allProducts=[], allCategories=[], currentProduct=null, activeVoucher=null;
 
 async function loadStoreData() {
     if(allCategories.length > 0) return;
@@ -191,47 +192,97 @@ function openModal(id) {
     document.getElementById('modal-content-product').classList.remove('hidden'); 
     document.getElementById('modal-content-receipt').classList.add('hidden');
     document.getElementById('modal-title').innerText = p.name; 
+    
+    // RESET VOUCHER UI
+    activeVoucher = null;
+    document.getElementById('voucherInput').value = '';
+    document.getElementById('voucher-msg').classList.add('hidden');
+    document.getElementById('price-original').classList.add('hidden');
+    
+    document.getElementById('price-final').innerText = `Rp ${p.price.toLocaleString()}`; 
+    document.getElementById('price-final').className = "font-bold font-mono text-white";
     document.getElementById('modal-price').innerText = `Rp ${p.price.toLocaleString()}`; 
     document.getElementById('modal-desc').innerText = p.desc; 
     document.getElementById('modal-img').src = p.imageUrl || 'https://via.placeholder.com/400';
     document.getElementById('user-balance-display').innerText = userSession ? `Rp ${userBalance.toLocaleString()}` : 'Login Dulu';
+    
     const form = document.getElementById('dynamic-inputs'); form.innerHTML = '';
     (p.formFields||'No WA').split(',').forEach(f => { if(f.trim()) form.innerHTML += `<div><label class="text-[10px] text-gray-500 font-bold block mb-1">${f.trim()}</label><input type="text" name="${f.trim()}" class="w-full bg-black/50 border border-gray-700 rounded-lg p-3 text-white text-sm" required></div>`; });
     document.getElementById('modal-overlay').classList.add('modal-active');
 }
 
+async function checkVoucher() {
+    const code = document.getElementById('voucherInput').value.trim();
+    const msgEl = document.getElementById('voucher-msg');
+    
+    if(!code) { msgEl.innerText="Masukkan kode."; msgEl.className="text-red-500 text-[10px] block"; return; }
+    
+    // Loading state
+    msgEl.innerHTML = "<i class='fa-solid fa-circle-notch fa-spin'></i> Cek..."; 
+    msgEl.className="text-yellow-500 text-[10px] block";
+    msgEl.classList.remove('hidden');
+    
+    try {
+        const res = await fetch('/api/check-voucher', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({code})});
+        const d = await res.json();
+        if(d.success) {
+            activeVoucher = code;
+            const disc = Math.ceil(currentProduct.price * (d.percent/100));
+            const final = currentProduct.price - disc;
+            
+            document.getElementById('price-original').innerText = `Rp ${currentProduct.price.toLocaleString()}`;
+            document.getElementById('price-original').classList.remove('hidden');
+            document.getElementById('price-final').innerText = `Rp ${final.toLocaleString()}`;
+            document.getElementById('price-final').className = "font-bold font-mono text-green-400";
+            
+            msgEl.innerText = `✅ Hemat ${d.percent}%`; msgEl.className="text-green-500 text-[10px] block";
+        } else {
+            msgEl.innerText = "❌ Kode salah."; msgEl.className="text-red-500 text-[10px] block";
+            activeVoucher = null;
+            
+            // Reset
+            document.getElementById('price-original').classList.add('hidden');
+            document.getElementById('price-final').innerText = `Rp ${currentProduct.price.toLocaleString()}`;
+            document.getElementById('price-final').className = "font-bold font-mono text-white";
+        }
+    } catch(e) { msgEl.innerText = "Error koneksi."; }
+}
+
 async function processOrder(e) {
     e.preventDefault(); 
     if(!userSession) return showToast("Login dulu!", "error"); 
-    if(userBalance < currentProduct.price) return showToast("Saldo kurang!", "error");
     
     const btn=document.getElementById('btn-buy'); btn.innerHTML='Proses...'; btn.disabled=true;
-    const inputs=document.querySelectorAll('#orderForm input'); let fd=""; inputs.forEach(i=>fd+=`${i.name}: ${i.value}\n`);
+    const inputs=document.querySelectorAll('#orderForm input'); 
+    let fd=""; inputs.forEach(i=> { if(i.id!=='voucherInput') fd+=`${i.name}: ${i.value}\n` });
     
     try { 
-        const res=await fetch('/api/order',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:userSession,productId:currentProduct._id,formData:fd})}); 
+        const res=await fetch('/api/order',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({username:userSession, productId:currentProduct._id, formData:fd, voucherCode:activeVoucher})
+        }); 
         const r=await res.json(); 
         if(r.success){ 
-            userBalance-=currentProduct.price; checkUserLogin(); 
+            checkUserLogin(); 
             document.getElementById('modal-content-product').classList.add('hidden'); 
             document.getElementById('modal-content-receipt').classList.remove('hidden'); 
             document.getElementById('rec-inv').innerText=r.invoiceId; 
             document.getElementById('rec-item').innerText=r.productName; 
             document.getElementById('rec-mode').innerText=r.mode; 
+            
+            const b=document.getElementById('btn-continue'); 
             if(r.mode==='manual'){ 
-                const b=document.getElementById('btn-continue'); b.innerText="Lanjut WA"; 
+                b.innerText="Lanjut WA"; 
                 b.onclick=()=>{ window.open(`https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(`Order:\nInv: ${r.invoiceId}\n${fd}`)}`,'_blank'); closeModalDirect(); }; 
-            } else { 
-                document.getElementById('btn-continue').innerText="Tutup"; 
-                document.getElementById('btn-continue').onclick=closeModalDirect; 
-            } 
+            } else { b.innerText="Tutup"; b.onclick=closeModalDirect; } 
         } else { showToast(r.msg, "error"); } 
     } catch(e){showToast("Error", "error");} 
-    finally { btn.innerHTML='Bayar'; btn.disabled=false; }
+    finally { btn.innerHTML='Bayar Sekarang'; btn.disabled=false; }
 }
 
 // ============================================
-// 5. TOP UP & REDEEM
+// 5. TOP UP (MANUAL ONLY)
 // ============================================
 
 async function submitTopUp(e) {
@@ -241,22 +292,9 @@ async function submitTopUp(e) {
     reader.onload=async()=>{ 
         try{ 
             const res=await fetch('/api/topup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:userSession,amount:document.getElementById('topupAmount').value,proofImage:reader.result})}); 
-            if(res.ok){ showToast("Terkirim! Saldo akan masuk setelah dicek admin.", "success"); switchView('landing'); } else { showToast("Gagal mengirim bukti.", "error"); } 
+            if(res.ok){ showToast("Terkirim! Tunggu admin cek.", "success"); switchView('landing'); } 
         }catch(e){} finally{ btn.innerHTML='Kirim Bukti Transfer'; btn.disabled=false; } 
     };
-}
-
-async function redeemCode(e) {
-    e.preventDefault(); if(!userSession) return showToast("Login dulu!", "error");
-    const input = document.getElementById('redeemInput'); const btn = document.getElementById('btn-redeem'); 
-    const code = input.value.trim(); if(!code) return;
-    
-    const originalText = btn.innerHTML; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>'; btn.disabled = true;
-    try { 
-        const res = await fetch('/api/redeem', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ username: userSession, code: code })}); 
-        const data = await res.json();
-        if(data.success) { showToast(`Voucher Sukses! +Rp ${data.amount.toLocaleString()}`, "success"); input.value = ''; checkUserLogin(); } else { showToast(data.msg, "error"); }
-    } catch(err) { showToast("Koneksi error.", "error"); } finally { btn.innerHTML = originalText; btn.disabled = false; }
 }
 
 // ============================================
@@ -264,17 +302,8 @@ async function redeemCode(e) {
 // ============================================
 
 let nokosInterval = null;
-let currentNokos = {
-    serviceId: null,
-    serviceName: null,
-    countryId: null, 
-    countryName: null,
-    providerId: null,
-    serverPrice: 0,
-    operatorId: null
-};
+let currentNokos = { serviceId: null, serviceName: null, countryId: null, countryName: null, providerId: null, serverPrice: 0, operatorId: null };
 
-// 1. INIT: LOAD APLIKASI
 async function initNokos() {
     const grid = document.getElementById('nokos-app-grid');
     if(grid.children.length <= 1) {
@@ -285,12 +314,7 @@ async function initNokos() {
                 const iconMap = { 'WhatsApp': 'https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg', 'Telegram': 'https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg', 'TikTok': 'https://sf-tb-sg.ibytedtos.com/obj/eden-sg/uhtyvueh7nulogpoguhm/tiktok-icon2.png', 'Shopee': 'https://upload.wikimedia.org/wikipedia/commons/0/0e/Shopee_logo.svg', 'Gojek': 'https://upload.wikimedia.org/wikipedia/commons/8/86/Gojek_logo_2019.svg', 'Facebook': 'https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg', 'Instagram': 'https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg', 'Google': 'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg' };
                 grid.innerHTML = data.data.map(s => {
                     const imgUrl = iconMap[s.service_name] || s.service_img || 'https://via.placeholder.com/50';
-                    return `
-                    <div onclick="selectApp(this, '${s.service_code}', '${s.service_name}')" 
-                         class="app-card cursor-pointer bg-black/40 border border-gray-700 rounded-xl p-3 flex flex-col items-center justify-center hover:border-gray-500 transition group h-20">
-                        <img src="${imgUrl}" class="w-6 h-6 object-contain mb-1">
-                        <span class="text-[9px] text-gray-400 font-bold text-center group-hover:text-white uppercase">${s.service_name}</span>
-                    </div>`;
+                    return `<div onclick="selectApp(this, '${s.service_code}', '${s.service_name}')" class="app-card cursor-pointer bg-black/40 border border-gray-700 rounded-xl p-3 flex flex-col items-center justify-center hover:border-gray-500 transition group h-20"><img src="${imgUrl}" class="w-6 h-6 object-contain mb-1"><span class="text-[9px] text-gray-400 font-bold text-center group-hover:text-white uppercase">${s.service_name}</span></div>`;
                 }).join('');
             }
         } catch(e) { grid.innerHTML = '<div class="col-span-full text-red-500 text-xs">Gagal memuat aplikasi.</div>'; }
@@ -300,111 +324,61 @@ async function initNokos() {
     nokosInterval = setInterval(fetchNokosHistory, 5000);
 }
 
-// 2. PILIH APLIKASI -> LOAD NEGARA
 async function selectApp(el, id, name) {
     document.querySelectorAll('.app-card').forEach(c => c.classList.remove('active-card'));
     el.classList.add('active-card');
-    currentNokos.serviceId = id;
-    currentNokos.serviceName = name;
-    
+    currentNokos.serviceId = id; currentNokos.serviceName = name;
     resetSteps(['step-country', 'step-server', 'step-operator', 'step-checkout']);
-    
     const countryGrid = document.getElementById('nokos-country-grid');
     document.getElementById('step-country').classList.remove('hidden');
     countryGrid.innerHTML = '<div class="col-span-full text-center text-xs text-yellow-500 animate-pulse">Memuat Negara...</div>';
-
     try {
         const res = await fetch(`/api/nokos/countries?service_id=${id}`);
         const data = await res.json();
         if(data.success) {
             countryGrid.innerHTML = data.data.map(c => {
                 const priceData = JSON.stringify(c.pricelist).replace(/"/g, '&quot;'); 
-                return `
-                <div onclick="selectCountry(this, '${c.number_id}', '${c.name}', '${priceData}')" 
-                     class="country-card cursor-pointer bg-black/40 border border-gray-700 rounded-lg p-2 flex items-center gap-3 hover:border-gray-500 transition">
-                    <img src="${c.img}" class="w-6 h-4 rounded-sm object-cover">
-                    <div class="flex-1">
-                        <div class="text-xs font-bold text-white leading-tight">${c.name}</div>
-                        <div class="text-[9px] text-gray-500">Stok: ${c.stock_total || '∞'}</div>
-                    </div>
-                </div>`;
+                return `<div onclick="selectCountry(this, '${c.number_id}', '${c.name}', '${priceData}')" class="country-card cursor-pointer bg-black/40 border border-gray-700 rounded-lg p-2 flex items-center gap-3 hover:border-gray-500 transition"><img src="${c.img}" class="w-6 h-4 rounded-sm object-cover"><div class="flex-1"><div class="text-xs font-bold text-white leading-tight">${c.name}</div><div class="text-[9px] text-gray-500">Stok: ${c.stock_total || '∞'}</div></div></div>`;
             }).join('');
         }
     } catch(e) { countryGrid.innerHTML = '<div class="col-span-full text-red-500 text-xs">Gagal.</div>'; }
 }
 
-// 3. PILIH NEGARA -> LIST SERVER
 function selectCountry(el, numId, name, priceDataJson) {
     document.querySelectorAll('.country-card').forEach(c => c.classList.remove('active-card'));
     el.classList.add('active-card');
-    currentNokos.countryId = numId;
-    currentNokos.countryName = name;
-
+    currentNokos.countryId = numId; currentNokos.countryName = name;
     resetSteps(['step-server', 'step-operator', 'step-checkout']);
     document.getElementById('step-server').classList.remove('hidden');
-    
     const serverList = document.getElementById('nokos-server-list');
     const prices = JSON.parse(priceDataJson); 
-
-    serverList.innerHTML = prices.map(p => `
-    <div onclick="selectServer(this, '${p.provider_id}', '${p.price}')" 
-         class="server-card cursor-pointer bg-black/40 border border-gray-700 rounded-lg p-3 flex justify-between items-center hover:border-green-500 transition group">
-        <div class="flex items-center gap-3">
-            <div class="bg-gray-800 p-2 rounded text-xs font-mono text-gray-400 group-hover:bg-green-900 group-hover:text-green-400">ID:${p.provider_id}</div>
-            <div>
-                <div class="text-xs font-bold text-white">Server ${p.server_id || 'Fast'}</div>
-                <div class="text-[10px] text-gray-500">Stok: ${p.stock}</div>
-            </div>
-        </div>
-        <div class="text-sm font-bold text-green-400">${p.price_format}</div>
-    </div>
-    `).join('');
+    serverList.innerHTML = prices.map(p => `<div onclick="selectServer(this, '${p.provider_id}', '${p.price}')" class="server-card cursor-pointer bg-black/40 border border-gray-700 rounded-lg p-3 flex justify-between items-center hover:border-green-500 transition group"><div class="flex items-center gap-3"><div class="bg-gray-800 p-2 rounded text-xs font-mono text-gray-400 group-hover:bg-green-900 group-hover:text-green-400">ID:${p.provider_id}</div><div><div class="text-xs font-bold text-white">Server ${p.server_id || 'Fast'}</div><div class="text-[10px] text-gray-500">Stok: ${p.stock}</div></div></div><div class="text-sm font-bold text-green-400">${p.price_format}</div></div>`).join('');
 }
 
-// 4. PILIH SERVER -> LIST OPERATOR
 async function selectServer(el, provId, price) {
     document.querySelectorAll('.server-card').forEach(c => c.classList.remove('active-card'));
     el.classList.add('active-card');
-    currentNokos.providerId = provId;
-    currentNokos.serverPrice = parseInt(price);
-
+    currentNokos.providerId = provId; currentNokos.serverPrice = parseInt(price);
     resetSteps(['step-operator', 'step-checkout']);
     document.getElementById('step-operator').classList.remove('hidden');
-    
     const opGrid = document.getElementById('nokos-operator-grid');
     opGrid.innerHTML = '<div class="col-span-full text-center text-xs text-yellow-500 animate-pulse">Memuat Operator...</div>';
-
     try {
         const countryEnc = encodeURIComponent(currentNokos.countryName);
         const res = await fetch(`/api/nokos/operators?country=${countryEnc}&provider_id=${provId}`);
         const data = await res.json();
-        
         if(data.status || data.success) {
-            let html = `
-            <div onclick="selectOperator(this, 'any', 'Any/Acak')" 
-                 class="operator-card cursor-pointer bg-black/40 border border-gray-700 rounded-lg p-3 flex flex-col items-center justify-center gap-1 hover:border-green-500 transition">
-                <div class="w-6 h-6 rounded-full bg-gray-700 text-white flex items-center justify-center font-bold text-xs">?</div>
-                <span class="text-[9px] font-bold text-white">ANY</span>
-            </div>`;
-            
-            html += data.data.map(op => `
-            <div onclick="selectOperator(this, '${op.id}', '${op.name}')" 
-                 class="operator-card cursor-pointer bg-black/40 border border-gray-700 rounded-lg p-3 flex flex-col items-center justify-center gap-1 hover:border-green-500 transition relative overflow-hidden">
-                <img src="${op.image}" onerror="this.src='https://via.placeholder.com/20'" class="w-5 h-5 object-contain">
-                <span class="text-[9px] font-bold text-gray-300 truncate w-full text-center">${op.name}</span>
-            </div>`).join('');
-            
+            let html = `<div onclick="selectOperator(this, 'any', 'Any/Acak')" class="operator-card cursor-pointer bg-black/40 border border-gray-700 rounded-lg p-3 flex flex-col items-center justify-center gap-1 hover:border-green-500 transition"><div class="w-6 h-6 rounded-full bg-gray-700 text-white flex items-center justify-center font-bold text-xs">?</div><span class="text-[9px] font-bold text-white">ANY</span></div>`;
+            html += data.data.map(op => `<div onclick="selectOperator(this, '${op.id}', '${op.name}')" class="operator-card cursor-pointer bg-black/40 border border-gray-700 rounded-lg p-3 flex flex-col items-center justify-center gap-1 hover:border-green-500 transition relative overflow-hidden"><img src="${op.image}" onerror="this.src='https://via.placeholder.com/20'" class="w-5 h-5 object-contain"><span class="text-[9px] font-bold text-gray-300 truncate w-full text-center">${op.name}</span></div>`).join('');
             opGrid.innerHTML = html;
         } else { opGrid.innerHTML = '<div class="col-span-full text-red-500 text-xs">Gagal.</div>'; }
     } catch(e) { opGrid.innerHTML = '<div class="col-span-full text-red-500 text-xs">Error.</div>'; }
 }
 
-// 5. PILIH OPERATOR -> CHECKOUT
 function selectOperator(el, opId, opName) {
     document.querySelectorAll('.operator-card').forEach(c => c.classList.remove('active-card'));
     el.classList.add('active-card');
     currentNokos.operatorId = opId;
-
     document.getElementById('step-checkout').classList.remove('hidden');
     document.getElementById('display-price').innerText = `Rp ${currentNokos.serverPrice.toLocaleString()}`;
     document.getElementById('display-info').innerText = opName;
@@ -412,213 +386,86 @@ function selectOperator(el, opId, opName) {
     document.getElementById('step-checkout').scrollIntoView({ behavior: 'smooth' });
 }
 
-// 6. EXECUTE BUY
 async function executeBuyNokos() {
     if(!confirm(`Beli nomor ${currentNokos.serviceName}?\nPastikan saldo cukup.`)) return;
-    
     const btn = document.getElementById('btn-buy-nokos');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> PROSES...';
-    btn.disabled = true;
-
+    const originalText = btn.innerHTML; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> PROSES...'; btn.disabled = true;
     try {
-        const payload = {
-            username: userSession,
-            service_id: currentNokos.serviceId,
-            service_name: currentNokos.serviceName,
-            number_id: currentNokos.countryId,
-            provider_id: currentNokos.providerId,
-            operator_id: currentNokos.operatorId
-        };
-
+        const payload = { username: userSession, service_id: currentNokos.serviceId, service_name: currentNokos.serviceName, number_id: currentNokos.countryId, provider_id: currentNokos.providerId, operator_id: currentNokos.operatorId };
         const res = await fetch('/api/nokos/buy', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
         const d = await res.json();
-        
-        if(d.success) {
-            showToast("SUKSES! Menunggu SMS...", "success");
-            checkUserLogin(); fetchNokosHistory();
-            resetSteps(['step-checkout']);
-        } else {
-            let msg = d.msg || "Gagal";
-            if(d.msg && d.msg.includes("Pusat:")) msg = "GAGAL MENGAMBIL STOCK / STOCK HABIS, Tunggu beberapa saat lagi.";
-            showToast(msg, "error");
-        }
+        if(d.success) { showToast("SUKSES! Menunggu SMS...", "success"); checkUserLogin(); fetchNokosHistory(); resetSteps(['step-checkout']); } 
+        else { let msg = d.msg || "Gagal"; if(d.msg && d.msg.includes("Pusat:")) msg = "GAGAL DARI PUSAT: Saldo/Stok Habis."; showToast(msg, "error"); }
     } catch(e) { showToast("Koneksi Error.", "error"); } 
     finally { btn.innerHTML = originalText; btn.disabled = false; }
 }
 
 function resetSteps(ids) { ids.forEach(id => document.getElementById(id).classList.add('hidden')); }
+function buyNokosAgain() { document.getElementById('view-nokos').scrollIntoView({ behavior: 'smooth' }); initNokos(); }
 
 // ============================================
-// 7. ACTIVE ORDERS (CARD STYLE) & CANCEL
+// 7. ACTIVE ORDERS (DYNAMIC BUTTONS)
 // ============================================
-
-// ... (bagian atas kode tetap sama)
 
 async function fetchNokosHistory() {
     if(!userSession) return;
-    
     const res = await fetch(`/api/nokos/history/${userSession}`); 
     const list = await res.json();
     const container = document.getElementById('nokos-active-container');
-    
     const activeList = list.filter(tx => tx.status === 'waiting');
-
-    if(activeList.length === 0) { 
-        container.innerHTML = '<div class="col-span-full text-center py-10 text-gray-500 italic bg-white/5 rounded-xl border border-white/5">Tidak ada pesanan aktif.</div>'; 
-        return; 
-    }
+    if(activeList.length === 0) { container.innerHTML = '<div class="col-span-full text-center py-10 text-gray-500 italic bg-white/5 rounded-xl border border-white/5">Tidak ada pesanan aktif.</div>'; return; }
     
     container.innerHTML = await Promise.all(activeList.map(async (tx) => {
-        // Cek status
         await fetch(`/api/nokos/status/${tx.invoiceId}`); 
-        
-        const exp = new Date(tx.expiresAt); 
-        const created = new Date(tx.createdAt);
-        const now = new Date();
+        const exp = new Date(tx.expiresAt); const created = new Date(tx.createdAt); const now = new Date();
         const timeLeft = Math.floor((exp - now) / 1000);
         let timeDisplay = timeLeft > 0 ? `${Math.floor(timeLeft/60)}:${(timeLeft%60).toString().padStart(2,'0')}` : '00:00';
         
         let footerHtml = '';
-        
-        // JIKA ADA SMS -> Tombol 'done' & 'resend'
         if (tx.smsCode) {
-            footerHtml = `
-                <div class="text-[10px] text-green-400 mb-2 font-bold animate-pulse">OTP Diterima! Klik Selesai jika berhasil.</div>
-                <div class="flex gap-2">
-                    <button onclick="nokosAction('${tx.invoiceId}', 'resend')" class="flex-1 py-2 rounded-lg border border-yellow-500/50 text-yellow-400 text-xs font-bold hover:bg-yellow-500/10 transition"><i class="fa-solid fa-rotate-right mr-1"></i> Resend</button>
-                    <button onclick="nokosAction('${tx.invoiceId}', 'done')" class="flex-1 py-2 rounded-lg border border-green-500 text-green-500 text-xs font-bold hover:bg-green-500/10 transition shadow-lg shadow-green-500/20"><i class="fa-solid fa-check mr-1"></i> Selesai</button>
-                </div>`;
-        } 
-        // JIKA BELUM ADA SMS -> Tombol 'cancel' (Timer) & 'resend'
-        else {
-            const elapsedSeconds = Math.floor((now - created) / 1000);
-            const waitTime = 240; 
-            
-            let cancelBtn = '';
-            if (elapsedSeconds < waitTime) {
-                const waitLeft = waitTime - elapsedSeconds;
-                const waitMin = Math.floor(waitLeft/60);
-                const waitSec = (waitLeft % 60).toString().padStart(2,'0');
-                cancelBtn = `<button disabled class="flex-1 py-2 rounded-lg border border-gray-600 text-gray-500 text-xs font-bold cursor-not-allowed">Wait ${waitMin}:${waitSec}</button>`;
-            } else {
-                // KIRIM 'cancel' (sesuai request)
-                cancelBtn = `<button onclick="nokosAction('${tx.invoiceId}', 'cancel')" class="flex-1 py-2 rounded-lg border border-red-500 text-red-500 text-xs font-bold hover:bg-red-500/10 transition"><i class="fa-solid fa-xmark mr-1"></i> Batal</button>`;
-            }
-
-            footerHtml = `
-                <div class="text-[10px] text-gray-400 mb-2">Belum ada SMS? Tunggu atau Resend.</div>
-                <div class="flex gap-2">
-                    <button onclick="nokosAction('${tx.invoiceId}', 'resend')" class="flex-1 py-2 rounded-lg border border-blue-500/50 text-blue-400 text-xs font-bold hover:bg-blue-500/10 transition"><i class="fa-solid fa-rotate-right mr-1"></i> Resend</button>
-                    ${cancelBtn}
-                </div>`;
+            footerHtml = `<div class="text-[10px] text-green-400 mb-2 font-bold animate-pulse">OTP Diterima! Klik Selesai jika berhasil.</div><div class="flex gap-2"><button onclick="nokosAction('${tx.invoiceId}', 'resend')" class="flex-1 py-2 rounded-lg border border-yellow-500/50 text-yellow-400 text-xs font-bold hover:bg-yellow-500/10 transition"><i class="fa-solid fa-rotate-right mr-1"></i> Resend</button><button onclick="nokosAction('${tx.invoiceId}', 'done')" class="flex-1 py-2 rounded-lg border border-green-500 text-green-500 text-xs font-bold hover:bg-green-500/10 transition shadow-lg shadow-green-500/20"><i class="fa-solid fa-check mr-1"></i> Selesai</button></div>`;
+        } else {
+            const elapsedSeconds = Math.floor((now - created) / 1000); const waitTime = 240; 
+            let cancelBtn = elapsedSeconds < waitTime ? `<button disabled class="flex-1 py-2 rounded-lg border border-gray-600 text-gray-500 text-xs font-bold cursor-not-allowed">Wait ${Math.floor((waitTime-elapsedSeconds)/60)}:${((waitTime-elapsedSeconds)%60).toString().padStart(2,'0')}</button>` : `<button onclick="nokosAction('${tx.invoiceId}', 'cancel')" class="flex-1 py-2 rounded-lg border border-red-500 text-red-500 text-xs font-bold hover:bg-red-500/10 transition"><i class="fa-solid fa-xmark mr-1"></i> Batal</button>`;
+            footerHtml = `<div class="text-[10px] text-gray-400 mb-2">Belum ada SMS? Tunggu atau Resend.</div><div class="flex gap-2"><button onclick="nokosAction('${tx.invoiceId}', 'resend')" class="flex-1 py-2 rounded-lg border border-blue-500/50 text-blue-400 text-xs font-bold hover:bg-blue-500/10 transition"><i class="fa-solid fa-rotate-right mr-1"></i> Resend</button>${cancelBtn}</div>`;
         }
-
-        let smsSection = `<div class="flex items-center gap-2 text-yellow-500 animate-pulse"><i class="fa-regular fa-envelope"></i><span class="text-xs font-bold">menunggu sms...</span></div>`;
-        if(tx.smsCode) smsSection = `<div class="flex flex-col"><span class="text-[10px] text-gray-400">Kode OTP:</span><span class="text-2xl font-mono font-bold text-green-400 tracking-[0.2em] select-all cursor-pointer bg-green-900/20 px-2 rounded">${tx.smsCode}</span></div>`;
-
+        let smsSection = tx.smsCode ? `<div class="flex flex-col"><span class="text-[10px] text-gray-400">Kode OTP:</span><span class="text-2xl font-mono font-bold text-green-400 tracking-[0.2em] select-all cursor-pointer bg-green-900/20 px-2 rounded">${tx.smsCode}</span></div>` : `<div class="flex items-center gap-2 text-yellow-500 animate-pulse"><i class="fa-regular fa-envelope"></i><span class="text-xs font-bold">menunggu sms...</span></div>`;
         const appIcons = {'WhatsApp': 'https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg', 'Telegram': 'https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg', 'TikTok': 'https://sf-tb-sg.ibytedtos.com/obj/eden-sg/uhtyvueh7nulogpoguhm/tiktok-icon2.png'};
-        const appIcon = appIcons[tx.serviceName] || 'https://via.placeholder.com/30?text=App';
-
-        return `
-        <div class="bg-white/5 border border-white/10 rounded-xl p-4 relative overflow-hidden group hover:border-gray-600 transition">
-            <div class="flex justify-between items-start mb-3 border-b border-gray-700 pb-3">
-                <div class="flex items-center gap-2">
-                    <div class="w-6 h-4 bg-gray-700 rounded-sm overflow-hidden relative"><i class="fa-solid fa-globe text-gray-400 text-[10px] absolute inset-0 flex items-center justify-center"></i></div>
-                    <span class="font-mono text-lg text-white font-bold tracking-wide select-all">${tx.phoneNumber}</span>
-                    <button onclick="navigator.clipboard.writeText('${tx.phoneNumber}')" class="text-gray-500 hover:text-white transition"><i class="fa-regular fa-copy"></i></button>
-                </div>
-                <div class="bg-yellow-500/20 text-yellow-500 px-2 py-1 rounded text-xs font-mono font-bold flex items-center gap-1"><i class="fa-regular fa-clock"></i> ${timeDisplay}</div>
-            </div>
-            <div class="flex justify-between items-center mb-4">
-                <div class="flex items-center gap-3"><img src="${appIcon}" class="w-8 h-8 object-contain"><div><div class="text-white font-bold text-sm">${tx.serviceName}</div><div class="text-[10px] text-gray-400">${tx.country}</div></div></div>
-                <div class="text-right">${smsSection}</div>
-            </div>
-            <div class="bg-black/30 rounded-lg p-3 border border-white/5 transition-all duration-300">${footerHtml}</div>
-        </div>`;
+        return `<div class="bg-white/5 border border-white/10 rounded-xl p-4 relative overflow-hidden group hover:border-gray-600 transition"><div class="flex justify-between items-start mb-3 border-b border-gray-700 pb-3"><div class="flex items-center gap-2"><div class="w-6 h-4 bg-gray-700 rounded-sm overflow-hidden relative"><i class="fa-solid fa-globe text-gray-400 text-[10px] absolute inset-0 flex items-center justify-center"></i></div><span class="font-mono text-lg text-white font-bold tracking-wide select-all">${tx.phoneNumber}</span><button onclick="navigator.clipboard.writeText('${tx.phoneNumber}')" class="text-gray-500 hover:text-white transition"><i class="fa-regular fa-copy"></i></button></div><div class="bg-yellow-500/20 text-yellow-500 px-2 py-1 rounded text-xs font-mono font-bold flex items-center gap-1"><i class="fa-regular fa-clock"></i> ${timeDisplay}</div></div><div class="flex justify-between items-center mb-4"><div class="flex items-center gap-3"><img src="${appIcons[tx.serviceName] || 'https://via.placeholder.com/30'}" class="w-8 h-8 object-contain"><div><div class="text-white font-bold text-sm">${tx.serviceName}</div><div class="text-[10px] text-gray-400">${tx.country}</div></div></div><div class="text-right">${smsSection}</div></div><div class="bg-black/30 rounded-lg p-3 border border-white/5 transition-all duration-300">${footerHtml}</div></div>`;
     })).then(rows => rows.join(''));
 }
 
-// FUNGSI AKSI BARU
 async function nokosAction(invId, actionType) {
     let msg = "Proses...";
     if(actionType === 'cancel') { if(!confirm("Batalkan nomor & Refund?")) return; msg = "Membatalkan..."; }
     if(actionType === 'done') { if(!confirm("Selesaikan pesanan ini?")) return; msg = "Menyelesaikan..."; }
     if(actionType === 'resend') { msg = "Meminta kirim ulang SMS..."; }
-
     showToast(msg, "info");
-
     try {
-        // Kirim actionType yang sesuai ('cancel', 'done', 'resend')
-        const res = await fetch('/api/nokos/action', {
-            method: 'POST', 
-            headers: {'Content-Type':'application/json'}, 
-            body: JSON.stringify({
-                invoiceId: invId, 
-                username: userSession,
-                action: actionType 
-            })
-        });
-        
+        const res = await fetch('/api/nokos/action', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ invoiceId: invId, username: userSession, action: actionType }) });
         const d = await res.json();
-        
-        if(d.success) { 
-            showToast("✅ " + d.msg, "success"); 
-            fetchNokosHistory(); 
-            if(actionType === 'cancel') checkUserLogin(); 
-        } else { 
-            showToast("❌ " + d.msg, "error"); 
-        }
-    } catch(e) { 
-        showToast("Gagal koneksi.", "error"); 
-    }
-}
-
-function buyNokosAgain() {
-    document.getElementById('view-nokos').scrollIntoView({ behavior: 'smooth' });
-    initNokos();
+        if(d.success) { showToast("✅ " + d.msg, "success"); fetchNokosHistory(); if(actionType === 'cancel') checkUserLogin(); } 
+        else { showToast("❌ " + d.msg, "error"); }
+    } catch(e) { showToast("Gagal koneksi.", "error"); }
 }
 
 // ============================================
-// 8. HISTORY GABUNGAN & SERVICES
-// ==========================================
+// 8. HISTORY & SERVICES
+// ============================================
 
-// [UPDATE] HISTORY DIBATASI 10 DATA
 async function fetchHistory() {
     if(!userSession) return;
-    const list = document.getElementById('history-list');
-    list.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-gray-500 text-xs"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Loading...</td></tr>';
-
+    const list = document.getElementById('history-list'); list.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-gray-500 text-xs"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Loading...</td></tr>';
     try {
         const [resGen, resNok] = await Promise.all([fetch(`/api/history/${userSession}`), fetch(`/api/nokos/history/${userSession}`)]);
-        const dataGen = await resGen.json();
-        const dataNok = await resNok.json();
-
-        // Ambil Nokos yg statusnya success/canceled/failed (History)
-        const finishedNokos = dataNok.filter(tx => tx.status !== 'waiting').map(tx => ({
-            date: tx.createdAt, desc: `Nokos ${tx.serviceName} (${tx.phoneNumber})`, amount: tx.price, type: 'OUT', 
-            status: tx.status === 'success' ? 'success' : 'canceled' 
-        }));
-
-        // Gabungkan -> Sortir Terbaru -> AMBIL 10 TERATAS SAJA
-        const combined = [...dataGen, ...finishedNokos]
-            .sort((a, b) => new Date(b.date) - new Date(a.date))
-            .slice(0, 10); // <--- INI KUNCINYA (Limit Tampilan)
-
+        const dataGen = await resGen.json(); const dataNok = await resNok.json();
+        const finishedNokos = dataNok.filter(tx => tx.status !== 'waiting').map(tx => ({ date: tx.createdAt, desc: `Nokos ${tx.serviceName} (${tx.phoneNumber})`, amount: tx.price, type: 'OUT', status: tx.status === 'success' ? 'success' : 'canceled' }));
+        const combined = [...dataGen, ...finishedNokos].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 10);
         if (combined.length === 0) { list.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-500 italic text-xs">Belum ada riwayat.</td></tr>'; return; }
-
         list.innerHTML = combined.map(item => {
-            const d = new Date(item.date);
-            const dateStr = `${d.getDate()}/${d.getMonth()+1} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
-            const isTopup = item.type === 'IN';
-            const colorClass = isTopup ? 'text-green-400' : 'text-red-400';
-            const symbol = isTopup ? '+' : '-';
-            
-            let badge = '';
-            if(item.status === 'success') badge = '<span class="text-[10px] font-bold text-green-500 bg-green-900/20 px-2 py-1 rounded">SUKSES</span>';
-            else if(item.status === 'canceled') badge = '<span class="text-[10px] font-bold text-red-400 bg-red-900/20 px-2 py-1 rounded">REFUND</span>';
-            else badge = '<span class="text-[10px] font-bold text-yellow-500 bg-yellow-900/20 px-2 py-1 rounded">PROSES</span>';
-
+            const d = new Date(item.date); const dateStr = `${d.getDate()}/${d.getMonth()+1} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+            const isTopup = item.type === 'IN'; const colorClass = isTopup ? 'text-green-400' : 'text-red-400'; const symbol = isTopup ? '+' : '-';
+            let badge = ''; if(item.status === 'success') badge = '<span class="text-[10px] font-bold text-green-500 bg-green-900/20 px-2 py-1 rounded">SUKSES</span>'; else if(item.status === 'canceled') badge = '<span class="text-[10px] font-bold text-red-400 bg-red-900/20 px-2 py-1 rounded">REFUND</span>'; else badge = '<span class="text-[10px] font-bold text-yellow-500 bg-yellow-900/20 px-2 py-1 rounded">PROSES</span>';
             return `<tr class="hover:bg-white/5 transition border-b border-gray-800/50"><td class="p-3 text-gray-500 font-mono text-xs whitespace-nowrap">${dateStr}</td><td class="p-3"><div class="font-medium text-white text-xs">${item.desc}</div><div class="md:hidden text-[10px] text-gray-600">${isTopup ? 'Deposit' : 'Pembelian'}</div></td><td class="p-3 text-right font-mono font-bold text-xs ${colorClass}">${symbol}Rp ${item.amount.toLocaleString()}</td><td class="p-3 text-center">${badge}</td></tr>`;
         }).join('');
     } catch (err) { list.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-red-500 text-xs">Gagal.</td></tr>'; }
@@ -633,61 +480,72 @@ async function fetchMyServices() {
     } catch(e){}
 }
 
-// ============================================
-// 9. SYSTEM STATS & TESTIMONI
-// ============================================
-
 async function updateServerStats() {
     try {
         const res = await fetch('/api/system/status');
         const data = await res.json();
-        const vpsEl = document.getElementById('runtime-vps');
-        const statusBadge = document.getElementById('status-badge');
-        const botEl = document.getElementById('runtime-bot');
-        
-        if (data.vpsActive) {
-            const start = new Date(data.vpsStartTime).getTime();
-            const diff = new Date().getTime() - start;
-            const days = Math.floor(diff/(1000*60*60*24));
-            const hours = Math.floor((diff%(1000*60*60*24))/(1000*60*60));
-            const mins = Math.floor((diff%(1000*60*60))/(1000*60));
-            if(vpsEl) vpsEl.innerText = `${days}d ${hours}h ${mins}m`;
-            if(statusBadge) { statusBadge.innerText = "ONLINE"; statusBadge.className = "text-green-400 text-[10px] bg-green-900/50 px-2 py-1 rounded border border-green-500 font-bold"; }
+        const vpsEl = document.getElementById('runtime-vps'); const statusBadge = document.getElementById('status-badge'); const botEl = document.getElementById('runtime-bot');
+        if (data.vpsActive && vpsEl) {
+            const start = new Date(data.vpsStartTime).getTime(); const diff = new Date().getTime() - start;
+            const days = Math.floor(diff/(1000*60*60*24)); const hours = Math.floor((diff%(1000*60*60*24))/(1000*60*60));
+            vpsEl.innerText = `${days}d ${hours}h`; statusBadge.innerText = "ONLINE"; statusBadge.className = "text-green-400 text-[10px] bg-green-900/50 px-2 py-1 rounded border border-green-500 font-bold";
             const cpuBar = document.getElementById('bar-cpu'), cpuTxt = document.getElementById('text-cpu');
             if(cpuBar) { const r = Math.floor(Math.random()*30)+10; cpuBar.style.width = r+"%"; cpuTxt.innerText = r+"%"; }
-        } else {
-            if(vpsEl) vpsEl.innerText = "OFFLINE";
-            if(statusBadge) { statusBadge.innerText = "MAINTENANCE"; statusBadge.className = "text-red-500 text-[10px] bg-red-900/50 px-2 py-1 rounded border border-red-500 font-bold animate-pulse"; }
         }
         if (data.botActive && botEl) {
-            const start = new Date(data.botStartTime).getTime();
-            const diff = new Date().getTime() - start;
-            const days = Math.floor(diff/(1000*60*60*24));
-            const hours = Math.floor((diff%(1000*60*60*24))/(1000*60*60));
+            const start = new Date(data.botStartTime).getTime(); const diff = new Date().getTime() - start;
+            const days = Math.floor(diff/(1000*60*60*24)); const hours = Math.floor((diff%(1000*60*60*24))/(1000*60*60));
             botEl.innerHTML = `<span class="text-blue-400">${days}d ${hours}h</span>`;
-        } else if(botEl) { botEl.innerText = "OFFLINE"; }
+        }
     } catch(e) {}
 }
 
-function setRating(n) { document.getElementById('ratingValue').value = n; document.getElementById('rating-text').innerText = n + ".0"; for (let i = 1; i <= 5; i++) { const s=document.getElementById(`star-${i}`); if(i<=n){s.classList.remove('text-gray-600');s.classList.add('text-yellow-500'); s.style.transform="scale(1.4)"; setTimeout(()=>s.style.transform="scale(1)", 200); }else{s.classList.remove('text-yellow-500');s.classList.add('text-gray-600');} } }
+async function submitReview(e) { e.preventDefault(); if(!userSession) return showToast("Login dulu.", "error"); const btn=document.getElementById('btn-submit-review'); btn.innerHTML='Mengirim...'; btn.disabled=true; try { const res=await fetch('/api/testimonials',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:userSession,rating:parseInt(document.getElementById('ratingValue').value),comment:document.getElementById('reviewComment').value})}); if((await res.json()).success){showToast("Ulasan terkirim!", "success"); document.getElementById('reviewComment').value=''; setRating(5); fetchTestimonials();} else showToast("Gagal.", "error"); } catch(e){} finally{ btn.innerHTML='Kirim Ulasan'; btn.disabled=false; } }
+function setRating(n) { document.getElementById('ratingValue').value = n; document.getElementById('rating-text').innerText = n + ".0"; for (let i = 1; i <= 5; i++) { const s=document.getElementById(`star-${i}`); if(i<=n){s.classList.remove('text-gray-600');s.classList.add('text-yellow-500');}else{s.classList.remove('text-yellow-500');s.classList.add('text-gray-600');} } }
+async function fetchTestimonials() { try { const d = await (await fetch('/api/testimonials')).json(); const g=document.getElementById('testimonial-grid'); if(d.length===0){g.innerHTML='<div class="w-full text-center text-gray-500 italic py-10">Belum ada ulasan.</div>';return;} g.innerHTML=d.map(x=>`<div class="glass-card p-5 rounded-xl w-[85vw] md:w-[320px] flex-none snap-center border-l-2 border-l-purple-500"><div class="flex justify-between mb-2"><h4 class="font-bold text-white text-sm">${x.username}</h4><span class="text-yellow-500 text-xs">★ ${x.rating}.0</span></div><p class="text-gray-300 text-sm italic">"${x.comment}"</p></div>`).join(''); } catch(e){} }
 
-async function submitReview(e) { 
-    e.preventDefault(); 
-    if(!userSession) return showToast("Login dulu.", "error"); 
-    const btn=document.getElementById('btn-submit-review'); btn.innerHTML='Mengirim...'; btn.disabled=true; 
-    try { 
-        const res=await fetch('/api/testimonials',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:userSession,rating:parseInt(document.getElementById('ratingValue').value),comment:document.getElementById('reviewComment').value})}); 
-        if((await res.json()).success){showToast("Ulasan terkirim!", "success"); document.getElementById('reviewComment').value=''; setRating(5); fetchTestimonials();} else showToast("Gagal.", "error"); 
-    } catch(e){} finally{ btn.innerHTML='Kirim Ulasan'; btn.disabled=false; } 
+// ============================================
+// 9. LIVE SOCIAL PROOF (NOTIFIKASI PALSU)
+// ============================================
+
+const fakeNames = ["Rizky", "Dimas", "Bayu", "Sultan_Indo", "Anonim", "Dika", "Fajar", "Admin", "User123", "GamerID", "Putri", "ManzzyFan"];
+const fakeProducts = [{ name: "Nokos WhatsApp", type: "buy" }, { name: "Nokos Telegram", type: "buy" }, { name: "Nokos Shopee", type: "buy" }, { name: "Top Up Rp 20.000", type: "topup" }, { name: "Top Up Rp 50.000", type: "topup" }, { name: "VPS Murah", type: "buy" }, { name: "Panel Pterodactyl", type: "buy" }];
+
+function showLiveNotification() {
+    // Inject HTML jika belum ada
+    if(!document.getElementById('live-notification')) {
+        const div = document.createElement('div');
+        div.id = 'live-notification';
+        div.className = "fixed bottom-5 left-5 z-50 flex flex-col gap-2 pointer-events-none transition-all duration-500 transform translate-y-20 opacity-0";
+        div.innerHTML = `<div class="glass-card p-3 rounded-xl border-l-4 border-l-green-500 flex items-center gap-3 w-72 shadow-2xl bg-black/80 backdrop-blur-md"><div class="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-400"><i id="notif-icon" class="fa-solid fa-cart-shopping"></i></div><div><h4 id="notif-title" class="text-xs font-bold text-white mb-0.5">Pembelian Baru</h4><p id="notif-desc" class="text-[10px] text-gray-300">Rizky membeli WhatsApp ID</p><p class="text-[9px] text-gray-500 mt-0.5">Baru saja</p></div></div>`;
+        document.body.appendChild(div);
+    }
+
+    const container = document.getElementById('live-notification');
+    const titleEl = document.getElementById('notif-title');
+    const descEl = document.getElementById('notif-desc');
+    const iconEl = document.getElementById('notif-icon');
+    const cardEl = container.querySelector('.glass-card');
+
+    const name = fakeNames[Math.floor(Math.random() * fakeNames.length)];
+    const prod = fakeProducts[Math.floor(Math.random() * fakeProducts.length)];
+
+    if (prod.type === 'topup') {
+        titleEl.innerText = "Deposit Berhasil"; descEl.innerText = `${name} baru saja deposit saldo.`; iconEl.className = "fa-solid fa-wallet";
+        cardEl.className = "glass-card p-3 rounded-xl border-l-4 border-l-green-500 flex items-center gap-3 w-72 shadow-2xl bg-black/80 backdrop-blur-md";
+        iconEl.parentElement.className = "w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-400";
+    } else {
+        titleEl.innerText = "Pembelian Sukses"; descEl.innerText = `${name} membeli ${prod.name}.`; iconEl.className = "fa-solid fa-cart-shopping";
+        cardEl.className = "glass-card p-3 rounded-xl border-l-4 border-l-purple-500 flex items-center gap-3 w-72 shadow-2xl bg-black/80 backdrop-blur-md";
+        iconEl.parentElement.className = "w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400";
+    }
+
+    container.classList.remove('translate-y-20', 'opacity-0');
+    setTimeout(() => { container.classList.add('translate-y-20', 'opacity-0'); }, 4000);
 }
 
-async function fetchTestimonials() { 
-    try { 
-        const d = await (await fetch('/api/testimonials')).json(); 
-        const g=document.getElementById('testimonial-grid'); 
-        if(d.length===0){g.innerHTML='<div class="w-full text-center text-gray-500 italic py-10">Belum ada ulasan.</div>';return;} 
-        g.innerHTML=d.map(x=>`<div class="glass-card p-5 rounded-xl w-[85vw] md:w-[320px] flex-none snap-center border-l-2 border-l-purple-500"><div class="flex justify-between mb-2"><h4 class="font-bold text-white text-sm">${x.username}</h4><span class="text-yellow-500 text-xs">★ ${x.rating}.0</span></div><p class="text-gray-300 text-sm italic">"${x.comment}"</p></div>`).join(''); 
-    } catch(e){} 
+function startLiveNotif() {
+    setTimeout(() => { showLiveNotification(); setInterval(() => { showLiveNotification(); }, Math.floor(Math.random() * (15000 - 8000 + 1) + 8000)); }, 5000);
 }
 
 initData();
