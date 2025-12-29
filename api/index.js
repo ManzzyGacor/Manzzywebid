@@ -23,7 +23,7 @@ const UserSchema = new mongoose.Schema({
 });
 const User = mongoose.models.User || mongoose.model('User', UserSchema);
 
-// Schema Layanan Aktif (VPS/Bot) - Agar admin bisa input data
+// Schema Layanan Aktif (VPS/Bot)
 const ActiveServiceSchema = new mongoose.Schema({
     username: String, productName: String, targetNumber: String,
     serverIp: String, expiredDate: Date
@@ -64,22 +64,24 @@ const TransactionSchema = new mongoose.Schema({
 const Transaction = mongoose.models.Transaction || mongoose.model('Transaction', TransactionSchema);
 
 // ==========================================
-// ROUTES AUTH & ADMIN SETUP
+// ROUTES AUTH (LOGIN USER & ADMIN HARDCODE)
 // ==========================================
-
-// RUN SEKALI DI BROWSER: /api/setup-admin
-app.get('/api/setup-admin', async (req, res) => {
-    await connectDB();
-    try {
-        await User.findOneAndDelete({ username: 'admin' });
-        await new User({ username: 'man', password: '112233', role: 'admin', balance: 999999 }).save();
-        res.json({ success: true, msg: "Admin Reset: User 'man', Pass '112233'" });
-    } catch(e) { res.json({ error: e.message }); }
-});
 
 app.post('/api/login-user', async (req, res) => {
     await connectDB();
     const { username, password } = req.body;
+
+    // [FITUR BALIKAN] LOGIN ADMIN HARDCODED (TANPA DB)
+    // Username: man, Password: 112233
+    if (username === 'man' && password === '112233') {
+        return res.json({ 
+            success: true, 
+            username: 'Manzzy (Owner)', 
+            balance: 999999999, 
+            role: 'admin' // Kunci agar bisa masuk admin.html
+        });
+    }
+
     try {
         const user = await User.findOne({ username, password });
         if (!user) return res.status(400).json({ success: false, message: "Gagal Login" });
@@ -100,6 +102,10 @@ app.post('/api/register-user', async (req, res) => {
 
 app.get('/api/user/:username', async (req, res) => {
     await connectDB();
+    // Kalau admin login, kasih data dummy biar ga error di frontend
+    if(req.params.username === 'Manzzy (Owner)') {
+        return res.json({ username: 'Manzzy (Owner)', balance: 999999999, role: 'admin' });
+    }
     const user = await User.findOne({ username: req.params.username });
     res.json(user || {});
 });
@@ -182,7 +188,7 @@ app.post('/api/order', async (req, res) => {
     const user = await User.findOne({ username });
     const prod = await Product.findById(productId);
     
-    if(!user || !prod) return res.json({ success: false, msg: "Error" });
+    if(!user || !prod) return res.json({ success: false, msg: "Data invalid" });
     
     let price = prod.price;
     let note = "";
