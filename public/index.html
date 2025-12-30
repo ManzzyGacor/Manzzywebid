@@ -92,10 +92,21 @@
         <div class="mt-auto pt-6 border-t border-gray-800 text-center"><p class="text-[10px] text-gray-600 font-mono">© Manzzy ID Official</p></div>
     </aside>
 
-    <nav class="fixed top-0 w-full z-50 backdrop-blur-md bg-black/60 border-b border-white/5">
+<nav class="fixed top-0 w-full z-50 backdrop-blur-md bg-black/60 border-b border-white/5">
         <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-4"><button onclick="toggleSidebar()" class="text-gray-300 hover:text-white transition p-2 hover:bg-white/10 rounded-lg"><i class="fa-solid fa-bars text-xl"></i></button><div class="flex items-center gap-2 cursor-pointer" onclick="switchView('landing')"><div class="w-1 h-6 bg-purple-600 rounded-full"></div><h2 class="text-lg font-bold tracking-widest text-white">MANZZY<span class="text-purple-400">ID</span></h2></div></div>
-            <div id="header-balance" class="hidden md:flex items-center gap-3 px-4 py-2 rounded-full bg-black/50 border border-gray-700 hover:border-purple-500 transition cursor-default"><i class="fa-solid fa-wallet text-green-400 animate-pulse"></i><span class="text-sm text-white font-mono font-bold tracking-wide">Loading...</span></div>
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="text-gray-300 hover:text-white transition p-2 hover:bg-white/10 rounded-lg">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+                <div class="flex items-center gap-2 cursor-pointer" onclick="switchView('landing')">
+                    <div class="w-1 h-6 bg-purple-600 rounded-full"></div>
+                    <h2 class="text-lg font-bold tracking-widest text-white">MANZZY<span class="text-purple-400">ID</span></h2>
+                </div>
+            </div>
+            <div id="header-balance" class="flex items-center gap-3 px-4 py-2 rounded-full bg-black/50 border border-gray-700 hover:border-purple-500 transition cursor-default">
+                <i class="fa-solid fa-wallet text-green-400 animate-pulse"></i>
+                <span class="text-sm text-white font-mono font-bold tracking-wide">Loading...</span>
+            </div>
         </div>
     </nav>
 
@@ -264,14 +275,33 @@
         
         <section id="view-myservices" class="view-section"><div class="w-full mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4"><button onclick="switchView('landing')" class="text-gray-400 hover:text-white flex items-center gap-2 group"><i class="fa-solid fa-arrow-left"></i> Kembali</button><h2 class="text-3xl font-bold text-white">BOT <span class="text-blue-500">AKTIF</span></h2></div><div id="myservices-list" class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20"><p class="text-gray-500 col-span-full text-center py-10">Memuat layanan...</p></div></section>
     
-        <section id="view-history" class="view-section" style="margin-top: -720px !important;">
-            <div class="max-w-4xl mx-auto min-h-[50vh]">
-                <div class="flex items-center justify-between mb-4 mt-8 border-b border-gray-800 pb-4"><button onclick="switchView('myservices')" class="text-gray-400 hover:text-white text-sm flex items-center gap-2 transition group"><i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition"></i> Kembali</button><h2 class="text-lg md:text-xl font-bold text-white tracking-widest uppercase">Riwayat <span class="text-purple-500">Transaksi</span></h2></div>
-                <div class="glass-card rounded-xl overflow-hidden border border-gray-800/50 relative z-10">
-                    <div class="overflow-x-auto"><table class="w-full text-left border-collapse"><thead><tr class="bg-white/5 text-[10px] text-gray-500 uppercase tracking-wider"><th class="p-3 pl-4">Waktu</th><th class="p-3">Keterangan</th><th class="p-3 text-right">Nominal</th><th class="p-3 text-center pr-4">Status</th></tr></thead><tbody id="history-list" class="divide-y divide-gray-800 text-sm"><tr><td colspan="4" class="p-6 text-center text-gray-500 text-xs">Memuat data...</td></tr></tbody></table></div>
+ <section id="view-history" class="view-section pt-24 pb-24">
+        <div class="max-w-4xl mx-auto min-h-[50vh] px-4">
+            <div class="flex items-center justify-between mb-4 mt-8 border-b border-gray-800 pb-4">
+                <button onclick="switchView('myservices')" class="text-gray-400 hover:text-white text-sm flex items-center gap-2 transition group">
+                    <i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition"></i> Kembali
+                </button>
+                <h2 class="text-lg md:text-xl font-bold text-white tracking-widest uppercase">Riwayat <span class="text-purple-500">Transaksi</span></h2>
+            </div>
+            <div class="glass-card rounded-xl overflow-hidden border border-gray-800/50 relative z-10">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-white/5 text-[10px] text-gray-500 uppercase tracking-wider">
+                                <th class="p-3 pl-4">Waktu</th>
+                                <th class="p-3">Keterangan</th>
+                                <th class="p-3 text-right">Nominal</th>
+                                <th class="p-3 text-center pr-4">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-list" class="divide-y divide-gray-800 text-sm">
+                            <tr><td colspan="4" class="p-6 text-center text-gray-500 text-xs">Memuat data...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
         <div class="fixed bottom-24 right-6 z-50 flex flex-col items-end font-sans">
         
         <div id="cs-menu" class="hidden mb-4 bg-[#1a1a1d] border border-gray-700 rounded-2xl p-4 shadow-2xl w-64 transform transition-all duration-300 origin-bottom-right scale-0">
