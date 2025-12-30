@@ -834,6 +834,48 @@ function setRating(n) { document.getElementById('ratingValue').value = n; docume
 async function fetchTestimonials() { try { const d = await (await fetch('/api/testimonials')).json(); const g=document.getElementById('testimonial-grid'); if(d.length===0){g.innerHTML='<div class="w-full text-center text-gray-500 italic py-10">Belum ada ulasan.</div>';return;} g.innerHTML=d.map(x=>`<div class="glass-card p-5 rounded-xl w-[85vw] md:w-[320px] flex-none snap-center border-l-2 border-l-purple-500"><div class="flex justify-between mb-2"><h4 class="font-bold text-white text-sm">${x.username}</h4><span class="text-yellow-500 text-xs">★ ${x.rating}.0</span></div><p class="text-gray-300 text-sm italic">"${x.comment}"</p></div>`).join(''); } catch(e){} }
 
 // ============================================
+// 10. CUSTOMER SERVICE WIDGET
+// ============================================
+
+function toggleCS() {
+    const menu = document.getElementById('cs-menu');
+    
+    if (menu.classList.contains('hidden')) {
+        // Buka Menu (Animasi Pop Up)
+        menu.classList.remove('hidden');
+        // Jeda dikit biar animasi scale jalan
+        setTimeout(() => menu.classList.remove('scale-0'), 10);
+    } else {
+        // Tutup Menu
+        menu.classList.add('scale-0');
+        setTimeout(() => menu.classList.add('hidden'), 300);
+    }
+}
+
+function contactWA(topic) {
+    const adminNumber = "6287756632352"; // Nomor Kamu
+    const currentUser = userSession || "Guest/Tamu";
+    
+    // Template Pesan Rapi
+    const text = `Halo Admin Manzzy ID 👋\nSaya butuh bantuan.\n\n👤 *Username:* ${currentUser}\n📝 *Kendala:* ${topic}\n\nMohon dibantu pengecekannya. Terima kasih!`;
+    
+    // Redirect ke WA
+    window.open(`https://wa.me/${adminNumber}?text=${encodeURIComponent(text)}`, '_blank');
+    
+    // Tutup menu setelah klik
+    toggleCS();
+}
+
+// Tutup menu CS kalau klik di luar area
+document.addEventListener('click', function(e) {
+    const menu = document.getElementById('cs-menu');
+    const btn = document.querySelector('button[onclick="toggleCS()"]');
+    
+    if (!menu.classList.contains('hidden') && !menu.contains(e.target) && !btn.contains(e.target)) {
+        toggleCS();
+    }
+});
+// ============================================
 // 9. LIVE SOCIAL PROOF (NOTIFIKASI PALSU)
 // ============================================
 

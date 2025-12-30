@@ -272,6 +272,45 @@
                 </div>
             </div>
         </section>
+        <div class="fixed bottom-24 right-6 z-50 flex flex-col items-end font-sans">
+        
+        <div id="cs-menu" class="hidden mb-4 bg-[#1a1a1d] border border-gray-700 rounded-2xl p-4 shadow-2xl w-64 transform transition-all duration-300 origin-bottom-right scale-0">
+            <div class="flex items-center gap-3 border-b border-gray-700 pb-3 mb-3">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="w-8 h-8">
+                <div>
+                    <h4 class="text-white font-bold text-sm">Pusat Bantuan</h4>
+                    <p class="text-[10px] text-green-400">Online • Siap Membantu</p>
+                </div>
+            </div>
+            
+            <div class="space-y-2">
+                <button onclick="contactWA('Top Up Belum Masuk')" class="w-full text-left text-xs text-gray-300 hover:text-white hover:bg-white/10 p-2.5 rounded-lg transition flex items-center gap-3 group">
+                    <div class="w-6 h-6 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center"><i class="fa-solid fa-wallet"></i></div>
+                    <span>Top Up Belum Masuk</span>
+                </button>
+                
+                <button onclick="contactWA('Saldo Tidak Kembali')" class="w-full text-left text-xs text-gray-300 hover:text-white hover:bg-white/10 p-2.5 rounded-lg transition flex items-center gap-3 group">
+                    <div class="w-6 h-6 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center"><i class="fa-solid fa-rotate-left"></i></div>
+                    <span>Refund Gagal / Error</span>
+                </button>
+                
+                <button onclick="contactWA('Order Lama/Pending')" class="w-full text-left text-xs text-gray-300 hover:text-white hover:bg-white/10 p-2.5 rounded-lg transition flex items-center gap-3 group">
+                    <div class="w-6 h-6 rounded-full bg-yellow-500/20 text-yellow-400 flex items-center justify-center"><i class="fa-solid fa-clock"></i></div>
+                    <span>Order Lama Diproses</span>
+                </button>
+                
+                <button onclick="contactWA('Pertanyaan Umum')" class="w-full text-left text-xs text-gray-300 hover:text-white hover:bg-white/10 p-2.5 rounded-lg transition flex items-center gap-3 group">
+                    <div class="w-6 h-6 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center"><i class="fa-solid fa-comments"></i></div>
+                    <span>Chat Admin / Lainnya</span>
+                </button>
+            </div>
+        </div>
+
+        <button onclick="toggleCS()" class="w-14 h-14 bg-[#25D366] hover:bg-[#1ebd56] text-white rounded-full shadow-[0_0_20px_rgba(37,211,102,0.4)] flex items-center justify-center transition-all transform hover:scale-110 active:scale-95 group relative">
+            <i class="fa-solid fa-headset text-2xl animate-pulse"></i>
+            <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-black"></span>
+        </button>
+    </div>
 
     </div>
     <script src="script.js"></script>
