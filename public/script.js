@@ -347,20 +347,24 @@ async function initNokos() {
     nokosInterval = setInterval(fetchNokosHistory, 10000);
 }
 
-// --- SHEET CONTROLS (FIXED VISIBILITY) ---
+// --- SHEET CONTROLS (FIXED ANIMATION) ---
 function openNokosSheet() {
     const sheet = document.getElementById('nokos-sheet');
     const overlay = document.getElementById('nokos-sheet-overlay');
     
-    // [FIX] Hapus hidden & set display flex dulu
+    // 1. Hapus class hidden & Paksa display flex dulu
     sheet.classList.remove('hidden');
-    sheet.style.display = 'flex';
-    overlay.classList.remove('hidden');
+    sheet.style.display = 'flex'; 
     
-    requestAnimationFrame(() => {
+    overlay.classList.remove('hidden');
+    overlay.style.display = 'block';
+    
+    // 2. Beri jeda 50ms agar browser "sadar" elemen sudah ada, baru slide naik
+    setTimeout(() => {
         overlay.classList.remove('opacity-0');
         sheet.classList.remove('translate-y-full');
-    });
+    }, 50); 
+    
     loadNokosApps();
 }
 
@@ -368,17 +372,19 @@ function closeNokosSheet() {
     const sheet = document.getElementById('nokos-sheet');
     const overlay = document.getElementById('nokos-sheet-overlay');
     
+    // 1. Slide Turun Dulu
     sheet.classList.add('translate-y-full');
     overlay.classList.add('opacity-0');
     
+    // 2. Tunggu animasi selesai (500ms) baru sembunyikan total
     setTimeout(() => {
         overlay.classList.add('hidden');
-        sheet.classList.add('hidden'); // Sembunyikan total
-        sheet.style.display = 'none';
+        sheet.classList.add('hidden');
+        sheet.style.display = 'none'; // Pastikan hilang total
         
         backToApps();
         closeOperatorSheet();
-    }, 300);
+    }, 500);
 }
 
 // --- LOAD APPS ---
