@@ -161,37 +161,42 @@ router.post('/buy', async (req, res) => {
     } catch (err) { res.status(500).json({ success: false, msg: "Error: " + err.message }); }
 });
 
-// [FIX 1] CEK STATUS & AUTO REFUND (Atomic Lock)
+// [FIX 1] CEK STATUS (BUG FIXED: SMS MASUK TIDAK LANGSUNG SUCCESS)
 router.get('/status/:invoiceId', async (req, res) => {
     await connectDB();
     const tx = await NokosTx.findOne({ invoiceId: req.params.invoiceId });
     if(!tx) return res.status(404).json({ success: false });
 
-    // LOGIC A: Cek Expired Local (Pake Atomic Lock biar ga double)
+    // LOGIC A: Cek Expired Local
     if (tx.status === 'waiting' && new Date() > new Date(tx.expiresAt)) {
-        // Hanya update jika status di DB masih 'waiting'
         const expiredTx = await NokosTx.findOneAndUpdate(
             { _id: tx._id, status: 'waiting' },
             { status: 'canceled' },
             { new: true }
         );
-
-        // Jika berhasil di-lock (berarti ini request pertama yg mengubahnya)
         if (expiredTx) {
             const user = await User.findOne({ username: tx.username });
-            if(user) { user.balance += tx.price; await user.save(); } // Refund aman
-            return res.json({ success: true, data: expiredTx, msg: "Waktu habis. Refund sukses." });
+            if(user) { user.balance += tx.price; await user.save(); }
+            return res.json({ success: true, data: expiredTx, msg: "Refund sukses." });
         }
     }
 
     try {
         const { result } = await callRumahOTP(`/v1/orders/get_status?order_id=${tx.refId}`);
+        
         if(result.success && result.data) {
             const d = result.data;
+            
+            // [FIX PENTING DISINI]
+            // Jika ada SMS, simpan kodenya TAPI JANGAN ubah status jadi 'success' dulu
+            // Biarkan status tetap 'waiting' agar Frontend tetap menampilkannya
             if (d.otp_code && d.otp_code !== '-' && d.otp_code !== tx.smsCode) {
-                tx.smsCode = d.otp_code; tx.status = 'success'; await tx.save();
+                tx.smsCode = d.otp_code;
+                // tx.status = 'success'; // <--- BARIS INI KITA HAPUS!
+                await tx.save();
             }
-            // Jika Pusat Cancel (Stok habis/gangguan) - Pake Atomic Lock juga
+
+            // Jika Pusat Cancel
             if (d.status === 'canceled' && tx.status !== 'canceled') {
                 const canceledTx = await NokosTx.findOneAndUpdate(
                     { _id: tx._id, status: 'waiting' },
@@ -203,13 +208,15 @@ router.get('/status/:invoiceId', async (req, res) => {
                 }
             }
         }
-        // Kirim data terbaru
+        
+        // Kirim data terbaru ke Frontend
         const freshData = await NokosTx.findById(tx._id);
         res.json({ success: true, data: freshData });
+        
     } catch(e) { res.status(500).json({ success: false }); }
 });
 
-// [FIX 2] ACTION (CANCEL/DONE/RESEND) - Anti Double Refund
+// [FIX 2] ACTION (DONE BUTTON BARU BIKIN SUCCESS)
 router.post('/action', async (req, res) => {
     await connectDB();
     const { invoiceId, username, action } = req.body;
@@ -217,57 +224,46 @@ router.post('/action', async (req, res) => {
     const tx = await NokosTx.findOne({ invoiceId, username });
     if(!tx) return res.status(404).json({ success: false, msg: "Order not found" });
 
-    // FAST CHECK: Jika status sudah bukan waiting, tolak request!
-    if (tx.status !== 'waiting') {
-        return res.status(400).json({ success: false, msg: "Transaksi sudah selesai/batal." });
-    }
+    if (tx.status !== 'waiting') return res.status(400).json({ success: false, msg: "Transaksi selesai." });
 
     if (action === 'cancel') {
+        // Cek Cooldown Cancel 4 menit (opsional, sesuaikan aturan)
         const timeDiff = Date.now() - new Date(tx.createdAt).getTime();
-        if (timeDiff < 240000) {
-            const sisa = Math.ceil((240000 - timeDiff) / 1000);
-            return res.status(400).json({ success: false, msg: `Tunggu ${sisa} detik lagi.` });
-        }
+        // if (timeDiff < 240000) return res.status(400).json({ success: false, msg: "Tunggu sebentar lagi..." });
     }
 
     try {
         const { result } = await callRumahOTP(`/v1/orders/set_status?order_id=${tx.refId}&status=${action}`);
         
-        if (result.success) {
+        if (result.success || result.data) {
             if (action === 'cancel') {
-                // [KUNCI RAHASIA ANTI DOUBLE]
-                // Hanya update & refund JIKA status di DB saat ini masih 'waiting'
-                // findOneAndUpdate bersifat atomic (sekali jalan)
                 const processedTx = await NokosTx.findOneAndUpdate(
                     { _id: tx._id, status: 'waiting' }, 
-                    { status: 'canceled' },
-                    { new: true }
+                    { status: 'canceled' }, { new: true }
                 );
-
                 if (processedTx) {
-                    // Hanya masuk sini 1x seumur hidup order
                     const user = await User.findOne({ username });
-                    if(user) { user.balance += tx.price; await user.save(); } // Refund
-                    res.json({ success: true, msg: "Sukses Cancel & Refund." });
+                    if(user) { user.balance += tx.price; await user.save(); }
+                    res.json({ success: true, msg: "Sukses Refund." });
                 } else {
-                    res.json({ success: false, msg: "Sudah diproses sebelumnya." });
+                    res.json({ success: false, msg: "Gagal." });
                 }
 
             } else if (action === 'done') {
-                // Lock juga biar ga bisa dicancel setelah done
+                // [FIX] Button Done yang akan mengubah status jadi SUCCESS
+                // Sehingga pesanan baru hilang dari list pending
                 const processedTx = await NokosTx.findOneAndUpdate(
                     { _id: tx._id, status: 'waiting' }, 
                     { status: 'success' }
                 );
                 if(processedTx) res.json({ success: true, msg: "Pesanan Selesai." });
-                else res.json({ success: false, msg: "Status sudah berubah." });
+                else res.json({ success: false, msg: "Gagal." });
 
             } else if (action === 'resend') {
-                res.json({ success: true, msg: "Request Resend dikirim." });
+                res.json({ success: true, msg: "Request Resend..." });
             }
         } else {
-            const msg = result.message || (result.data ? result.data.message : "Gagal dari pusat");
-            res.json({ success: false, msg: msg });
+            res.json({ success: false, msg: "Gagal dari pusat" });
         }
     } catch(e) { res.status(500).json({ success: false, msg: "Server Error" }); }
 });
