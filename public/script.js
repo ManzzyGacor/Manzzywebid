@@ -314,29 +314,28 @@ async function initNokos() {
     nokosInterval = setInterval(fetchNokosHistory, 10000);
 }
 
-// --- SHEET CONTROLS (FIXED ANIMATION & RE-OPEN) ---
+// --- SHEET CONTROLS (ANTI-STUCK / ZOMBIE OVERLAY FIX) ---
 function openNokosSheet() {
+    // Bersihkan timeout penutup sebelumnya agar tidak bentrok
+    clearTimeout(nokosSheetTimeout);
+    
     const sheet = document.getElementById('nokos-sheet');
     const overlay = document.getElementById('nokos-sheet-overlay');
     
-    // Hentikan proses tutup jika user klik buka lagi dgn cepat
-    clearTimeout(nokosSheetTimer);
-
-    // Reset Class
+    // 1. Reset state (Paksa tampil)
     sheet.classList.remove('hidden');
     sheet.style.display = 'flex'; 
-    
     overlay.classList.remove('hidden');
     overlay.style.display = 'block';
     
-    // Force Reflow agar animasi ulang jalan
-    void sheet.offsetWidth;
-
-    // Animasi Masuk
-    setTimeout(() => {
+    // 2. [FIX] Aktifkan Interaksi
+    overlay.style.pointerEvents = 'auto'; 
+    
+    // 3. Animasi Masuk
+    requestAnimationFrame(() => {
         overlay.classList.remove('opacity-0');
         sheet.classList.remove('translate-y-full');
-    }, 10); 
+    });
     
     loadNokosApps();
 }
@@ -345,16 +344,22 @@ function closeNokosSheet() {
     const sheet = document.getElementById('nokos-sheet');
     const overlay = document.getElementById('nokos-sheet-overlay');
     
-    // Animasi Keluar
+    // 1. [FIX UTAMA] Langsung matikan interaksi overlay (biar bisa klik belakangnya)
+    overlay.style.pointerEvents = 'none';
+
+    // 2. Animasi Keluar
     sheet.classList.add('translate-y-full');
     overlay.classList.add('opacity-0');
     
-    // Tunggu animasi selesai baru hide total
-    clearTimeout(nokosSheetTimer);
-    nokosSheetTimer = setTimeout(() => {
+    // 3. Sembunyikan total setelah animasi selesai
+    clearTimeout(nokosSheetTimeout);
+    nokosSheetTimeout = setTimeout(() => {
+        // Pastikan benar-benar hilang
         overlay.classList.add('hidden');
+        overlay.style.display = 'none'; 
+        
         sheet.classList.add('hidden');
-        sheet.style.display = 'none';
+        sheet.style.display = 'none'; 
         
         backToApps();
         closeOperatorSheet();
