@@ -314,28 +314,34 @@ async function initNokos() {
     nokosInterval = setInterval(fetchNokosHistory, 10000);
 }
 
-// --- SHEET CONTROLS (ANTI-STUCK / ZOMBIE OVERLAY FIX) ---
+// [FIX] Variabel Global untuk Timeout (Pastikan ini ada)
+let nokosSheetTimeout = null; 
+
+// --- SHEET CONTROLS (VERSI STABIL & ANTI-MACET) ---
 function openNokosSheet() {
-    // Bersihkan timeout penutup sebelumnya agar tidak bentrok
-    clearTimeout(nokosSheetTimeout);
+    // 1. Batalkan proses penutupan jika sedang berjalan
+    if (nokosSheetTimeout) clearTimeout(nokosSheetTimeout);
     
     const sheet = document.getElementById('nokos-sheet');
     const overlay = document.getElementById('nokos-sheet-overlay');
     
-    // 1. Reset state (Paksa tampil)
+    if(!sheet || !overlay) return console.error("Elemen Nokos Sheet tidak ditemukan");
+
+    // 2. Reset Tampilan (Pastikan muncul dulu)
     sheet.classList.remove('hidden');
     sheet.style.display = 'flex'; 
+    
     overlay.classList.remove('hidden');
     overlay.style.display = 'block';
     
-    // 2. [FIX] Aktifkan Interaksi
+    // 3. Aktifkan Interaksi (Agar bisa diklik)
     overlay.style.pointerEvents = 'auto'; 
     
-    // 3. Animasi Masuk
-    requestAnimationFrame(() => {
+    // 4. Jalankan Animasi Slide-Up (Pakai delay 10ms agar transisi mulus)
+    setTimeout(() => {
         overlay.classList.remove('opacity-0');
         sheet.classList.remove('translate-y-full');
-    });
+    }, 10);
     
     loadNokosApps();
 }
@@ -344,23 +350,27 @@ function closeNokosSheet() {
     const sheet = document.getElementById('nokos-sheet');
     const overlay = document.getElementById('nokos-sheet-overlay');
     
-    // 1. [FIX UTAMA] Langsung matikan interaksi overlay (biar bisa klik belakangnya)
-    overlay.style.pointerEvents = 'none';
+    // 1. Langsung matikan interaksi overlay (biar tombol di belakangnya bisa diklik)
+    if(overlay) overlay.style.pointerEvents = 'none';
 
-    // 2. Animasi Keluar
-    sheet.classList.add('translate-y-full');
-    overlay.classList.add('opacity-0');
+    // 2. Animasi Turun (Slide-Down)
+    if(sheet) sheet.classList.add('translate-y-full');
+    if(overlay) overlay.classList.add('opacity-0');
     
-    // 3. Sembunyikan total setelah animasi selesai
-    clearTimeout(nokosSheetTimeout);
+    // 3. Sembunyikan total setelah animasi selesai (0.5 detik)
+    if (nokosSheetTimeout) clearTimeout(nokosSheetTimeout);
+    
     nokosSheetTimeout = setTimeout(() => {
-        // Pastikan benar-benar hilang
-        overlay.classList.add('hidden');
-        overlay.style.display = 'none'; 
+        if(overlay) {
+            overlay.classList.add('hidden');
+            overlay.style.display = 'none'; 
+        }
+        if(sheet) {
+            sheet.classList.add('hidden');
+            sheet.style.display = 'none'; 
+        }
         
-        sheet.classList.add('hidden');
-        sheet.style.display = 'none'; 
-        
+        // Reset state internal
         backToApps();
         closeOperatorSheet();
     }, 500);
