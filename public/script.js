@@ -542,9 +542,10 @@ async function openOperatorSelection(countryId, countryName, price, providerId, 
     const sheetOp = document.getElementById('sheet-operator');
     const listOp = document.getElementById('list-operators');
     
-    // [FIX] Hapus hidden dulu, baru slide naik
+    // [FIX] Hapus class hidden dulu agar elemen dirender browser
     sheetOp.classList.remove('hidden');
-    // Beri sedikit delay agar transisi slide berfungsi
+    
+    // Beri jeda sedikit (1 frame) agar transisi slide-up jalan mulus
     requestAnimationFrame(() => {
         sheetOp.classList.remove('translate-y-full');
     });
@@ -559,7 +560,7 @@ async function openOperatorSelection(countryId, countryName, price, providerId, 
         let ops = [];
         if(data.status || data.success) ops = data.data;
         
-        // Opsi ANY
+        // Opsi ANY (Selalu ada)
         let html = `
         <div onclick="selectOperatorAndCheckout('any', 'Acak / Any')" 
              class="min-w-[80px] h-24 bg-[#25252a] border border-gray-700 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-green-500 hover:bg-[#2a2a30] transition snap-start flex-none">
@@ -583,13 +584,51 @@ async function openOperatorSelection(countryId, countryName, price, providerId, 
 function closeOperatorSheet() {
     const sheetOp = document.getElementById('sheet-operator');
     
-    // [FIX] Slide turun dulu
+    // 1. Slide Turun dulu
     sheetOp.classList.add('translate-y-full');
     
-    // [FIX] Baru sembunyikan (hidden) setelah animasi selesai (300ms)
+    // 2. Tunggu animasi selesai (300ms) baru sembunyikan total (hidden)
     setTimeout(() => {
         sheetOp.classList.add('hidden');
     }, 300);
+}
+
+// --- FINAL CHECKOUT & ERROR MESSAGE FIX ---
+async function selectOperatorAndCheckout(opId, opName) {
+    // Konfirmasi User
+    if(!confirm(`Beli ${nokosData.selectedApp.name} (${nokosData.tempServer.countryName})?\nOperator: ${opName}\nHarga: Rp ${parseInt(nokosData.tempServer.price).toLocaleString()}`)) return;
+    
+    closeOperatorSheet();
+    closeNokosSheet(); // Tutup semua sheet biar bersih
+    
+    showToast("Memproses pesanan...", "info");
+    
+    try {
+        const payload = {
+            username: userSession,
+            service_id: nokosData.selectedApp.id,
+            service_name: nokosData.selectedApp.name,
+            number_id: nokosData.tempServer.countryId,
+            provider_id: nokosData.tempServer.providerId,
+            operator_id: opId
+        };
+        
+        const res = await fetch('/api/nokos/buy', { 
+            method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
+        });
+        const d = await res.json();
+        
+        if(d.success) {
+            showToast("✅ Order Berhasil!", "success");
+            checkUserLogin();
+            fetchNokosHistory();
+        } else {
+            // [FIX] PESAN ERROR CUSTOM SESUAI REQUEST
+            showToast("Stok kosong atau gagal mengambil stok, silahkan tunggu beberapa saat.", "error");
+        }
+    } catch(e) { 
+        showToast("Gagal terhubung ke server.", "error"); 
+    }
 }
 
 // --- FINAL CHECKOUT ---
