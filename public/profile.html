@@ -2,136 +2,208 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>My Profile - Manzzy ID</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
     
     <style>
-        body { background-color: #050505; color: white; font-family: 'Space Grotesk', sans-serif; }
+        body { 
+            background-color: #050505; 
+            color: white; 
+            font-family: 'Space Grotesk', sans-serif; 
+            overflow-x: hidden;
+        }
         
-        /* Glassmorphism */
+        /* --- ANIMATIONS --- */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .animate-fade { animation: fadeIn 0.8s ease-out forwards; }
+        .animate-slide { animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; opacity: 0; }
+        .delay-100 { animation-delay: 0.1s; }
+        .delay-200 { animation-delay: 0.2s; }
+        .delay-300 { animation-delay: 0.3s; }
+
+        /* --- GLASS & CARDS --- */
         .glass-panel {
             background: rgba(20, 20, 25, 0.6);
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .glass-panel:hover {
+            border-color: rgba(168, 85, 247, 0.3);
+            box-shadow: 0 10px 30px -10px rgba(168, 85, 247, 0.1);
         }
 
-        /* KARTU MEMBER (Black Card Effect) */
+        /* --- MEMBER CARD (HOLOGRAPHIC) --- */
         .member-card {
-            background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
+            background: linear-gradient(135deg, #0f0f10 0%, #18181b 100%);
             border: 1px solid rgba(255,255,255,0.1);
             position: relative;
             overflow: hidden;
-            transition: transform 0.5s ease;
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+            box-shadow: 0 20px 40px -15px rgba(0,0,0,1);
         }
         .member-card::before {
             content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-            background: radial-gradient(circle, rgba(168,85,247,0.15) 0%, transparent 60%);
+            background: radial-gradient(circle, rgba(168,85,247,0.1) 0%, transparent 70%);
             transform: rotate(30deg); pointer-events: none;
         }
-        .member-card:hover { transform: scale(1.02); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.8); }
+        .member-card:hover { transform: translateY(-5px) scale(1.01); box-shadow: 0 30px 60px -20px rgba(168,85,247,0.25); }
         
-        /* Efek Chip Emas */
+        /* Chip */
         .chip {
-            background: linear-gradient(135deg, #fcd34d 0%, #d97706 100%);
-            box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+            background: linear-gradient(135deg, #fbbf24 0%, #b45309 100%);
+            box-shadow: inset 0 1px 4px rgba(255,255,255,0.3), 0 2px 4px rgba(0,0,0,0.5);
         }
 
+        /* --- INPUTS & BUTTONS --- */
         .input-dark {
-            background: #0a0a0c; border: 1px solid #27272a; color: white;
-            transition: all 0.3s;
+            background: rgba(0,0,0,0.4); 
+            border: 1px solid rgba(255,255,255,0.1); 
+            color: white;
+            transition: all 0.3s ease;
         }
-        .input-dark:focus { border-color: #a855f7; outline: none; }
+        .input-dark:focus { 
+            border-color: #a855f7; 
+            background: rgba(0,0,0,0.6);
+            box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.1);
+            outline: none; 
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, #9333ea 0%, #7e22ce 100%);
+            position: relative; overflow: hidden; transition: all 0.3s ease;
+        }
+        .btn-gradient::after {
+            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: 0.5s;
+        }
+        .btn-gradient:hover::after { left: 100%; }
+        .btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(147, 51, 234, 0.4); }
+        .btn-gradient:active { transform: translateY(0); }
+
+        /* Avatar Selection */
+        .avatar-option { transition: all 0.2s; border: 2px solid transparent; }
+        .avatar-option.selected { border-color: #a855f7; transform: scale(1.1); box-shadow: 0 0 15px rgba(168,85,247,0.5); }
     </style>
 </head>
-<body class="min-h-screen relative pb-20">
+<body class="min-h-screen relative pb-20 opacity-0 animate-fade">
     
-    <div class="fixed top-0 left-0 w-full h-64 bg-gradient-to-b from-purple-900/20 to-transparent -z-10"></div>
-    <div class="fixed bottom-0 right-0 w-96 h-96 bg-blue-900/10 rounded-full blur-[100px] -z-10"></div>
+    <div class="fixed top-0 left-0 w-full h-80 bg-gradient-to-b from-purple-900/10 to-transparent -z-10"></div>
+    <div class="fixed bottom-0 left-0 w-64 h-64 bg-purple-600/5 rounded-full blur-[80px] -z-10"></div>
+    <div class="fixed top-1/2 right-0 w-80 h-80 bg-blue-600/5 rounded-full blur-[100px] -z-10"></div>
 
-    <nav class="p-6 flex items-center justify-between max-w-2xl mx-auto">
-        <a href="/" class="flex items-center gap-2 text-gray-400 hover:text-white transition group">
-            <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-white/10">
-                <i class="fa-solid fa-arrow-left"></i>
-            </div>
+    <nav class="p-6 flex items-center justify-between max-w-2xl mx-auto animate-slide">
+        <a href="/" class="flex items-center gap-3 text-gray-400 hover:text-white transition group py-2 px-3 rounded-full hover:bg-white/5">
+            <i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition"></i>
             <span class="text-sm font-bold">Dashboard</span>
         </a>
-        <h1 class="text-lg font-bold tracking-widest">MY PROFILE</h1>
-        <div class="w-8"></div> </nav>
+        <h1 class="text-sm font-bold tracking-[0.2em] text-gray-500">PROFILE</h1>
+        <div class="w-8"></div> 
+    </nav>
 
-    <main class="max-w-2xl mx-auto px-6 mt-4">
+    <main class="max-w-2xl mx-auto px-6 mt-2 space-y-8">
         
-        <div class="member-card rounded-2xl p-6 aspect-[1.6/1] flex flex-col justify-between shadow-2xl mb-8 relative group">
-            
+        <div class="member-card rounded-[1.5rem] p-7 aspect-[1.6/1] flex flex-col justify-between relative group animate-slide delay-100">
             <div class="flex justify-between items-start z-10">
-                <div>
-                    <h3 class="text-gray-400 text-[10px] uppercase tracking-[0.2em] mb-1">Official Member</h3>
-                    <div class="text-xl font-bold italic tracking-wide">MANZZY<span class="text-purple-500">ID</span></div>
+                <div class="flex items-center gap-3">
+                    <img id="card-avatar-img" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" class="w-10 h-10 rounded-full border border-white/20 bg-white/5 p-0.5">
+                    <div>
+                        <h3 class="text-gray-400 text-[9px] uppercase tracking-[0.2em]">Official Member</h3>
+                        <div class="text-lg font-bold italic tracking-wide text-white">MANZZY<span class="text-purple-500">ID</span></div>
+                    </div>
                 </div>
-                <div class="text-right">
-                    <i class="fa-brands fa-cc-visa text-3xl text-white/50"></i>
-                </div>
+                <i class="fa-brands fa-cc-visa text-3xl text-white/30"></i>
             </div>
 
-            <div class="flex items-center gap-4 z-10 my-4">
-                <div class="chip w-12 h-9 rounded-md"></div>
-                <i class="fa-solid fa-wifi rotate-90 text-white/50 text-xl"></i>
+            <div class="flex items-center gap-4 z-10 pl-1">
+                <div class="chip w-11 h-8 rounded-[4px]"></div>
+                <i class="fa-solid fa-wifi rotate-90 text-white/30 text-lg"></i>
             </div>
 
             <div class="z-10">
-                <div class="text-gray-400 text-[9px] uppercase tracking-wider mb-1">Card Holder</div>
-                <div id="card-name" class="text-xl font-mono font-bold text-white tracking-widest uppercase truncate shadow-black drop-shadow-md">LOADING...</div>
-                
-                <div class="flex justify-between items-end mt-4">
-                    <div class="font-mono text-sm text-purple-400 tracking-widest" id="card-id">0000 0000 0000</div>
-                    <div class="px-3 py-1 rounded bg-white/10 border border-white/20 text-[10px] font-bold uppercase tracking-widest" id="card-rank">MEMBER</div>
+                <div class="flex justify-between items-end">
+                    <div>
+                        <div class="text-gray-500 text-[9px] uppercase tracking-wider mb-1">Card Holder</div>
+                        <div id="card-name" class="text-xl font-mono font-bold text-white tracking-widest uppercase truncate w-48">LOADING...</div>
+                    </div>
+                    <div id="card-rank" class="px-3 py-1 rounded bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-widest text-gray-400 backdrop-blur-md">
+                        MEMBER
+                    </div>
                 </div>
-            </div>
-
-            <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition duration-700 pointer-events-none"></div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4 mb-8">
-            <div class="glass-panel p-4 rounded-xl text-center">
-                <div class="text-gray-500 text-xs mb-1">Sisa Saldo</div>
-                <div id="profile-balance" class="text-xl font-bold text-green-400">Rp 0</div>
-            </div>
-            <div class="glass-panel p-4 rounded-xl text-center">
-                <div class="text-gray-500 text-xs mb-1">Status Akun</div>
-                <div class="text-xl font-bold text-blue-400">Aktif ✅</div>
+                <div class="mt-3 font-mono text-xs text-purple-500/80 tracking-[0.3em]" id="card-id">0000 0000 0000</div>
             </div>
         </div>
 
-        <div class="glass-panel rounded-xl p-6 mb-24">
-            <h3 class="text-lg font-bold mb-6 flex items-center gap-2">
-                <i class="fa-solid fa-shield-halved text-purple-500"></i> Keamanan Akun
-            </h3>
+        <div class="glass-panel p-5 rounded-2xl animate-slide delay-200">
+            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Pilih Avatar</h3>
+            <div class="flex gap-4 overflow-x-auto pb-2 no-scrollbar" id="avatar-list">
+                </div>
+        </div>
 
-            <div class="space-y-5">
+        <div class="grid grid-cols-2 gap-4 animate-slide delay-200">
+            <div class="glass-panel p-5 rounded-2xl flex flex-col items-center justify-center gap-1 group cursor-pointer hover:bg-white/5">
+                <div class="text-gray-500 text-[10px] uppercase font-bold tracking-wider">Sisa Saldo</div>
+                <div id="profile-balance" class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-600 group-hover:scale-110 transition">Rp 0</div>
+            </div>
+            <div class="glass-panel p-5 rounded-2xl flex flex-col items-center justify-center gap-1">
+                <div class="text-gray-500 text-[10px] uppercase font-bold tracking-wider">Status Akun</div>
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                    <span class="text-xl font-bold text-white">Aktif</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-6 mb-24 animate-slide delay-300">
+            <div class="flex items-center gap-3 mb-6 border-b border-gray-800 pb-4">
+                <div class="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-500">
+                    <i class="fa-solid fa-shield-halved text-lg"></i>
+                </div>
                 <div>
-                    <label class="text-xs text-gray-500 font-bold block mb-2">Username / Email</label>
-                    <input type="text" id="profile-username" class="w-full input-dark rounded-lg p-3 text-sm text-gray-400 cursor-not-allowed" readonly>
+                    <h3 class="text-lg font-bold text-white">Keamanan</h3>
+                    <p class="text-xs text-gray-500">Kelola password & PIN transaksi.</p>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <div class="relative group">
+                    <label class="absolute -top-2 left-3 bg-[#0f0f12] px-1 text-[10px] text-purple-500 font-bold">USERNAME</label>
+                    <input type="text" id="profile-username" class="w-full input-dark rounded-xl p-3.5 text-sm text-gray-400 font-mono" readonly>
+                    <i class="fa-solid fa-lock absolute right-4 top-4 text-gray-600"></i>
                 </div>
 
-                <div>
-                    <label class="text-xs text-gray-500 font-bold block mb-2">Ganti Password Baru</label>
+                <div class="relative">
+                    <label class="text-[10px] text-gray-400 font-bold uppercase ml-1 mb-1 block">Password Baru</label>
                     <div class="relative">
-                        <input type="password" id="new-password" class="w-full input-dark rounded-lg p-3 text-sm pr-10" placeholder="Minimal 6 karakter">
-                        <i onclick="togglePass()" class="fa-solid fa-eye absolute right-3 top-3.5 text-gray-500 cursor-pointer hover:text-white transition"></i>
+                        <input type="password" id="new-password" class="w-full input-dark rounded-xl p-3.5 text-sm pr-10 transition focus:ring-2 focus:ring-purple-500/50" placeholder="Biarkan kosong jika tidak diganti">
+                        <i onclick="togglePass('new-password')" class="fa-solid fa-eye absolute right-4 top-4 text-gray-500 cursor-pointer hover:text-white transition"></i>
                     </div>
                 </div>
 
-                <button onclick="savePassword()" id="btn-save" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-lg transition shadow-lg shadow-purple-900/20">
+                <div class="relative">
+                    <label class="text-[10px] text-gray-400 font-bold uppercase ml-1 mb-1 block">PIN Transaksi (6 Digit)</label>
+                    <div class="relative">
+                        <input type="password" id="new-pin" maxlength="6" class="w-full input-dark rounded-xl p-3.5 text-sm pr-10 font-mono tracking-widest" placeholder="******" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                        <i onclick="togglePass('new-pin')" class="fa-solid fa-key absolute right-4 top-4 text-gray-500 cursor-pointer hover:text-white transition"></i>
+                    </div>
+                    <p class="text-[10px] text-gray-600 mt-1 ml-1">*Digunakan saat checkout (opsional untuk saat ini).</p>
+                </div>
+
+                <button onclick="saveChanges()" id="btn-save" class="btn-gradient w-full text-white font-bold py-3.5 rounded-xl shadow-lg mt-4 text-sm tracking-wider">
                     SIMPAN PERUBAHAN
                 </button>
 
-                <div class="border-t border-gray-800 my-4"></div>
-
-                <button onclick="doLogout()" class="w-full border border-red-500/30 text-red-500 hover:bg-red-500/10 font-bold py-3 rounded-lg transition">
-                    <i class="fa-solid fa-sign-out-alt mr-2"></i> KELUAR / LOGOUT
-                </button>
+                <div class="flex justify-center pt-2">
+                    <button onclick="doLogout()" class="text-xs text-red-500 hover:text-red-400 font-bold flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-red-500/10 transition">
+                        <i class="fa-solid fa-power-off"></i> KELUAR DARI AKUN
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -139,79 +211,112 @@
 
     <script>
         const userSession = localStorage.getItem('user_session');
+        // List Avatar Keren
+        const avatars = [
+            'Felix', 'Aneka', 'Zoe', 'Bear', 'Tiger', 'Leo', 'Max'
+        ];
+        let currentAvatar = localStorage.getItem('user_avatar') || 'Felix';
 
-        // 1. Load Data User
+        // 1. INIT PAGE
         document.addEventListener('DOMContentLoaded', async () => {
             if(!userSession) { window.location.href = '/login_user.html'; return; }
+            
+            renderAvatars();
+            updateAvatarDisplay(currentAvatar);
 
             try {
                 const res = await fetch(`/api/user/${userSession}`);
                 const data = await res.json();
                 
                 if(data.username) {
-                    // Update Kartu
+                    // Update Text
                     document.getElementById('card-name').innerText = data.username;
                     document.getElementById('card-id').innerText = generateFakeCardNumber(data.username);
-                    
-                    // Update Rank (Logika Sederhana: Saldo > 500rb = VIP)
-                    const rank = data.balance > 500000 ? "VIP GOLD" : "MEMBER";
-                    document.getElementById('card-rank').innerText = rank;
-                    if(data.balance > 500000) document.getElementById('card-rank').className = "px-3 py-1 rounded bg-yellow-500/20 border border-yellow-500/50 text-yellow-500 text-[10px] font-bold uppercase tracking-widest";
-
-                    // Update Form & Stats
                     document.getElementById('profile-username').value = data.username;
                     document.getElementById('profile-balance').innerText = `Rp ${data.balance.toLocaleString()}`;
+                    
+                    // Update Rank
+                    const isVip = data.balance > 500000;
+                    const rankEl = document.getElementById('card-rank');
+                    rankEl.innerText = isVip ? "SULTAN" : "MEMBER";
+                    if(isVip) {
+                        rankEl.className = "px-3 py-1 rounded bg-yellow-500/20 border border-yellow-500/50 text-yellow-400 text-[10px] font-bold uppercase tracking-widest shadow-[0_0_15px_rgba(234,179,8,0.3)] animate-pulse";
+                    }
                 }
-            } catch(e) {
-                console.error(e);
-            }
+            } catch(e) { console.error(e); }
         });
 
-        // 2. Fungsi Ganti Password
-        async function savePassword() {
+        // 2. AVATAR LOGIC
+        function renderAvatars() {
+            const container = document.getElementById('avatar-list');
+            container.innerHTML = avatars.map(seed => `
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}" 
+                     class="w-12 h-12 rounded-full cursor-pointer avatar-option bg-white/5 p-1 hover:bg-white/10 ${seed === currentAvatar ? 'selected' : ''}"
+                     onclick="selectAvatar('${seed}')">
+            `).join('');
+        }
+
+        function selectAvatar(seed) {
+            currentAvatar = seed;
+            localStorage.setItem('user_avatar', seed); // Simpan di local dulu
+            updateAvatarDisplay(seed);
+            renderAvatars(); // Re-render border
+        }
+
+        function updateAvatarDisplay(seed) {
+            document.getElementById('card-avatar-img').src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
+        }
+
+        // 3. SAVE CHANGES (Pass + PIN)
+        async function saveChanges() {
             const pass = document.getElementById('new-password').value;
-            if(!pass) return alert("Masukkan password baru dulu.");
-            if(pass.length < 6) return alert("Password minimal 6 karakter.");
+            const pin = document.getElementById('new-pin').value;
+            
+            if(!pass && !pin) return alert("❌ Tidak ada yang diubah.");
+            if(pass && pass.length < 6) return alert("❌ Password minimal 6 karakter.");
+            if(pin && pin.length !== 6) return alert("❌ PIN harus 6 angka.");
 
             const btn = document.getElementById('btn-save');
             const originalText = btn.innerText;
-            btn.innerText = "MENYIMPAN..."; btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> MENYIMPAN...'; btn.disabled = true;
+
+            // TODO: Nanti backend harus support update PIN. Sekarang kita update Password dulu.
+            // Kita simpan PIN di localStorage sementara (Simulasi)
+            if(pin) localStorage.setItem('user_pin_' + userSession, pin);
 
             try {
-                const res = await fetch('/api/user/change-password', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: userSession, newPassword: pass })
-                });
-                const d = await res.json();
-                
-                if(d.success) {
-                    alert("✅ Password berhasil diubah! Silakan login ulang.");
-                    doLogout();
-                } else {
-                    alert("❌ Gagal: " + d.msg);
+                if(pass) {
+                    const res = await fetch('/api/user/change-password', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: userSession, newPassword: pass })
+                    });
+                    const d = await res.json();
+                    if(!d.success) throw new Error(d.msg);
                 }
+                
+                alert("✅ Data Berhasil Disimpan!");
+                if(pass) doLogout(); // Logout kalau ganti password
+                
             } catch(e) {
-                alert("Error koneksi.");
+                alert("❌ Gagal: " + e.message);
             } finally {
                 btn.innerText = originalText; btn.disabled = false;
             }
         }
 
-        // 3. Helper Functions
+        // 4. HELPER
         function doLogout() {
             localStorage.removeItem('user_session');
-            localStorage.removeItem('manzzyUser');
             window.location.href = '/login_user.html';
         }
 
-        function togglePass() {
-            const i = document.getElementById('new-password');
+        function togglePass(id) {
+            const i = document.getElementById(id);
             i.type = i.type === 'password' ? 'text' : 'password';
         }
 
         function generateFakeCardNumber(str) {
-            // Bikin nomor acak biar kelihatan keren aja (Visual only)
             let hash = 0;
             for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
             const num = Math.abs(hash).toString().padEnd(16, '0').slice(0, 16);
