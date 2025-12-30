@@ -164,21 +164,102 @@
             </div>
         </section>
 
-        <section id="view-nokos" class="view-section">
+ <section id="view-nokos" class="view-section">
             <div class="max-w-4xl mx-auto pb-20">
-                <div class="flex items-center justify-between mb-6"><button onclick="switchView('landing')" class="text-gray-400 hover:text-white flex items-center gap-2"><i class="fa-solid fa-arrow-left"></i> Kembali</button><h2 class="text-2xl font-bold text-white">VIRTUAL <span class="text-green-500">NUMBER</span></h2></div>
-                <div class="glass-card p-6 rounded-2xl border-t-4 border-t-green-500 mb-8">
-                    <div class="mb-6"><label class="text-xs text-green-400 font-bold mb-3 block uppercase tracking-wider">1. Pilih Aplikasi</label><div id="nokos-app-grid" class="grid grid-cols-4 md:grid-cols-6 gap-3 max-h-40 overflow-y-auto pr-1 custom-scroll"><div class="col-span-full text-center py-4 text-gray-500 text-xs">Memuat aplikasi...</div></div></div>
-                    <div id="step-country" class="mb-6 hidden animate-fade-in-up"><label class="text-xs text-green-400 font-bold mb-3 block uppercase tracking-wider">2. Pilih Negara</label><div id="nokos-country-grid" class="grid grid-cols-3 md:grid-cols-4 gap-3 max-h-60 overflow-y-auto pr-1 custom-scroll"></div></div>
-                    <div id="step-server" class="mb-6 hidden animate-fade-in-up"><label class="text-xs text-green-400 font-bold mb-3 block uppercase tracking-wider">3. Pilih Server & Harga</label><div id="nokos-server-list" class="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scroll"></div></div>
-                    <div id="step-operator" class="mb-6 hidden animate-fade-in-up"><label class="text-xs text-green-400 font-bold mb-3 block uppercase tracking-wider">4. Pilih Operator</label><div id="nokos-operator-grid" class="grid grid-cols-3 md:grid-cols-5 gap-3"></div></div>
-                    <div id="step-checkout" class="hidden bg-green-900/10 border border-green-500/30 rounded-xl p-4 animate-fade-in-up mt-6">
-                        <div class="flex justify-between items-center mb-4"><div><div class="text-xs text-gray-400">Total Harga</div><div id="display-price" class="text-2xl font-bold text-white font-mono">Rp 0</div></div><div class="text-right"><div id="display-info" class="text-xs font-bold text-green-400 uppercase">-</div><div id="display-server" class="text-[10px] text-gray-500">Server ID: -</div></div></div>
-                        <button onclick="executeBuyNokos()" id="btn-buy-nokos" class="w-full py-3 rounded-lg bg-green-600 hover:bg-green-500 text-white font-bold transition shadow-lg shadow-green-900/50"><i class="fa-solid fa-cart-shopping mr-2"></i> BELI SEKARANG</button>
+                
+                <div class="flex items-center justify-between mb-6">
+                    <button onclick="switchView('landing')" class="text-gray-400 hover:text-white flex items-center gap-2 group">
+                        <i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition"></i> Kembali
+                    </button>
+                    <h2 class="text-2xl font-bold text-white tracking-widest">
+                        VIRTUAL <span class="text-purple-500">NUMBER</span>
+                    </h2>
+                </div>
+
+                <div class="glass-card rounded-2xl overflow-hidden shadow-2xl border border-white/5 mb-8">
+                    
+                    <div id="step-app-selection">
+                        <div class="p-6 border-b border-gray-800">
+                            <h3 class="text-white font-bold text-lg mb-4 flex items-center gap-2">
+                                <i class="fa-solid fa-bolt text-yellow-500"></i> Aplikasi Populer
+                            </h3>
+                            <div id="nokos-app-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                <div class="col-span-full text-center py-10 text-gray-500 italic">
+                                    <i class="fa-solid fa-circle-notch fa-spin text-purple-500 text-2xl mb-2"></i><br>
+                                    Memuat aplikasi...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="step-country-server" class="hidden animate-fade-in-up">
+                        <div class="p-6 pb-0 flex items-center gap-3">
+                            <button onclick="resetNokosFlow()" class="text-sm bg-gray-800 hover:bg-gray-700 text-white px-3 py-1.5 rounded-lg transition flex items-center gap-2">
+                                <i class="fa-solid fa-chevron-left"></i> Ganti Aplikasi
+                            </button>
+                            <h3 class="text-white font-bold text-lg flex items-center gap-2">
+                                <img id="selected-app-icon" src="" class="w-6 h-6 object-contain">
+                                <span id="selected-app-name"></span>
+                            </h3>
+                        </div>
+                        
+                        <div class="p-6">
+                            <div class="relative mb-4">
+                                <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                                <input type="text" id="nokosSearch" onkeyup="filterNokosCountries()" placeholder="Cari negara..." class="w-full bg-black/50 border border-gray-700 rounded-xl py-3 pl-12 pr-4 text-white text-sm focus:border-purple-500 outline-none transition">
+                            </div>
+                            
+                            <div id="nokos-country-list" class="space-y-3 max-h-[500px] overflow-y-auto pr-1 custom-scroll pb-6">
+                                </div>
+                        </div>
+                    </div>
+
+                    <div id="step-operator" class="hidden p-6 bg-black/30 animate-fade-in-up border-t border-gray-800">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-white font-bold text-lg flex items-center gap-2">
+                                <i class="fa-solid fa-tower-cell text-blue-500"></i> Pilih Operator
+                            </h3>
+                            <button onclick="document.getElementById('step-operator').classList.add('hidden'); document.getElementById('step-country-server').classList.remove('hidden');" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div class="bg-yellow-900/20 border border-yellow-500/30 p-3 rounded-xl mb-4 text-xs text-yellow-200 flex items-center gap-2">
+                            <i class="fa-solid fa-circle-info"></i>
+                            <span>Operator "ANY" direkomendasikan untuk stok terbanyak.</span>
+                        </div>
+                        <div id="nokos-operator-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3"></div>
+                    </div>
+
+                    <div id="step-checkout" class="hidden bg-gradient-to-r from-purple-900/30 to-blue-900/30 border-t border-white/10 p-6 animate-fade-in-up sticky bottom-0 backdrop-blur-md">
+                        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div class="flex items-center gap-4">
+                                <img id="display-country-flag" src="" class="w-10 h-7 object-cover rounded-md shadow-md">
+                                <div>
+                                    <div id="display-country" class="text-sm font-bold text-white">Negara</div>
+                                    <div id="display-server-info" class="text-xs text-gray-400">Server & Operator</div>
+                                </div>
+                            </div>
+                            <div class="text-right flex items-center gap-4">
+                                <div>
+                                    <div class="text-xs text-gray-400">Total Harga</div>
+                                    <div id="display-price" class="text-2xl font-bold text-white font-mono">Rp 0</div>
+                                </div>
+                                <button onclick="executeBuyNokos()" id="btn-buy-nokos" class="px-8 py-4 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold transition shadow-lg shadow-purple-500/20 flex items-center gap-2 transform hover:scale-105 active:scale-95">
+                                    <i class="fa-solid fa-cart-shopping"></i> BELI SEKARANG
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2 mt-12">
+                    <span class="animate-pulse w-3 h-3 bg-yellow-500 rounded-full shadow-[0_0_10px_rgba(234,179,8,0.5)]"></span> Pesanan Pending
+                </h3>
+                <div id="nokos-active-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="col-span-full text-center py-12 bg-white/5 rounded-2xl border border-white/5 flex flex-col items-center justify-center gap-3">
+                        <i class="fa-solid fa-box-open text-4xl text-gray-600"></i>
+                        <span class="text-gray-500 italic">Tidak ada pesanan aktif.</span>
                     </div>
                 </div>
-                <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2 mt-8"><span class="animate-pulse w-2 h-2 bg-yellow-500 rounded-full"></span> Pesanan Pending</h3>
-                <div id="nokos-active-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="col-span-full text-center py-10 text-gray-500 italic">Tidak ada pesanan aktif.</div></div>
             </div>
         </section>
         
