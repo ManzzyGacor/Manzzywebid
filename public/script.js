@@ -666,38 +666,44 @@ async function selectOperatorAndCheckout(opId, opName) {
     }
 }
 
-// --- FETCH HISTORY (FIXED: FILTER EXPIRED) ---
+// --- FETCH HISTORY (FIX: AUTO REFUND BACKGROUND) ---
 async function fetchNokosHistory() {
     if(!userSession) return;
     const container = document.getElementById('nokos-active-container');
     
     try {
         const res = await fetch(`/api/nokos/history/${userSession}`);
-        if(!res.ok) throw new Error("Gagal");
+        if(!res.ok) throw new Error("API Error"); // Silent error jika gagal fetch
+        
         const list = await res.json();
         
-        // [FIX] Filter pesanan yang statusnya 'waiting' DAN waktunya BELUM habis
+        // 1. [PENTING] Background Check ke Server (Trigger Auto Refund)
+        // Loop semua pesanan 'waiting' (termasuk yg expired) agar server memproses refund
+        list.forEach(tx => {
+            if (tx.status === 'waiting') {
+                fetch(`/api/nokos/status/${tx.invoiceId}`);
+            }
+        });
+
+        // 2. Filter Tampilan (Hanya tampilkan yang BELUM Expired)
         const now = new Date();
         const activeList = list.filter(tx => {
             const exp = new Date(tx.expiresAt);
-            return tx.status === 'waiting' && exp > now; // Hanya tampilkan jika belum expired
+            // Tampilkan jika status waiting DAN sisa waktu masih ada (> 0)
+            return tx.status === 'waiting' && exp > now;
         });
         
+        // 3. Render UI
         if(activeList.length === 0) { 
             container.innerHTML = '<div class="text-center py-12 border border-dashed border-gray-800 rounded-2xl bg-[#0a0a0a]"><p class="text-gray-600 text-xs italic">Tidak ada pesanan aktif.</p><button onclick="openNokosSheet()" class="mt-4 text-xs text-blue-500 font-bold border border-blue-500/30 px-4 py-2 rounded-lg hover:bg-blue-500/10">+ Buat Pesanan</button></div>'; 
             return; 
         }
         
-        // Render Active List
         container.innerHTML = activeList.map(tx => {
-            // Panggil cek status ke backend untuk tiap item (silent check)
-            // Agar jika expired di backend, saldo user direfund
-            fetch(`/api/nokos/status/${tx.invoiceId}`); 
-
             const exp = new Date(tx.expiresAt);
             const timeLeft = Math.floor((exp - now) / 1000);
             
-            // Format menit:detik
+            // Format waktu
             let timeDisplay = timeLeft > 0 ? 
                 `${Math.floor(timeLeft/60)}:${(timeLeft%60).toString().padStart(2,'0')}` : 
                 '00:00';
@@ -706,13 +712,14 @@ async function fetchNokosHistory() {
                 `<div class="flex flex-col"><span class="text-[10px] text-gray-400">Kode OTP:</span><span class="text-2xl font-mono font-bold text-green-400 tracking-[0.2em] select-all cursor-pointer bg-green-900/20 px-2 rounded">${tx.smsCode}</span></div>` : 
                 `<div class="flex items-center gap-2 text-yellow-500 animate-pulse"><i class="fa-regular fa-envelope"></i><span class="text-xs font-bold">menunggu sms...</span></div>`;
             
+            // Tombol Footer
             let footerBtn = tx.smsCode ? 
                 `<button onclick="nokosAction('${tx.invoiceId}', 'done')" class="flex-1 py-2 rounded-lg border border-green-500 text-green-500 text-xs font-bold hover:bg-green-500/10"><i class="fa-solid fa-check mr-1"></i> Selesai</button>` :
                 `<button onclick="nokosAction('${tx.invoiceId}', 'resend')" class="flex-1 py-2 rounded-lg border border-blue-500/50 text-blue-400 text-xs font-bold hover:bg-blue-500/10"><i class="fa-solid fa-rotate-right mr-1"></i> Resend</button>
                  <button onclick="nokosAction('${tx.invoiceId}', 'cancel')" class="flex-1 py-2 rounded-lg border border-red-500/50 text-red-500 text-xs font-bold hover:bg-red-500/10"><i class="fa-solid fa-xmark mr-1"></i> Batal</button>`;
 
             return `
-            <div class="bg-[#1a1a1d] border border-gray-800 rounded-2xl p-4 relative overflow-hidden">
+            <div class="bg-[#1a1a1d] border border-gray-800 rounded-2xl p-4 relative overflow-hidden transition-all duration-500">
                 <div class="flex justify-between items-start mb-3 border-b border-gray-800 pb-3">
                     <div class="flex items-center gap-2"><span class="font-mono text-lg text-white font-bold tracking-wide select-all">${tx.phoneNumber}</span></div>
                     <div class="bg-yellow-500/20 text-yellow-500 px-2 py-1 rounded text-xs font-mono font-bold flex items-center gap-1"><i class="fa-regular fa-clock"></i> ${timeDisplay}</div>
@@ -726,7 +733,7 @@ async function fetchNokosHistory() {
         }).join('');
         
     } catch(e) {
-        // Silent error
+        // Error Silent (Jangan tampilkan apa-apa agar user tidak terganggu)
     }
 }
 // ============================================
