@@ -6,7 +6,10 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' })); 
 
-// 1. KONEKSI DB (Hanya dipanggil jika perlu)
+// Helper Fetch (Untuk verifikasi token Google)
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+
+// 1. KONEKSI DB
 let isConnected = false;
 const connectDB = async () => {
     if (isConnected) return;
@@ -15,25 +18,68 @@ const connectDB = async () => {
 };
 
 // ==========================================
-// [FIX] LOGIN ADMIN SUPER CEPAT (TANPA DB)
+// [BARU] LOGIN ADMIN & GOOGLE AUTH
 // ==========================================
+
+// Login Admin (Hardcode)
 app.post('/api/admin-login', (req, res) => {
     const { username, password } = req.body;
-    
-    // Cek Hardcode Langsung (Tanpa loading database)
     if (username === 'man' && password === '112233') {
-        return res.json({ 
-            success: true, 
-            username: 'Manzzy (Owner)', 
-            role: 'admin',
-            token: 'admin-super-token' // Token dummy
-        });
+        return res.json({ success: true, username: 'Manzzy (Owner)', role: 'admin', token: 'admin-super-token' });
     }
-    
     return res.status(400).json({ success: false, message: "Password Salah" });
 });
 
-// 2. SCHEMA DEFINITIONS
+// Login Google (Auto Register)
+app.post('/api/auth/google', async (req, res) => {
+    await connectDB();
+    const { token } = req.body;
+
+    try {
+        // 1. Verifikasi Token ke Google
+        const verify = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`);
+        const googleData = await verify.json();
+
+        // Jika token tidak valid / expired
+        if (!googleData.email) return res.status(400).json({ success: false, msg: "Token Google Invalid" });
+
+        const email = googleData.email;
+
+        // 2. Cek User di Database
+        let user = await User.findOne({ username: email });
+
+        if (!user) {
+            // 3. Jika Belum Ada -> Buat User Baru (Auto Register)
+            // Password random karena login via Google
+            const randomPass = Math.random().toString(36).slice(-8) + "GooGLE";
+            
+            user = new User({
+                username: email, // Username pakai email
+                password: randomPass, 
+                balance: 0,
+                role: 'member'
+            });
+            await user.save();
+        }
+
+        // 4. Login Sukses
+        res.json({ 
+            success: true, 
+            username: user.username, 
+            balance: user.balance, 
+            role: user.role,
+            isGoogle: true
+        });
+
+    } catch (e) {
+        console.error("Google Auth Error:", e);
+        res.status(500).json({ success: false, msg: "Server Error" });
+    }
+});
+
+// ==========================================
+// SCHEMA DEFINITIONS
+// ==========================================
 const UserSchema = new mongoose.Schema({ 
     username: { type: String, required: true, unique: true }, 
     password: { type: String, required: true }, 
@@ -42,30 +88,16 @@ const UserSchema = new mongoose.Schema({
 });
 const User = mongoose.models.User || mongoose.model('User', UserSchema);
 
-const ActiveServiceSchema = new mongoose.Schema({
-    username: String, productName: String, targetNumber: String,
-    serverIp: String, expiredDate: Date
-});
+const ActiveServiceSchema = new mongoose.Schema({ username: String, productName: String, targetNumber: String, serverIp: String, expiredDate: Date });
 const ActiveService = mongoose.models.ActiveService || mongoose.model('ActiveService', ActiveServiceSchema);
 
-const TopUpSchema = new mongoose.Schema({
-    username: String, amount: Number, proofImage: String, 
-    status: { type: String, default: 'pending' }, createdAt: { type: Date, default: Date.now }
-});
+const TopUpSchema = new mongoose.Schema({ username: String, amount: Number, proofImage: String, status: { type: String, default: 'pending' }, createdAt: { type: Date, default: Date.now } });
 const TopUp = mongoose.models.TopUp || mongoose.model('TopUp', TopUpSchema);
 
-const ProductSchema = new mongoose.Schema({
-    name: String, category: String, price: Number,
-    desc: String, imageUrl: String, formFields: String, isAvailable: { type: Boolean, default: true },
-    orderMode: { type: String, default: 'manual' }
-});
+const ProductSchema = new mongoose.Schema({ name: String, category: String, price: Number, desc: String, imageUrl: String, formFields: String, isAvailable: { type: Boolean, default: true }, orderMode: { type: String, default: 'manual' } });
 const Product = mongoose.models.Product || mongoose.model('Product', ProductSchema);
 
-const VoucherSchema = new mongoose.Schema({
-    code: { type: String, required: true, unique: true },
-    percent: { type: Number, required: true },
-    createdAt: { type: Date, default: Date.now }
-});
+const VoucherSchema = new mongoose.Schema({ code: { type: String, required: true, unique: true }, percent: { type: Number, required: true }, createdAt: { type: Date, default: Date.now } });
 const Voucher = mongoose.models.Voucher || mongoose.model('Voucher', VoucherSchema);
 
 const CategorySchema = new mongoose.Schema({ name: String, imageUrl: String });
@@ -74,10 +106,7 @@ const Category = mongoose.models.Category || mongoose.model('Category', Category
 const TestimonialSchema = new mongoose.Schema({ username: String, rating: Number, comment: String, createdAt: { type: Date, default: Date.now } });
 const Testimonial = mongoose.models.Testimonial || mongoose.model('Testimonial', TestimonialSchema);
 
-const TransactionSchema = new mongoose.Schema({
-    invoiceId: String, username: String, productName: String, formData: String,
-    amount: Number, status: { type: String, default: 'success' }, createdAt: { type: Date, default: Date.now }
-});
+const TransactionSchema = new mongoose.Schema({ invoiceId: String, username: String, productName: String, formData: String, amount: Number, status: { type: String, default: 'success' }, createdAt: { type: Date, default: Date.now } });
 const Transaction = mongoose.models.Transaction || mongoose.model('Transaction', TransactionSchema);
 
 // ==========================================
@@ -106,11 +135,7 @@ app.post('/api/register-user', async (req, res) => {
 });
 
 app.get('/api/user/:username', async (req, res) => {
-    // Bypass database jika admin yang request data dirinya sendiri
-    if(req.params.username === 'Manzzy (Owner)') {
-        return res.json({ username: 'Manzzy (Owner)', balance: 999999999, role: 'admin' });
-    }
-    
+    if(req.params.username === 'Manzzy (Owner)') return res.json({ username: 'Manzzy (Owner)', balance: 999999999, role: 'admin' });
     await connectDB();
     const user = await User.findOne({ username: req.params.username });
     res.json(user || {});
