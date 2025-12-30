@@ -631,42 +631,6 @@ async function selectOperatorAndCheckout(opId, opName) {
     }
 }
 
-// --- FINAL CHECKOUT ---
-async function selectOperatorAndCheckout(opId, opName) {
-    if(!confirm(`Beli ${nokosData.selectedApp.name} (${nokosData.tempServer.countryName})?\nOperator: ${opName}\nHarga: Rp ${parseInt(nokosData.tempServer.price).toLocaleString()}`)) return;
-    
-    closeOperatorSheet();
-    closeNokosSheet();
-    
-    // Show Toast Processing
-    showToast("Memproses pesanan...", "info");
-    
-    try {
-        const payload = {
-            username: userSession,
-            service_id: nokosData.selectedApp.id,
-            service_name: nokosData.selectedApp.name,
-            number_id: nokosData.tempServer.countryId,
-            provider_id: nokosData.tempServer.providerId,
-            operator_id: opId
-        };
-        
-        const res = await fetch('/api/nokos/buy', { 
-            method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
-        });
-        const d = await res.json();
-        
-        if(d.success) {
-            showToast("✅ Order Berhasil!", "success");
-            checkUserLogin();
-            fetchNokosHistory();
-        } else {
-            let msg = d.msg || "Gagal.";
-            if(msg.includes("saldo")) msg = "Saldo tidak cukup.";
-            showToast("❌ " + msg, "error");
-        }
-    } catch(e) { showToast("Gagal koneksi.", "error"); }
-}
 // ============================================
 // 8. HISTORY & SERVICES
 // ============================================
