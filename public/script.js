@@ -699,6 +699,8 @@ async function fetchNokosHistory() {
             return; 
         }
         
+// ... (Bagian atas fungsi fetchNokosHistory sama) ...
+
         // 4. Render List Pesanan
         container.innerHTML = activeList.map(tx => {
             const exp = new Date(tx.expiresAt);
@@ -708,7 +710,7 @@ async function fetchNokosHistory() {
             let timeDisplay = timeLeft > 0 ? 
                 `${Math.floor(timeLeft/60)}:${(timeLeft%60).toString().padStart(2,'0')}` : '00:00';
             
-            // LOGIKA TAMPILAN SMS (ADA TOMBOL COPY)
+            // TAMPILAN SMS
             let smsSection = tx.smsCode ? 
                 `<div class="flex flex-col items-end">
                     <span class="text-[10px] text-gray-400 mb-1">Kode OTP:</span>
@@ -721,13 +723,34 @@ async function fetchNokosHistory() {
                     <i class="fa-regular fa-envelope"></i><span class="text-xs font-bold">menunggu sms...</span>
                  </div>`;
             
-            // LOGIKA TOMBOL FOOTER
-            // Jika ada SMS -> Tombol Selesai
-            // Jika belum -> Tombol Resend & Batal
-            let footerBtn = tx.smsCode ? 
-                `<button onclick="nokosAction('${tx.invoiceId}', 'done')" class="flex-1 py-2.5 rounded-lg bg-green-600 hover:bg-green-500 text-white text-xs font-bold shadow-lg shadow-green-900/20 transition"><i class="fa-solid fa-check mr-1"></i> Selesai</button>` :
-                `<button onclick="nokosAction('${tx.invoiceId}', 'resend')" class="flex-1 py-2.5 rounded-lg border border-blue-600/30 text-blue-400 text-xs font-bold hover:bg-blue-600/10 transition"><i class="fa-solid fa-rotate-right mr-1"></i> Resend</button>
-                 <button onclick="nokosAction('${tx.invoiceId}', 'cancel')" class="flex-1 py-2.5 rounded-lg border border-red-600/30 text-red-500 text-xs font-bold hover:bg-red-600/10 transition"><i class="fa-solid fa-xmark mr-1"></i> Batal</button>`;
+            // [LOGIKA BARU] BUTTONS
+            let footerBtn = '';
+
+            if (tx.smsCode) {
+                // KONDISI 1: SUDAH ADA SMS
+                // Tampilkan Tombol SELESAI + Tombol RESEND (Berdampingan)
+                footerBtn = `
+                    <button onclick="nokosAction('${tx.invoiceId}', 'done')" class="flex-[2] py-2.5 rounded-lg bg-green-600 hover:bg-green-500 text-white text-xs font-bold shadow-lg shadow-green-900/20 transition">
+                        <i class="fa-solid fa-check mr-1"></i> Selesai
+                    </button>
+                    
+                    <button onclick="nokosAction('${tx.invoiceId}', 'resend')" class="flex-1 py-2.5 rounded-lg border border-blue-600/30 text-blue-400 text-xs font-bold hover:bg-blue-600/10 transition" title="Minta SMS Ulang">
+                        <i class="fa-solid fa-rotate-right"></i> Resend
+                    </button>
+                `;
+            } else {
+                // KONDISI 2: BELUM ADA SMS (PENDING)
+                // Tampilkan RESEND + BATAL
+                footerBtn = `
+                    <button onclick="nokosAction('${tx.invoiceId}', 'resend')" class="flex-1 py-2.5 rounded-lg border border-blue-600/30 text-blue-400 text-xs font-bold hover:bg-blue-600/10 transition">
+                        <i class="fa-solid fa-rotate-right mr-1"></i> Resend
+                    </button>
+                    
+                    <button onclick="nokosAction('${tx.invoiceId}', 'cancel')" class="flex-1 py-2.5 rounded-lg border border-red-600/30 text-red-500 text-xs font-bold hover:bg-red-600/10 transition">
+                        <i class="fa-solid fa-xmark mr-1"></i> Batal
+                    </button>
+                `;
+            }
 
             return `
             <div class="bg-[#1a1a1d] border border-gray-800 rounded-2xl p-4 relative overflow-hidden transition-all duration-500 hover:border-gray-700 shadow-lg">
