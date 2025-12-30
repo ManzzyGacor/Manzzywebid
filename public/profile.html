@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - Manzzy ID</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    
+    <style>
+        body { background-color: #050505; color: white; font-family: 'Space Grotesk', sans-serif; }
+        
+        /* Glassmorphism */
+        .glass-panel {
+            background: rgba(20, 20, 25, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* KARTU MEMBER (Black Card Effect) */
+        .member-card {
+            background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
+            border: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.5s ease;
+        }
+        .member-card::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(168,85,247,0.15) 0%, transparent 60%);
+            transform: rotate(30deg); pointer-events: none;
+        }
+        .member-card:hover { transform: scale(1.02); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.8); }
+        
+        /* Efek Chip Emas */
+        .chip {
+            background: linear-gradient(135deg, #fcd34d 0%, #d97706 100%);
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+        }
+
+        .input-dark {
+            background: #0a0a0c; border: 1px solid #27272a; color: white;
+            transition: all 0.3s;
+        }
+        .input-dark:focus { border-color: #a855f7; outline: none; }
+    </style>
+</head>
+<body class="min-h-screen relative pb-20">
+    
+    <div class="fixed top-0 left-0 w-full h-64 bg-gradient-to-b from-purple-900/20 to-transparent -z-10"></div>
+    <div class="fixed bottom-0 right-0 w-96 h-96 bg-blue-900/10 rounded-full blur-[100px] -z-10"></div>
+
+    <nav class="p-6 flex items-center justify-between max-w-2xl mx-auto">
+        <a href="/" class="flex items-center gap-2 text-gray-400 hover:text-white transition group">
+            <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-white/10">
+                <i class="fa-solid fa-arrow-left"></i>
+            </div>
+            <span class="text-sm font-bold">Dashboard</span>
+        </a>
+        <h1 class="text-lg font-bold tracking-widest">MY PROFILE</h1>
+        <div class="w-8"></div> </nav>
+
+    <main class="max-w-2xl mx-auto px-6 mt-4">
+        
+        <div class="member-card rounded-2xl p-6 aspect-[1.6/1] flex flex-col justify-between shadow-2xl mb-8 relative group">
+            
+            <div class="flex justify-between items-start z-10">
+                <div>
+                    <h3 class="text-gray-400 text-[10px] uppercase tracking-[0.2em] mb-1">Official Member</h3>
+                    <div class="text-xl font-bold italic tracking-wide">MANZZY<span class="text-purple-500">ID</span></div>
+                </div>
+                <div class="text-right">
+                    <i class="fa-brands fa-cc-visa text-3xl text-white/50"></i>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 z-10 my-4">
+                <div class="chip w-12 h-9 rounded-md"></div>
+                <i class="fa-solid fa-wifi rotate-90 text-white/50 text-xl"></i>
+            </div>
+
+            <div class="z-10">
+                <div class="text-gray-400 text-[9px] uppercase tracking-wider mb-1">Card Holder</div>
+                <div id="card-name" class="text-xl font-mono font-bold text-white tracking-widest uppercase truncate shadow-black drop-shadow-md">LOADING...</div>
+                
+                <div class="flex justify-between items-end mt-4">
+                    <div class="font-mono text-sm text-purple-400 tracking-widest" id="card-id">0000 0000 0000</div>
+                    <div class="px-3 py-1 rounded bg-white/10 border border-white/20 text-[10px] font-bold uppercase tracking-widest" id="card-rank">MEMBER</div>
+                </div>
+            </div>
+
+            <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition duration-700 pointer-events-none"></div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-8">
+            <div class="glass-panel p-4 rounded-xl text-center">
+                <div class="text-gray-500 text-xs mb-1">Sisa Saldo</div>
+                <div id="profile-balance" class="text-xl font-bold text-green-400">Rp 0</div>
+            </div>
+            <div class="glass-panel p-4 rounded-xl text-center">
+                <div class="text-gray-500 text-xs mb-1">Status Akun</div>
+                <div class="text-xl font-bold text-blue-400">Aktif ✅</div>
+            </div>
+        </div>
+
+        <div class="glass-panel rounded-xl p-6 mb-24">
+            <h3 class="text-lg font-bold mb-6 flex items-center gap-2">
+                <i class="fa-solid fa-shield-halved text-purple-500"></i> Keamanan Akun
+            </h3>
+
+            <div class="space-y-5">
+                <div>
+                    <label class="text-xs text-gray-500 font-bold block mb-2">Username / Email</label>
+                    <input type="text" id="profile-username" class="w-full input-dark rounded-lg p-3 text-sm text-gray-400 cursor-not-allowed" readonly>
+                </div>
+
+                <div>
+                    <label class="text-xs text-gray-500 font-bold block mb-2">Ganti Password Baru</label>
+                    <div class="relative">
+                        <input type="password" id="new-password" class="w-full input-dark rounded-lg p-3 text-sm pr-10" placeholder="Minimal 6 karakter">
+                        <i onclick="togglePass()" class="fa-solid fa-eye absolute right-3 top-3.5 text-gray-500 cursor-pointer hover:text-white transition"></i>
+                    </div>
+                </div>
+
+                <button onclick="savePassword()" id="btn-save" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-lg transition shadow-lg shadow-purple-900/20">
+                    SIMPAN PERUBAHAN
+                </button>
+
+                <div class="border-t border-gray-800 my-4"></div>
+
+                <button onclick="doLogout()" class="w-full border border-red-500/30 text-red-500 hover:bg-red-500/10 font-bold py-3 rounded-lg transition">
+                    <i class="fa-solid fa-sign-out-alt mr-2"></i> KELUAR / LOGOUT
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const userSession = localStorage.getItem('user_session');
+
+        // 1. Load Data User
+        document.addEventListener('DOMContentLoaded', async () => {
+            if(!userSession) { window.location.href = '/login_user.html'; return; }
+
+            try {
+                const res = await fetch(`/api/user/${userSession}`);
+                const data = await res.json();
+                
+                if(data.username) {
+                    // Update Kartu
+                    document.getElementById('card-name').innerText = data.username;
+                    document.getElementById('card-id').innerText = generateFakeCardNumber(data.username);
+                    
+                    // Update Rank (Logika Sederhana: Saldo > 500rb = VIP)
+                    const rank = data.balance > 500000 ? "VIP GOLD" : "MEMBER";
+                    document.getElementById('card-rank').innerText = rank;
+                    if(data.balance > 500000) document.getElementById('card-rank').className = "px-3 py-1 rounded bg-yellow-500/20 border border-yellow-500/50 text-yellow-500 text-[10px] font-bold uppercase tracking-widest";
+
+                    // Update Form & Stats
+                    document.getElementById('profile-username').value = data.username;
+                    document.getElementById('profile-balance').innerText = `Rp ${data.balance.toLocaleString()}`;
+                }
+            } catch(e) {
+                console.error(e);
+            }
+        });
+
+        // 2. Fungsi Ganti Password
+        async function savePassword() {
+            const pass = document.getElementById('new-password').value;
+            if(!pass) return alert("Masukkan password baru dulu.");
+            if(pass.length < 6) return alert("Password minimal 6 karakter.");
+
+            const btn = document.getElementById('btn-save');
+            const originalText = btn.innerText;
+            btn.innerText = "MENYIMPAN..."; btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/user/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: userSession, newPassword: pass })
+                });
+                const d = await res.json();
+                
+                if(d.success) {
+                    alert("✅ Password berhasil diubah! Silakan login ulang.");
+                    doLogout();
+                } else {
+                    alert("❌ Gagal: " + d.msg);
+                }
+            } catch(e) {
+                alert("Error koneksi.");
+            } finally {
+                btn.innerText = originalText; btn.disabled = false;
+            }
+        }
+
+        // 3. Helper Functions
+        function doLogout() {
+            localStorage.removeItem('user_session');
+            localStorage.removeItem('manzzyUser');
+            window.location.href = '/login_user.html';
+        }
+
+        function togglePass() {
+            const i = document.getElementById('new-password');
+            i.type = i.type === 'password' ? 'text' : 'password';
+        }
+
+        function generateFakeCardNumber(str) {
+            // Bikin nomor acak biar kelihatan keren aja (Visual only)
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            const num = Math.abs(hash).toString().padEnd(16, '0').slice(0, 16);
+            return num.match(/.{1,4}/g).join(' '); 
+        }
+    </script>
+</body>
+</html>
