@@ -763,16 +763,62 @@ async function fetchNokosHistory() {
     }
 }
 
-// --- HELPER: COPY TEXT ---
+// --- HELPER: COPY TEXT (VERSION 2: ROBUST / ANTI-GAGAL) ---
 function copyText(text, label) {
-    if(!text) return;
-    navigator.clipboard.writeText(text).then(() => {
-        showToast(`✅ ${label} disalin!`, "success");
-        // Efek getar HP (Haptic Feedback)
-        if (navigator.vibrate) navigator.vibrate(50);
-    }).catch(err => {
-        showToast("Gagal menyalin", "error");
-    });
+    if (!text) return;
+
+    // Coba Cara Modern (Wajib HTTPS)
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+            successCopyEffect(label);
+        }).catch(err => {
+            // Jika gagal (misal izin ditolak), coba cara manual
+            fallbackCopyText(text, label);
+        });
+    } else {
+        // Jika browser tidak support clipboard API (misal HTTP biasa), pakai cara manual
+        fallbackCopyText(text, label);
+    }
+}
+
+// Fungsi Cadangan (Manual Copy)
+function fallbackCopyText(text, label) {
+    // 1. Buat elemen textarea sementara
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    
+    // 2. Sembunyikan agar tidak terlihat user
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.position = "fixed";
+    textArea.style.opacity = "0";
+
+    document.body.appendChild(textArea);
+    
+    // 3. Pilih dan Salin teksnya
+    textArea.focus();
+    textArea.select();
+
+    try {
+        const successful = document.execCommand('copy');
+        if(successful) {
+            successCopyEffect(label);
+        } else {
+            showToast("Gagal menyalin. Izin browser ditolak.", "error");
+        }
+    } catch (err) {
+        showToast("Gagal menyalin.", "error");
+    }
+
+    // 4. Hapus elemen sementara
+    document.body.removeChild(textArea);
+}
+
+// Efek Sukses (Notif & Getar)
+function successCopyEffect(label) {
+    showToast(`✅ ${label} disalin!`, "success");
+    // Efek getar HP (Haptic Feedback)
+    if (navigator.vibrate) navigator.vibrate(50);
 }
 // ============================================
 // 7. ACTION BUTTONS (RESEND/CANCEL/DONE)
