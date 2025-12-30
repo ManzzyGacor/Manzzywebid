@@ -134,6 +134,30 @@ app.post('/api/register-user', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
+// ==========================================
+// [BARU] UPDATE PASSWORD
+// ==========================================
+app.post('/api/user/change-password', async (req, res) => {
+    await connectDB();
+    const { username, newPassword } = req.body;
+    
+    try {
+        if (!newPassword || newPassword.length < 6) {
+            return res.status(400).json({ success: false, msg: "Password minimal 6 karakter" });
+        }
+
+        const user = await User.findOne({ username });
+        if (!user) return res.status(404).json({ success: false, msg: "User tidak ditemukan" });
+
+        user.password = newPassword;
+        await user.save();
+
+        res.json({ success: true, msg: "Password berhasil diubah!" });
+    } catch (e) {
+        res.status(500).json({ success: false, msg: "Server Error" });
+    }
+});
+
 app.get('/api/user/:username', async (req, res) => {
     if(req.params.username === 'Manzzy (Owner)') return res.json({ username: 'Manzzy (Owner)', balance: 999999999, role: 'admin' });
     await connectDB();
