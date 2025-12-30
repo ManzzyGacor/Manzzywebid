@@ -298,82 +298,7 @@ async function submitTopUp(e) {
 }
 
 // ============================================
-// 6. NOKOS SYSTEM (PREMIUM FLOW)
-// ============================================
 
-let nokosInterval = null;
-let currentNokos = { serviceId: null, serviceName: null, countryId: null, countryName: null, providerId: null, serverPrice: 0, operatorId: null };
-
-async function initNokos() {
-    const grid = document.getElementById('nokos-app-grid');
-    if(grid.children.length <= 1) {
-        try {
-            const res = await fetch('/api/nokos/services');
-            const data = await res.json();
-            if(data.success) {
-                const iconMap = { 'WhatsApp': 'https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg', 'Telegram': 'https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg', 'TikTok': 'https://sf-tb-sg.ibytedtos.com/obj/eden-sg/uhtyvueh7nulogpoguhm/tiktok-icon2.png', 'Shopee': 'https://upload.wikimedia.org/wikipedia/commons/0/0e/Shopee_logo.svg', 'Gojek': 'https://upload.wikimedia.org/wikipedia/commons/8/86/Gojek_logo_2019.svg', 'Facebook': 'https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg', 'Instagram': 'https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg', 'Google': 'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg' };
-                grid.innerHTML = data.data.map(s => {
-                    const imgUrl = iconMap[s.service_name] || s.service_img || 'https://via.placeholder.com/50';
-                    return `<div onclick="selectApp(this, '${s.service_code}', '${s.service_name}')" class="app-card cursor-pointer bg-black/40 border border-gray-700 rounded-xl p-3 flex flex-col items-center justify-center hover:border-gray-500 transition group h-20"><img src="${imgUrl}" class="w-6 h-6 object-contain mb-1"><span class="text-[9px] text-gray-400 font-bold text-center group-hover:text-white uppercase">${s.service_name}</span></div>`;
-                }).join('');
-            }
-        } catch(e) { grid.innerHTML = '<div class="col-span-full text-red-500 text-xs">Gagal memuat aplikasi.</div>'; }
-    }
-    fetchNokosHistory();
-    clearInterval(nokosInterval);
-    nokosInterval = setInterval(fetchNokosHistory, 5000);
-}
-
-async function selectApp(el, id, name) {
-    document.querySelectorAll('.app-card').forEach(c => c.classList.remove('active-card'));
-    el.classList.add('active-card');
-    currentNokos.serviceId = id; currentNokos.serviceName = name;
-    resetSteps(['step-country', 'step-server', 'step-operator', 'step-checkout']);
-    const countryGrid = document.getElementById('nokos-country-grid');
-    document.getElementById('step-country').classList.remove('hidden');
-    countryGrid.innerHTML = '<div class="col-span-full text-center text-xs text-yellow-500 animate-pulse">Memuat Negara...</div>';
-    try {
-        const res = await fetch(`/api/nokos/countries?service_id=${id}`);
-        const data = await res.json();
-        if(data.success) {
-            countryGrid.innerHTML = data.data.map(c => {
-                const priceData = JSON.stringify(c.pricelist).replace(/"/g, '&quot;'); 
-                return `<div onclick="selectCountry(this, '${c.number_id}', '${c.name}', '${priceData}')" class="country-card cursor-pointer bg-black/40 border border-gray-700 rounded-lg p-2 flex items-center gap-3 hover:border-gray-500 transition"><img src="${c.img}" class="w-6 h-4 rounded-sm object-cover"><div class="flex-1"><div class="text-xs font-bold text-white leading-tight">${c.name}</div><div class="text-[9px] text-gray-500">Stok: ${c.stock_total || '∞'}</div></div></div>`;
-            }).join('');
-        }
-    } catch(e) { countryGrid.innerHTML = '<div class="col-span-full text-red-500 text-xs">Gagal.</div>'; }
-}
-
-function selectCountry(el, numId, name, priceDataJson) {
-    document.querySelectorAll('.country-card').forEach(c => c.classList.remove('active-card'));
-    el.classList.add('active-card');
-    currentNokos.countryId = numId; currentNokos.countryName = name;
-    resetSteps(['step-server', 'step-operator', 'step-checkout']);
-    document.getElementById('step-server').classList.remove('hidden');
-    const serverList = document.getElementById('nokos-server-list');
-    const prices = JSON.parse(priceDataJson); 
-    serverList.innerHTML = prices.map(p => `<div onclick="selectServer(this, '${p.provider_id}', '${p.price}')" class="server-card cursor-pointer bg-black/40 border border-gray-700 rounded-lg p-3 flex justify-between items-center hover:border-green-500 transition group"><div class="flex items-center gap-3"><div class="bg-gray-800 p-2 rounded text-xs font-mono text-gray-400 group-hover:bg-green-900 group-hover:text-green-400">ID:${p.provider_id}</div><div><div class="text-xs font-bold text-white">Server ${p.server_id || 'Fast'}</div><div class="text-[10px] text-gray-500">Stok: ${p.stock}</div></div></div><div class="text-sm font-bold text-green-400">${p.price_format}</div></div>`).join('');
-}
-
-async function selectServer(el, provId, price) {
-    document.querySelectorAll('.server-card').forEach(c => c.classList.remove('active-card'));
-    el.classList.add('active-card');
-    currentNokos.providerId = provId; currentNokos.serverPrice = parseInt(price);
-    resetSteps(['step-operator', 'step-checkout']);
-    document.getElementById('step-operator').classList.remove('hidden');
-    const opGrid = document.getElementById('nokos-operator-grid');
-    opGrid.innerHTML = '<div class="col-span-full text-center text-xs text-yellow-500 animate-pulse">Memuat Operator...</div>';
-    try {
-        const countryEnc = encodeURIComponent(currentNokos.countryName);
-        const res = await fetch(`/api/nokos/operators?country=${countryEnc}&provider_id=${provId}`);
-        const data = await res.json();
-        if(data.status || data.success) {
-            let html = `<div onclick="selectOperator(this, 'any', 'Any/Acak')" class="operator-card cursor-pointer bg-black/40 border border-gray-700 rounded-lg p-3 flex flex-col items-center justify-center gap-1 hover:border-green-500 transition"><div class="w-6 h-6 rounded-full bg-gray-700 text-white flex items-center justify-center font-bold text-xs">?</div><span class="text-[9px] font-bold text-white">ANY</span></div>`;
-            html += data.data.map(op => `<div onclick="selectOperator(this, '${op.id}', '${op.name}')" class="operator-card cursor-pointer bg-black/40 border border-gray-700 rounded-lg p-3 flex flex-col items-center justify-center gap-1 hover:border-green-500 transition relative overflow-hidden"><img src="${op.image}" onerror="this.src='https://via.placeholder.com/20'" class="w-5 h-5 object-contain"><span class="text-[9px] font-bold text-gray-300 truncate w-full text-center">${op.name}</span></div>`).join('');
-            opGrid.innerHTML = html;
-        } else { opGrid.innerHTML = '<div class="col-span-full text-red-500 text-xs">Gagal.</div>'; }
-    } catch(e) { opGrid.innerHTML = '<div class="col-span-full text-red-500 text-xs">Error.</div>'; }
-}
 
 function selectOperator(el, opId, opName) {
     document.querySelectorAll('.operator-card').forEach(c => c.classList.remove('active-card'));
@@ -406,49 +331,293 @@ function buyNokosAgain() { document.getElementById('view-nokos').scrollIntoView(
 // ============================================
 // 7. ACTIVE ORDERS (DYNAMIC BUTTONS)
 // ============================================
+// ============================================
+// 6. NOKOS SYSTEM (ACCORDION & HORIZONTAL OP)
+// ============================================
 
-async function fetchNokosHistory() {
-    if(!userSession) return;
-    const res = await fetch(`/api/nokos/history/${userSession}`); 
-    const list = await res.json();
-    const container = document.getElementById('nokos-active-container');
-    const activeList = list.filter(tx => tx.status === 'waiting');
-    if(activeList.length === 0) { container.innerHTML = '<div class="col-span-full text-center py-10 text-gray-500 italic bg-white/5 rounded-xl border border-white/5">Tidak ada pesanan aktif.</div>'; return; }
-    
-    container.innerHTML = await Promise.all(activeList.map(async (tx) => {
-        await fetch(`/api/nokos/status/${tx.invoiceId}`); 
-        const exp = new Date(tx.expiresAt); const created = new Date(tx.createdAt); const now = new Date();
-        const timeLeft = Math.floor((exp - now) / 1000);
-        let timeDisplay = timeLeft > 0 ? `${Math.floor(timeLeft/60)}:${(timeLeft%60).toString().padStart(2,'0')}` : '00:00';
-        
-        let footerHtml = '';
-        if (tx.smsCode) {
-            footerHtml = `<div class="text-[10px] text-green-400 mb-2 font-bold animate-pulse">OTP Diterima! Klik Selesai jika berhasil.</div><div class="flex gap-2"><button onclick="nokosAction('${tx.invoiceId}', 'resend')" class="flex-1 py-2 rounded-lg border border-yellow-500/50 text-yellow-400 text-xs font-bold hover:bg-yellow-500/10 transition"><i class="fa-solid fa-rotate-right mr-1"></i> Resend</button><button onclick="nokosAction('${tx.invoiceId}', 'done')" class="flex-1 py-2 rounded-lg border border-green-500 text-green-500 text-xs font-bold hover:bg-green-500/10 transition shadow-lg shadow-green-500/20"><i class="fa-solid fa-check mr-1"></i> Selesai</button></div>`;
-        } else {
-            const elapsedSeconds = Math.floor((now - created) / 1000); const waitTime = 240; 
-            let cancelBtn = elapsedSeconds < waitTime ? `<button disabled class="flex-1 py-2 rounded-lg border border-gray-600 text-gray-500 text-xs font-bold cursor-not-allowed">Wait ${Math.floor((waitTime-elapsedSeconds)/60)}:${((waitTime-elapsedSeconds)%60).toString().padStart(2,'0')}</button>` : `<button onclick="nokosAction('${tx.invoiceId}', 'cancel')" class="flex-1 py-2 rounded-lg border border-red-500 text-red-500 text-xs font-bold hover:bg-red-500/10 transition"><i class="fa-solid fa-xmark mr-1"></i> Batal</button>`;
-            footerHtml = `<div class="text-[10px] text-gray-400 mb-2">Belum ada SMS? Tunggu atau Resend.</div><div class="flex gap-2"><button onclick="nokosAction('${tx.invoiceId}', 'resend')" class="flex-1 py-2 rounded-lg border border-blue-500/50 text-blue-400 text-xs font-bold hover:bg-blue-500/10 transition"><i class="fa-solid fa-rotate-right mr-1"></i> Resend</button>${cancelBtn}</div>`;
-        }
-        let smsSection = tx.smsCode ? `<div class="flex flex-col"><span class="text-[10px] text-gray-400">Kode OTP:</span><span class="text-2xl font-mono font-bold text-green-400 tracking-[0.2em] select-all cursor-pointer bg-green-900/20 px-2 rounded">${tx.smsCode}</span></div>` : `<div class="flex items-center gap-2 text-yellow-500 animate-pulse"><i class="fa-regular fa-envelope"></i><span class="text-xs font-bold">menunggu sms...</span></div>`;
-        const appIcons = {'WhatsApp': 'https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg', 'Telegram': 'https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg', 'TikTok': 'https://sf-tb-sg.ibytedtos.com/obj/eden-sg/uhtyvueh7nulogpoguhm/tiktok-icon2.png'};
-        return `<div class="bg-white/5 border border-white/10 rounded-xl p-4 relative overflow-hidden group hover:border-gray-600 transition"><div class="flex justify-between items-start mb-3 border-b border-gray-700 pb-3"><div class="flex items-center gap-2"><div class="w-6 h-4 bg-gray-700 rounded-sm overflow-hidden relative"><i class="fa-solid fa-globe text-gray-400 text-[10px] absolute inset-0 flex items-center justify-center"></i></div><span class="font-mono text-lg text-white font-bold tracking-wide select-all">${tx.phoneNumber}</span><button onclick="navigator.clipboard.writeText('${tx.phoneNumber}')" class="text-gray-500 hover:text-white transition"><i class="fa-regular fa-copy"></i></button></div><div class="bg-yellow-500/20 text-yellow-500 px-2 py-1 rounded text-xs font-mono font-bold flex items-center gap-1"><i class="fa-regular fa-clock"></i> ${timeDisplay}</div></div><div class="flex justify-between items-center mb-4"><div class="flex items-center gap-3"><img src="${appIcons[tx.serviceName] || 'https://via.placeholder.com/30'}" class="w-8 h-8 object-contain"><div><div class="text-white font-bold text-sm">${tx.serviceName}</div><div class="text-[10px] text-gray-400">${tx.country}</div></div></div><div class="text-right">${smsSection}</div></div><div class="bg-black/30 rounded-lg p-3 border border-white/5 transition-all duration-300">${footerHtml}</div></div>`;
-    })).then(rows => rows.join(''));
+let nokosData = { apps: [], countries: [], selectedApp: null, tempServer: null };
+let nokosInterval = null;
+
+async function initNokos() {
+    if(userSession) {
+        document.getElementById('nokos-username').innerText = userSession;
+        const balText = document.getElementById('header-balance').innerText; 
+        document.getElementById('nokos-balance-display').innerText = balText || "Rp 0";
+    }
+    fetchNokosHistory();
+    clearInterval(nokosInterval);
+    nokosInterval = setInterval(fetchNokosHistory, 5000);
 }
 
-async function nokosAction(invId, actionType) {
-    let msg = "Proses...";
-    if(actionType === 'cancel') { if(!confirm("Batalkan nomor & Refund?")) return; msg = "Membatalkan..."; }
-    if(actionType === 'done') { if(!confirm("Selesaikan pesanan ini?")) return; msg = "Menyelesaikan..."; }
-    if(actionType === 'resend') { msg = "Meminta kirim ulang SMS..."; }
-    showToast(msg, "info");
+// --- SHEET CONTROLS ---
+function openNokosSheet() {
+    document.getElementById('nokos-sheet-overlay').classList.remove('hidden');
+    requestAnimationFrame(() => {
+        document.getElementById('nokos-sheet-overlay').classList.remove('opacity-0');
+        document.getElementById('nokos-sheet').classList.remove('translate-y-full');
+    });
+    loadNokosApps();
+}
+
+function closeNokosSheet() {
+    document.getElementById('nokos-sheet').classList.add('translate-y-full');
+    document.getElementById('nokos-sheet-overlay').classList.add('opacity-0');
+    setTimeout(() => {
+        document.getElementById('nokos-sheet-overlay').classList.add('hidden');
+        backToApps();
+        closeOperatorSheet();
+    }, 3000);
+}
+
+// --- APPS LOGIC ---
+async function loadNokosApps() {
+    if(nokosData.apps.length > 0) return;
+    const gridPop = document.getElementById('grid-popular-apps');
+    gridPop.innerHTML = '<div class="col-span-full text-center py-4 text-gray-500"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</div>';
+    
     try {
-        const res = await fetch('/api/nokos/action', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ invoiceId: invId, username: userSession, action: actionType }) });
+        const res = await fetch('/api/nokos/services');
+        const data = await res.json();
+        if(data.success) {
+            nokosData.apps = data.data;
+            renderApps(nokosData.apps);
+        }
+    } catch(e) { gridPop.innerHTML = "Gagal memuat."; }
+}
+
+function renderApps(apps) {
+    const gridPop = document.getElementById('grid-popular-apps');
+    const listAll = document.getElementById('list-all-apps');
+    
+    const iconMap = { 
+        'WhatsApp': 'https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg', 
+        'Telegram': 'https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg', 
+        'Instagram': 'https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg', 
+        'TikTok': 'https://sf-tb-sg.ibytedtos.com/obj/eden-sg/uhtyvueh7nulogpoguhm/tiktok-icon2.png', 
+        'Shopee': 'https://upload.wikimedia.org/wikipedia/commons/0/0e/Shopee_logo.svg', 
+        'Facebook': 'https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg',
+        'Google': 'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg',
+        'Gojek': 'https://upload.wikimedia.org/wikipedia/commons/8/86/Gojek_logo_2019.svg'
+    };
+
+    const popularKeys = ['WhatsApp', 'Telegram', 'Instagram', 'TikTok', 'Shopee', 'Facebook'];
+    const popularApps = apps.filter(a => popularKeys.includes(a.service_name));
+    
+    gridPop.innerHTML = popularApps.map(a => `
+        <div onclick="selectApp('${a.service_code}', '${a.service_name}', '${iconMap[a.service_name]}')" 
+             class="bg-[#1c1c1f] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-purple-500 hover:bg-[#25252a] transition group h-28">
+            <img src="${iconMap[a.service_name]}" class="w-10 h-10 object-contain group-hover:scale-110 transition">
+            <span class="text-[10px] font-bold text-gray-300 uppercase tracking-wide group-hover:text-white">${a.service_name}</span>
+        </div>
+    `).join('');
+
+    listAll.innerHTML = apps.map(a => {
+        const img = iconMap[a.service_name] || a.service_img || 'https://via.placeholder.com/30';
+        return `
+        <div onclick="selectApp('${a.service_code}', '${a.service_name}', '${img}')" 
+             class="flex items-center gap-4 p-4 bg-[#1c1c1f] border border-gray-800 rounded-2xl hover:bg-[#25252a] cursor-pointer transition">
+            <div class="w-10 h-10 rounded-xl bg-black/50 flex items-center justify-center p-1.5"><img src="${img}" class="w-full h-full object-contain"></div>
+            <span class="text-sm font-bold text-gray-200">${a.service_name}</span>
+            <i class="fa-solid fa-chevron-right ml-auto text-gray-600 text-xs"></i>
+        </div>`;
+    }).join('');
+}
+
+function filterApps() {
+    const k = document.getElementById('searchAppInput').value.toLowerCase();
+    const filtered = nokosData.apps.filter(a => a.service_name.toLowerCase().includes(k));
+    renderApps(filtered);
+    document.getElementById('section-popular-apps').style.display = k ? 'none' : 'block';
+}
+
+// --- COUNTRY & SERVER LOGIC (ACCORDION) ---
+async function selectApp(id, name, icon) {
+    nokosData.selectedApp = { id, name, icon };
+    document.getElementById('header-app-name').innerText = name;
+    document.getElementById('header-app-icon').src = icon;
+    
+    document.getElementById('sheet-view-apps').classList.add('-translate-x-full');
+    document.getElementById('sheet-view-countries').classList.remove('translate-x-full');
+    
+    const list = document.getElementById('list-countries');
+    list.innerHTML = '<div class="text-center py-10"><i class="fa-solid fa-circle-notch fa-spin text-purple-500"></i> Memuat Data...</div>';
+    
+    try {
+        const res = await fetch(`/api/nokos/countries?service_id=${id}`);
+        const data = await res.json();
+        if(data.success) {
+            nokosData.countries = data.data;
+            renderCountries(nokosData.countries);
+        }
+    } catch(e) { list.innerHTML = "Error."; }
+}
+
+function backToApps() {
+    document.getElementById('sheet-view-apps').classList.remove('-translate-x-full');
+    document.getElementById('sheet-view-countries').classList.add('translate-x-full');
+    document.getElementById('searchCountryInput').value = '';
+}
+
+function renderCountries(countries) {
+    const list = document.getElementById('list-countries');
+    if(countries.length === 0) { list.innerHTML = '<div class="text-center text-gray-500">Kosong.</div>'; return; }
+    
+    list.innerHTML = countries.map(c => {
+        const cheapest = c.pricelist.sort((a,b) => a.price - b.price)[0];
+        const startPrice = cheapest ? cheapest.price_format : '-';
+        // Simpan data server dalam atribut data-servers untuk accordion
+        const serversData = encodeURIComponent(JSON.stringify(c.pricelist));
+        
+        return `
+        <div class="border border-gray-800 rounded-2xl bg-[#1c1c1f] overflow-hidden transition-all duration-300 country-item">
+            <div onclick="toggleCountryAccordion(this)" class="p-4 flex items-center justify-between cursor-pointer hover:bg-[#25252a]">
+                <div class="flex items-center gap-3">
+                    <img src="${c.img}" class="w-8 h-6 rounded object-cover shadow-sm">
+                    <span class="text-sm font-bold text-white">${c.name}</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="text-right">
+                        <div class="text-[10px] text-gray-500">Mulai</div>
+                        <div class="text-xs font-bold text-gray-300">${startPrice}</div>
+                    </div>
+                    <i class="fa-solid fa-chevron-down text-gray-600 transition-transform duration-300 accordion-icon"></i>
+                </div>
+            </div>
+            
+            <div class="accordion-body hidden bg-[#141416] border-t border-gray-800 p-3 space-y-2">
+                ${renderServerList(c.pricelist, c.number_id, c.name)}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function toggleCountryAccordion(el) {
+    const parent = el.parentElement;
+    const body = parent.querySelector('.accordion-body');
+    const icon = parent.querySelector('.accordion-icon');
+    
+    // Tutup yang lain (Opsional, biar rapi)
+    document.querySelectorAll('.accordion-body').forEach(b => { if(b !== body) b.classList.add('hidden'); });
+    document.querySelectorAll('.accordion-icon').forEach(i => { if(i !== icon) i.classList.remove('rotate-180'); });
+    
+    // Toggle current
+    body.classList.toggle('hidden');
+    icon.classList.toggle('rotate-180');
+}
+
+function renderServerList(servers, countryId, countryName) {
+    if(!servers || servers.length === 0) return '<div class="text-center text-xs text-red-500">Stok habis.</div>';
+    
+    return servers.map(s => `
+        <div class="flex justify-between items-center p-3 rounded-xl bg-[#1f1f23] border border-gray-800 hover:border-gray-700">
+            <div class="flex items-center gap-3">
+                <div class="text-[10px] font-mono text-blue-400 bg-blue-900/20 px-1.5 py-0.5 rounded">ID:${s.provider_id}</div>
+                <div>
+                    <div class="text-xs font-bold text-white">Server ${s.server_id || 'Fast'}</div>
+                    <div class="text-[10px] text-gray-500">Stok: ${s.stock}</div>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-sm font-bold text-white">${s.price_format}</span>
+                <button onclick="openOperatorSelection('${countryId}', '${countryName}', '${s.price}', '${s.provider_id}', '${s.server_id}')" 
+                    class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition shadow-lg shadow-blue-900/30">
+                    Order
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function filterCountries() {
+    const k = document.getElementById('searchCountryInput').value.toLowerCase();
+    const filtered = nokosData.countries.filter(c => c.name.toLowerCase().includes(k));
+    renderCountries(filtered);
+}
+
+// --- OPERATOR SELECTION (HORIZONTAL FLOATING) ---
+async function openOperatorSelection(countryId, countryName, price, providerId, serverName) {
+    nokosData.tempServer = { countryId, countryName, price, providerId };
+    
+    document.getElementById('op-server-info').innerText = `${countryName} • Server ${serverName || 'X'} (ID: ${providerId})`;
+    const sheetOp = document.getElementById('sheet-operator');
+    const listOp = document.getElementById('list-operators');
+    
+    // Show Sheet
+    sheetOp.classList.remove('translate-y-full');
+    
+    listOp.innerHTML = '<div class="text-xs text-gray-500 p-2">Memuat operator...</div>';
+    
+    // Fetch Operator (Horizontal Scroll UI)
+    try {
+        const cNameEnc = encodeURIComponent(countryName);
+        const res = await fetch(`/api/nokos/operators?country=${cNameEnc}&provider_id=${providerId}`);
+        const data = await res.json();
+        
+        let ops = [];
+        if(data.status || data.success) ops = data.data;
+        
+        // Selalu tambah opsi ANY di awal
+        let html = `
+        <div onclick="selectOperatorAndCheckout('any', 'Acak / Any')" 
+             class="min-w-[80px] h-24 bg-[#25252a] border border-gray-700 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-green-500 hover:bg-[#2a2a30] transition snap-start">
+            <div class="w-8 h-8 rounded-full bg-gray-700 text-white flex items-center justify-center font-bold text-xs">?</div>
+            <span class="text-[10px] font-bold text-white">ANY</span>
+        </div>`;
+        
+        if(ops.length > 0) {
+            html += ops.map(op => `
+            <div onclick="selectOperatorAndCheckout('${op.id}', '${op.name}')" 
+                 class="min-w-[80px] h-24 bg-[#25252a] border border-gray-700 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-green-500 hover:bg-[#2a2a30] transition snap-start relative overflow-hidden px-2 text-center">
+                <img src="${op.image}" onerror="this.style.display='none'" class="w-6 h-6 object-contain">
+                <span class="text-[9px] font-bold text-gray-300 leading-tight line-clamp-2">${op.name}</span>
+            </div>`).join('');
+        }
+        
+        listOp.innerHTML = html;
+        
+    } catch(e) { listOp.innerHTML = '<div class="text-xs text-red-500">Gagal load operator.</div>'; }
+}
+
+function closeOperatorSheet() {
+    document.getElementById('sheet-operator').classList.add('translate-y-full');
+}
+
+// --- FINAL CHECKOUT ---
+async function selectOperatorAndCheckout(opId, opName) {
+    if(!confirm(`Beli ${nokosData.selectedApp.name} (${nokosData.tempServer.countryName})?\nOperator: ${opName}\nHarga: Rp ${parseInt(nokosData.tempServer.price).toLocaleString()}`)) return;
+    
+    closeOperatorSheet();
+    closeNokosSheet();
+    
+    // Show Toast Processing
+    showToast("Memproses pesanan...", "info");
+    
+    try {
+        const payload = {
+            username: userSession,
+            service_id: nokosData.selectedApp.id,
+            service_name: nokosData.selectedApp.name,
+            number_id: nokosData.tempServer.countryId,
+            provider_id: nokosData.tempServer.providerId,
+            operator_id: opId
+        };
+        
+        const res = await fetch('/api/nokos/buy', { 
+            method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
+        });
         const d = await res.json();
-        if(d.success) { showToast("✅ " + d.msg, "success"); fetchNokosHistory(); if(actionType === 'cancel') checkUserLogin(); } 
-        else { showToast("❌ " + d.msg, "error"); }
+        
+        if(d.success) {
+            showToast("✅ Order Berhasil!", "success");
+            checkUserLogin();
+            fetchNokosHistory();
+        } else {
+            let msg = d.msg || "Gagal.";
+            if(msg.includes("saldo")) msg = "Saldo tidak cukup.";
+            showToast("❌ " + msg, "error");
+        }
     } catch(e) { showToast("Gagal koneksi.", "error"); }
 }
-
 // ============================================
 // 8. HISTORY & SERVICES
 // ============================================
