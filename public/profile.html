@@ -163,24 +163,31 @@
             </div>
         </div>
 
-        <div class="glass-panel p-6 rounded-3xl opacity-0 animate-slide-up delay-300 relative overflow-hidden group">
+ <div class="glass-panel p-6 rounded-3xl opacity-0 animate-slide-up delay-300 relative overflow-hidden group">
             <div class="absolute -right-6 -top-6 text-8xl text-white/5 rotate-12 group-hover:rotate-0 transition duration-700">
                 <i class="fa-solid fa-code"></i>
             </div>
 
-            <div class="flex items-center gap-3 mb-4">
-                <div class="w-8 h-8 rounded-lg bg-[var(--theme-color)]/20 flex items-center justify-center text-[var(--theme-color)] border border-[var(--theme-color)]/30">
-                    <i class="fa-solid fa-terminal text-xs"></i>
+            <div class="flex items-center justify-between mb-4 relative z-10">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-[var(--theme-color)]/20 flex items-center justify-center text-[var(--theme-color)] border border-[var(--theme-color)]/30">
+                        <i class="fa-solid fa-terminal text-xs"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-white">Developer API</h3>
+                        <p class="text-[10px] text-gray-500">Integrasi Bot & H2H</p>
+                    </div>
                 </div>
-                <div>
-                    <h3 class="text-sm font-bold text-white">Developer API</h3>
-                    <p class="text-[10px] text-gray-500">Gunakan key ini untuk integrasi bot/script.</p>
-                </div>
+                
+                <a href="/docs.html" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition text-[10px] font-bold text-gray-300 hover:text-white group-btn">
+                    <i class="fa-solid fa-book-open text-[var(--theme-color)]"></i>
+                    Docs
+                </a>
             </div>
 
             <div class="bg-black/50 border border-gray-700 rounded-xl p-3 flex items-center justify-between gap-3 mb-3 relative overflow-hidden">
                 <div class="font-mono text-xs text-green-400 tracking-wider truncate select-all" id="api-key-display">Belum ada API Key</div>
-                <button onclick="copyApiKey()" class="text-gray-400 hover:text-white transition"><i class="fa-solid fa-copy"></i></button>
+                <button onclick="copyApiKey()" class="text-gray-400 hover:text-white transition tooltip" title="Salin Key"><i class="fa-solid fa-copy"></i></button>
                 
                 <div class="absolute top-0 left-0 w-full h-[1px] bg-green-500/50 shadow-[0_0_10px_#22c55e] animate-ping" style="animation-duration: 3s"></div>
             </div>
@@ -366,4 +373,4 @@
         }
     </script>
 </body>
-</html>
+</html> 
