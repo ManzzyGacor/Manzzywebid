@@ -171,113 +171,49 @@
                     <div class="flex justify-between items-start mb-8">
                         <div>
                             <p class="text-gray-400 text-xs mb-1">Selamat datang,</p>
-                            <h2 class="text-xl font-bold text-white flex items-center gap-2">
-                                <span id="nokos-username" class="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400">User</span> 
-                                <img src="https://em-content.zobj.net/source/microsoft-teams/337/sparkles_2728.png" class="w-5 h-5">
-                            </h2>
+                            <h2 class="text-xl font-bold text-white flex items-center gap-2"><span id="nokos-username" class="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400">User</span></h2>
                         </div>
-                        <div onclick="switchView('landing')" class="w-9 h-9 bg-white/5 rounded-full flex items-center justify-center text-gray-400 cursor-pointer hover:bg-white/10 hover:text-white transition border border-white/5">
-                            <i class="fa-solid fa-xmark"></i>
-                        </div>
+                        <div onclick="switchView('landing')" class="w-9 h-9 bg-white/5 rounded-full flex items-center justify-center text-gray-400 cursor-pointer hover:bg-white/10"><i class="fa-solid fa-xmark"></i></div>
                     </div>
-
                     <div class="text-center">
                         <p class="text-gray-400 text-xs mb-2 font-mono tracking-widest uppercase">Total Balance</p>
-                        <h1 class="text-4xl font-extrabold text-white font-sans tracking-tight drop-shadow-lg" id="nokos-balance-display">Rp 0</h1>
+                        <h1 class="text-4xl font-extrabold text-white font-sans tracking-tight" id="nokos-balance-display">Rp 0</h1>
                     </div>
                 </div>
 
                 <div class="px-6 -mt-12 relative z-10">
                     <div class="glass-card bg-[#141416]/90 backdrop-blur-xl border border-white/10 p-5 rounded-2xl shadow-2xl flex justify-between items-center px-8">
-                        <div onclick="switchView('topup')" class="flex flex-col items-center gap-2 cursor-pointer group">
-                            <div class="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center text-xl text-white shadow-lg shadow-blue-500/30 group-hover:scale-105 transition">
-                                <i class="fa-solid fa-wallet"></i>
-                            </div>
-                            <span class="text-[10px] font-bold text-gray-400 group-hover:text-white uppercase tracking-wider">Top Up</span>
-                        </div>
-                        <div onclick="switchView('history')" class="flex flex-col items-center gap-2 cursor-pointer group">
-                            <div class="w-12 h-12 bg-[#25252a] rounded-2xl flex items-center justify-center text-xl text-white border border-white/10 group-hover:bg-[#303036] transition">
-                                <i class="fa-solid fa-clock-rotate-left"></i>
-                            </div>
-                            <span class="text-[10px] font-bold text-gray-400 group-hover:text-white uppercase tracking-wider">History</span>
-                        </div>
-                        <div onclick="openNokosSheet()" class="flex flex-col items-center gap-2 cursor-pointer group">
-                            <div class="w-12 h-12 bg-[#25252a] rounded-2xl flex items-center justify-center text-xl text-white border border-white/10 group-hover:bg-[#303036] transition">
-                                <i class="fa-solid fa-cart-shopping"></i>
-                            </div>
-                            <span class="text-[10px] font-bold text-gray-400 group-hover:text-white uppercase tracking-wider">Order</span>
-                        </div>
+                        <div onclick="switchView('topup')" class="flex flex-col items-center gap-2 cursor-pointer group"><div class="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center text-xl text-white shadow-lg shadow-blue-500/30 group-hover:scale-105 transition"><i class="fa-solid fa-wallet"></i></div><span class="text-[10px] font-bold text-gray-400">TOP UP</span></div>
+                        <div onclick="switchView('history')" class="flex flex-col items-center gap-2 cursor-pointer group"><div class="w-12 h-12 bg-[#25252a] rounded-2xl flex items-center justify-center text-xl text-white border border-white/10 group-hover:bg-[#303036] transition"><i class="fa-solid fa-clock-rotate-left"></i></div><span class="text-[10px] font-bold text-gray-400">HISTORY</span></div>
+                        <div onclick="openNokosSheet()" class="flex flex-col items-center gap-2 cursor-pointer group"><div class="w-12 h-12 bg-[#25252a] rounded-2xl flex items-center justify-center text-xl text-white border border-white/10 group-hover:bg-[#303036] transition"><i class="fa-solid fa-cart-shopping"></i></div><span class="text-[10px] font-bold text-gray-400">ORDER</span></div>
                     </div>
                 </div>
 
                 <div class="px-6 mt-10">
-                    <div class="flex justify-between items-center mb-5">
-                        <h3 class="text-white font-bold text-sm">Pesanan Pending</h3>
-                        <button onclick="fetchNokosHistory()" class="text-xs text-white bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded-lg font-bold shadow-lg shadow-blue-900/20 transition"><i class="fa-solid fa-rotate mr-1"></i> Refresh</button>
-                    </div>
-                    <div id="nokos-active-container" class="space-y-4">
-                        <div class="text-center py-12 border border-dashed border-gray-800 rounded-2xl bg-[#0a0a0a]">
-                            <p class="text-gray-600 text-xs italic">Tidak ada pesanan aktif.</p>
-                            <button onclick="openNokosSheet()" class="mt-4 text-xs text-blue-500 font-bold border border-blue-500/30 px-4 py-2 rounded-lg hover:bg-blue-500/10">+ Buat Pesanan</button>
-                        </div>
-                    </div>
+                    <div class="flex justify-between items-center mb-5"><h3 class="text-white font-bold text-sm">Pesanan Pending</h3><button onclick="fetchNokosHistory()" class="text-xs text-white bg-blue-600 px-3 py-1.5 rounded-lg"><i class="fa-solid fa-rotate mr-1"></i> Refresh</button></div>
+                    <div id="nokos-active-container" class="space-y-4"><div class="text-center py-12 border border-dashed border-gray-800 rounded-2xl bg-[#0a0a0a]"><p class="text-gray-600 text-xs italic">Tidak ada pesanan.</p></div></div>
                 </div>
             </div>
 
- <div id="nokos-sheet-overlay" onclick="closeNokosSheet()" class="fixed inset-0 bg-black/80 z-[60] hidden transition-opacity duration-300 opacity-0 backdrop-blur-sm"></div>
-            
+            <div id="nokos-sheet-overlay" onclick="closeNokosSheet()" class="fixed inset-0 bg-black/80 z-[60] hidden transition-opacity duration-300 opacity-0 backdrop-blur-sm"></div>
             <div id="nokos-sheet" class="fixed bottom-0 left-0 right-0 bg-[#121214] z-[70] rounded-t-[2rem] border-t border-gray-800 transition-transform duration-500 translate-y-full h-[75vh] flex flex-col shadow-[0_-10px_50px_rgba(0,0,0,0.8)]">
-                
-                <div class="w-full flex justify-center pt-4 pb-2 flex-none" onclick="closeNokosSheet()">
-                    <div class="w-14 h-1.5 bg-gray-700 rounded-full cursor-pointer hover:bg-gray-500 transition"></div>
-                </div>
-
+                <div class="w-full flex justify-center pt-4 pb-2 flex-none" onclick="closeNokosSheet()"><div class="w-14 h-1.5 bg-gray-700 rounded-full cursor-pointer hover:bg-gray-500 transition"></div></div>
                 <div class="flex-1 overflow-hidden relative bg-[#121214]">
-                    
                     <div id="sheet-view-apps" class="absolute inset-0 p-6 overflow-y-auto custom-scroll transition-transform duration-300">
                         <h3 class="text-lg font-bold text-white mb-6">Beli Nomor Virtual</h3>
-                        
-                        <div class="relative mb-8">
-                            <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
-                            <input type="text" id="searchAppInput" onkeyup="filterApps()" placeholder="Cari nama aplikasi..." class="w-full bg-[#1c1c1f] border border-gray-800 rounded-xl py-3.5 pl-12 pr-4 text-white text-sm focus:border-purple-500 outline-none placeholder-gray-600 transition">
-                        </div>
-
-                        <div id="section-popular-apps">
-                            <h4 class="text-[10px] font-bold text-gray-500 uppercase mb-4 tracking-widest"><i class="fa-solid fa-bolt text-yellow-500 mr-1"></i> Aplikasi Populer</h4>
-                            <div id="grid-popular-apps" class="grid grid-cols-3 gap-3 mb-8"></div>
-                        </div>
-
-                        <h4 class="text-[10px] font-bold text-gray-500 uppercase mb-4 tracking-widest">Semua Aplikasi</h4>
-                        <div id="list-all-apps" class="space-y-2 pb-20"></div>
+                        <div class="relative mb-8"><i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i><input type="text" id="searchAppInput" onkeyup="filterApps()" placeholder="Cari nama aplikasi..." class="w-full bg-[#1c1c1f] border border-gray-800 rounded-xl py-3.5 pl-12 pr-4 text-white text-sm focus:border-purple-500 outline-none"></div>
+                        <div id="section-popular-apps"><h4 class="text-[10px] font-bold text-gray-500 uppercase mb-4 tracking-widest"><i class="fa-solid fa-bolt text-yellow-500 mr-1"></i> Populer</h4><div id="grid-popular-apps" class="grid grid-cols-2 gap-3 mb-8"></div></div>
+                        <h4 class="text-[10px] font-bold text-gray-500 uppercase mb-4 tracking-widest">Semua Aplikasi</h4><div id="list-all-apps" class="space-y-2 pb-20"></div>
                     </div>
-
                     <div id="sheet-view-countries" class="absolute inset-0 p-0 overflow-hidden flex flex-col bg-[#121214] translate-x-full transition-transform duration-300">
-                        
-                        <div class="px-6 py-4 border-b border-gray-800 flex items-center gap-4 bg-[#121214] flex-none">
-                            <button onclick="backToApps()" class="w-9 h-9 rounded-full bg-[#1c1c1f] text-gray-400 flex items-center justify-center hover:text-white transition border border-gray-800"><i class="fa-solid fa-arrow-left"></i></button>
-                            <div class="flex items-center gap-3">
-                                <img id="header-app-icon" src="" class="w-8 h-8 object-contain">
-                                <div>
-                                    <h4 id="header-app-name" class="font-bold text-white text-lg leading-none">WhatsApp</h4>
-                                    <p class="text-[10px] text-gray-500 mt-1">Pilih negara tujuan</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="px-6 py-4 bg-[#121214] flex-none">
-                            <div class="relative">
-                                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
-                                <input type="text" id="searchCountryInput" onkeyup="filterCountries()" placeholder="Cari negara..." class="w-full bg-[#1c1c1f] border border-gray-800 rounded-xl py-3.5 pl-12 pr-4 text-white text-sm focus:border-purple-500 outline-none placeholder-gray-600">
-                            </div>
-                        </div>
-
-                        <div id="list-countries" class="flex-1 overflow-y-auto px-6 pb-24 custom-scroll space-y-3">
-                            </div>
+                        <div class="px-6 py-4 border-b border-gray-800 flex items-center gap-4 bg-[#121214] flex-none"><button onclick="backToApps()" class="w-9 h-9 rounded-full bg-[#1c1c1f] text-gray-400 flex items-center justify-center hover:text-white border border-gray-800"><i class="fa-solid fa-arrow-left"></i></button><div class="flex items-center gap-3"><img id="header-app-icon" src="" class="w-8 h-8 object-contain"><div><h4 id="header-app-name" class="font-bold text-white text-lg leading-none">App</h4><p class="text-[10px] text-gray-500 mt-1">Pilih negara</p></div></div></div>
+                        <div class="px-6 py-4 bg-[#121214] flex-none"><div class="relative"><i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i><input type="text" id="searchCountryInput" onkeyup="filterCountries()" placeholder="Cari negara..." class="w-full bg-[#1c1c1f] border border-gray-800 rounded-xl py-3.5 pl-12 pr-4 text-white text-sm focus:border-purple-500 outline-none"></div></div>
+                        <div id="list-countries" class="flex-1 overflow-y-auto px-6 pb-24 custom-scroll space-y-3"></div>
                     </div>
                 </div>
             </div>
 
-   <div id="sheet-operator" class="fixed bottom-0 left-0 right-0 bg-[#1a1a1d] border-t border-gray-700 z-[80] p-6 rounded-t-[2rem] transform translate-y-full transition-transform duration-300 shadow-[0_-10px_40px_rgba(0,0,0,0.9)] hidden">
+<div id="sheet-operator" style="display: none;" class="fixed bottom-0 left-0 right-0 bg-[#1a1a1d] border-t border-gray-700 z-[80] p-6 rounded-t-[2rem] transform translate-y-full transition-transform duration-300 shadow-[0_-10px_40px_rgba(0,0,0,0.9)] hidden">
                 <div class="flex justify-between items-center mb-4">
                     <div>
                         <h3 class="text-white font-bold text-lg">Pilih Operator</h3>
@@ -289,7 +225,6 @@
                 <div id="list-operators" class="flex gap-3 overflow-x-auto pb-4 custom-scroll snap-x">
                     </div>
             </div>
-             
         </section>
         
         <section id="view-myservices" class="view-section"><div class="w-full mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4"><button onclick="switchView('landing')" class="text-gray-400 hover:text-white flex items-center gap-2 group"><i class="fa-solid fa-arrow-left"></i> Kembali</button><h2 class="text-3xl font-bold text-white">BOT <span class="text-blue-500">AKTIF</span></h2></div><div id="myservices-list" class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20"><p class="text-gray-500 col-span-full text-center py-10">Memuat layanan...</p></div></section>

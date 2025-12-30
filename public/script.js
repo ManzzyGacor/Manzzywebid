@@ -327,12 +327,8 @@ async function executeBuyNokos() {
 
 function resetSteps(ids) { ids.forEach(id => document.getElementById(id).classList.add('hidden')); }
 function buyNokosAgain() { document.getElementById('view-nokos').scrollIntoView({ behavior: 'smooth' }); initNokos(); }
-
 // ============================================
-// 7. ACTIVE ORDERS (DYNAMIC BUTTONS)
-// ============================================
-// ============================================
-// 6. NOKOS SYSTEM (ACCORDION & HORIZONTAL OP)
+// 6. NOKOS SYSTEM (FIXED UI & ERROR MSG)
 // ============================================
 
 let nokosData = { apps: [], countries: [], selectedApp: null, tempServer: null };
@@ -341,12 +337,14 @@ let nokosInterval = null;
 async function initNokos() {
     if(userSession) {
         document.getElementById('nokos-username').innerText = userSession;
+        // Update saldo visual dari navbar
         const balText = document.getElementById('header-balance').innerText; 
         document.getElementById('nokos-balance-display').innerText = balText || "Rp 0";
     }
-    fetchNokosHistory();
+    fetchNokosHistory(); 
     clearInterval(nokosInterval);
-    nokosInterval = setInterval(fetchNokosHistory, 5000);
+    // Refresh otomatis setiap 10 detik tanpa popup error
+    nokosInterval = setInterval(fetchNokosHistory, 10000);
 }
 
 // --- SHEET CONTROLS ---
@@ -366,23 +364,33 @@ function closeNokosSheet() {
         document.getElementById('nokos-sheet-overlay').classList.add('hidden');
         backToApps();
         closeOperatorSheet();
-    }, 3000);
+    }, 300);
 }
 
-// --- APPS LOGIC ---
+// --- LOAD APPS ---
 async function loadNokosApps() {
-    if(nokosData.apps.length > 0) return;
+    if(nokosData.apps.length > 0) return; // Pakai cache jika sudah ada
+    
+    // Tampilkan loading di grid populer
     const gridPop = document.getElementById('grid-popular-apps');
     gridPop.innerHTML = '<div class="col-span-full text-center py-4 text-gray-500"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</div>';
     
     try {
         const res = await fetch('/api/nokos/services');
         const data = await res.json();
-        if(data.success) {
-            nokosData.apps = data.data;
+        
+        // Handle format data (adaptif jika struktur beda dikit)
+        const apps = data.data || data; 
+        if(Array.isArray(apps)) {
+            nokosData.apps = apps;
             renderApps(nokosData.apps);
+        } else {
+            throw new Error("Format data salah");
         }
-    } catch(e) { gridPop.innerHTML = "Gagal memuat."; }
+    } catch(e) { 
+        console.error(e);
+        gridPop.innerHTML = '<div class="text-xs text-red-500 col-span-full text-center">Gagal memuat aplikasi.</div>'; 
+    }
 }
 
 function renderApps(apps) {
@@ -395,14 +403,15 @@ function renderApps(apps) {
         'Instagram': 'https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg', 
         'TikTok': 'https://sf-tb-sg.ibytedtos.com/obj/eden-sg/uhtyvueh7nulogpoguhm/tiktok-icon2.png', 
         'Shopee': 'https://upload.wikimedia.org/wikipedia/commons/0/0e/Shopee_logo.svg', 
-        'Facebook': 'https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg',
-        'Google': 'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg',
+        'Facebook': 'https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg', 
+        'Google': 'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg', 
         'Gojek': 'https://upload.wikimedia.org/wikipedia/commons/8/86/Gojek_logo_2019.svg'
     };
-
+    
     const popularKeys = ['WhatsApp', 'Telegram', 'Instagram', 'TikTok', 'Shopee', 'Facebook'];
     const popularApps = apps.filter(a => popularKeys.includes(a.service_name));
     
+    // Render Grid Populer (6 Ikon Besar)
     gridPop.innerHTML = popularApps.map(a => `
         <div onclick="selectApp('${a.service_code}', '${a.service_name}', '${iconMap[a.service_name]}')" 
              class="bg-[#1c1c1f] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-purple-500 hover:bg-[#25252a] transition group h-28">
@@ -411,6 +420,7 @@ function renderApps(apps) {
         </div>
     `).join('');
 
+    // Render List Semua
     listAll.innerHTML = apps.map(a => {
         const img = iconMap[a.service_name] || a.service_img || 'https://via.placeholder.com/30';
         return `
@@ -425,31 +435,40 @@ function renderApps(apps) {
 
 function filterApps() {
     const k = document.getElementById('searchAppInput').value.toLowerCase();
-    const filtered = nokosData.apps.filter(a => a.service_name.toLowerCase().includes(k));
-    renderApps(filtered);
+    const f = nokosData.apps.filter(a => a.service_name.toLowerCase().includes(k));
+    renderApps(f);
     document.getElementById('section-popular-apps').style.display = k ? 'none' : 'block';
 }
 
-// --- COUNTRY & SERVER LOGIC (ACCORDION) ---
+// --- SELECT COUNTRY ---
 async function selectApp(id, name, icon) {
     nokosData.selectedApp = { id, name, icon };
+    
+    // Update Header
     document.getElementById('header-app-name').innerText = name;
     document.getElementById('header-app-icon').src = icon;
     
+    // Slide Animation
     document.getElementById('sheet-view-apps').classList.add('-translate-x-full');
     document.getElementById('sheet-view-countries').classList.remove('translate-x-full');
     
+    // Load Data
     const list = document.getElementById('list-countries');
     list.innerHTML = '<div class="text-center py-10"><i class="fa-solid fa-circle-notch fa-spin text-purple-500"></i> Memuat Data...</div>';
     
     try {
         const res = await fetch(`/api/nokos/countries?service_id=${id}`);
         const data = await res.json();
-        if(data.success) {
+        
+        if(data.success || data.status) { // Handle response format
             nokosData.countries = data.data;
             renderCountries(nokosData.countries);
+        } else {
+            list.innerHTML = '<div class="text-center text-gray-500 py-10">Gagal memuat negara.</div>';
         }
-    } catch(e) { list.innerHTML = "Error."; }
+    } catch(e) { 
+        list.innerHTML = '<div class="text-center text-red-500 py-10">Error koneksi.</div>';
+    }
 }
 
 function backToApps() {
@@ -460,13 +479,12 @@ function backToApps() {
 
 function renderCountries(countries) {
     const list = document.getElementById('list-countries');
-    if(countries.length === 0) { list.innerHTML = '<div class="text-center text-gray-500">Kosong.</div>'; return; }
+    if(!countries || countries.length === 0) { list.innerHTML = '<div class="text-center text-gray-500 py-10">Tidak ada data.</div>'; return; }
     
     list.innerHTML = countries.map(c => {
-        const cheapest = c.pricelist.sort((a,b) => a.price - b.price)[0];
+        // Ambil harga termurah untuk display
+        const cheapest = c.pricelist && c.pricelist.length > 0 ? c.pricelist.sort((a,b) => a.price - b.price)[0] : null;
         const startPrice = cheapest ? cheapest.price_format : '-';
-        // Simpan data server dalam atribut data-servers untuk accordion
-        const serversData = encodeURIComponent(JSON.stringify(c.pricelist));
         
         return `
         <div class="border border-gray-800 rounded-2xl bg-[#1c1c1f] overflow-hidden transition-all duration-300 country-item">
@@ -483,7 +501,6 @@ function renderCountries(countries) {
                     <i class="fa-solid fa-chevron-down text-gray-600 transition-transform duration-300 accordion-icon"></i>
                 </div>
             </div>
-            
             <div class="accordion-body hidden bg-[#141416] border-t border-gray-800 p-3 space-y-2">
                 ${renderServerList(c.pricelist, c.number_id, c.name)}
             </div>
@@ -492,17 +509,16 @@ function renderCountries(countries) {
 }
 
 function toggleCountryAccordion(el) {
-    const parent = el.parentElement;
-    const body = parent.querySelector('.accordion-body');
-    const icon = parent.querySelector('.accordion-icon');
+    const p = el.parentElement;
+    const b = p.querySelector('.accordion-body');
+    const i = p.querySelector('.accordion-icon');
     
-    // Tutup yang lain (Opsional, biar rapi)
-    document.querySelectorAll('.accordion-body').forEach(b => { if(b !== body) b.classList.add('hidden'); });
-    document.querySelectorAll('.accordion-icon').forEach(i => { if(i !== icon) i.classList.remove('rotate-180'); });
+    // Tutup yang lain (opsional)
+    document.querySelectorAll('.accordion-body').forEach(box => { if(box!==b) box.classList.add('hidden'); });
+    document.querySelectorAll('.accordion-icon').forEach(icon => { if(icon!==i) icon.classList.remove('rotate-180'); });
     
-    // Toggle current
-    body.classList.toggle('hidden');
-    icon.classList.toggle('rotate-180');
+    b.classList.toggle('hidden');
+    i.classList.toggle('rotate-180');
 }
 
 function renderServerList(servers, countryId, countryName) {
@@ -530,11 +546,11 @@ function renderServerList(servers, countryId, countryName) {
 
 function filterCountries() {
     const k = document.getElementById('searchCountryInput').value.toLowerCase();
-    const filtered = nokosData.countries.filter(c => c.name.toLowerCase().includes(k));
-    renderCountries(filtered);
+    const f = nokosData.countries.filter(c => c.name.toLowerCase().includes(k));
+    renderCountries(f);
 }
 
-// --- OPERATOR SELECTION (HORIZONTAL FLOATING) ---
+// --- SELECT OPERATOR (FIXED VISIBILITY) ---
 async function openOperatorSelection(countryId, countryName, price, providerId, serverName) {
     nokosData.tempServer = { countryId, countryName, price, providerId };
     
@@ -542,10 +558,10 @@ async function openOperatorSelection(countryId, countryName, price, providerId, 
     const sheetOp = document.getElementById('sheet-operator');
     const listOp = document.getElementById('list-operators');
     
-    // [FIX] Hapus class hidden dulu agar elemen dirender browser
+    // [FIX UTAMA] Hapus class hidden & ubah display sebelum animasi
     sheetOp.classList.remove('hidden');
+    sheetOp.style.display = 'block';
     
-    // Beri jeda sedikit (1 frame) agar transisi slide-up jalan mulus
     requestAnimationFrame(() => {
         sheetOp.classList.remove('translate-y-full');
     });
@@ -560,7 +576,7 @@ async function openOperatorSelection(countryId, countryName, price, providerId, 
         let ops = [];
         if(data.status || data.success) ops = data.data;
         
-        // Opsi ANY (Selalu ada)
+        // Selalu tampilkan ANY
         let html = `
         <div onclick="selectOperatorAndCheckout('any', 'Acak / Any')" 
              class="min-w-[80px] h-24 bg-[#25252a] border border-gray-700 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-green-500 hover:bg-[#2a2a30] transition snap-start flex-none">
@@ -576,31 +592,30 @@ async function openOperatorSelection(countryId, countryName, price, providerId, 
                 <span class="text-[9px] font-bold text-gray-300 leading-tight line-clamp-2">${op.name}</span>
             </div>`).join('');
         }
-        listOp.innerHTML = html;
         
-    } catch(e) { listOp.innerHTML = '<div class="text-xs text-red-500">Gagal load operator.</div>'; }
+        listOp.innerHTML = html;
+    } catch(e) { 
+        listOp.innerHTML = '<div class="text-xs text-red-500">Gagal load operator.</div>'; 
+    }
 }
 
 function closeOperatorSheet() {
     const sheetOp = document.getElementById('sheet-operator');
-    
-    // 1. Slide Turun dulu
     sheetOp.classList.add('translate-y-full');
     
-    // 2. Tunggu animasi selesai (300ms) baru sembunyikan total (hidden)
-    setTimeout(() => {
+    // Sembunyikan total setelah animasi slide turun selesai
+    setTimeout(() => { 
+        sheetOp.style.display = 'none';
         sheetOp.classList.add('hidden');
     }, 300);
 }
 
-// --- FINAL CHECKOUT & ERROR MESSAGE FIX ---
+// --- CHECKOUT & ERROR MESSAGE FIX ---
 async function selectOperatorAndCheckout(opId, opName) {
-    // Konfirmasi User
-    if(!confirm(`Beli ${nokosData.selectedApp.name} (${nokosData.tempServer.countryName})?\nOperator: ${opName}\nHarga: Rp ${parseInt(nokosData.tempServer.price).toLocaleString()}`)) return;
+    if(!confirm(`Beli ${nokosData.selectedApp.name} (${nokosData.tempServer.countryName})?\nHarga: Rp ${parseInt(nokosData.tempServer.price).toLocaleString()}`)) return;
     
     closeOperatorSheet();
-    closeNokosSheet(); // Tutup semua sheet biar bersih
-    
+    closeNokosSheet();
     showToast("Memproses pesanan...", "info");
     
     try {
@@ -623,11 +638,112 @@ async function selectOperatorAndCheckout(opId, opName) {
             checkUserLogin();
             fetchNokosHistory();
         } else {
-            // [FIX] PESAN ERROR CUSTOM SESUAI REQUEST
+            // [FIX] PESAN ERROR CUSTOM
             showToast("Stok kosong atau gagal mengambil stok, silahkan tunggu beberapa saat.", "error");
         }
     } catch(e) { 
         showToast("Gagal terhubung ke server.", "error"); 
+    }
+}
+
+// --- FETCH HISTORY (SILENT ERROR) ---
+async function fetchNokosHistory() {
+    if(!userSession) return;
+    const container = document.getElementById('nokos-active-container');
+    
+    try {
+        const res = await fetch(`/api/nokos/history/${userSession}`);
+        if(!res.ok) throw new Error("API Error");
+        const list = await res.json();
+        
+        const activeList = list.filter(tx => tx.status === 'waiting');
+        if(activeList.length === 0) { 
+            container.innerHTML = '<div class="text-center py-12 border border-dashed border-gray-800 rounded-2xl bg-[#0a0a0a]"><p class="text-gray-600 text-xs italic">Tidak ada pesanan aktif.</p><button onclick="openNokosSheet()" class="mt-4 text-xs text-blue-500 font-bold border border-blue-500/30 px-4 py-2 rounded-lg hover:bg-blue-500/10">+ Buat Pesanan</button></div>'; 
+            return; 
+        }
+        
+        // Render Active List
+        container.innerHTML = activeList.map(tx => {
+            const exp = new Date(tx.expiresAt); const now = new Date();
+            const timeLeft = Math.floor((exp - now) / 1000);
+            let timeDisplay = timeLeft > 0 ? `${Math.floor(timeLeft/60)}:${(timeLeft%60).toString().padStart(2,'0')}` : '00:00';
+            
+            let smsSection = tx.smsCode ? 
+                `<div class="flex flex-col"><span class="text-[10px] text-gray-400">Kode OTP:</span><span class="text-2xl font-mono font-bold text-green-400 tracking-[0.2em] select-all cursor-pointer bg-green-900/20 px-2 rounded">${tx.smsCode}</span></div>` : 
+                `<div class="flex items-center gap-2 text-yellow-500 animate-pulse"><i class="fa-regular fa-envelope"></i><span class="text-xs font-bold">menunggu sms...</span></div>`;
+            
+            let footerBtn = tx.smsCode ? 
+                `<button onclick="nokosAction('${tx.invoiceId}', 'done')" class="flex-1 py-2 rounded-lg border border-green-500 text-green-500 text-xs font-bold hover:bg-green-500/10"><i class="fa-solid fa-check mr-1"></i> Selesai</button>` :
+                `<button onclick="nokosAction('${tx.invoiceId}', 'resend')" class="flex-1 py-2 rounded-lg border border-blue-500/50 text-blue-400 text-xs font-bold hover:bg-blue-500/10"><i class="fa-solid fa-rotate-right mr-1"></i> Resend</button>
+                 <button onclick="nokosAction('${tx.invoiceId}', 'cancel')" class="flex-1 py-2 rounded-lg border border-red-500/50 text-red-500 text-xs font-bold hover:bg-red-500/10"><i class="fa-solid fa-xmark mr-1"></i> Batal</button>`;
+
+            return `
+            <div class="bg-[#1a1a1d] border border-gray-800 rounded-2xl p-4 relative overflow-hidden">
+                <div class="flex justify-between items-start mb-3 border-b border-gray-800 pb-3">
+                    <div class="flex items-center gap-2"><span class="font-mono text-lg text-white font-bold tracking-wide select-all">${tx.phoneNumber}</span></div>
+                    <div class="bg-yellow-500/20 text-yellow-500 px-2 py-1 rounded text-xs font-mono font-bold flex items-center gap-1"><i class="fa-regular fa-clock"></i> ${timeDisplay}</div>
+                </div>
+                <div class="flex justify-between items-center mb-4">
+                    <div><div class="text-white font-bold text-sm">${tx.serviceName}</div><div class="text-[10px] text-gray-400">${tx.country}</div></div>
+                    <div class="text-right">${smsSection}</div>
+                </div>
+                <div class="flex gap-2">${footerBtn}</div>
+            </div>`;
+        }).join('');
+        
+    } catch(e) {
+        // [FIX PENTING] HAPUS POPUP ERROR DISINI.
+        // Jika gagal refresh background, cukup log di console atau diam saja.
+        console.log("Auto-refresh pending...");
+        // Jangan ubah container jika error sementara, biar user masih liat data lama
+    }
+}
+// ============================================
+// 7. ACTION BUTTONS (RESEND/CANCEL/DONE)
+// ============================================
+
+async function nokosAction(invId, actionType) {
+    let msg = "Proses...";
+    
+    // Konfirmasi User
+    if(actionType === 'cancel') { 
+        if(!confirm("Yakin batalkan nomor ini? Saldo akan direfund.")) return; 
+        msg = "Membatalkan..."; 
+    }
+    if(actionType === 'done') { 
+        if(!confirm("Sudah dapat SMS? Selesaikan pesanan ini?")) return; 
+        msg = "Menyelesaikan..."; 
+    }
+    if(actionType === 'resend') { 
+        msg = "Meminta SMS ulang..."; 
+    }
+
+    showToast(msg, "info");
+
+    try {
+        const res = await fetch('/api/nokos/action', { 
+            method: 'POST', 
+            headers: {'Content-Type':'application/json'}, 
+            body: JSON.stringify({ 
+                invoiceId: invId, 
+                username: userSession, 
+                action: actionType 
+            }) 
+        });
+        
+        const d = await res.json();
+        
+        if(d.success) { 
+            showToast("✅ " + d.msg, "success"); 
+            fetchNokosHistory(); // Refresh list setelah aksi
+            
+            // Jika cancel, refresh saldo juga
+            if(actionType === 'cancel') checkUserLogin(); 
+        } else { 
+            showToast("❌ " + d.msg, "error"); 
+        }
+    } catch(e) { 
+        showToast("Gagal terhubung.", "error"); 
     }
 }
 
