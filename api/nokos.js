@@ -161,42 +161,56 @@ router.post('/buy', async (req, res) => {
     } catch (err) { res.status(500).json({ success: false, msg: "Error: " + err.message }); }
 });
 
-// [FIX 1] CEK STATUS (BUG FIXED: SMS MASUK TIDAK LANGSUNG SUCCESS)
+// [FIX 1] CEK STATUS & LOGIKA EXPIRED YANG BENAR
 router.get('/status/:invoiceId', async (req, res) => {
     await connectDB();
     const tx = await NokosTx.findOne({ invoiceId: req.params.invoiceId });
     if(!tx) return res.status(404).json({ success: false });
 
-    // LOGIC A: Cek Expired Local
+    // === LOGIKA BARU EXPIRED CHECK ===
     if (tx.status === 'waiting' && new Date() > new Date(tx.expiresAt)) {
-        const expiredTx = await NokosTx.findOneAndUpdate(
-            { _id: tx._id, status: 'waiting' },
-            { status: 'canceled' },
-            { new: true }
-        );
-        if (expiredTx) {
-            const user = await User.findOne({ username: tx.username });
-            if(user) { user.balance += tx.price; await user.save(); }
-            return res.json({ success: true, data: expiredTx, msg: "Refund sukses." });
+        
+        // KASUS A: Waktu Habis TAPI SMS SUDAH ADA
+        // (User lupa klik selesai, jangan direfund!)
+        if (tx.smsCode && tx.smsCode !== '-' && tx.smsCode.length > 2) {
+            const autoSuccess = await NokosTx.findOneAndUpdate(
+                { _id: tx._id, status: 'waiting' },
+                { status: 'success' }, // Paksa SUKSES
+                { new: true }
+            );
+            if(autoSuccess) {
+                return res.json({ success: true, data: autoSuccess, msg: "Waktu habis, Auto-Complete." });
+            }
+        } 
+        
+        // KASUS B: Waktu Habis DAN SMS BELUM ADA
+        // (Murni gagal, silahkan refund)
+        else {
+            const expiredTx = await NokosTx.findOneAndUpdate(
+                { _id: tx._id, status: 'waiting' },
+                { status: 'canceled' },
+                { new: true }
+            );
+            if (expiredTx) {
+                const user = await User.findOne({ username: tx.username });
+                if(user) { user.balance += tx.price; await user.save(); }
+                return res.json({ success: true, data: expiredTx, msg: "Waktu habis. Refund sukses." });
+            }
         }
     }
 
     try {
         const { result } = await callRumahOTP(`/v1/orders/get_status?order_id=${tx.refId}`);
-        
         if(result.success && result.data) {
             const d = result.data;
             
-            // [FIX PENTING DISINI]
-            // Jika ada SMS, simpan kodenya TAPI JANGAN ubah status jadi 'success' dulu
-            // Biarkan status tetap 'waiting' agar Frontend tetap menampilkannya
+            // Simpan Kode SMS jika ada, tapi biarkan status waiting (menunggu user/expired)
             if (d.otp_code && d.otp_code !== '-' && d.otp_code !== tx.smsCode) {
-                tx.smsCode = d.otp_code;
-                // tx.status = 'success'; // <--- BARIS INI KITA HAPUS!
+                tx.smsCode = d.otp_code; 
                 await tx.save();
             }
 
-            // Jika Pusat Cancel
+            // Jika Pusat Cancel Murni
             if (d.status === 'canceled' && tx.status !== 'canceled') {
                 const canceledTx = await NokosTx.findOneAndUpdate(
                     { _id: tx._id, status: 'waiting' },
@@ -209,14 +223,12 @@ router.get('/status/:invoiceId', async (req, res) => {
             }
         }
         
-        // Kirim data terbaru ke Frontend
         const freshData = await NokosTx.findById(tx._id);
         res.json({ success: true, data: freshData });
-        
     } catch(e) { res.status(500).json({ success: false }); }
 });
 
-// [FIX 2] ACTION (DONE BUTTON BARU BIKIN SUCCESS)
+// [FIX 2] ACTION (CANCEL/DONE/RESEND)
 router.post('/action', async (req, res) => {
     await connectDB();
     const { invoiceId, username, action } = req.body;
@@ -224,12 +236,16 @@ router.post('/action', async (req, res) => {
     const tx = await NokosTx.findOne({ invoiceId, username });
     if(!tx) return res.status(404).json({ success: false, msg: "Order not found" });
 
-    if (tx.status !== 'waiting') return res.status(400).json({ success: false, msg: "Transaksi selesai." });
+    if (tx.status !== 'waiting') return res.status(400).json({ success: false, msg: "Transaksi selesai/batal." });
 
     if (action === 'cancel') {
-        // Cek Cooldown Cancel 4 menit (opsional, sesuaikan aturan)
+        // [TAMBAHAN] Cek apakah SMS sudah ada? Kalau sudah ada, jangan kasih cancel manual!
+        if (tx.smsCode && tx.smsCode !== '-') {
+            return res.status(400).json({ success: false, msg: "SMS sudah masuk! Tidak bisa cancel, silakan klik Selesai/Resend." });
+        }
+
         const timeDiff = Date.now() - new Date(tx.createdAt).getTime();
-        // if (timeDiff < 240000) return res.status(400).json({ success: false, msg: "Tunggu sebentar lagi..." });
+        if (timeDiff < 240000) return res.status(400).json({ success: false, msg: "Harap tunggu 4 menit sebelum cancel." });
     }
 
     try {
@@ -246,18 +262,16 @@ router.post('/action', async (req, res) => {
                     if(user) { user.balance += tx.price; await user.save(); }
                     res.json({ success: true, msg: "Sukses Refund." });
                 } else {
-                    res.json({ success: false, msg: "Gagal." });
+                    res.json({ success: false, msg: "Gagal/Sudah diproses." });
                 }
 
             } else if (action === 'done') {
-                // [FIX] Button Done yang akan mengubah status jadi SUCCESS
-                // Sehingga pesanan baru hilang dari list pending
                 const processedTx = await NokosTx.findOneAndUpdate(
                     { _id: tx._id, status: 'waiting' }, 
                     { status: 'success' }
                 );
                 if(processedTx) res.json({ success: true, msg: "Pesanan Selesai." });
-                else res.json({ success: false, msg: "Gagal." });
+                else res.json({ success: false, msg: "Gagal update." });
 
             } else if (action === 'resend') {
                 res.json({ success: true, msg: "Request Resend..." });
@@ -274,4 +288,4 @@ router.get('/history/:username', async (req, res) => {
     res.json(list);
 });
 
-module.exports = router;
+module.exports = router; 
