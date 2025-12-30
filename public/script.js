@@ -1033,4 +1033,26 @@ function startLiveNotif() {
     setTimeout(() => { showLiveNotification(); setInterval(() => { showLiveNotification(); }, Math.floor(Math.random() * (15000 - 8000 + 1) + 8000)); }, 5000);
 }
 
+// ============================================
+// 10. FITUR: FAQ ACCORDION
+// ============================================
+function toggleFaqItem(button) {
+    // 1. Ambil elemen body dan icon
+    const body = button.nextElementSibling;
+    const icon = button.querySelector('.icon-arrow');
+
+    // 2. Cek apakah sedang terbuka
+    const isOpen = !body.classList.contains('hidden');
+
+    // 3. Tutup semua FAQ lain (Opsional, biar rapi cuma 1 yg kebuka)
+    document.querySelectorAll('.faq-body').forEach(el => el.classList.add('hidden'));
+    document.querySelectorAll('.icon-arrow').forEach(el => el.classList.remove('rotate-180'));
+
+    // 4. Toggle FAQ yang diklik
+    if (!isOpen) {
+        body.classList.remove('hidden');
+        icon.classList.add('rotate-180');
+    }
+}
+
 initData();

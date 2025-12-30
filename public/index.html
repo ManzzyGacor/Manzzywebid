@@ -208,6 +208,108 @@
                     <div id="nokos-active-container" class="space-y-4"><div class="text-center py-12 border border-dashed border-gray-800 rounded-2xl bg-[#0a0a0a]"><p class="text-gray-600 text-xs italic">Tidak ada pesanan.</p></div></div>
                 </div>
             </div>
+    
+    <div class="mt-12 mb-20 max-w-3xl mx-auto px-4">
+    
+    <div class="text-center mb-8">
+        <h2 class="text-xl font-bold text-white tracking-wide">PERTANYAAN UMUM</h2>
+        <div class="h-1 w-20 bg-purple-600 mx-auto mt-2 rounded-full"></div>
+    </div>
+
+    <div class="bg-yellow-500/5 border border-yellow-500/20 rounded-xl p-5 mb-8 relative overflow-hidden">
+        <div class="absolute -right-5 -top-5 text-yellow-500/10 text-9xl rotate-12 pointer-events-none">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        
+        <div class="relative z-10">
+            <h3 class="font-bold text-yellow-400 text-sm mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-book-open"></i> AYO BELAJAR MEMBACA!
+            </h3>
+            <div class="space-y-3 text-xs text-gray-300 leading-relaxed text-justify">
+                <p>
+                    Baca dan lihat info sebelum melakukan deposit atau membeli pada website. Harap tidak egois atau bersikap arogan karena segala info telah tertulis <strong class="text-white">LENGKAP</strong> dalam FAQ.
+                </p>
+                <p>
+                    Jika system <span class="text-red-400">maintenance</span> itu berarti sedang dalam perbaikan. Orderan kosong berarti stock nomor habis dan belum di restock, <strong class="text-white">bukan berarti Tidak Dapat Order!</strong>
+                </p>
+                <p>
+                    Segala info telah ditulis sejelas mungkin mohon untuk <strong class="text-white">MEMBACA</strong> info atau notifikasi pada website sebelum menyimpulkan tindakan.
+                </p>
+                <div class="mt-2 bg-yellow-500/10 text-yellow-500 px-3 py-2 rounded text-center font-bold border border-yellow-500/20">
+                    Jadilah SDM yang berkualitas!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="space-y-3">
+
+        <div class="border border-gray-800 bg-[#1a1a1d] rounded-xl overflow-hidden transition hover:border-purple-500/30">
+            <button onclick="toggleFaqItem(this)" class="w-full flex justify-between items-center p-4 text-left focus:outline-none">
+                <span class="text-sm font-bold text-gray-200">OTP Gak Masuk-Masuk?</span>
+                <i class="fa-solid fa-chevron-down text-gray-500 text-xs transition-transform duration-300 icon-arrow"></i>
+            </button>
+            <div class="hidden faq-body border-t border-gray-800 bg-black/20">
+                <div class="p-4 text-xs text-gray-400 leading-relaxed space-y-2">
+                    <p>Kendala ini dapat terjadi karena faktor perangkat pengguna atau ketersediaan stok dari penyedia yang sedang kurang stabil.</p>
+                    <p>Perlu diingat, nomor yang digunakan adalah nomor kosong, bukan seperti kartu pribadi yang kamu beli langsung dari operator, sehingga wajar jika sesekali mengalami kendala. Check nomor terlebih dahulu sebelum melakukan pendaftaran. Kamu mungkin perlu mencoba beberapa kali hingga berhasil.</p>
+                    <p class="text-green-400">Solusi: Jika tetap tidak berfungsi, silakan tunggu beberapa menit atau batalkan transaksi (Cancel). Saldo kamu akan dikembalikan 100% tanpa potongan biaya.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="border border-gray-800 bg-[#1a1a1d] rounded-xl overflow-hidden transition hover:border-purple-500/30">
+            <button onclick="toggleFaqItem(this)" class="w-full flex justify-between items-center p-4 text-left focus:outline-none">
+                <span class="text-sm font-bold text-gray-200">Cancel Tapi Saldo Terpotong?</span>
+                <i class="fa-solid fa-chevron-down text-gray-500 text-xs transition-transform duration-300 icon-arrow"></i>
+            </button>
+            <div class="hidden faq-body border-t border-gray-800 bg-black/20">
+                <div class="p-4 text-xs text-gray-400 leading-relaxed">
+                    <p class="mb-2">Silakan hubungi Customer Service kami dan jelaskan kendala yang dialami.</p>
+                    <ul class="list-disc pl-4 space-y-1 mb-2">
+                        <li>Mohon gunakan bahasa yang <span class="text-white font-bold">sopan</span>, karena layanan ini ditangani langsung oleh tim kami, bukan AI.</li>
+                        <li>Jangan lupa sertakan <span class="text-purple-400 font-mono">ID Transaksi / Invoice</span> agar saldo dapat dikembalikan 100%.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="border border-gray-800 bg-[#1a1a1d] rounded-xl overflow-hidden transition hover:border-purple-500/30">
+            <button onclick="toggleFaqItem(this)" class="w-full flex justify-between items-center p-4 text-left focus:outline-none">
+                <span class="text-sm font-bold text-gray-200">Lupa Cancel Active Order?</span>
+                <i class="fa-solid fa-chevron-down text-gray-500 text-xs transition-transform duration-300 icon-arrow"></i>
+            </button>
+            <div class="hidden faq-body border-t border-gray-800 bg-black/20">
+                <div class="p-4 text-xs text-gray-400 leading-relaxed">
+                    <p>Tenang saja, saldo Anda kami kembalikan 100% tanpa potongan biaya apapun, karena sistem kami akan <strong class="text-white">Auto Cancel</strong> nomor setelah 20 menit jika tidak ada aktivitas/SMS masuk.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="border border-gray-800 bg-[#1a1a1d] rounded-xl overflow-hidden transition hover:border-purple-500/30">
+            <button onclick="toggleFaqItem(this)" class="w-full flex justify-between items-center p-4 text-left focus:outline-none">
+                <span class="text-sm font-bold text-gray-200">Tips Agar OTP Mudah Masuk</span>
+                <i class="fa-solid fa-chevron-down text-gray-500 text-xs transition-transform duration-300 icon-arrow"></i>
+            </button>
+            <div class="hidden faq-body border-t border-gray-800 bg-black/20">
+                <div class="p-4 text-xs text-gray-400 leading-relaxed">
+                    <p class="mb-2">Beberapa aplikasi seperti WhatsApp dan Telegram memiliki sistem keamanan yang ketat. Disarankan menggunakan VPN untuk membantu mengurangi deteksi keamanan.</p>
+                    <p class="mb-2">Jika kendala masih berlanjut, kemungkinan perangkat terdeteksi mencurigakan oleh aplikasi atau kualitas nomor sedang kurang baik.</p>
+                    <div class="bg-gray-800 p-3 rounded mt-2">
+                        <span class="block text-gray-500 text-[10px] uppercase font-bold mb-1">REKOMENDASI:</span>
+                        <ul class="list-disc pl-4 space-y-1 text-gray-300">
+                            <li>Gunakan VPN (IP Luar Negeri sesuai negara nomor)</li>
+                            <li>Gunakan ClonePro / App Cloner</li>
+                            <li>Gunakan Clone Akun bawaan HP</li>
+                            <li>Atau tunggu stock server baru (Restock)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
 
  <div id="nokos-sheet-overlay" onclick="closeNokosSheet()" class="fixed inset-0 bg-black/80 z-[60] hidden transition-opacity duration-300 opacity-0 backdrop-blur-sm"></div>
             
