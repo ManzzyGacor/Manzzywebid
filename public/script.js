@@ -347,21 +347,35 @@ async function initNokos() {
     nokosInterval = setInterval(fetchNokosHistory, 10000);
 }
 
-// --- SHEET CONTROLS ---
+// --- SHEET CONTROLS (FIXED VISIBILITY) ---
 function openNokosSheet() {
-    document.getElementById('nokos-sheet-overlay').classList.remove('hidden');
+    const sheet = document.getElementById('nokos-sheet');
+    const overlay = document.getElementById('nokos-sheet-overlay');
+    
+    // [FIX] Hapus hidden & set display flex dulu
+    sheet.classList.remove('hidden');
+    sheet.style.display = 'flex';
+    overlay.classList.remove('hidden');
+    
     requestAnimationFrame(() => {
-        document.getElementById('nokos-sheet-overlay').classList.remove('opacity-0');
-        document.getElementById('nokos-sheet').classList.remove('translate-y-full');
+        overlay.classList.remove('opacity-0');
+        sheet.classList.remove('translate-y-full');
     });
     loadNokosApps();
 }
 
 function closeNokosSheet() {
-    document.getElementById('nokos-sheet').classList.add('translate-y-full');
-    document.getElementById('nokos-sheet-overlay').classList.add('opacity-0');
+    const sheet = document.getElementById('nokos-sheet');
+    const overlay = document.getElementById('nokos-sheet-overlay');
+    
+    sheet.classList.add('translate-y-full');
+    overlay.classList.add('opacity-0');
+    
     setTimeout(() => {
-        document.getElementById('nokos-sheet-overlay').classList.add('hidden');
+        overlay.classList.add('hidden');
+        sheet.classList.add('hidden'); // Sembunyikan total
+        sheet.style.display = 'none';
+        
         backToApps();
         closeOperatorSheet();
     }, 300);
@@ -646,17 +660,23 @@ async function selectOperatorAndCheckout(opId, opName) {
     }
 }
 
-// --- FETCH HISTORY (SILENT ERROR) ---
+// --- FETCH HISTORY (FIXED: FILTER EXPIRED) ---
 async function fetchNokosHistory() {
     if(!userSession) return;
     const container = document.getElementById('nokos-active-container');
     
     try {
         const res = await fetch(`/api/nokos/history/${userSession}`);
-        if(!res.ok) throw new Error("API Error");
+        if(!res.ok) throw new Error("Gagal");
         const list = await res.json();
         
-        const activeList = list.filter(tx => tx.status === 'waiting');
+        // [FIX] Filter pesanan yang statusnya 'waiting' DAN waktunya BELUM habis
+        const now = new Date();
+        const activeList = list.filter(tx => {
+            const exp = new Date(tx.expiresAt);
+            return tx.status === 'waiting' && exp > now; // Hanya tampilkan jika belum expired
+        });
+        
         if(activeList.length === 0) { 
             container.innerHTML = '<div class="text-center py-12 border border-dashed border-gray-800 rounded-2xl bg-[#0a0a0a]"><p class="text-gray-600 text-xs italic">Tidak ada pesanan aktif.</p><button onclick="openNokosSheet()" class="mt-4 text-xs text-blue-500 font-bold border border-blue-500/30 px-4 py-2 rounded-lg hover:bg-blue-500/10">+ Buat Pesanan</button></div>'; 
             return; 
@@ -664,9 +684,17 @@ async function fetchNokosHistory() {
         
         // Render Active List
         container.innerHTML = activeList.map(tx => {
-            const exp = new Date(tx.expiresAt); const now = new Date();
+            // Panggil cek status ke backend untuk tiap item (silent check)
+            // Agar jika expired di backend, saldo user direfund
+            fetch(`/api/nokos/status/${tx.invoiceId}`); 
+
+            const exp = new Date(tx.expiresAt);
             const timeLeft = Math.floor((exp - now) / 1000);
-            let timeDisplay = timeLeft > 0 ? `${Math.floor(timeLeft/60)}:${(timeLeft%60).toString().padStart(2,'0')}` : '00:00';
+            
+            // Format menit:detik
+            let timeDisplay = timeLeft > 0 ? 
+                `${Math.floor(timeLeft/60)}:${(timeLeft%60).toString().padStart(2,'0')}` : 
+                '00:00';
             
             let smsSection = tx.smsCode ? 
                 `<div class="flex flex-col"><span class="text-[10px] text-gray-400">Kode OTP:</span><span class="text-2xl font-mono font-bold text-green-400 tracking-[0.2em] select-all cursor-pointer bg-green-900/20 px-2 rounded">${tx.smsCode}</span></div>` : 
@@ -692,10 +720,7 @@ async function fetchNokosHistory() {
         }).join('');
         
     } catch(e) {
-        // [FIX PENTING] HAPUS POPUP ERROR DISINI.
-        // Jika gagal refresh background, cukup log di console atau diam saja.
-        console.log("Auto-refresh pending...");
-        // Jangan ubah container jika error sementara, biar user masih liat data lama
+        // Silent error
     }
 }
 // ============================================
