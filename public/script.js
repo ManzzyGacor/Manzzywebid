@@ -666,19 +666,19 @@ async function selectOperatorAndCheckout(opId, opName) {
     }
 }
 
-// --- FETCH HISTORY (FIX: AUTO REFUND BACKGROUND) ---
+// --- FETCH HISTORY (FULL VERSION: AUTO REFUND + COPY FITUR) ---
 async function fetchNokosHistory() {
     if(!userSession) return;
     const container = document.getElementById('nokos-active-container');
     
     try {
         const res = await fetch(`/api/nokos/history/${userSession}`);
-        if(!res.ok) throw new Error("API Error"); // Silent error jika gagal fetch
+        if(!res.ok) throw new Error("API Error"); // Silent error
         
         const list = await res.json();
         
-        // 1. [PENTING] Background Check ke Server (Trigger Auto Refund)
-        // Loop semua pesanan 'waiting' (termasuk yg expired) agar server memproses refund
+        // 1. Background Check (PENTING: Trigger Auto Refund di Server)
+        // Kita loop semua pesanan 'waiting' agar server cek statusnya (expired/cancel pusat)
         list.forEach(tx => {
             if (tx.status === 'waiting') {
                 fetch(`/api/nokos/status/${tx.invoiceId}`);
@@ -693,48 +693,86 @@ async function fetchNokosHistory() {
             return tx.status === 'waiting' && exp > now;
         });
         
-        // 3. Render UI
+        // 3. Render UI (Kosong)
         if(activeList.length === 0) { 
             container.innerHTML = '<div class="text-center py-12 border border-dashed border-gray-800 rounded-2xl bg-[#0a0a0a]"><p class="text-gray-600 text-xs italic">Tidak ada pesanan aktif.</p><button onclick="openNokosSheet()" class="mt-4 text-xs text-blue-500 font-bold border border-blue-500/30 px-4 py-2 rounded-lg hover:bg-blue-500/10">+ Buat Pesanan</button></div>'; 
             return; 
         }
         
+        // 4. Render List Pesanan
         container.innerHTML = activeList.map(tx => {
             const exp = new Date(tx.expiresAt);
             const timeLeft = Math.floor((exp - now) / 1000);
             
-            // Format waktu
+            // Format waktu (MM:SS)
             let timeDisplay = timeLeft > 0 ? 
-                `${Math.floor(timeLeft/60)}:${(timeLeft%60).toString().padStart(2,'0')}` : 
-                '00:00';
+                `${Math.floor(timeLeft/60)}:${(timeLeft%60).toString().padStart(2,'0')}` : '00:00';
             
+            // LOGIKA TAMPILAN SMS (ADA TOMBOL COPY)
             let smsSection = tx.smsCode ? 
-                `<div class="flex flex-col"><span class="text-[10px] text-gray-400">Kode OTP:</span><span class="text-2xl font-mono font-bold text-green-400 tracking-[0.2em] select-all cursor-pointer bg-green-900/20 px-2 rounded">${tx.smsCode}</span></div>` : 
-                `<div class="flex items-center gap-2 text-yellow-500 animate-pulse"><i class="fa-regular fa-envelope"></i><span class="text-xs font-bold">menunggu sms...</span></div>`;
+                `<div class="flex flex-col items-end">
+                    <span class="text-[10px] text-gray-400 mb-1">Kode OTP:</span>
+                    <div onclick="copyText('${tx.smsCode}', 'Kode OTP')" class="cursor-pointer group flex items-center gap-2 bg-green-900/20 px-3 py-1.5 rounded border border-green-500/30 hover:bg-green-500/20 transition active:scale-95">
+                        <span class="text-xl font-mono font-bold text-green-400 tracking-[0.2em]">${tx.smsCode}</span>
+                        <i class="fa-regular fa-copy text-green-600 text-xs group-hover:text-green-400"></i>
+                    </div>
+                 </div>` : 
+                `<div class="flex items-center gap-2 text-yellow-500 animate-pulse bg-yellow-500/10 px-3 py-1.5 rounded border border-yellow-500/20">
+                    <i class="fa-regular fa-envelope"></i><span class="text-xs font-bold">menunggu sms...</span>
+                 </div>`;
             
-            // Tombol Footer
+            // LOGIKA TOMBOL FOOTER
+            // Jika ada SMS -> Tombol Selesai
+            // Jika belum -> Tombol Resend & Batal
             let footerBtn = tx.smsCode ? 
-                `<button onclick="nokosAction('${tx.invoiceId}', 'done')" class="flex-1 py-2 rounded-lg border border-green-500 text-green-500 text-xs font-bold hover:bg-green-500/10"><i class="fa-solid fa-check mr-1"></i> Selesai</button>` :
-                `<button onclick="nokosAction('${tx.invoiceId}', 'resend')" class="flex-1 py-2 rounded-lg border border-blue-500/50 text-blue-400 text-xs font-bold hover:bg-blue-500/10"><i class="fa-solid fa-rotate-right mr-1"></i> Resend</button>
-                 <button onclick="nokosAction('${tx.invoiceId}', 'cancel')" class="flex-1 py-2 rounded-lg border border-red-500/50 text-red-500 text-xs font-bold hover:bg-red-500/10"><i class="fa-solid fa-xmark mr-1"></i> Batal</button>`;
+                `<button onclick="nokosAction('${tx.invoiceId}', 'done')" class="flex-1 py-2.5 rounded-lg bg-green-600 hover:bg-green-500 text-white text-xs font-bold shadow-lg shadow-green-900/20 transition"><i class="fa-solid fa-check mr-1"></i> Selesai</button>` :
+                `<button onclick="nokosAction('${tx.invoiceId}', 'resend')" class="flex-1 py-2.5 rounded-lg border border-blue-600/30 text-blue-400 text-xs font-bold hover:bg-blue-600/10 transition"><i class="fa-solid fa-rotate-right mr-1"></i> Resend</button>
+                 <button onclick="nokosAction('${tx.invoiceId}', 'cancel')" class="flex-1 py-2.5 rounded-lg border border-red-600/30 text-red-500 text-xs font-bold hover:bg-red-600/10 transition"><i class="fa-solid fa-xmark mr-1"></i> Batal</button>`;
 
             return `
-            <div class="bg-[#1a1a1d] border border-gray-800 rounded-2xl p-4 relative overflow-hidden transition-all duration-500">
-                <div class="flex justify-between items-start mb-3 border-b border-gray-800 pb-3">
-                    <div class="flex items-center gap-2"><span class="font-mono text-lg text-white font-bold tracking-wide select-all">${tx.phoneNumber}</span></div>
-                    <div class="bg-yellow-500/20 text-yellow-500 px-2 py-1 rounded text-xs font-mono font-bold flex items-center gap-1"><i class="fa-regular fa-clock"></i> ${timeDisplay}</div>
+            <div class="bg-[#1a1a1d] border border-gray-800 rounded-2xl p-4 relative overflow-hidden transition-all duration-500 hover:border-gray-700 shadow-lg">
+                <div class="flex justify-between items-start mb-4 border-b border-gray-800 pb-3">
+                    <div onclick="copyText('${tx.phoneNumber}', 'Nomor HP')" class="flex items-center gap-2 cursor-pointer group active:scale-95 transition">
+                        <span class="font-mono text-lg text-white font-bold tracking-wide group-hover:text-purple-400 transition select-all">${tx.phoneNumber}</span>
+                        <i class="fa-regular fa-copy text-gray-600 group-hover:text-purple-400 text-sm"></i>
+                    </div>
+                    <div class="bg-gray-800 text-gray-400 px-2 py-1 rounded text-xs font-mono font-bold flex items-center gap-1 border border-gray-700">
+                        <i class="fa-regular fa-clock text-yellow-500"></i> ${timeDisplay}
+                    </div>
                 </div>
-                <div class="flex justify-between items-center mb-4">
-                    <div><div class="text-white font-bold text-sm">${tx.serviceName}</div><div class="text-[10px] text-gray-400">${tx.country}</div></div>
+                
+                <div class="flex justify-between items-center mb-5">
+                    <div>
+                        <div class="text-white font-bold text-sm flex items-center gap-2">
+                            ${tx.serviceName} 
+                            <span class="text-[10px] bg-gray-800 px-1.5 py-0.5 rounded text-gray-400 border border-gray-700">${tx.country}</span>
+                        </div>
+                        <div class="text-[10px] text-gray-500 mt-1 font-mono">ID: #${tx.invoiceId.substr(-5)}</div>
+                    </div>
                     <div class="text-right">${smsSection}</div>
                 </div>
-                <div class="flex gap-2">${footerBtn}</div>
+                
+                <div class="flex gap-3">
+                    ${footerBtn}
+                </div>
             </div>`;
         }).join('');
         
     } catch(e) {
-        // Error Silent (Jangan tampilkan apa-apa agar user tidak terganggu)
+        // Silent error (biar user gak keganggu popup error pas auto-refresh)
     }
+}
+
+// --- HELPER: COPY TEXT ---
+function copyText(text, label) {
+    if(!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+        showToast(`✅ ${label} disalin!`, "success");
+        // Efek getar HP (Haptic Feedback)
+        if (navigator.vibrate) navigator.vibrate(50);
+    }).catch(err => {
+        showToast("Gagal menyalin", "error");
+    });
 }
 // ============================================
 // 7. ACTION BUTTONS (RESEND/CANCEL/DONE)
