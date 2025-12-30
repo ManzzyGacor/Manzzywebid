@@ -542,12 +542,15 @@ async function openOperatorSelection(countryId, countryName, price, providerId, 
     const sheetOp = document.getElementById('sheet-operator');
     const listOp = document.getElementById('list-operators');
     
-    // Show Sheet
-    sheetOp.classList.remove('translate-y-full');
+    // [FIX] Hapus hidden dulu, baru slide naik
+    sheetOp.classList.remove('hidden');
+    // Beri sedikit delay agar transisi slide berfungsi
+    requestAnimationFrame(() => {
+        sheetOp.classList.remove('translate-y-full');
+    });
     
     listOp.innerHTML = '<div class="text-xs text-gray-500 p-2">Memuat operator...</div>';
     
-    // Fetch Operator (Horizontal Scroll UI)
     try {
         const cNameEnc = encodeURIComponent(countryName);
         const res = await fetch(`/api/nokos/operators?country=${cNameEnc}&provider_id=${providerId}`);
@@ -556,10 +559,10 @@ async function openOperatorSelection(countryId, countryName, price, providerId, 
         let ops = [];
         if(data.status || data.success) ops = data.data;
         
-        // Selalu tambah opsi ANY di awal
+        // Opsi ANY
         let html = `
         <div onclick="selectOperatorAndCheckout('any', 'Acak / Any')" 
-             class="min-w-[80px] h-24 bg-[#25252a] border border-gray-700 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-green-500 hover:bg-[#2a2a30] transition snap-start">
+             class="min-w-[80px] h-24 bg-[#25252a] border border-gray-700 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-green-500 hover:bg-[#2a2a30] transition snap-start flex-none">
             <div class="w-8 h-8 rounded-full bg-gray-700 text-white flex items-center justify-center font-bold text-xs">?</div>
             <span class="text-[10px] font-bold text-white">ANY</span>
         </div>`;
@@ -567,19 +570,26 @@ async function openOperatorSelection(countryId, countryName, price, providerId, 
         if(ops.length > 0) {
             html += ops.map(op => `
             <div onclick="selectOperatorAndCheckout('${op.id}', '${op.name}')" 
-                 class="min-w-[80px] h-24 bg-[#25252a] border border-gray-700 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-green-500 hover:bg-[#2a2a30] transition snap-start relative overflow-hidden px-2 text-center">
+                 class="min-w-[80px] h-24 bg-[#25252a] border border-gray-700 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-green-500 hover:bg-[#2a2a30] transition snap-start relative overflow-hidden px-2 text-center flex-none">
                 <img src="${op.image}" onerror="this.style.display='none'" class="w-6 h-6 object-contain">
                 <span class="text-[9px] font-bold text-gray-300 leading-tight line-clamp-2">${op.name}</span>
             </div>`).join('');
         }
-        
         listOp.innerHTML = html;
         
     } catch(e) { listOp.innerHTML = '<div class="text-xs text-red-500">Gagal load operator.</div>'; }
 }
 
 function closeOperatorSheet() {
-    document.getElementById('sheet-operator').classList.add('translate-y-full');
+    const sheetOp = document.getElementById('sheet-operator');
+    
+    // [FIX] Slide turun dulu
+    sheetOp.classList.add('translate-y-full');
+    
+    // [FIX] Baru sembunyikan (hidden) setelah animasi selesai (300ms)
+    setTimeout(() => {
+        sheetOp.classList.add('hidden');
+    }, 300);
 }
 
 // --- FINAL CHECKOUT ---
