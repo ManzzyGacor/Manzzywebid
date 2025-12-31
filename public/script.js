@@ -438,46 +438,34 @@ function filterApps() {
     document.getElementById('section-popular-apps').style.display = k ? 'none' : 'block';
 }
 
-// --- SELECT COUNTRY (VERSI FIX & LANCAR) ---
+// --- SELECT COUNTRY ---
 async function selectApp(id, name, icon) {
-    // Kita hapus validasi strict yang bikin error alert tadi.
-    // Langsung simpan data.
     nokosData.selectedApp = { id, name, icon };
     
-    // 1. Update Header UI (Judul & Ikon di Sheet)
-    const headerName = document.getElementById('header-app-name');
-    const headerIcon = document.getElementById('header-app-icon');
+    // Update Header
+    document.getElementById('header-app-name').innerText = name;
+    document.getElementById('header-app-icon').src = icon;
     
-    if(headerName) headerName.innerText = name;
-    if(headerIcon) headerIcon.src = icon;
+    // Slide Animation
+    document.getElementById('sheet-view-apps').classList.add('-translate-x-full');
+    document.getElementById('sheet-view-countries').classList.remove('translate-x-full');
     
-    // 2. Animasi Slide (Pindah dari List Aplikasi ke List Negara)
-    const viewApps = document.getElementById('sheet-view-apps');
-    const viewCountries = document.getElementById('sheet-view-countries');
-    
-    if(viewApps) viewApps.classList.add('-translate-x-full');
-    if(viewCountries) viewCountries.classList.remove('translate-x-full');
-    
-    // 3. Loading State
+    // Load Data
     const list = document.getElementById('list-countries');
-    if(list) list.innerHTML = '<div class="text-center py-10"><i class="fa-solid fa-circle-notch fa-spin text-purple-500"></i> Memuat Data...</div>';
+    list.innerHTML = '<div class="text-center py-10"><i class="fa-solid fa-circle-notch fa-spin text-purple-500"></i> Memuat Data...</div>';
     
     try {
-        // 4. Request ke Server
-        // Walaupun ID undefined, kita tetap coba request (server yang akan handle errornya)
         const res = await fetch(`/api/nokos/countries?service_id=${id}`);
         const data = await res.json();
         
-        if(data.success || data.status) { 
-            // Simpan & Render
-            nokosData.countries = data.data || [];
+        if(data.success || data.status) { // Handle response format
+            nokosData.countries = data.data;
             renderCountries(nokosData.countries);
         } else {
-            if(list) list.innerHTML = `<div class="text-center text-gray-500 py-10 text-xs">${data.msg || "Gagal memuat negara."}</div>`;
+            list.innerHTML = '<div class="text-center text-gray-500 py-10">Gagal memuat negara.</div>';
         }
     } catch(e) { 
-        console.error(e);
-        if(list) list.innerHTML = '<div class="text-center text-red-500 py-10 text-xs">Gagal terhubung ke server.</div>';
+        list.innerHTML = '<div class="text-center text-red-500 py-10">Error koneksi.</div>';
     }
 }
 
