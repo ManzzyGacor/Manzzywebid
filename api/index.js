@@ -42,12 +42,18 @@ const User = mongoose.models.User || mongoose.model('User', UserSchema);
 
 // Schema Lainnya (Tetap Sama)
 const ActiveService = mongoose.models.ActiveService || mongoose.model('ActiveService', new mongoose.Schema({ username: String, productName: String, targetNumber: String, serverIp: String, expiredDate: Date }));
-const TopUp = mongoose.models.TopUp || mongoose.model('TopUp', new mongoose.Schema({ username: String, amount: Number, proofImage: String, status: { type: String, default: 'pending' }, createdAt: { type: Date, default: Date.now } }));
 const Product = mongoose.models.Product || mongoose.model('Product', new mongoose.Schema({ name: String, category: String, price: Number, desc: String, imageUrl: String, formFields: String, isAvailable: { type: Boolean, default: true }, orderMode: { type: String, default: 'manual' } }));
 const Voucher = mongoose.models.Voucher || mongoose.model('Voucher', new mongoose.Schema({ code: { type: String, required: true, unique: true }, percent: { type: Number, required: true }, createdAt: { type: Date, default: Date.now } }));
 const Category = mongoose.models.Category || mongoose.model('Category', new mongoose.Schema({ name: String, imageUrl: String }));
 const Testimonial = mongoose.models.Testimonial || mongoose.model('Testimonial', new mongoose.Schema({ username: String, rating: Number, comment: String, createdAt: { type: Date, default: Date.now } }));
 const Transaction = mongoose.models.Transaction || mongoose.model('Transaction', new mongoose.Schema({ invoiceId: String, username: String, productName: String, formData: String, amount: Number, status: { type: String, default: 'success' }, createdAt: { type: Date, default: Date.now } }));
+// 1. PASTIKAN SCHEMA INI ADA DI api/index.js (Di bagian Schema Definitions)
+// Schema Transaksi TopUp Otomatis (Sama dengan yg di topup_handler.js)
+const TopUpTx = mongoose.models.TopUpTx || mongoose.model('TopUpTx', new mongoose.Schema({
+    orderId: String, username: String, amount: Number, fee: Number, totalPayment: Number, 
+    paymentNumber: String, status: { type: String, default: 'pending' }, 
+    expiredAt: Date, createdAt: { type: Date, default: Date.now }
+}));
 
 // ==========================================
 // 3. INTEGRASI MODULE (ROUTER)
@@ -186,7 +192,13 @@ app.post('/api/check-voucher', async (req, res) => {
     if(v) res.json({ success: true, percent: v.percent }); else res.json({ success: false });
 });
 
-
+// 2. UPDATE ROUTE ADMIN TOPUPS (Cari route '/api/admin/topups' yang lama, GANTI dengan ini)
+app.get('/api/admin/topups', async (req, res) => { 
+    await connectDB(); 
+    // Ambil dari TopUpTx (Otomatis), bukan TopUp (Manual)
+    const data = await TopUpTx.find().sort({ createdAt: -1 }).limit(50);
+    res.json(data); 
+});
 
 // Order System (Produk Digital Manual)
 app.post('/api/order', async (req, res) => {
