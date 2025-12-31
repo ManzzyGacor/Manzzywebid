@@ -162,21 +162,67 @@
 
         <section id="view-store" class="view-section"><div class="w-full mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4"><button onclick="switchView('landing')" class="text-gray-400 hover:text-white flex items-center gap-2 group"><i class="fa-solid fa-arrow-left"></i> Kembali</button><h2 class="text-3xl font-bold text-white">KATALOG</h2></div><div class="search-container"><input type="text" id="searchInput" onkeyup="filterProducts()" placeholder="Cari layanan..." class="search-input"><i class="fa-solid fa-search search-icon"></i></div><div id="section-categories"><h3 class="text-gray-400 text-sm font-bold uppercase mb-4 pl-3 border-l-4 border-purple-500">Kategori</h3><div id="grid-categories" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12"></div></div><div id="section-products" class="hidden"><div class="flex items-center gap-3 mb-6"><button onclick="backToCategories()" class="text-sm bg-gray-800 px-3 py-1 rounded text-white"><i class="fa-solid fa-chevron-left"></i> Kategori</button><span id="current-category-name" class="text-purple-400 font-bold"></span></div><div id="grid-products" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 pb-20"></div></div><div id="loading-store" class="text-center py-20 hidden"><div class="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mb-4"></div></div></section>
 
-        <section id="view-topup" class="view-section">
-            <div class="max-w-lg mx-auto">
-                <button onclick="switchView('landing')" class="mb-6 text-gray-400 hover:text-white flex items-center gap-2 group"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
-                <div class="glass-card p-8 rounded-2xl border-t-4 border-t-green-500">
-                    <h2 class="text-2xl font-bold text-white text-center mb-6">Isi Saldo Manual</h2>
-                    <div class="bg-white p-4 rounded-xl mb-6 mx-auto w-64"><img src="qris.jpg" onerror="this.src='https://via.placeholder.com/300x300?text=Scan+QRIS'" class="w-full h-auto"></div>
-                    <p class="text-center text-xs text-gray-400 mb-6">Scan QRIS, lalu upload bukti transfer.</p>
-                    <form onsubmit="submitTopUp(event)" class="space-y-4">
-                        <div><label class="text-sm text-gray-400 block mb-1">Nominal Transfer</label><input type="number" id="topupAmount" class="w-full bg-black/50 border border-gray-700 rounded p-3 text-white" placeholder="50000" required></div>
-                        <div><label class="text-sm text-gray-400 block mb-1">Bukti Transfer (Screenshot)</label><input type="file" id="topupProof" accept="image/*" class="w-full text-sm text-gray-400" required></div>
-                        <button type="submit" id="btn-topup" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-lg">Kirim Bukti Transfer</button>
-                    </form>
+<section id="view-topup" class="view-section">
+    <div class="max-w-md mx-auto min-h-screen flex flex-col justify-center px-4 relative">
+        
+        <div class="flex items-center justify-between mb-8">
+            <button onclick="switchView('landing'); resetTopUpView()" class="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h2 class="text-xl font-bold text-white tracking-widest">TOP UP</h2>
+            <div class="w-10"></div>
+        </div>
+
+        <div id="topup-form-area" class="animate-fade-in-up">
+            <div class="glass-card p-8 rounded-3xl border border-white/10 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-green-500/20 rounded-full blur-[60px] -z-10"></div>
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-white rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-lg shadow-white/10 p-2"><img src="https://upload.wikimedia.org/wikipedia/commons/d/d1/Qris.png" class="w-full h-full object-contain"></div>
+                    <h3 class="text-2xl font-bold text-white">Isi Saldo Otomatis</h3>
+                    <p class="text-xs text-gray-400 mt-1">Metode QRIS (All E-Wallet & Bank)</p>
                 </div>
+                <form onsubmit="requestTopUp(event)" class="space-y-5">
+                    <div class="relative group">
+                        <label class="text-[10px] font-bold text-green-400 uppercase tracking-wider mb-1 block ml-1">Nominal Top Up</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-mono text-lg">Rp</span>
+                            <input type="number" id="topupAmount" class="w-full bg-[#0a0a0c] border border-gray-700 rounded-xl py-4 pl-12 pr-4 text-white text-xl font-bold focus:border-green-500 outline-none transition placeholder-gray-700 font-mono" placeholder="50000" min="1000" required>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" onclick="document.getElementById('topupAmount').value=10000" class="py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-mono text-gray-300 transition">10.000</button>
+                        <button type="button" onclick="document.getElementById('topupAmount').value=25000" class="py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-mono text-gray-300 transition">25.000</button>
+                        <button type="button" onclick="document.getElementById('topupAmount').value=50000" class="py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-mono text-gray-300 transition">50.000</button>
+                    </div>
+                    <button type="submit" id="btn-topup-process" class="w-full py-4 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold shadow-lg shadow-green-500/20 transition transform active:scale-95 flex items-center justify-center gap-2">Buat QRIS <i class="fa-solid fa-arrow-right"></i></button>
+                </form>
             </div>
-        </section>
+        </div>
+
+        <div id="topup-qr-area" class="hidden animate-fade-in-up">
+            <div class="glass-card p-6 rounded-3xl border border-green-500/30 text-center relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-green-500/50 shadow-[0_0_15px_#22c55e] z-20 animate-[scan_2s_ease-in-out_infinite]"></div>
+                <h3 class="text-white font-bold text-lg mb-1">Scan QRIS</h3>
+                <p class="text-xs text-gray-400 mb-4">Bayar sebelum waktu habis</p>
+                <div class="bg-white p-3 rounded-2xl mx-auto w-fit mb-4 relative group">
+                    <div id="qris-image"></div>
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none"><div class="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1 shadow-md"><img src="https://upload.wikimedia.org/wikipedia/commons/d/d1/Qris.png" class="w-full"></div></div>
+                </div>
+                <div class="mb-6"><p class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Total Pembayaran</p><h2 id="qris-amount" class="text-3xl font-bold text-white font-mono tracking-tight">Rp 0</h2><p class="text-[10px] text-gray-600 mt-2 font-mono" id="qris-id">ORDER-ID</p></div>
+                <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3 mb-4 flex items-center justify-center gap-2"><div class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></div><span class="text-xs text-yellow-500 font-bold">Menunggu Pembayaran...</span></div>
+                <button onclick="resetTopUpView()" class="text-xs text-red-500 hover:text-red-400 underline">Batalkan Transaksi</button>
+            </div>
+            <style>@keyframes scan { 0% { top: 0; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }</style>
+        </div>
+
+        <div id="topup-success-area" class="hidden animate-fade-in-up text-center">
+            <div class="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_40px_rgba(34,197,94,0.5)]"><i class="fa-solid fa-check text-4xl text-white"></i></div>
+            <h2 class="text-3xl font-bold text-white mb-2">Berhasil!</h2>
+            <p class="text-gray-400 text-sm mb-8">Saldo telah ditambahkan ke akunmu.</p>
+            <button onclick="switchView('landing'); resetTopUpView()" class="w-full py-4 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold border border-white/10 transition">Kembali ke Dashboard</button>
+        </div>
+    </div>
+</section>
 
 <section id="view-nokos" class="view-section relative">
             <div class="max-w-md mx-auto min-h-screen relative pb-24">
@@ -347,5 +393,7 @@
 
     </div>
     <script src="script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="topup.js"></script>
 </body>
 </html>
