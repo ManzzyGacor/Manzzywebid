@@ -415,18 +415,27 @@ function renderApps(apps) {
     const popularKeys = ['WhatsApp', 'Telegram', 'Instagram', 'TikTok', 'Shopee', 'Facebook'];
     const popularApps = apps.filter(a => popularKeys.includes(a.service_name));
     
-    gridPop.innerHTML = popularApps.map(a => `
-        <div onclick="selectApp('${a.service_code}', '${a.service_name}', '${iconMap[a.service_name]}')" 
+    // [FIX] DETEKSI ID OTOMATIS
+    // Kita cek mana yang ada: service_code, service_id, code, atau id
+    const getId = (a) => a.service_code || a.service_id || a.code || a.id;
+
+    // Render Grid Populer
+    gridPop.innerHTML = popularApps.map(a => {
+        const id = getId(a);
+        return `
+        <div onclick="selectApp('${id}', '${a.service_name}', '${iconMap[a.service_name]}')" 
              class="bg-[#1c1c1f] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-purple-500 hover:bg-[#25252a] transition group h-28">
             <img src="${iconMap[a.service_name]}" class="w-10 h-10 object-contain group-hover:scale-110 transition">
             <span class="text-[10px] font-bold text-gray-300 uppercase tracking-wide group-hover:text-white">${a.service_name}</span>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 
+    // Render List Semua
     listAll.innerHTML = apps.map(a => {
+        const id = getId(a); // Pakai deteksi ID juga disini
         const img = iconMap[a.service_name] || a.service_img || 'https://via.placeholder.com/30';
         return `
-        <div onclick="selectApp('${a.service_code}', '${a.service_name}', '${img}')" 
+        <div onclick="selectApp('${id}', '${a.service_name}', '${img}')" 
              class="flex items-center gap-4 p-4 bg-[#1c1c1f] border border-gray-800 rounded-2xl hover:bg-[#25252a] cursor-pointer transition">
             <div class="w-10 h-10 rounded-xl bg-black/50 flex items-center justify-center p-1.5"><img src="${img}" class="w-full h-full object-contain"></div>
             <span class="text-sm font-bold text-gray-200">${a.service_name}</span>
@@ -444,8 +453,15 @@ function filterApps() {
 
 // --- SELECT COUNTRY ---
 async function selectApp(id, name, icon) {
+    // [DEBUG] Cek apakah ID valid
+    console.log("Memilih App:", name, "ID:", id);
+    if (!id || id === 'undefined') {
+        alert("Error: ID Aplikasi tidak ditemukan. Cek console.");
+        return;
+    }
+
     nokosData.selectedApp = { id, name, icon };
-    
+    // ... (lanjutan kode sama seperti sebelumnya)
     document.getElementById('header-app-name').innerText = name;
     document.getElementById('header-app-icon').src = icon;
     
