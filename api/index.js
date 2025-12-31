@@ -73,6 +73,20 @@ try {
 } catch (e) {
     console.error("Warning: nokos.js belum dibuat/error.");
 }
+// ==========================================
+// C. MOUNT TOPUP MODULE (PAKASIR AUTOMATIC)
+// ==========================================
+try {
+    const topupRouter = require('./topup_handler'); 
+    // Ini akan mengaktifkan route:
+    // - /api/topup/create
+    // - /api/topup/check/:orderId
+    // - /api/topup/webhook
+    app.use('/api/topup', topupRouter);
+    console.log("✅ TopUp Module Loaded");
+} catch (e) {
+    console.error("Warning: topup_handler.js belum dibuat.", e);
+}
 
 // ==========================================
 // 4. AUTH ROUTES (LOGIN/REGISTER)
@@ -172,29 +186,7 @@ app.post('/api/check-voucher', async (req, res) => {
     if(v) res.json({ success: true, percent: v.percent }); else res.json({ success: false });
 });
 
-// Top Up System
-app.post('/api/topup', async (req, res) => { await connectDB(); await new TopUp(req.body).save(); res.json({ success: true }); });
-app.get('/api/admin/topups', async (req, res) => { await connectDB(); res.json(await TopUp.find().sort({ createdAt: -1 })); });
 
-app.post('/api/admin/topup/action', async (req, res) => {
-    await connectDB(); 
-    const { id, action } = req.body;
-    
-    if (action === 'approve') {
-        const tx = await TopUp.findOneAndUpdate({ _id: id, status: 'pending' }, { status: 'success', proofImage: null }, { new: true });
-        if(tx) { 
-            const u = await User.findOne({ username: tx.username });
-            if(u) { 
-                u.balance += tx.amount; 
-                await u.save(); 
-                await new Transaction({ invoiceId: 'TOP', username: u.username, productName: 'Deposit', amount: tx.amount, status: 'success' }).save(); 
-            }
-        }
-    } else { 
-        await TopUp.findOneAndUpdate({ _id: id, status: 'pending' }, { status: 'failed', proofImage: null }); 
-    }
-    res.json({ success: true });
-});
 
 // Order System (Produk Digital Manual)
 app.post('/api/order', async (req, res) => {
