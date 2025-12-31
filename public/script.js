@@ -765,24 +765,143 @@ async function nokosAction(invId, actionType) {
 
 // ============================================
 // 7. HISTORY & SERVICES
-// ============================================
+// =========================================
+let globalHistoryData = [];
 
 async function fetchHistory() {
     if(!userSession) return;
-    const list = document.getElementById('history-list'); list.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-gray-500 text-xs"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Loading...</td></tr>';
+    const list = document.getElementById('history-list'); 
+    list.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-gray-500 text-xs"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Loading...</td></tr>';
+    
     try {
-        const [resGen, resNok] = await Promise.all([fetch(`/api/history/${userSession}`), fetch(`/api/nokos/history/${userSession}`)]);
-        const dataGen = await resGen.json(); const dataNok = await resNok.json();
-        const finishedNokos = dataNok.filter(tx => tx.status !== 'waiting').map(tx => ({ date: tx.createdAt, desc: `Nokos ${tx.serviceName} (${tx.phoneNumber})`, amount: tx.price, type: 'OUT', status: tx.status === 'success' ? 'success' : 'canceled' }));
-        const combined = [...dataGen, ...finishedNokos].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 10);
-        if (combined.length === 0) { list.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-500 italic text-xs">Belum ada riwayat.</td></tr>'; return; }
-        list.innerHTML = combined.map(item => {
-            const d = new Date(item.date); const dateStr = `${d.getDate()}/${d.getMonth()+1} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
-            const isTopup = item.type === 'IN'; const colorClass = isTopup ? 'text-green-400' : 'text-red-400'; const symbol = isTopup ? '+' : '-';
-            let badge = ''; if(item.status === 'success') badge = '<span class="text-[10px] font-bold text-green-500 bg-green-900/20 px-2 py-1 rounded">SUKSES</span>'; else if(item.status === 'canceled') badge = '<span class="text-[10px] font-bold text-red-400 bg-red-900/20 px-2 py-1 rounded">REFUND</span>'; else badge = '<span class="text-[10px] font-bold text-yellow-500 bg-yellow-900/20 px-2 py-1 rounded">PROSES</span>';
-            return `<tr class="hover:bg-white/5 transition border-b border-gray-800/50"><td class="p-3 text-gray-500 font-mono text-xs whitespace-nowrap">${dateStr}</td><td class="p-3"><div class="font-medium text-white text-xs">${item.desc}</div><div class="md:hidden text-[10px] text-gray-600">${isTopup ? 'Deposit' : 'Pembelian'}</div></td><td class="p-3 text-right font-mono font-bold text-xs ${colorClass}">${symbol}Rp ${item.amount.toLocaleString()}</td><td class="p-3 text-center">${badge}</td></tr>`;
+        const [resGen, resNok] = await Promise.all([
+            fetch(`/api/history/${userSession}`), 
+            fetch(`/api/nokos/history/${userSession}`)
+        ]);
+        
+        const dataGen = await resGen.json(); // Produk Manual & TopUp
+        const dataNok = await resNok.json(); // Nokos
+        
+        // Format Data Nokos agar seragam
+        const formattedNokos = dataNok.map(tx => ({
+            raw: tx, // Simpan data asli untuk modal
+            date: tx.createdAt,
+            invoiceId: tx.invoiceId,
+            desc: `Nokos ${tx.serviceName} (${tx.country})`,
+            detail: tx.phoneNumber + (tx.smsCode ? ` | OTP: ${tx.smsCode}` : ''),
+            amount: tx.price,
+            type: 'OUT',
+            status: tx.status === 'success' ? 'success' : (tx.status === 'canceled' ? 'canceled' : 'pending'),
+            category: 'NOKOS'
+        }));
+
+        // Format Data General
+        const formattedGen = dataGen.map(tx => ({
+            raw: tx,
+            date: tx.date,
+            invoiceId: tx.invoiceId || 'INV-???', // Pastikan backend kirim invoiceId
+            desc: tx.desc,
+            detail: tx.desc === 'Deposit' ? 'Top Up Saldo via QRIS' : (tx.formData || '-'),
+            amount: tx.amount,
+            type: tx.type,
+            status: tx.status,
+            category: tx.type === 'IN' ? 'TOPUP' : 'PRODUCT'
+        }));
+
+        // Gabung & Sortir
+        globalHistoryData = [...formattedGen, ...formattedNokos].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        if (globalHistoryData.length === 0) { 
+            list.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-500 italic text-xs">Belum ada riwayat.</td></tr>'; 
+            return; 
+        }
+
+        // Render Table
+        list.innerHTML = globalHistoryData.slice(0, 20).map((item, index) => {
+            const d = new Date(item.date); 
+            const dateStr = `${d.getDate()}/${d.getMonth()+1} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+            const isTopup = item.type === 'IN'; 
+            const colorClass = isTopup ? 'text-green-400' : 'text-red-400'; 
+            const symbol = isTopup ? '+' : '-';
+            
+            let badgeColor = item.status === 'success' ? 'text-green-500 bg-green-900/20' : 
+                             item.status === 'canceled' ? 'text-red-400 bg-red-900/20' : 
+                             'text-yellow-500 bg-yellow-900/20';
+
+            return `
+            <tr onclick="openInvoiceModal(${index})" class="hover:bg-white/5 transition border-b border-gray-800/50 cursor-pointer group">
+                <td class="p-3 text-gray-500 font-mono text-xs whitespace-nowrap">
+                    ${dateStr}
+                    <div class="text-[9px] text-purple-500 group-hover:text-purple-300">#${(item.invoiceId||'').substr(-6)}</div>
+                </td>
+                <td class="p-3">
+                    <div class="font-medium text-white text-xs">${item.desc}</div>
+                    <div class="md:hidden text-[10px] text-gray-600">${item.detail.substring(0,20)}...</div>
+                </td>
+                <td class="p-3 text-right font-mono font-bold text-xs ${colorClass}">${symbol}Rp ${item.amount.toLocaleString()}</td>
+                <td class="p-3 text-center">
+                    <span class="text-[10px] font-bold px-2 py-1 rounded ${badgeColor}">${item.status.toUpperCase()}</span>
+                </td>
+            </tr>`;
         }).join('');
-    } catch (err) { list.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-red-500 text-xs">Gagal.</td></tr>'; }
+
+    } catch (err) { 
+        console.error(err);
+        list.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-red-500 text-xs">Gagal memuat riwayat.</td></tr>'; 
+    }
+}
+
+// --- FUNGSI MODAL INVOICE ---
+function openInvoiceModal(index) {
+    const data = globalHistoryData[index];
+    if(!data) return;
+
+    const modal = document.getElementById('modal-invoice');
+    
+    // Set Data
+    document.getElementById('inv-id').innerText = data.invoiceId || 'UNKNOWN';
+    document.getElementById('inv-date').innerText = new Date(data.date).toLocaleString();
+    document.getElementById('inv-product').innerText = data.desc;
+    document.getElementById('inv-desc').innerText = data.category === 'TOPUP' ? 'Deposit Saldo Otomatis' : data.detail;
+    document.getElementById('inv-price').innerText = `Rp ${data.amount.toLocaleString()}`;
+    
+    // Status Badge
+    const stEl = document.getElementById('inv-status');
+    stEl.innerText = data.status.toUpperCase();
+    stEl.className = `text-xs font-mono font-bold mt-2 inline-block px-3 py-1 rounded-full relative z-10 text-white ${
+        data.status === 'success' ? 'bg-green-600' : data.status === 'canceled' ? 'bg-red-600' : 'bg-yellow-600'
+    }`;
+
+    // Menampilkan Data Penting (OTP / SN / Token)
+    const dataBox = document.getElementById('inv-data-box');
+    const dataText = document.getElementById('inv-data-text');
+    
+    // Logic Data Khusus
+    if (data.category === 'NOKOS' && data.raw.smsCode) {
+        dataBox.classList.remove('hidden');
+        dataText.innerText = `OTP: ${data.raw.smsCode}`;
+    } else if (data.category === 'PRODUCT' && data.status === 'success') {
+        // Cek apakah ada data SN/Akun di deskripsi (biasanya backend simpan di formData atau note)
+        // Disini kita tampilkan detail user input / balasan admin
+        dataBox.classList.remove('hidden');
+        dataText.innerText = data.detail || '-';
+    } else {
+        dataBox.classList.add('hidden');
+    }
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeInvoice() {
+    const modal = document.getElementById('modal-invoice');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+function copyInvoiceData() {
+    const text = document.getElementById('inv-data-text').innerText;
+    navigator.clipboard.writeText(text).then(() => showToast("Data disalin!", "success"));
 }
 
 async function fetchMyServices() {
