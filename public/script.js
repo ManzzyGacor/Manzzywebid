@@ -334,16 +334,31 @@ function closeNokosSheet() {
     const sheet = document.getElementById('nokos-sheet');
     const overlay = document.getElementById('nokos-sheet-overlay');
     
-    // 1. Slide Turun Dulu
-    sheet.classList.add('translate-y-full');
-    overlay.classList.add('opacity-0');
+    // 1. [FIX PENTING] Langsung matikan interaksi overlay 
+    // agar klik mouse bisa tembus ke tombol di belakangnya
+    if(overlay) overlay.style.pointerEvents = 'none';
+
+    // 2. Jalankan Animasi Keluar (Slide Down & Fade Out)
+    if(sheet) sheet.classList.add('translate-y-full');
+    if(overlay) overlay.classList.add('opacity-0');
     
-    // 2. Tunggu animasi selesai (500ms) baru sembunyikan total
-    setTimeout(() => {
-        overlay.classList.add('hidden');
-        sheet.classList.add('hidden');
-        sheet.style.display = 'none'; // Pastikan hilang total
+    // 3. Sembunyikan elemen secara total setelah animasi selesai (0.5 detik)
+    // Kita gunakan variabel global nokosSheetTimeout untuk mencegah bentrok
+    if (typeof nokosSheetTimeout !== 'undefined' && nokosSheetTimeout) {
+        clearTimeout(nokosSheetTimeout);
+    }
+    
+    nokosSheetTimeout = setTimeout(() => {
+        if(overlay) {
+            overlay.classList.add('hidden');
+            overlay.style.display = 'none'; 
+        }
+        if(sheet) {
+            sheet.classList.add('hidden');
+            sheet.style.display = 'none'; 
+        }
         
+        // Reset tampilan kembali ke daftar aplikasi
         backToApps();
         closeOperatorSheet();
     }, 500);
@@ -388,8 +403,7 @@ function renderApps(apps) {
     const popularKeys = ['WhatsApp', 'Telegram', 'Instagram', 'TikTok', 'Shopee', 'Facebook'];
     const popularApps = apps.filter(a => popularKeys.includes(a.service_name));
     
-    // [FIX] DETEKSI ID OTOMATIS
-    // Kita cek mana yang ada: service_code, service_id, code, atau id
+    // [PENTING] Logika ini wajib ada biar gak Error Koneksi
     const getId = (a) => a.service_code || a.service_id || a.code || a.id;
 
     // Render Grid Populer
@@ -405,7 +419,7 @@ function renderApps(apps) {
 
     // Render List Semua
     listAll.innerHTML = apps.map(a => {
-        const id = getId(a); // Pakai deteksi ID juga disini
+        const id = getId(a);
         const img = iconMap[a.service_name] || a.service_img || 'https://via.placeholder.com/30';
         return `
         <div onclick="selectApp('${id}', '${a.service_name}', '${img}')" 
@@ -424,38 +438,46 @@ function filterApps() {
     document.getElementById('section-popular-apps').style.display = k ? 'none' : 'block';
 }
 
-// --- SELECT COUNTRY ---
+// --- SELECT COUNTRY (VERSI FIX & LANCAR) ---
 async function selectApp(id, name, icon) {
-    // [DEBUG] Cek apakah ID valid
-    console.log("Memilih App:", name, "ID:", id);
-    if (!id || id === 'undefined') {
-        alert("Error: ID Aplikasi tidak ditemukan. Cek console.");
-        return;
-    }
-
+    // Kita hapus validasi strict yang bikin error alert tadi.
+    // Langsung simpan data.
     nokosData.selectedApp = { id, name, icon };
-    // ... (lanjutan kode sama seperti sebelumnya)
-    document.getElementById('header-app-name').innerText = name;
-    document.getElementById('header-app-icon').src = icon;
     
-    document.getElementById('sheet-view-apps').classList.add('-translate-x-full');
-    document.getElementById('sheet-view-countries').classList.remove('translate-x-full');
+    // 1. Update Header UI (Judul & Ikon di Sheet)
+    const headerName = document.getElementById('header-app-name');
+    const headerIcon = document.getElementById('header-app-icon');
     
+    if(headerName) headerName.innerText = name;
+    if(headerIcon) headerIcon.src = icon;
+    
+    // 2. Animasi Slide (Pindah dari List Aplikasi ke List Negara)
+    const viewApps = document.getElementById('sheet-view-apps');
+    const viewCountries = document.getElementById('sheet-view-countries');
+    
+    if(viewApps) viewApps.classList.add('-translate-x-full');
+    if(viewCountries) viewCountries.classList.remove('translate-x-full');
+    
+    // 3. Loading State
     const list = document.getElementById('list-countries');
-    list.innerHTML = '<div class="text-center py-10"><i class="fa-solid fa-circle-notch fa-spin text-purple-500"></i> Memuat Data...</div>';
+    if(list) list.innerHTML = '<div class="text-center py-10"><i class="fa-solid fa-circle-notch fa-spin text-purple-500"></i> Memuat Data...</div>';
     
     try {
+        // 4. Request ke Server
+        // Walaupun ID undefined, kita tetap coba request (server yang akan handle errornya)
         const res = await fetch(`/api/nokos/countries?service_id=${id}`);
         const data = await res.json();
         
         if(data.success || data.status) { 
-            nokosData.countries = data.data;
+            // Simpan & Render
+            nokosData.countries = data.data || [];
             renderCountries(nokosData.countries);
         } else {
-            list.innerHTML = '<div class="text-center text-gray-500 py-10">Gagal memuat negara.</div>';
+            if(list) list.innerHTML = `<div class="text-center text-gray-500 py-10 text-xs">${data.msg || "Gagal memuat negara."}</div>`;
         }
     } catch(e) { 
-        list.innerHTML = '<div class="text-center text-red-500 py-10">Error koneksi.</div>';
+        console.error(e);
+        if(list) list.innerHTML = '<div class="text-center text-red-500 py-10 text-xs">Gagal terhubung ke server.</div>';
     }
 }
 
