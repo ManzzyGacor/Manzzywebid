@@ -334,27 +334,16 @@ function closeNokosSheet() {
     const sheet = document.getElementById('nokos-sheet');
     const overlay = document.getElementById('nokos-sheet-overlay');
     
-    // 1. Langsung matikan interaksi overlay (biar tombol di belakangnya bisa diklik)
-    if(overlay) overlay.style.pointerEvents = 'none';
-
-    // 2. Animasi Turun (Slide-Down)
-    if(sheet) sheet.classList.add('translate-y-full');
-    if(overlay) overlay.classList.add('opacity-0');
+    // 1. Slide Turun Dulu
+    sheet.classList.add('translate-y-full');
+    overlay.classList.add('opacity-0');
     
-    // 3. Sembunyikan total setelah animasi selesai (0.5 detik)
-    if (nokosSheetTimeout) clearTimeout(nokosSheetTimeout);
-    
-    nokosSheetTimeout = setTimeout(() => {
-        if(overlay) {
-            overlay.classList.add('hidden');
-            overlay.style.display = 'none'; 
-        }
-        if(sheet) {
-            sheet.classList.add('hidden');
-            sheet.style.display = 'none'; 
-        }
+    // 2. Tunggu animasi selesai (500ms) baru sembunyikan total
+    setTimeout(() => {
+        overlay.classList.add('hidden');
+        sheet.classList.add('hidden');
+        sheet.style.display = 'none'; // Pastikan hilang total
         
-        // Reset state internal
         backToApps();
         closeOperatorSheet();
     }, 500);
