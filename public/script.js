@@ -17,7 +17,7 @@ async function initData() {
     checkUserLogin();
     fetchTestimonials();
     updateServerStats();
-    startLiveNotif(); 
+    startLiveNotif(); // Jalankan notifikasi sosial proof
     setInterval(updateServerStats, 5000);
 }
 
@@ -217,6 +217,7 @@ async function checkVoucher() {
     
     if(!code) { msgEl.innerText="Masukkan kode."; msgEl.className="text-red-500 text-[10px] block"; return; }
     
+    // Loading state
     msgEl.innerHTML = "<i class='fa-solid fa-circle-notch fa-spin'></i> Cek..."; 
     msgEl.className="text-yellow-500 text-[10px] block";
     msgEl.classList.remove('hidden');
@@ -238,6 +239,8 @@ async function checkVoucher() {
         } else {
             msgEl.innerText = "❌ Kode salah."; msgEl.className="text-red-500 text-[10px] block";
             activeVoucher = null;
+            
+            // Reset
             document.getElementById('price-original').classList.add('hidden');
             document.getElementById('price-final').innerText = `Rp ${currentProduct.price.toLocaleString()}`;
             document.getElementById('price-final').className = "font-bold font-mono text-white";
@@ -295,53 +298,72 @@ async function submitTopUp(e) {
 }
 
 // ============================================
-// 6. NOKOS SYSTEM (FIXED BUTTON BUG & CLEANED)
+
+
+function selectOperator(el, opId, opName) {
+    document.querySelectorAll('.operator-card').forEach(c => c.classList.remove('active-card'));
+    el.classList.add('active-card');
+    currentNokos.operatorId = opId;
+    document.getElementById('step-checkout').classList.remove('hidden');
+    document.getElementById('display-price').innerText = `Rp ${currentNokos.serverPrice.toLocaleString()}`;
+    document.getElementById('display-info').innerText = opName;
+    document.getElementById('display-server').innerText = `ID: ${currentNokos.providerId}`;
+    document.getElementById('step-checkout').scrollIntoView({ behavior: 'smooth' });
+}
+
+async function executeBuyNokos() {
+    if(!confirm(`Beli nomor ${currentNokos.serviceName}?\nPastikan saldo cukup.`)) return;
+    const btn = document.getElementById('btn-buy-nokos');
+    const originalText = btn.innerHTML; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> PROSES...'; btn.disabled = true;
+    try {
+        const payload = { username: userSession, service_id: currentNokos.serviceId, service_name: currentNokos.serviceName, number_id: currentNokos.countryId, provider_id: currentNokos.providerId, operator_id: currentNokos.operatorId };
+        const res = await fetch('/api/nokos/buy', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+        const d = await res.json();
+        if(d.success) { showToast("SUKSES! Menunggu SMS...", "success"); checkUserLogin(); fetchNokosHistory(); resetSteps(['step-checkout']); } 
+        else { let msg = d.msg || "Gagal"; if(d.msg && d.msg.includes("Pusat:")) msg = "GAGAL DARI PUSAT: Saldo/Stok Habis."; showToast(msg, "error"); }
+    } catch(e) { showToast("Koneksi Error.", "error"); } 
+    finally { btn.innerHTML = originalText; btn.disabled = false; }
+}
+
+function resetSteps(ids) { ids.forEach(id => document.getElementById(id).classList.add('hidden')); }
+function buyNokosAgain() { document.getElementById('view-nokos').scrollIntoView({ behavior: 'smooth' }); initNokos(); }
+// ============================================
+// 6. NOKOS SYSTEM (FIXED UI & ERROR MSG)
 // ============================================
 
 let nokosData = { apps: [], countries: [], selectedApp: null, tempServer: null };
 let nokosInterval = null;
-let nokosSheetTimer = null; // [FIX] Timer untuk anti-conflict
-let opSheetTimer = null;    // [FIX] Timer untuk anti-conflict
 
 async function initNokos() {
     if(userSession) {
         document.getElementById('nokos-username').innerText = userSession;
+        // Update saldo visual dari navbar
         const balText = document.getElementById('header-balance').innerText; 
         document.getElementById('nokos-balance-display').innerText = balText || "Rp 0";
     }
     fetchNokosHistory(); 
     clearInterval(nokosInterval);
+    // Refresh otomatis setiap 10 detik tanpa popup error
     nokosInterval = setInterval(fetchNokosHistory, 10000);
 }
 
-// [FIX] Variabel Global untuk Timeout (Pastikan ini ada)
-let nokosSheetTimeout = null; 
-
-// --- SHEET CONTROLS (VERSI STABIL & ANTI-MACET) ---
+// --- SHEET CONTROLS (FIXED ANIMATION) ---
 function openNokosSheet() {
-    // 1. Batalkan proses penutupan jika sedang berjalan
-    if (nokosSheetTimeout) clearTimeout(nokosSheetTimeout);
-    
     const sheet = document.getElementById('nokos-sheet');
     const overlay = document.getElementById('nokos-sheet-overlay');
     
-    if(!sheet || !overlay) return console.error("Elemen Nokos Sheet tidak ditemukan");
-
-    // 2. Reset Tampilan (Pastikan muncul dulu)
+    // 1. Hapus class hidden & Paksa display flex dulu
     sheet.classList.remove('hidden');
     sheet.style.display = 'flex'; 
     
     overlay.classList.remove('hidden');
     overlay.style.display = 'block';
     
-    // 3. Aktifkan Interaksi (Agar bisa diklik)
-    overlay.style.pointerEvents = 'auto'; 
-    
-    // 4. Jalankan Animasi Slide-Up (Pakai delay 10ms agar transisi mulus)
+    // 2. Beri jeda 50ms agar browser "sadar" elemen sudah ada, baru slide naik
     setTimeout(() => {
         overlay.classList.remove('opacity-0');
         sheet.classList.remove('translate-y-full');
-    }, 10);
+    }, 50); 
     
     loadNokosApps();
 }
@@ -350,27 +372,16 @@ function closeNokosSheet() {
     const sheet = document.getElementById('nokos-sheet');
     const overlay = document.getElementById('nokos-sheet-overlay');
     
-    // 1. Langsung matikan interaksi overlay (biar tombol di belakangnya bisa diklik)
-    if(overlay) overlay.style.pointerEvents = 'none';
-
-    // 2. Animasi Turun (Slide-Down)
-    if(sheet) sheet.classList.add('translate-y-full');
-    if(overlay) overlay.classList.add('opacity-0');
+    // 1. Slide Turun Dulu
+    sheet.classList.add('translate-y-full');
+    overlay.classList.add('opacity-0');
     
-    // 3. Sembunyikan total setelah animasi selesai (0.5 detik)
-    if (nokosSheetTimeout) clearTimeout(nokosSheetTimeout);
-    
-    nokosSheetTimeout = setTimeout(() => {
-        if(overlay) {
-            overlay.classList.add('hidden');
-            overlay.style.display = 'none'; 
-        }
-        if(sheet) {
-            sheet.classList.add('hidden');
-            sheet.style.display = 'none'; 
-        }
+    // 2. Tunggu animasi selesai (500ms) baru sembunyikan total
+    setTimeout(() => {
+        overlay.classList.add('hidden');
+        sheet.classList.add('hidden');
+        sheet.style.display = 'none'; // Pastikan hilang total
         
-        // Reset state internal
         backToApps();
         closeOperatorSheet();
     }, 500);
@@ -378,18 +389,23 @@ function closeNokosSheet() {
 
 // --- LOAD APPS ---
 async function loadNokosApps() {
-    if(nokosData.apps.length > 0) return; 
+    if(nokosData.apps.length > 0) return; // Pakai cache jika sudah ada
     
+    // Tampilkan loading di grid populer
     const gridPop = document.getElementById('grid-popular-apps');
     gridPop.innerHTML = '<div class="col-span-full text-center py-4 text-gray-500"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</div>';
     
     try {
         const res = await fetch('/api/nokos/services');
         const data = await res.json();
+        
+        // Handle format data (adaptif jika struktur beda dikit)
         const apps = data.data || data; 
         if(Array.isArray(apps)) {
             nokosData.apps = apps;
             renderApps(nokosData.apps);
+        } else {
+            throw new Error("Format data salah");
         }
     } catch(e) { 
         console.error(e);
@@ -415,27 +431,20 @@ function renderApps(apps) {
     const popularKeys = ['WhatsApp', 'Telegram', 'Instagram', 'TikTok', 'Shopee', 'Facebook'];
     const popularApps = apps.filter(a => popularKeys.includes(a.service_name));
     
-    // [FIX] DETEKSI ID OTOMATIS
-    // Kita cek mana yang ada: service_code, service_id, code, atau id
-    const getId = (a) => a.service_code || a.service_id || a.code || a.id;
-
-    // Render Grid Populer
-    gridPop.innerHTML = popularApps.map(a => {
-        const id = getId(a);
-        return `
-        <div onclick="selectApp('${id}', '${a.service_name}', '${iconMap[a.service_name]}')" 
+    // Render Grid Populer (6 Ikon Besar)
+    gridPop.innerHTML = popularApps.map(a => `
+        <div onclick="selectApp('${a.service_code}', '${a.service_name}', '${iconMap[a.service_name]}')" 
              class="bg-[#1c1c1f] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-purple-500 hover:bg-[#25252a] transition group h-28">
             <img src="${iconMap[a.service_name]}" class="w-10 h-10 object-contain group-hover:scale-110 transition">
             <span class="text-[10px] font-bold text-gray-300 uppercase tracking-wide group-hover:text-white">${a.service_name}</span>
-        </div>`;
-    }).join('');
+        </div>
+    `).join('');
 
     // Render List Semua
     listAll.innerHTML = apps.map(a => {
-        const id = getId(a); // Pakai deteksi ID juga disini
         const img = iconMap[a.service_name] || a.service_img || 'https://via.placeholder.com/30';
         return `
-        <div onclick="selectApp('${id}', '${a.service_name}', '${img}')" 
+        <div onclick="selectApp('${a.service_code}', '${a.service_name}', '${img}')" 
              class="flex items-center gap-4 p-4 bg-[#1c1c1f] border border-gray-800 rounded-2xl hover:bg-[#25252a] cursor-pointer transition">
             <div class="w-10 h-10 rounded-xl bg-black/50 flex items-center justify-center p-1.5"><img src="${img}" class="w-full h-full object-contain"></div>
             <span class="text-sm font-bold text-gray-200">${a.service_name}</span>
@@ -453,21 +462,17 @@ function filterApps() {
 
 // --- SELECT COUNTRY ---
 async function selectApp(id, name, icon) {
-    // [DEBUG] Cek apakah ID valid
-    console.log("Memilih App:", name, "ID:", id);
-    if (!id || id === 'undefined') {
-        alert("Error: ID Aplikasi tidak ditemukan. Cek console.");
-        return;
-    }
-
     nokosData.selectedApp = { id, name, icon };
-    // ... (lanjutan kode sama seperti sebelumnya)
+    
+    // Update Header
     document.getElementById('header-app-name').innerText = name;
     document.getElementById('header-app-icon').src = icon;
     
+    // Slide Animation
     document.getElementById('sheet-view-apps').classList.add('-translate-x-full');
     document.getElementById('sheet-view-countries').classList.remove('translate-x-full');
     
+    // Load Data
     const list = document.getElementById('list-countries');
     list.innerHTML = '<div class="text-center py-10"><i class="fa-solid fa-circle-notch fa-spin text-purple-500"></i> Memuat Data...</div>';
     
@@ -475,7 +480,7 @@ async function selectApp(id, name, icon) {
         const res = await fetch(`/api/nokos/countries?service_id=${id}`);
         const data = await res.json();
         
-        if(data.success || data.status) { 
+        if(data.success || data.status) { // Handle response format
             nokosData.countries = data.data;
             renderCountries(nokosData.countries);
         } else {
@@ -497,6 +502,7 @@ function renderCountries(countries) {
     if(!countries || countries.length === 0) { list.innerHTML = '<div class="text-center text-gray-500 py-10">Tidak ada data.</div>'; return; }
     
     list.innerHTML = countries.map(c => {
+        // Ambil harga termurah untuk display
         const cheapest = c.pricelist && c.pricelist.length > 0 ? c.pricelist.sort((a,b) => a.price - b.price)[0] : null;
         const startPrice = cheapest ? cheapest.price_format : '-';
         
@@ -527,6 +533,7 @@ function toggleCountryAccordion(el) {
     const b = p.querySelector('.accordion-body');
     const i = p.querySelector('.accordion-icon');
     
+    // Tutup yang lain (opsional)
     document.querySelectorAll('.accordion-body').forEach(box => { if(box!==b) box.classList.add('hidden'); });
     document.querySelectorAll('.accordion-icon').forEach(icon => { if(icon!==i) icon.classList.remove('rotate-180'); });
     
@@ -537,12 +544,7 @@ function toggleCountryAccordion(el) {
 function renderServerList(servers, countryId, countryName) {
     if(!servers || servers.length === 0) return '<div class="text-center text-xs text-red-500">Stok habis.</div>';
     
-    return servers.map(s => {
-        // [FIX] Escape quote agar tidak error onClick
-        const safeCountryName = countryName.replace(/'/g, "\\'");
-        const safeServerId = (s.server_id || '').replace(/'/g, "\\'");
-        
-        return `
+    return servers.map(s => `
         <div class="flex justify-between items-center p-3 rounded-xl bg-[#1f1f23] border border-gray-800 hover:border-gray-700">
             <div class="flex items-center gap-3">
                 <div class="text-[10px] font-mono text-blue-400 bg-blue-900/20 px-1.5 py-0.5 rounded">ID:${s.provider_id}</div>
@@ -553,13 +555,13 @@ function renderServerList(servers, countryId, countryName) {
             </div>
             <div class="flex items-center gap-3">
                 <span class="text-sm font-bold text-white">${s.price_format}</span>
-                <button onclick="openOperatorSelection('${countryId}', '${safeCountryName}', '${s.price}', '${s.provider_id}', '${safeServerId}')" 
+                <button onclick="openOperatorSelection('${countryId}', '${countryName}', '${s.price}', '${s.provider_id}', '${s.server_id}')" 
                     class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition shadow-lg shadow-blue-900/30">
                     Order
                 </button>
             </div>
         </div>
-    `}).join('');
+    `).join('');
 }
 
 function filterCountries() {
@@ -568,7 +570,7 @@ function filterCountries() {
     renderCountries(f);
 }
 
-// --- SELECT OPERATOR & FIX BUTTON STUCK ---
+// --- SELECT OPERATOR (FIXED VISIBILITY) ---
 async function openOperatorSelection(countryId, countryName, price, providerId, serverName) {
     nokosData.tempServer = { countryId, countryName, price, providerId };
     
@@ -576,14 +578,9 @@ async function openOperatorSelection(countryId, countryName, price, providerId, 
     const sheetOp = document.getElementById('sheet-operator');
     const listOp = document.getElementById('list-operators');
     
-    clearTimeout(opSheetTimer); // Stop closing process if any
-
-    // Reset State
+    // [FIX UTAMA] Hapus class hidden & ubah display sebelum animasi
     sheetOp.classList.remove('hidden');
     sheetOp.style.display = 'block';
-    
-    // Force Reflow
-    void sheetOp.offsetWidth;
     
     requestAnimationFrame(() => {
         sheetOp.classList.remove('translate-y-full');
@@ -599,6 +596,7 @@ async function openOperatorSelection(countryId, countryName, price, providerId, 
         let ops = [];
         if(data.status || data.success) ops = data.data;
         
+        // Selalu tampilkan ANY
         let html = `
         <div onclick="selectOperatorAndCheckout('any', 'Acak / Any')" 
              class="min-w-[80px] h-24 bg-[#25252a] border border-gray-700 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-green-500 hover:bg-[#2a2a30] transition snap-start flex-none">
@@ -625,31 +623,20 @@ function closeOperatorSheet() {
     const sheetOp = document.getElementById('sheet-operator');
     sheetOp.classList.add('translate-y-full');
     
-    clearTimeout(opSheetTimer);
-    opSheetTimer = setTimeout(() => { 
+    // Sembunyikan total setelah animasi slide turun selesai
+    setTimeout(() => { 
         sheetOp.style.display = 'none';
         sheetOp.classList.add('hidden');
     }, 300);
 }
 
-// Variable Global untuk mencegah spam klik
-let isTransactionProcessing = false;
-
+// --- CHECKOUT & ERROR MESSAGE FIX ---
 async function selectOperatorAndCheckout(opId, opName) {
-    // 1. CEK STATUS: Jika sedang proses, tolak klik baru (Anti-Spam)
-    if (isTransactionProcessing) return;
-
-    // Konfirmasi User
     if(!confirm(`Beli ${nokosData.selectedApp.name} (${nokosData.tempServer.countryName})?\nHarga: Rp ${parseInt(nokosData.tempServer.price).toLocaleString()}`)) return;
     
-    // 2. KUNCI SISTEM (Lock)
-    isTransactionProcessing = true;
-
-    // Tutup UI agar rapi
     closeOperatorSheet();
     closeNokosSheet();
-    
-    showToast("Memproses pesanan... Mohon tunggu.", "info");
+    showToast("Memproses pesanan...", "info");
     
     try {
         const payload = {
@@ -662,9 +649,7 @@ async function selectOperatorAndCheckout(opId, opName) {
         };
         
         const res = await fetch('/api/nokos/buy', { 
-            method:'POST', 
-            headers:{'Content-Type':'application/json'}, 
-            body:JSON.stringify(payload)
+            method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
         });
         const d = await res.json();
         
@@ -673,114 +658,242 @@ async function selectOperatorAndCheckout(opId, opName) {
             checkUserLogin();
             fetchNokosHistory();
         } else {
-            // Tampilkan pesan error spesifik
-            let msg = d.msg || "Gagal memproses pesanan.";
-            if (msg.includes("spam")) msg = "Sabar! Jangan spam klik.";
-            showToast(msg, "error");
+            // [FIX] PESAN ERROR CUSTOM
+            showToast("Stok kosong atau gagal mengambil stok, silahkan tunggu beberapa saat.", "error");
         }
     } catch(e) { 
         showToast("Gagal terhubung ke server.", "error"); 
-    } finally {
-        // 3. BUKA KUNCI (Unlock) SETELAH 3 DETIK
-        // Kita kasih delay 3 detik extra biar user napas dulu (Cooldown)
-        setTimeout(() => {
-            isTransactionProcessing = false;
-        }, 3000);
     }
 }
-// --- HISTORY NOKOS ---
+
+// --- FETCH HISTORY (FULL VERSION: AUTO REFUND + COPY FITUR) ---
 async function fetchNokosHistory() {
     if(!userSession) return;
     const container = document.getElementById('nokos-active-container');
     
     try {
         const res = await fetch(`/api/nokos/history/${userSession}`);
-        if(!res.ok) throw new Error("API Error");
+        if(!res.ok) throw new Error("API Error"); // Silent error
         
         const list = await res.json();
-        list.forEach(tx => { if (tx.status === 'waiting') fetch(`/api/nokos/status/${tx.invoiceId}`); });
-
-        const now = new Date();
-        const activeList = list.filter(tx => tx.status === 'waiting' && new Date(tx.expiresAt) > now);
         
+        // 1. Background Check (PENTING: Trigger Auto Refund di Server)
+        // Kita loop semua pesanan 'waiting' agar server cek statusnya (expired/cancel pusat)
+        list.forEach(tx => {
+            if (tx.status === 'waiting') {
+                fetch(`/api/nokos/status/${tx.invoiceId}`);
+            }
+        });
+
+        // 2. Filter Tampilan (Hanya tampilkan yang BELUM Expired)
+        const now = new Date();
+        const activeList = list.filter(tx => {
+            const exp = new Date(tx.expiresAt);
+            // Tampilkan jika status waiting DAN sisa waktu masih ada (> 0)
+            return tx.status === 'waiting' && exp > now;
+        });
+        
+        // 3. Render UI (Kosong)
         if(activeList.length === 0) { 
             container.innerHTML = '<div class="text-center py-12 border border-dashed border-gray-800 rounded-2xl bg-[#0a0a0a]"><p class="text-gray-600 text-xs italic">Tidak ada pesanan aktif.</p><button onclick="openNokosSheet()" class="mt-4 text-xs text-blue-500 font-bold border border-blue-500/30 px-4 py-2 rounded-lg hover:bg-blue-500/10">+ Buat Pesanan</button></div>'; 
             return; 
         }
+        
+// ... (Bagian atas fungsi fetchNokosHistory sama) ...
 
+        // 4. Render List Pesanan
         container.innerHTML = activeList.map(tx => {
             const exp = new Date(tx.expiresAt);
             const timeLeft = Math.floor((exp - now) / 1000);
-            let timeDisplay = timeLeft > 0 ? `${Math.floor(timeLeft/60)}:${(timeLeft%60).toString().padStart(2,'0')}` : '00:00';
             
+            // Format waktu (MM:SS)
+            let timeDisplay = timeLeft > 0 ? 
+                `${Math.floor(timeLeft/60)}:${(timeLeft%60).toString().padStart(2,'0')}` : '00:00';
+            
+            // TAMPILAN SMS
             let smsSection = tx.smsCode ? 
-                `<div class="flex flex-col items-end"><span class="text-[10px] text-gray-400 mb-1">Kode OTP:</span><div onclick="copyText('${tx.smsCode}', 'Kode OTP')" class="cursor-pointer group flex items-center gap-2 bg-green-900/20 px-3 py-1.5 rounded border border-green-500/30 hover:bg-green-500/20 transition active:scale-95"><span class="text-xl font-mono font-bold text-green-400 tracking-[0.2em]">${tx.smsCode}</span><i class="fa-regular fa-copy text-green-600 text-xs group-hover:text-green-400"></i></div></div>` : 
-                `<div class="flex items-center gap-2 text-yellow-500 animate-pulse bg-yellow-500/10 px-3 py-1.5 rounded border border-yellow-500/20"><i class="fa-regular fa-envelope"></i><span class="text-xs font-bold">menunggu sms...</span></div>`;
+                `<div class="flex flex-col items-end">
+                    <span class="text-[10px] text-gray-400 mb-1">Kode OTP:</span>
+                    <div onclick="copyText('${tx.smsCode}', 'Kode OTP')" class="cursor-pointer group flex items-center gap-2 bg-green-900/20 px-3 py-1.5 rounded border border-green-500/30 hover:bg-green-500/20 transition active:scale-95">
+                        <span class="text-xl font-mono font-bold text-green-400 tracking-[0.2em]">${tx.smsCode}</span>
+                        <i class="fa-regular fa-copy text-green-600 text-xs group-hover:text-green-400"></i>
+                    </div>
+                 </div>` : 
+                `<div class="flex items-center gap-2 text-yellow-500 animate-pulse bg-yellow-500/10 px-3 py-1.5 rounded border border-yellow-500/20">
+                    <i class="fa-regular fa-envelope"></i><span class="text-xs font-bold">menunggu sms...</span>
+                 </div>`;
             
-            let footerBtn = tx.smsCode ? 
-                `<button onclick="nokosAction('${tx.invoiceId}', 'done')" class="flex-[2] py-2.5 rounded-lg bg-green-600 hover:bg-green-500 text-white text-xs font-bold shadow-lg shadow-green-900/20 transition"><i class="fa-solid fa-check mr-1"></i> Selesai</button><button onclick="nokosAction('${tx.invoiceId}', 'resend')" class="flex-1 py-2.5 rounded-lg border border-blue-600/30 text-blue-400 text-xs font-bold hover:bg-blue-600/10 transition" title="Resend"><i class="fa-solid fa-rotate-right"></i> Resend</button>` : 
-                `<button onclick="nokosAction('${tx.invoiceId}', 'resend')" class="flex-1 py-2.5 rounded-lg border border-blue-600/30 text-blue-400 text-xs font-bold hover:bg-blue-600/10 transition"><i class="fa-solid fa-rotate-right mr-1"></i> Resend</button><button onclick="nokosAction('${tx.invoiceId}', 'cancel')" class="flex-1 py-2.5 rounded-lg border border-red-600/30 text-red-500 text-xs font-bold hover:bg-red-600/10 transition"><i class="fa-solid fa-xmark mr-1"></i> Batal</button>`;
+            // [LOGIKA BARU] BUTTONS
+            let footerBtn = '';
+
+            if (tx.smsCode) {
+                // KONDISI 1: SUDAH ADA SMS
+                // Tampilkan Tombol SELESAI + Tombol RESEND (Berdampingan)
+                footerBtn = `
+                    <button onclick="nokosAction('${tx.invoiceId}', 'done')" class="flex-[2] py-2.5 rounded-lg bg-green-600 hover:bg-green-500 text-white text-xs font-bold shadow-lg shadow-green-900/20 transition">
+                        <i class="fa-solid fa-check mr-1"></i> Selesai
+                    </button>
+                    
+                    <button onclick="nokosAction('${tx.invoiceId}', 'resend')" class="flex-1 py-2.5 rounded-lg border border-blue-600/30 text-blue-400 text-xs font-bold hover:bg-blue-600/10 transition" title="Minta SMS Ulang">
+                        <i class="fa-solid fa-rotate-right"></i> Resend
+                    </button>
+                `;
+            } else {
+                // KONDISI 2: BELUM ADA SMS (PENDING)
+                // Tampilkan RESEND + BATAL
+                footerBtn = `
+                    <button onclick="nokosAction('${tx.invoiceId}', 'resend')" class="flex-1 py-2.5 rounded-lg border border-blue-600/30 text-blue-400 text-xs font-bold hover:bg-blue-600/10 transition">
+                        <i class="fa-solid fa-rotate-right mr-1"></i> Resend
+                    </button>
+                    
+                    <button onclick="nokosAction('${tx.invoiceId}', 'cancel')" class="flex-1 py-2.5 rounded-lg border border-red-600/30 text-red-500 text-xs font-bold hover:bg-red-600/10 transition">
+                        <i class="fa-solid fa-xmark mr-1"></i> Batal
+                    </button>
+                `;
+            }
 
             return `
             <div class="bg-[#1a1a1d] border border-gray-800 rounded-2xl p-4 relative overflow-hidden transition-all duration-500 hover:border-gray-700 shadow-lg">
                 <div class="flex justify-between items-start mb-4 border-b border-gray-800 pb-3">
-                    <div onclick="copyText('${tx.phoneNumber}', 'Nomor HP')" class="flex items-center gap-2 cursor-pointer group active:scale-95 transition"><span class="font-mono text-lg text-white font-bold tracking-wide group-hover:text-purple-400 transition select-all">${tx.phoneNumber}</span><i class="fa-regular fa-copy text-gray-600 group-hover:text-purple-400 text-sm"></i></div>
-                    <div class="bg-gray-800 text-gray-400 px-2 py-1 rounded text-xs font-mono font-bold flex items-center gap-1 border border-gray-700"><i class="fa-regular fa-clock text-yellow-500"></i> ${timeDisplay}</div>
+                    <div onclick="copyText('${tx.phoneNumber}', 'Nomor HP')" class="flex items-center gap-2 cursor-pointer group active:scale-95 transition">
+                        <span class="font-mono text-lg text-white font-bold tracking-wide group-hover:text-purple-400 transition select-all">${tx.phoneNumber}</span>
+                        <i class="fa-regular fa-copy text-gray-600 group-hover:text-purple-400 text-sm"></i>
+                    </div>
+                    <div class="bg-gray-800 text-gray-400 px-2 py-1 rounded text-xs font-mono font-bold flex items-center gap-1 border border-gray-700">
+                        <i class="fa-regular fa-clock text-yellow-500"></i> ${timeDisplay}
+                    </div>
                 </div>
+                
                 <div class="flex justify-between items-center mb-5">
-                    <div><div class="text-white font-bold text-sm flex items-center gap-2">${tx.serviceName} <span class="text-[10px] bg-gray-800 px-1.5 py-0.5 rounded text-gray-400 border border-gray-700">${tx.country}</span></div><div class="text-[10px] text-gray-500 mt-1 font-mono">ID: #${tx.invoiceId.substr(-5)}</div></div>
+                    <div>
+                        <div class="text-white font-bold text-sm flex items-center gap-2">
+                            ${tx.serviceName} 
+                            <span class="text-[10px] bg-gray-800 px-1.5 py-0.5 rounded text-gray-400 border border-gray-700">${tx.country}</span>
+                        </div>
+                        <div class="text-[10px] text-gray-500 mt-1 font-mono">ID: #${tx.invoiceId.substr(-5)}</div>
+                    </div>
                     <div class="text-right">${smsSection}</div>
                 </div>
-                <div class="flex gap-3">${footerBtn}</div>
+                
+                <div class="flex gap-3">
+                    ${footerBtn}
+                </div>
             </div>`;
         }).join('');
-    } catch(e) {}
+        
+    } catch(e) {
+        // Silent error (biar user gak keganggu popup error pas auto-refresh)
+    }
 }
 
-// --- COPY TEXT ---
+// --- HELPER: COPY TEXT (VERSION 2: ROBUST / ANTI-GAGAL) ---
 function copyText(text, label) {
     if (!text) return;
+
+    // Coba Cara Modern (Wajib HTTPS)
     if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(text).then(() => successCopyEffect(label)).catch(err => fallbackCopyText(text, label));
+        navigator.clipboard.writeText(text).then(() => {
+            successCopyEffect(label);
+        }).catch(err => {
+            // Jika gagal (misal izin ditolak), coba cara manual
+            fallbackCopyText(text, label);
+        });
     } else {
+        // Jika browser tidak support clipboard API (misal HTTP biasa), pakai cara manual
         fallbackCopyText(text, label);
     }
 }
+
+// Fungsi Cadangan (Manual Copy)
 function fallbackCopyText(text, label) {
+    // 1. Buat elemen textarea sementara
     const textArea = document.createElement("textarea");
     textArea.value = text;
-    textArea.style.position = "fixed"; textArea.style.opacity = "0";
+    
+    // 2. Sembunyikan agar tidak terlihat user
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.position = "fixed";
+    textArea.style.opacity = "0";
+
     document.body.appendChild(textArea);
-    textArea.focus(); textArea.select();
-    try { if(document.execCommand('copy')) successCopyEffect(label); else showToast("Gagal menyalin.", "error"); } 
-    catch (err) { showToast("Gagal menyalin.", "error"); }
+    
+    // 3. Pilih dan Salin teksnya
+    textArea.focus();
+    textArea.select();
+
+    try {
+        const successful = document.execCommand('copy');
+        if(successful) {
+            successCopyEffect(label);
+        } else {
+            showToast("Gagal menyalin. Izin browser ditolak.", "error");
+        }
+    } catch (err) {
+        showToast("Gagal menyalin.", "error");
+    }
+
+    // 4. Hapus elemen sementara
     document.body.removeChild(textArea);
 }
+
+// Efek Sukses (Notif & Getar)
 function successCopyEffect(label) {
     showToast(`✅ ${label} disalin!`, "success");
+    // Efek getar HP (Haptic Feedback)
     if (navigator.vibrate) navigator.vibrate(50);
 }
+// ============================================
+// 7. ACTION BUTTONS (RESEND/CANCEL/DONE)
+// ============================================
 
-// --- ACTIONS ---
 async function nokosAction(invId, actionType) {
     let msg = "Proses...";
-    if(actionType === 'cancel' && !confirm("Yakin batalkan nomor ini? Saldo akan direfund.")) return; 
-    if(actionType === 'done' && !confirm("Sudah dapat SMS? Selesaikan pesanan ini?")) return; 
     
+    // Konfirmasi User
+    if(actionType === 'cancel') { 
+        if(!confirm("Yakin batalkan nomor ini? Saldo akan direfund.")) return; 
+        msg = "Membatalkan..."; 
+    }
+    if(actionType === 'done') { 
+        if(!confirm("Sudah dapat SMS? Selesaikan pesanan ini?")) return; 
+        msg = "Menyelesaikan..."; 
+    }
+    if(actionType === 'resend') { 
+        msg = "Meminta SMS ulang..."; 
+    }
+
     showToast(msg, "info");
+
     try {
-        const res = await fetch('/api/nokos/action', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ invoiceId: invId, username: userSession, action: actionType }) });
+        const res = await fetch('/api/nokos/action', { 
+            method: 'POST', 
+            headers: {'Content-Type':'application/json'}, 
+            body: JSON.stringify({ 
+                invoiceId: invId, 
+                username: userSession, 
+                action: actionType 
+            }) 
+        });
+        
         const d = await res.json();
+        
         if(d.success) { 
             showToast("✅ " + d.msg, "success"); 
-            fetchNokosHistory(); 
+            fetchNokosHistory(); // Refresh list setelah aksi
+            
+            // Jika cancel, refresh saldo juga
             if(actionType === 'cancel') checkUserLogin(); 
-        } else { showToast("❌ " + d.msg, "error"); }
-    } catch(e) { showToast("Gagal terhubung.", "error"); }
+        } else { 
+            showToast("❌ " + d.msg, "error"); 
+        }
+    } catch(e) { 
+        showToast("Gagal terhubung.", "error"); 
+    }
 }
 
 // ============================================
-// 7. HISTORY & SERVICES
+// 8. HISTORY & SERVICES
 // ============================================
 
 async function fetchHistory() {
@@ -835,44 +948,56 @@ function setRating(n) { document.getElementById('ratingValue').value = n; docume
 async function fetchTestimonials() { try { const d = await (await fetch('/api/testimonials')).json(); const g=document.getElementById('testimonial-grid'); if(d.length===0){g.innerHTML='<div class="w-full text-center text-gray-500 italic py-10">Belum ada ulasan.</div>';return;} g.innerHTML=d.map(x=>`<div class="glass-card p-5 rounded-xl w-[85vw] md:w-[320px] flex-none snap-center border-l-2 border-l-purple-500"><div class="flex justify-between mb-2"><h4 class="font-bold text-white text-sm">${x.username}</h4><span class="text-yellow-500 text-xs">★ ${x.rating}.0</span></div><p class="text-gray-300 text-sm italic">"${x.comment}"</p></div>`).join(''); } catch(e){} }
 
 // ============================================
-// 8. CUSTOMER SERVICE WIDGET
+// 10. CUSTOMER SERVICE WIDGET
 // ============================================
 
 function toggleCS() {
     const menu = document.getElementById('cs-menu');
     
     if (menu.classList.contains('hidden')) {
+        // Buka Menu (Animasi Pop Up)
         menu.classList.remove('hidden');
+        // Jeda dikit biar animasi scale jalan
         setTimeout(() => menu.classList.remove('scale-0'), 10);
     } else {
+        // Tutup Menu
         menu.classList.add('scale-0');
         setTimeout(() => menu.classList.add('hidden'), 300);
     }
 }
 
 function contactWA(topic) {
+    const adminNumber = "6287756632352"; // Nomor Kamu
     const currentUser = userSession || "Guest/Tamu";
+    
+    // Template Pesan Rapi
     const text = `Halo Admin Manzzy ID 👋\nSaya butuh bantuan.\n\n👤 *Username:* ${currentUser}\n📝 *Kendala:* ${topic}\n\nMohon dibantu pengecekannya. Terima kasih!`;
-    window.open(`https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(text)}`, '_blank');
+    
+    // Redirect ke WA
+    window.open(`https://wa.me/${adminNumber}?text=${encodeURIComponent(text)}`, '_blank');
+    
+    // Tutup menu setelah klik
     toggleCS();
 }
 
+// Tutup menu CS kalau klik di luar area
 document.addEventListener('click', function(e) {
     const menu = document.getElementById('cs-menu');
     const btn = document.querySelector('button[onclick="toggleCS()"]');
+    
     if (!menu.classList.contains('hidden') && !menu.contains(e.target) && !btn.contains(e.target)) {
         toggleCS();
     }
 });
-
 // ============================================
-// 9. LIVE SOCIAL PROOF
+// 9. LIVE SOCIAL PROOF (NOTIFIKASI PALSU)
 // ============================================
 
-const fakeNames = ["Rizky", "Dimas", "Bayu", "Sultan_Indo", "Anonim", "Dika", "Fajar", "Yexz Tampan", "User123", "GamerID", "Putri", "ManzzyFan"];
+const fakeNames = ["Rizky", "Dimas", "Bayu", "Sultan_Indo", "Anonim", "Dika", "Fajar", "Admin", "User123", "GamerID", "Putri", "ManzzyFan"];
 const fakeProducts = [{ name: "Nokos WhatsApp", type: "buy" }, { name: "Nokos Telegram", type: "buy" }, { name: "Nokos Shopee", type: "buy" }, { name: "Top Up Rp 20.000", type: "topup" }, { name: "Top Up Rp 50.000", type: "topup" }, { name: "VPS Murah", type: "buy" }, { name: "Panel Pterodactyl", type: "buy" }];
 
 function showLiveNotification() {
+    // Inject HTML jika belum ada
     if(!document.getElementById('live-notification')) {
         const div = document.createElement('div');
         div.id = 'live-notification';
