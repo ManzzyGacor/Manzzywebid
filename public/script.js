@@ -616,15 +616,24 @@ function closeOperatorSheet() {
     }, 300);
 }
 
-// --- CHECKOUT ---
+// Variable Global untuk mencegah spam klik
+let isTransactionProcessing = false;
+
 async function selectOperatorAndCheckout(opId, opName) {
+    // 1. CEK STATUS: Jika sedang proses, tolak klik baru (Anti-Spam)
+    if (isTransactionProcessing) return;
+
+    // Konfirmasi User
     if(!confirm(`Beli ${nokosData.selectedApp.name} (${nokosData.tempServer.countryName})?\nHarga: Rp ${parseInt(nokosData.tempServer.price).toLocaleString()}`)) return;
     
-    // Tutup UI
+    // 2. KUNCI SISTEM (Lock)
+    isTransactionProcessing = true;
+
+    // Tutup UI agar rapi
     closeOperatorSheet();
     closeNokosSheet();
     
-    showToast("Memproses pesanan...", "info");
+    showToast("Memproses pesanan... Mohon tunggu.", "info");
     
     try {
         const payload = {
@@ -637,7 +646,9 @@ async function selectOperatorAndCheckout(opId, opName) {
         };
         
         const res = await fetch('/api/nokos/buy', { 
-            method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
+            method:'POST', 
+            headers:{'Content-Type':'application/json'}, 
+            body:JSON.stringify(payload)
         });
         const d = await res.json();
         
@@ -646,13 +657,21 @@ async function selectOperatorAndCheckout(opId, opName) {
             checkUserLogin();
             fetchNokosHistory();
         } else {
-            showToast("Gagal: " + (d.msg || "Saldo/Stok Habis"), "error");
+            // Tampilkan pesan error spesifik
+            let msg = d.msg || "Gagal memproses pesanan.";
+            if (msg.includes("spam")) msg = "Sabar! Jangan spam klik.";
+            showToast(msg, "error");
         }
     } catch(e) { 
         showToast("Gagal terhubung ke server.", "error"); 
+    } finally {
+        // 3. BUKA KUNCI (Unlock) SETELAH 3 DETIK
+        // Kita kasih delay 3 detik extra biar user napas dulu (Cooldown)
+        setTimeout(() => {
+            isTransactionProcessing = false;
+        }, 3000);
     }
 }
-
 // --- HISTORY NOKOS ---
 async function fetchNokosHistory() {
     if(!userSession) return;
