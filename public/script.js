@@ -403,26 +403,20 @@ function renderApps(apps) {
     const popularKeys = ['WhatsApp', 'Telegram', 'Instagram', 'TikTok', 'Shopee', 'Facebook'];
     const popularApps = apps.filter(a => popularKeys.includes(a.service_name));
     
-    // [PENTING] Logika ini wajib ada biar gak Error Koneksi
-    const getId = (a) => a.service_code || a.service_id || a.code || a.id;
-
-    // Render Grid Populer
-    gridPop.innerHTML = popularApps.map(a => {
-        const id = getId(a);
-        return `
-        <div onclick="selectApp('${id}', '${a.service_name}', '${iconMap[a.service_name]}')" 
+    // Render Grid Populer (6 Ikon Besar)
+    gridPop.innerHTML = popularApps.map(a => `
+        <div onclick="selectApp('${a.service_code}', '${a.service_name}', '${iconMap[a.service_name]}')" 
              class="bg-[#1c1c1f] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-purple-500 hover:bg-[#25252a] transition group h-28">
             <img src="${iconMap[a.service_name]}" class="w-10 h-10 object-contain group-hover:scale-110 transition">
             <span class="text-[10px] font-bold text-gray-300 uppercase tracking-wide group-hover:text-white">${a.service_name}</span>
-        </div>`;
-    }).join('');
+        </div>
+    `).join('');
 
     // Render List Semua
     listAll.innerHTML = apps.map(a => {
-        const id = getId(a);
         const img = iconMap[a.service_name] || a.service_img || 'https://via.placeholder.com/30';
         return `
-        <div onclick="selectApp('${id}', '${a.service_name}', '${img}')" 
+        <div onclick="selectApp('${a.service_code}', '${a.service_name}', '${img}')" 
              class="flex items-center gap-4 p-4 bg-[#1c1c1f] border border-gray-800 rounded-2xl hover:bg-[#25252a] cursor-pointer transition">
             <div class="w-10 h-10 rounded-xl bg-black/50 flex items-center justify-center p-1.5"><img src="${img}" class="w-full h-full object-contain"></div>
             <span class="text-sm font-bold text-gray-200">${a.service_name}</span>
