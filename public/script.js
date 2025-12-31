@@ -342,8 +342,6 @@ function closeNokosSheet() {
     if(sheet) sheet.classList.add('translate-y-full');
     if(overlay) overlay.classList.add('opacity-0');
     
-    // 3. Sembunyikan elemen secara total setelah animasi selesai (0.5 detik)
-    // Kita gunakan variabel global nokosSheetTimeout untuk mencegah bentrok
     if (typeof nokosSheetTimeout !== 'undefined' && nokosSheetTimeout) {
         clearTimeout(nokosSheetTimeout);
     }
@@ -366,18 +364,23 @@ function closeNokosSheet() {
 
 // --- LOAD APPS ---
 async function loadNokosApps() {
-    if(nokosData.apps.length > 0) return; 
+    if(nokosData.apps.length > 0) return; // Pakai cache jika sudah ada
     
+    // Tampilkan loading di grid populer
     const gridPop = document.getElementById('grid-popular-apps');
     gridPop.innerHTML = '<div class="col-span-full text-center py-4 text-gray-500"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</div>';
     
     try {
         const res = await fetch('/api/nokos/services');
         const data = await res.json();
+        
+        // Handle format data (adaptif jika struktur beda dikit)
         const apps = data.data || data; 
         if(Array.isArray(apps)) {
             nokosData.apps = apps;
             renderApps(nokosData.apps);
+        } else {
+            throw new Error("Format data salah");
         }
     } catch(e) { 
         console.error(e);
@@ -474,6 +477,7 @@ function renderCountries(countries) {
     if(!countries || countries.length === 0) { list.innerHTML = '<div class="text-center text-gray-500 py-10">Tidak ada data.</div>'; return; }
     
     list.innerHTML = countries.map(c => {
+        // Ambil harga termurah untuk display
         const cheapest = c.pricelist && c.pricelist.length > 0 ? c.pricelist.sort((a,b) => a.price - b.price)[0] : null;
         const startPrice = cheapest ? cheapest.price_format : '-';
         
@@ -504,6 +508,7 @@ function toggleCountryAccordion(el) {
     const b = p.querySelector('.accordion-body');
     const i = p.querySelector('.accordion-icon');
     
+    // Tutup yang lain (opsional)
     document.querySelectorAll('.accordion-body').forEach(box => { if(box!==b) box.classList.add('hidden'); });
     document.querySelectorAll('.accordion-icon').forEach(icon => { if(icon!==i) icon.classList.remove('rotate-180'); });
     
@@ -514,12 +519,7 @@ function toggleCountryAccordion(el) {
 function renderServerList(servers, countryId, countryName) {
     if(!servers || servers.length === 0) return '<div class="text-center text-xs text-red-500">Stok habis.</div>';
     
-    return servers.map(s => {
-        // [FIX] Escape quote agar tidak error onClick
-        const safeCountryName = countryName.replace(/'/g, "\\'");
-        const safeServerId = (s.server_id || '').replace(/'/g, "\\'");
-        
-        return `
+    return servers.map(s => `
         <div class="flex justify-between items-center p-3 rounded-xl bg-[#1f1f23] border border-gray-800 hover:border-gray-700">
             <div class="flex items-center gap-3">
                 <div class="text-[10px] font-mono text-blue-400 bg-blue-900/20 px-1.5 py-0.5 rounded">ID:${s.provider_id}</div>
@@ -530,13 +530,13 @@ function renderServerList(servers, countryId, countryName) {
             </div>
             <div class="flex items-center gap-3">
                 <span class="text-sm font-bold text-white">${s.price_format}</span>
-                <button onclick="openOperatorSelection('${countryId}', '${safeCountryName}', '${s.price}', '${s.provider_id}', '${safeServerId}')" 
+                <button onclick="openOperatorSelection('${countryId}', '${countryName}', '${s.price}', '${s.provider_id}', '${s.server_id}')" 
                     class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition shadow-lg shadow-blue-900/30">
                     Order
                 </button>
             </div>
         </div>
-    `}).join('');
+    `).join('');
 }
 
 function filterCountries() {
