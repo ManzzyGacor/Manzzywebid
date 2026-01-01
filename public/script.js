@@ -969,47 +969,63 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// ============================================
-// 9. LIVE SOCIAL PROOF
-// ============================================
+// ==========================================
+// 6. PUBLIC DATA (RECENT ACTIVITY)
+// ==========================================
 
-const fakeNames = ["Rizky", "Dimas", "Bayu", "Sultan_Indo", "Anonim", "Dika", "Fajar", "Yexz Tampan", "User123", "GamerID", "Putri", "ManzzyFan"];
-const fakeProducts = [{ name: "Nokos WhatsApp", type: "buy" }, { name: "Nokos Telegram", type: "buy" }, { name: "Nokos Shopee", type: "buy" }, { name: "Top Up Rp 20.000", type: "topup" }, { name: "Top Up Rp 50.000", type: "topup" }, { name: "VPS Murah", type: "buy" }, { name: "Panel Pterodactyl", type: "buy" }];
-
-function showLiveNotification() {
-    if(!document.getElementById('live-notification')) {
-        const div = document.createElement('div');
-        div.id = 'live-notification';
-        div.className = "fixed bottom-5 left-5 z-50 flex flex-col gap-2 pointer-events-none transition-all duration-500 transform translate-y-20 opacity-0";
-        div.innerHTML = `<div class="glass-card p-3 rounded-xl border-l-4 border-l-green-500 flex items-center gap-3 w-72 shadow-2xl bg-black/80 backdrop-blur-md"><div class="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-400"><i id="notif-icon" class="fa-solid fa-cart-shopping"></i></div><div><h4 id="notif-title" class="text-xs font-bold text-white mb-0.5">Pembelian Baru</h4><p id="notif-desc" class="text-[10px] text-gray-300">Rizky membeli WhatsApp ID</p><p class="text-[9px] text-gray-500 mt-0.5">Baru saja</p></div></div>`;
-        document.body.appendChild(div);
-    }
-
-    const container = document.getElementById('live-notification');
-    const titleEl = document.getElementById('notif-title');
-    const descEl = document.getElementById('notif-desc');
-    const iconEl = document.getElementById('notif-icon');
-    const cardEl = container.querySelector('.glass-card');
-
-    const name = fakeNames[Math.floor(Math.random() * fakeNames.length)];
-    const prod = fakeProducts[Math.floor(Math.random() * fakeProducts.length)];
-
-    if (prod.type === 'topup') {
-        titleEl.innerText = "Deposit Berhasil"; descEl.innerText = `${name} baru saja deposit saldo.`; iconEl.className = "fa-solid fa-wallet";
-        cardEl.className = "glass-card p-3 rounded-xl border-l-4 border-l-green-500 flex items-center gap-3 w-72 shadow-2xl bg-black/80 backdrop-blur-md";
-        iconEl.parentElement.className = "w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-400";
-    } else {
-        titleEl.innerText = "Pembelian Sukses"; descEl.innerText = `${name} membeli ${prod.name}.`; iconEl.className = "fa-solid fa-cart-shopping";
-        cardEl.className = "glass-card p-3 rounded-xl border-l-4 border-l-purple-500 flex items-center gap-3 w-72 shadow-2xl bg-black/80 backdrop-blur-md";
-        iconEl.parentElement.className = "w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400";
-    }
-
-    container.classList.remove('translate-y-20', 'opacity-0');
-    setTimeout(() => { container.classList.add('translate-y-20', 'opacity-0'); }, 4000);
+// Helper Sensor Username (Manzzy -> Man***)
+function censorUser(str) {
+    if(!str) return "Member";
+    if(str.length <= 3) return str + "*";
+    return str.substring(0, 3) + "***";
 }
 
-function startLiveNotif() {
-    setTimeout(() => { showLiveNotification(); setInterval(() => { showLiveNotification(); }, Math.floor(Math.random() * (15000 - 8000 + 1) + 8000)); }, 5000);
-}
+app.get('/api/public/recent-activities', async (req, res) => {
+    try {
+        await connectDB();
+
+        // 1. Ambil 5 Topup Sukses Terakhir
+        const topups = await TopUpTx.find({ status: 'success' })
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .lean();
+
+        // 2. Ambil 5 Order Produk/Nokos Sukses Terakhir
+        const orders = await Transaction.find({ status: 'success' })
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .lean();
+
+        // 3. Gabungkan Data
+        let activities = [];
+
+        topups.forEach(t => {
+            activities.push({
+                type: 'topup',
+                user: censorUser(t.username),
+                desc: 'Deposit Saldo',
+                time: t.createdAt
+            });
+        });
+
+        orders.forEach(o => {
+            activities.push({
+                type: 'buy', // Bisa 'buy' (produk) atau 'nokos'
+                user: censorUser(o.username),
+                // Jika nama produk panjang, potong dikit
+                desc: o.productName.length > 20 ? o.productName.substring(0, 20) + '...' : o.productName,
+                time: o.createdAt
+            });
+        });
+
+        // 4. Urutkan dari yang paling baru
+        activities.sort((a, b) => new Date(b.time) - new Date(a.time));
+
+        res.json(activities);
+    } catch (e) {
+        console.error("Recent Activity Error:", e);
+        res.json([]); // Kembalikan array kosong jika error
+    }
+});
 
 initData();
