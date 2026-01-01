@@ -968,64 +968,121 @@ document.addEventListener('click', function(e) {
         toggleCS();
     }
 });
+// ============================================
+// 9. LIVE SOCIAL PROOF (REAL DATA DARI DATABASE)
+// ============================================
 
-// ==========================================
-// 6. PUBLIC DATA (RECENT ACTIVITY)
-// ==========================================
+let liveQueue = [];     // Penampung data dari server
+let queueIndex = 0;     // Penunjuk giliran data
 
-// Helper Sensor Username (Manzzy -> Man***)
-function censorUser(str) {
-    if(!str) return "Member";
-    if(str.length <= 3) return str + "*";
-    return str.substring(0, 3) + "***";
+// 1. Ambil Data Real dari Server Backend
+async function fetchRealActivities() {
+    try {
+        const res = await fetch('/api/public/recent-activities');
+        const data = await res.json();
+        
+        if (data && data.length > 0) {
+            liveQueue = data;
+            // Reset index jika data berubah drastis
+            if (queueIndex >= liveQueue.length) queueIndex = 0;
+        }
+    } catch (e) {
+        console.log("Menunggu data live...");
+    }
 }
 
-app.get('/api/public/recent-activities', async (req, res) => {
-    try {
-        await connectDB();
+// 2. Tampilkan Notifikasi (Satu per satu)
+function showLiveNotification() {
+    // Kalau belum ada data transaksi, jangan muncul dulu
+    if (liveQueue.length === 0) return;
 
-        // 1. Ambil 5 Topup Sukses Terakhir
-        const topups = await TopUpTx.find({ status: 'success' })
-            .sort({ createdAt: -1 })
-            .limit(5)
-            .lean();
-
-        // 2. Ambil 5 Order Produk/Nokos Sukses Terakhir
-        const orders = await Transaction.find({ status: 'success' })
-            .sort({ createdAt: -1 })
-            .limit(5)
-            .lean();
-
-        // 3. Gabungkan Data
-        let activities = [];
-
-        topups.forEach(t => {
-            activities.push({
-                type: 'topup',
-                user: censorUser(t.username),
-                desc: 'Deposit Saldo',
-                time: t.createdAt
-            });
-        });
-
-        orders.forEach(o => {
-            activities.push({
-                type: 'buy', // Bisa 'buy' (produk) atau 'nokos'
-                user: censorUser(o.username),
-                // Jika nama produk panjang, potong dikit
-                desc: o.productName.length > 20 ? o.productName.substring(0, 20) + '...' : o.productName,
-                time: o.createdAt
-            });
-        });
-
-        // 4. Urutkan dari yang paling baru
-        activities.sort((a, b) => new Date(b.time) - new Date(a.time));
-
-        res.json(activities);
-    } catch (e) {
-        console.error("Recent Activity Error:", e);
-        res.json([]); // Kembalikan array kosong jika error
+    // Ambil data antrian
+    const item = liveQueue[queueIndex];
+    
+    // Buat elemen HTML jika belum ada
+    if(!document.getElementById('live-notification')) {
+        const div = document.createElement('div');
+        div.id = 'live-notification';
+        div.className = "fixed bottom-5 left-5 z-50 flex flex-col gap-2 pointer-events-none transition-all duration-500 transform translate-y-20 opacity-0";
+        div.innerHTML = `
+            <div class="glass-card p-3 rounded-xl border-l-4 flex items-center gap-3 w-72 shadow-2xl bg-black/90 backdrop-blur-md border-white/10">
+                <div id="notif-icon-bg" class="w-10 h-10 rounded-full flex items-center justify-center shrink-0">
+                    <i id="notif-icon"></i>
+                </div>
+                <div>
+                    <h4 id="notif-title" class="text-xs font-bold text-white mb-0.5">Title</h4>
+                    <p id="notif-desc" class="text-[10px] text-gray-300 leading-tight line-clamp-2">Desc</p>
+                    <p id="notif-time" class="text-[9px] text-gray-500 mt-1 font-mono">Baru saja</p>
+                </div>
+            </div>`;
+        document.body.appendChild(div);
     }
-});
 
+    const container = document.getElementById('live-notification');
+    const cardEl = container.querySelector('.glass-card');
+    const iconBg = document.getElementById('notif-icon-bg');
+    const iconEl = document.getElementById('notif-icon');
+    
+    // Isi Konten dengan Data Asli
+    document.getElementById('notif-desc').innerText = `${item.user} • ${item.desc}`;
+    document.getElementById('notif-time').innerText = timeAgo(item.time);
+
+    // Ganti Style Sesuai Tipe (Beli / Topup)
+    if (item.type === 'topup') {
+        document.getElementById('notif-title').innerText = "Deposit Masuk";
+        cardEl.className = "glass-card p-3 rounded-xl border-l-4 border-l-green-500 flex items-center gap-3 w-72 shadow-2xl bg-black/90 backdrop-blur-md border-white/10";
+        iconBg.className = "w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 shrink-0";
+        iconEl.className = "fa-solid fa-wallet";
+    } else {
+        document.getElementById('notif-title').innerText = "Pembelian Sukses";
+        cardEl.className = "glass-card p-3 rounded-xl border-l-4 border-l-purple-500 flex items-center gap-3 w-72 shadow-2xl bg-black/90 backdrop-blur-md border-white/10";
+        iconBg.className = "w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 shrink-0";
+        iconEl.className = "fa-solid fa-cart-shopping";
+    }
+
+    // Animasi Masuk (Slide Up)
+    container.classList.remove('translate-y-20', 'opacity-0');
+    
+    // Animasi Keluar (Slide Down) setelah 4 detik
+    setTimeout(() => { 
+        container.classList.add('translate-y-20', 'opacity-0'); 
+    }, 4000);
+
+    // Pindah ke data berikutnya (Looping)
+    queueIndex = (queueIndex + 1) % liveQueue.length;
+}
+
+// Helper Waktu (biar terlihat real: "2 menit lalu")
+function timeAgo(dateString) {
+    const seconds = Math.floor((new Date() - new Date(dateString)) / 1000);
+    if (seconds < 60) return "Baru saja";
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} menit lalu`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} jam lalu`;
+    return "Kemarin";
+}
+
+// 3. Jalankan Loop Notifikasi
+function startLiveNotif() {
+    fetchRealActivities(); // Tarik data pertama kali
+    
+    // Update data dari server tiap 30 detik (biar transaksi baru masuk antrian)
+    setInterval(fetchRealActivities, 30000);
+
+    // Loop Tampilan (Muncul random tiap 8-15 detik)
+    loopDisplay();
+}
+
+function loopDisplay() {
+    // Delay random antara 8 sampai 15 detik biar gak spamming
+    const randomDelay = Math.floor(Math.random() * (15000 - 8000 + 1) + 8000);
+    setTimeout(() => {
+        showLiveNotification();
+        loopDisplay(); // Panggil diri sendiri terus menerus
+    }, randomDelay);
+}
+
+// Jalankan sistem
 initData();
+// Pastikan TIDAK ADA kurung kurawal '}' di bawah baris ini
