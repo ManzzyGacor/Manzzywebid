@@ -246,5 +246,63 @@ app.get('/api/history/:username', async (req, res) => {
 app.get('/api/system/status', (req, res) => res.json({ vpsActive: true, vpsStartTime: new Date(Date.now()-36000000), botActive: true, botStartTime: new Date(Date.now()-18000000) }));
 app.post('/api/testimonials', async (req, res) => { await connectDB(); await new Testimonial(req.body).save(); res.json({ success: true }); });
 app.get('/api/testimonials', async (req, res) => { await connectDB(); res.json(await Testimonial.find().sort({ createdAt: -1 }).limit(10)); });
+// ==========================================
+// 6. PUBLIC DATA (RECENT ACTIVITY)
+// ==========================================
+
+// Helper Sensor Username (Manzzy -> Man***)
+function censorUser(str) {
+    if(!str) return "Member";
+    if(str.length <= 3) return str + "*";
+    return str.substring(0, 3) + "***";
+}
+
+app.get('/api/public/recent-activities', async (req, res) => {
+    try {
+        await connectDB();
+
+        // 1. Ambil 5 Topup Sukses Terakhir
+        const topups = await TopUpTx.find({ status: 'success' })
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .lean();
+
+        // 2. Ambil 5 Order Produk/Nokos Sukses Terakhir
+        const orders = await Transaction.find({ status: 'success' })
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .lean();
+
+        // 3. Gabungkan Data
+        let activities = [];
+
+        topups.forEach(t => {
+            activities.push({
+                type: 'topup',
+                user: censorUser(t.username),
+                desc: 'Deposit Saldo',
+                time: t.createdAt
+            });
+        });
+
+        orders.forEach(o => {
+            activities.push({
+                type: 'buy', // Bisa 'buy' (produk) atau 'nokos'
+                user: censorUser(o.username),
+                // Jika nama produk panjang, potong dikit
+                desc: o.productName.length > 20 ? o.productName.substring(0, 20) + '...' : o.productName,
+                time: o.createdAt
+            });
+        });
+
+        // 4. Urutkan dari yang paling baru
+        activities.sort((a, b) => new Date(b.time) - new Date(a.time));
+
+        res.json(activities);
+    } catch (e) {
+        console.error("Recent Activity Error:", e);
+        res.json([]); // Kembalikan array kosong jika error
+    }
+});
 
 module.exports = app;
