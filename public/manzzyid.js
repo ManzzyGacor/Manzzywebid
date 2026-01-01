@@ -1,150 +1,290 @@
 // ============================================
-// MANZZY ID - STORE & H2H LOGIC
+// MANZZY ID - STORE & PPOB LOGIC (FULL)
 // ============================================
 
-let allProducts = [], allCategories = [], currentProduct = null;
+let allData = [];
+let selectedProduct = null;
+const userSession = localStorage.getItem('user_session');
 
-// 1. Load Data Toko (Otomatis deteksi H2H)
-async function loadStoreData() {
-    const loader = document.getElementById('loading-store');
-    const catSection = document.getElementById('section-categories');
+// --- 1. SYSTEM INITIALIZATION ---
+window.addEventListener('load', async () => {
+    // Cek Login & Load Data
+    if(userSession) fetchUserProfile();
+    await fetchProducts();
     
-    if(loader) loader.classList.remove('hidden');
-    if(catSection) catSection.classList.add('hidden');
-    
-    try { 
-        // Panggil API Backend H2H yang baru
-        const res = await fetch('/api/products/rumahotp'); 
-        const json = await res.json();
+    // Matikan Loader Bawaan HTML (Jika ada)
+    const loader = document.getElementById('loader');
+    if(loader) {
+        loader.style.opacity = '0';
+        setTimeout(() => loader.style.display = 'none', 500);
+    }
+});
+
+// --- 2. FETCH USER PROFILE ---
+async function fetchUserProfile() {
+    try {
+        // Mengambil data user terbaru (saldo, username)
+        const res = await fetch(`/api/user/${userSession}`);
+        const data = await res.json();
         
-        if (json.success && Array.isArray(json.data)) {
-            allProducts = json.data;
+        if(data.username) {
+            // Update Tampilan Nama & Saldo di Home
+            const nameEl = document.getElementById('user-name-display');
+            const balEl = document.getElementById('user-balance-display');
             
-            // Buat Kategori Otomatis dari Brand (Freefire, Mobilelegends, dll)
-            const brands = [...new Set(allProducts.map(p => p.brand))];
-            allCategories = brands.map(b => ({
-                name: b.charAt(0).toUpperCase() + b.slice(1), 
-                originalKey: b,
-                imageUrl: allProducts.find(p => p.brand === b)?.img_url || 'https://via.placeholder.com/150'
-            }));
-            
-            renderCategories();
-        } else {
-            console.error("Data H2H Kosong/Error", json);
-            document.getElementById('grid-categories').innerHTML = '<p class="text-center text-red-500">Gagal memuat produk server.</p>';
+            if(nameEl) nameEl.innerText = data.username;
+            if(balEl) balEl.innerText = `Rp ${data.balance.toLocaleString()}`;
         }
-    } catch(e){ 
-        console.error(e);
-    } finally { 
-        if(loader) loader.classList.add('hidden'); 
+    } catch(e) {
+        console.error("Gagal load profile", e);
     }
 }
 
-// 2. Render Kategori
-function renderCategories() {
-    const grid = document.getElementById('grid-categories');
-    document.getElementById('section-categories').classList.remove('hidden');
-    document.getElementById('section-products').classList.add('hidden');
-    
-    if(allCategories.length === 0) return;
-    
-    let html = allCategories.map(c => `
-        <div class="cat-card group" onclick="openCategory('${c.originalKey}')">
-            <div class="cat-bg" style="background-image: url('${c.imageUrl}');"></div>
-            <div class="cat-overlay">
-                <h3 class="text-white font-bold text-lg group-hover:text-purple-400 transition uppercase">${c.name}</h3>
-            </div>
-        </div>
-    `).join('');
-    
-    // Tambah tombol ALL
-    html += `<div class="cat-card group" onclick="openCategory('ALL')"><div class="cat-bg bg-purple-900"></div><div class="cat-overlay"><h3 class="text-white font-bold text-lg">Semua</h3></div></div>`;
-    grid.innerHTML = html;
+// --- 3. FETCH PRODUCTS (DARI BACKEND H2H) ---
+async function fetchProducts() {
+    try {
+        // Panggil endpoint backend yang sudah kita buat (h2h.js)
+        // Pastikan route di index.js mengarah ke /api
+        const res = await fetch('/api/products/h2h-list'); 
+        const json = await res.json();
+        
+        if(json.success && Array.isArray(json.data)) {
+            allData = json.data;
+            renderCategoryGrid();
+        } else {
+            console.error("Data produk kosong/error", json);
+            document.getElementById('category-grid').innerHTML = '<div class="col-span-full text-center text-xs text-red-500">Gagal memuat layanan.</div>';
+        }
+    } catch(e) {
+        console.error("Connection error", e);
+    }
 }
 
-// 3. Buka Kategori
-function openCategory(key) { 
-    document.getElementById('section-categories').classList.add('hidden'); 
-    document.getElementById('section-products').classList.remove('hidden'); 
+// --- 4. RENDER KATEGORI (BERANDA) ---
+function renderCategoryGrid() {
+    // Ambil daftar brand unik (contoh: dana, gopay, freefire)
+    const brands = [...new Set(allData.map(p => p.brand))];
+    const container = document.getElementById('category-grid');
+    if(!container) return;
     
-    const displayTitle = key === 'ALL' ? 'Semua Produk' : key.toUpperCase();
-    document.getElementById('current-category-name').innerText = displayTitle; 
-    document.getElementById('searchInput').value = ''; 
-    document.body.setAttribute('data-current-category', key);
-    
-    filterProducts(key); 
-}
-
-function backToCategories() { 
-    document.getElementById('section-products').classList.add('hidden'); 
-    document.getElementById('section-categories').classList.remove('hidden'); 
-}
-
-// 4. Filter & Render Produk
-function filterProducts(forceKey = null) { 
-    const keyword = document.getElementById('searchInput').value.toLowerCase(); 
-    const categoryKey = forceKey || document.body.getAttribute('data-current-category') || 'ALL';
-    
-    let data = allProducts; 
-    if(categoryKey !== 'ALL') data = data.filter(p => p.brand === categoryKey); 
-    if(keyword) data = data.filter(p => p.name.toLowerCase().includes(keyword)); 
-    
-    renderProducts(data); 
-}
-
-function renderProducts(products) { 
-    const grid = document.getElementById('grid-products'); 
-    if(products.length === 0){ grid.innerHTML = '<p class="text-gray-500 col-span-full text-center">Produk tidak ditemukan.</p>'; return; } 
-    
-    grid.innerHTML = products.map(item => { 
-        const img = item.img_url || 'https://via.placeholder.com/400';
-        const price = item.price;
-        const discount = item.price_info?.price_discount_percent || 0;
-        const discountBadge = discount > 0 ? `<div class="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg">-${discount}%</div>` : '';
+    container.innerHTML = brands.map(brand => {
+        // Ambil 1 produk sebagai sampel untuk gambar icon
+        const sample = allData.find(p => p.brand === brand);
+        const imgUrl = sample?.img_url || 'https://via.placeholder.com/100';
+        // Format Nama: freefire -> Freefire
+        const name = brand.charAt(0).toUpperCase() + brand.slice(1);
 
         return `
-        <div class="product-card group flex flex-col h-full bg-[#0f0f11] border border-white/10 rounded-2xl overflow-hidden hover:border-purple-500 transition duration-300">
-            <div class="product-img-wrapper h-40 relative overflow-hidden">
-                <img src="${img}" class="w-full h-full object-cover transition transform group-hover:scale-110 duration-500">
-                <div class="absolute top-3 right-3"><span class="price-badge bg-black/70 backdrop-blur-md border border-white/20 text-purple-300 px-3 py-1 rounded-full text-xs font-mono font-bold">Rp ${price.toLocaleString()}</span></div>
-                ${discountBadge}
+        <div onclick="openOrderPage('${brand}', '${imgUrl}')" class="flex flex-col items-center gap-2 cursor-pointer group">
+            <div class="menu-icon-box w-16 h-16 rounded-2xl flex items-center justify-center p-3 shadow-lg bg-[#18181b] border border-white/5 group-hover:border-blue-500 transition duration-300">
+                <img src="${imgUrl}" class="w-full h-full object-contain drop-shadow-sm group-hover:scale-110 transition duration-300">
             </div>
-            <div class="p-5 flex flex-col flex-1">
-                <div class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">${item.brand}</div>
-                <h3 class="text-lg font-bold text-white mb-2 leading-tight group-hover:text-purple-400 transition">${item.name}</h3>
-                <button onclick="openModalExternal('${item.code}')" class="mt-auto w-full py-3 rounded-xl border border-white/10 bg-white/5 text-white font-bold hover:bg-purple-600 hover:border-purple-500 transition shadow-lg">Beli Sekarang</button>
-            </div>
-        </div>`; 
-    }).join(''); 
+            <span class="text-[10px] font-bold text-gray-400 group-hover:text-white text-center leading-tight transition">${name}</span>
+        </div>
+        `;
+    }).join('');
 }
 
-// 5. Modal & Checkout External
-function openModalExternal(code) {
-    const p = allProducts.find(x => x.code === code); 
-    if(!p) return; 
-    currentProduct = p; 
-
-    document.getElementById('modal-content-product').classList.remove('hidden'); 
-    document.getElementById('modal-content-receipt').classList.add('hidden');
-    document.getElementById('modal-title').innerText = p.name; 
-    document.getElementById('modal-price').innerText = `Rp ${p.price.toLocaleString()}`; 
-    document.getElementById('modal-desc').innerText = p.note || `Top Up ${p.name} (${p.brand})`; 
-    document.getElementById('modal-img').src = p.img_url;
-    document.getElementById('price-final').innerText = `Rp ${p.price.toLocaleString()}`; 
-    document.getElementById('price-original').classList.add('hidden');
+// --- 5. OPEN ORDER PAGE (ANIMASI) ---
+function openOrderPage(brand, imgUrl) {
+    const home = document.getElementById('view-home');
+    const order = document.getElementById('view-order');
     
-    // User Balance Check
-    const userSession = localStorage.getItem('user_session');
-    let bal = "Login Dulu";
-    // Kita ambil saldo dari elemen header kalau ada, biar sinkron
-    const headerBal = document.getElementById('header-balance');
-    if(userSession && headerBal) bal = headerBal.innerText;
-    document.getElementById('user-balance-display').innerText = bal;
+    // Set Header Halaman Order
+    document.getElementById('order-page-title').innerText = brand.toUpperCase();
+    document.getElementById('order-brand-logo').src = imgUrl;
     
-    // Form Input ID
-    const form = document.getElementById('dynamic-inputs'); 
-    form.innerHTML = `<div><label class="text-[10px] text-gray-500 font-bold block mb-1">ID PLAYER / NOMOR TUJUAN</label><input type="text" name="target" class="w-full bg-black/50 border border-gray-700 rounded-lg p-3 text-white text-sm focus:border-purple-500 outline-none" placeholder="Masukkan ID / Nomor..." required></div>`;
+    // Animasi Transisi
+    home.classList.add('hidden');
+    order.classList.remove('hidden');
+    order.classList.add('page-enter');
     
-    document.getElementById('modal-overlay').classList.add('modal-active');
+    // Filter Produk Sesuai Brand
+    const products = allData.filter(p => p.brand === brand);
+    renderProductList(products);
+    
+    // Reset State Input & Tombol
+    selectedProduct = null;
+    document.getElementById('btn-process').disabled = true;
+    document.getElementById('total-price-display').innerText = 'Rp 0';
+    document.getElementById('target-input').value = '';
+    
+    // Sembunyikan Hasil Cek ID Lama
+    const infoBox = document.getElementById('account-info-box');
+    if(infoBox) infoBox.classList.add('hidden');
 }
 
+function closeOrderPage() {
+    const home = document.getElementById('view-home');
+    const order = document.getElementById('view-order');
+    
+    order.classList.add('hidden');
+    home.classList.remove('hidden');
+    home.classList.add('page-enter');
+}
+
+// --- 6. RENDER DAFTAR PRODUK ---
+function renderProductList(products) {
+    const list = document.getElementById('product-list-container');
+    
+    // Urutkan dari harga termurah ke termahal
+    products.sort((a, b) => a.price - b.price);
+
+    list.innerHTML = products.map(item => {
+        const price = item.price; // Harga Jual (Sudah dimarkup di backend)
+        const original = Math.ceil(price * 1.2); // Harga coret dummy (biar kelihatan diskon)
+        
+        // Hitung persentase diskon
+        const discount = Math.round(((original - price) / original) * 100);
+
+        return `
+        <div onclick="selectItem(this, '${item.code}', ${price}, '${item.brand}')" 
+             class="product-item rounded-xl p-4 cursor-pointer relative overflow-hidden group bg-[#18181b] border border-white/5 hover:border-blue-500 transition duration-200">
+            
+            <div class="flex justify-between items-center">
+                <div class="flex-1 pr-2">
+                    <h4 class="font-bold text-white text-sm mb-1">${item.name}</h4>
+                    <p class="text-[10px] text-gray-500 line-clamp-1">${item.note || 'Layanan otomatis 24 Jam'}</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-xs text-gray-500 line-through mb-0.5">Rp ${original.toLocaleString()}</p>
+                    <p class="text-base font-bold text-blue-400 font-mono">Rp ${price.toLocaleString()}</p>
+                </div>
+            </div>
+            
+            ${discount > 0 ? `<div class="absolute top-0 right-0 bg-red-600/90 text-white text-[9px] font-bold px-2 py-0.5 rounded-bl-lg shadow-sm">-${discount}%</div>` : ''}
+        </div>
+        `;
+    }).join('');
+}
+
+// --- 7. PILIH ITEM (SELEKSI) ---
+function selectItem(el, code, price, brand) {
+    // Hapus seleksi lama
+    document.querySelectorAll('.product-item').forEach(i => i.classList.remove('selected', 'border-blue-500', 'bg-blue-900/10'));
+    
+    // Tambah seleksi baru
+    el.classList.add('selected', 'border-blue-500', 'bg-blue-900/10');
+    
+    selectedProduct = { code, price, brand };
+    document.getElementById('total-price-display').innerText = `Rp ${price.toLocaleString()}`;
+    document.getElementById('btn-process').disabled = false;
+}
+
+// --- 8. CEK NAMA AKUN / ID (VALIDASI) ---
+async function checkAccountName() {
+    const target = document.getElementById('target-input').value;
+    if(!target) return alert("Masukkan Nomor/ID Tujuan dulu!");
+    
+    // Harus pilih produk dulu biar tau tipenya (Game/Ewallet)
+    if(!selectedProduct) return alert("Pilih salah satu nominal produk dulu!");
+
+    const btn = document.getElementById('btn-check-id');
+    const originalIcon = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    btn.disabled = true;
+    
+    // Tentukan Tipe (Game atau E-Wallet)
+    // Logika sederhana: jika kategori ada kata 'game' atau 'voucher', anggap game. Sisanya ewallet/pulsa.
+    const sample = allData.find(p => p.brand === selectedProduct.brand);
+    const type = (sample.category === 'game' || sample.category === 'voucher_game') ? 'game' : 'ewallet';
+    
+    try {
+        const res = await fetch('/api/check-account', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ 
+                type: type, 
+                code: selectedProduct.brand, // misal: 'dana', 'freefire'
+                target: target 
+            })
+        });
+        const json = await res.json();
+        
+        const infoBox = document.getElementById('account-info-box');
+        
+        if(json.success && json.data.status === 'valid') {
+            // Tampilkan Hasil Valid
+            if(infoBox) {
+                document.getElementById('account-name-result').innerText = json.data.account_name;
+                infoBox.classList.remove('hidden');
+                infoBox.classList.add('flex');
+            } else {
+                alert(`Valid: ${json.data.account_name}`);
+            }
+        } else {
+            alert("❌ ID/Nomor Tidak Ditemukan atau Salah Format!");
+            if(infoBox) infoBox.classList.add('hidden');
+        }
+    } catch(e) {
+        alert("Gagal mengecek ID. Pastikan koneksi aman.");
+    } finally {
+        btn.innerHTML = originalIcon;
+        btn.disabled = false;
+    }
+}
+
+// --- 9. PROSES TRANSAKSI (BELI) ---
+async function processTransaction() {
+    // 1. Validasi Login
+    if(!userSession) {
+        alert("Silakan Login Terlebih Dahulu!");
+        window.location.href = '/login_user.html';
+        return;
+    }
+    
+    const target = document.getElementById('target-input').value;
+    if(!target) return alert("Masukkan ID / Nomor Tujuan dengan benar!");
+    
+    // 2. Konfirmasi User
+    const confirmMsg = `
+    KONFIRMASI PEMBELIAN
+    --------------------
+    Item   : ${selectedProduct.code}
+    Tujuan : ${target}
+    Harga  : Rp ${selectedProduct.price.toLocaleString()}
+    
+    Lanjutkan pembayaran?
+    `;
+    if(!confirm(confirmMsg)) return;
+
+    // 3. UI Loading
+    const btn = document.getElementById('btn-process');
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> MEMPROSES...';
+    btn.disabled = true;
+
+    try {
+        // 4. Request ke Backend Real
+        const res = await fetch('/api/buy-ppob', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: userSession,
+                productCode: selectedProduct.code,
+                target: target,
+                expectedPrice: selectedProduct.price
+            })
+        });
+
+        const json = await res.json();
+
+        // 5. Handle Response
+        if (json.success) {
+            // SUKSES
+            alert(`✅ TRANSAKSI BERHASIL!\n\nInvoice: ${json.invoiceId}\nStatus: Sedang Diproses\n\nSilakan cek menu 'Transaksi' untuk melihat status terbaru.`);
+            
+            closeOrderPage();
+            fetchUserProfile(); // Refresh saldo otomatis
+        } else {
+            // GAGAL (Saldo kurang / Gangguan)
+            alert(`❌ GAGAL: ${json.msg}`);
+        }
+
+    } catch(e) {
+        alert("Terjadi kesalahan koneksi ke server.");
+        console.error(e);
+    } finally {
+        btn.innerHTML = 'BELI SEKARANG';
+        btn.disabled = false;
+    }
+} 

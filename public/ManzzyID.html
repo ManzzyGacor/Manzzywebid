@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Manzzy ID - Topup Games & PPOB</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    
+    <style>
+        /* CONFIGURATION */
+        :root {
+            --bg-body: #09090b;
+            --bg-card: #18181b;
+            --primary: #3b82f6; 
+            --accent: #8b5cf6; 
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-body);
+            color: white;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* CUSTOM UTILITIES */
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* GLASSMORPHISM HEADER */
+        .glass-header {
+            background: rgba(9, 9, 11, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* ANIMATIONS */
+        .page-enter { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* CARD GRADIENT */
+        .card-balance {
+            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        .card-balance::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+            transform: rotate(30deg); pointer-events: none;
+        }
+
+        /* MENU GRID ICONS */
+        .menu-icon-box {
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.2s;
+        }
+        .menu-icon-box:active { transform: scale(0.95); border-color: var(--primary); }
+
+        /* PRODUCT LIST ITEM */
+        .product-item {
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.2s;
+        }
+        .product-item.selected {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        /* LOADER */
+        #loader { position: fixed; inset: 0; z-index: 9999; background: var(--bg-body); display: flex; justify-content: center; align-items: center; transition: opacity 0.5s; }
+        .loader-spin { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="pb-24">
+
+    <div id="loader"><div class="loader-spin"></div></div>
+
+    <div id="view-home" class="min-h-screen page-enter">
+        
+        <header class="fixed top-0 w-full z-40 glass-header px-5 py-4 flex justify-between items-center max-w-md mx-auto left-0 right-0">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-gray-700 to-gray-600 p-[2px]">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" class="w-full h-full rounded-full bg-black" alt="Avatar">
+                </div>
+                <div>
+                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Selamat Datang,</p>
+                    <h3 class="text-sm font-bold text-white truncate max-w-[120px]" id="user-name-display">Guest User</h3>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button class="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center text-gray-300 hover:text-white hover:bg-white/10 transition">
+                    <i class="fa-regular fa-bell"></i>
+                </button>
+            </div>
+        </header>
+
+        <main class="pt-24 px-5 max-w-md mx-auto">
+            
+            <div class="card-balance rounded-3xl p-6 shadow-2xl shadow-blue-900/20 mb-8 transform transition hover:scale-[1.02]">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <p class="text-blue-200 text-xs font-medium mb-1">Total Saldo Aktif</p>
+                        <h2 class="text-3xl font-bold text-white font-mono tracking-tight" id="user-balance-display">Rp 0</h2>
+                    </div>
+                    <div class="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold text-white border border-white/10">
+                        <i class="fa-solid fa-crown text-yellow-300 mr-1"></i> MEMBER
+                    </div>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button onclick="window.location.href='index.html#view-topup'" class="flex-1 bg-white text-blue-600 py-3 rounded-xl font-bold text-xs shadow-lg flex items-center justify-center gap-2 active:scale-95 transition">
+                        <i class="fa-solid fa-plus-circle"></i> TOP UP
+                    </button>
+                    <button onclick="window.location.href='index.html#view-topup'" class="flex-1 bg-blue-600 text-white border border-white/20 py-3 rounded-xl font-bold text-xs shadow-lg flex items-center justify-center gap-2 active:scale-95 transition">
+                        <i class="fa-solid fa-qrcode"></i> QRIS
+                    </button>
+                </div>
+            </div>
+
+            <div class="w-full overflow-x-auto no-scrollbar flex gap-4 mb-8 snap-x snap-mandatory">
+                <img src="https://raw.githubusercontent.com/ManzzyGacor/Urlmanzzy/main/file_1766890211382_23.jpg" class="w-[85%] h-36 object-cover rounded-2xl flex-none snap-center shadow-lg border border-white/10">
+                <div class="w-[85%] h-36 bg-gray-800 rounded-2xl flex-none snap-center flex items-center justify-center border border-white/10">
+                    <span class="text-xs text-gray-500">Promo Banner 2</span>
+                </div>
+            </div>
+
+            <div class="mb-6 flex justify-between items-end">
+                <h3 class="text-lg font-bold text-white">Layanan</h3>
+                <span class="text-[10px] text-blue-400 font-bold cursor-pointer">Lihat Semua</span>
+            </div>
+
+            <div id="category-grid" class="grid grid-cols-4 gap-4 mb-20">
+                <div class="animate-pulse flex flex-col items-center gap-2 col-span-4 py-4"><div class="text-xs text-gray-500">Memuat layanan...</div></div>
+            </div>
+
+        </main>
+    </div>
+
+    <div id="view-order" class="hidden min-h-screen bg-black fixed inset-0 z-50 overflow-y-auto">
+        
+        <div class="sticky top-0 z-20 glass-header px-5 py-4 flex items-center gap-4 max-w-md mx-auto">
+            <button onclick="closeOrderPage()" class="w-8 h-8 flex items-center justify-center text-gray-300 hover:text-white transition">
+                <i class="fa-solid fa-arrow-left text-lg"></i>
+            </button>
+            <div>
+                <h3 class="font-bold text-white text-base leading-none" id="order-page-title">...</h3>
+                <p class="text-[10px] text-gray-500 mt-1">Pilih nominal layanan</p>
+            </div>
+        </div>
+
+        <div class="pt-6 px-5 max-w-md mx-auto pb-32">
+            
+            <div class="flex items-center gap-4 mb-8">
+                <div class="w-16 h-16 rounded-2xl bg-white/5 p-2 border border-white/10 shadow-lg">
+                    <img id="order-brand-logo" src="" class="w-full h-full object-contain">
+                </div>
+                <div class="flex-1">
+                    <div class="bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-bold px-2 py-1 rounded w-fit mb-2">
+                        <i class="fa-solid fa-check-circle mr-1"></i> SYSTEM ON
+                    </div>
+                    <p class="text-xs text-gray-400 leading-relaxed">Masukkan ID/Nomor dengan benar.</p>
+                </div>
+            </div>
+
+            <div class="bg-[#121214] border border-white/10 rounded-2xl p-4 mb-8 shadow-lg">
+                <label class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2 block">Target (ID / Nomor HP)</label>
+                <div class="flex gap-3">
+                    <input type="text" id="target-input" class="flex-1 bg-transparent border-b-2 border-gray-700 focus:border-blue-500 text-white text-lg font-mono py-2 outline-none transition placeholder-gray-700" placeholder="Contoh: 12345678" autocomplete="off">
+                    <button class="text-blue-500 hover:text-blue-400"><i class="fa-solid fa-address-book text-xl"></i></button>
+                </div>
+            </div>
+
+            <div class="mb-4 flex items-center justify-between">
+                <h4 class="text-sm font-bold text-white">Pilih Item</h4>
+            </div>
+
+            <div id="product-list-container" class="space-y-3">
+                </div>
+
+        </div>
+
+        <div class="fixed bottom-0 left-0 w-full glass-header border-t border-white/10 p-4 pb-8 z-30">
+            <div class="max-w-md mx-auto flex justify-between items-center">
+                <div>
+                    <p class="text-[10px] text-gray-500">Total Pembayaran</p>
+                    <h3 class="text-lg font-bold text-blue-400 font-mono" id="total-price-display">Rp 0</h3>
+                </div>
+                <button onclick="processTransaction()" id="btn-process" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-blue-900/30 transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    BELI SEKARANG
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <nav id="bottom-nav" class="fixed bottom-0 w-full z-40 bg-[#09090b]/90 backdrop-blur-lg border-t border-white/5 pb-2">
+        <div class="max-w-md mx-auto flex justify-around items-center h-16">
+            <a href="#" class="flex flex-col items-center gap-1 text-blue-500">
+                <i class="fa-solid fa-house text-lg"></i>
+                <span class="text-[10px] font-bold">Home</span>
+            </a>
+            <a href="index.html#view-history" class="flex flex-col items-center gap-1 text-gray-500 hover:text-white transition">
+                <i class="fa-solid fa-receipt text-lg"></i>
+                <span class="text-[10px] font-medium">Transaksi</span>
+            </a>
+            <div class="relative -top-5">
+                <div class="w-14 h-14 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/30 border-4 border-[#09090b]">
+                    <img src="https://raw.githubusercontent.com/ManzzyGacor/Urlmanzzy/main/file_1767158467865_891.jpg" class="w-8 h-8 object-contain">
+                </div>
+            </div>
+            <a href="#" class="flex flex-col items-center gap-1 text-gray-500 hover:text-white transition">
+                <i class="fa-solid fa-gift text-lg"></i>
+                <span class="text-[10px] font-medium">Event</span>
+            </a>
+            <a href="profile.html" class="flex flex-col items-center gap-1 text-gray-500 hover:text-white transition">
+                <i class="fa-solid fa-user text-lg"></i>
+                <span class="text-[10px] font-medium">Akun</span>
+            </a>
+        </div>
+    </nav>
+
+    <script src="manzzyid.js"></script>
+    
+</body>
+</html> 
