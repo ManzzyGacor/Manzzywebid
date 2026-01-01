@@ -1,93 +1,99 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Manzzy ID</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Admin - Manzzy ID</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
     
     <style>
-        /* THEME CONFIG */
-        :root { --bg-body: #09090b; --bg-card: #18181b; --primary: #8b5cf6; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-body); color: #e4e4e7; overflow-x: hidden; }
+        :root { --bg-body: #050505; --bg-card: #0f0f11; --primary: #8b5cf6; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-body); color: #e4e4e7; font-size: 13px; /* Font Dasar Lebih Kecil */ }
         
         /* SCROLLBAR */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: var(--bg-body); }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
 
-        /* SIDEBAR & LAYOUT */
-        .sidebar { width: 260px; height: 100vh; position: fixed; left: 0; top: 0; background: rgba(24, 24, 27, 0.8); backdrop-filter: blur(20px); border-right: 1px solid rgba(255,255,255,0.05); z-index: 50; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .main-content { margin-left: 260px; padding: 30px; transition: margin-left 0.3s; }
+        /* SIDEBAR */
+        .sidebar { width: 240px; height: 100vh; position: fixed; left: 0; top: 0; background: #0f0f11; border-right: 1px solid rgba(255,255,255,0.05); z-index: 50; transition: transform 0.3s; }
+        .main-content { margin-left: 240px; padding: 20px; transition: margin-left 0.3s; }
         
-        /* MOBILE RESPONSIVE */
         @media (max-width: 768px) { 
-            .sidebar { transform: translateX(-100%); } 
+            .sidebar { transform: translateX(-100%); width: 220px; } 
             .sidebar.active { transform: translateX(0); } 
-            .main-content { margin-left: 0; padding: 20px; padding-top: 80px; } 
+            .main-content { margin-left: 0; padding: 15px; padding-top: 70px; } 
         }
 
-        /* NAVIGATION ITEM */
-        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #a1a1aa; border-radius: 12px; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; font-weight: 600; margin-bottom: 4px; }
-        .nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
-        .nav-item.active { background: linear-gradient(90deg, rgba(139,92,246,0.2), transparent); color: var(--primary); border-left: 3px solid var(--primary); }
+        /* COMPACT NAV ITEM */
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; color: #71717a; border-radius: 8px; cursor: pointer; transition: all 0.2s; font-size: 0.8rem; font-weight: 600; margin-bottom: 2px; }
+        .nav-item:hover, .nav-item.active { background: rgba(139,92,246,0.1); color: var(--primary); }
+        .nav-item.active { border-left: 2px solid var(--primary); }
 
-        /* CARDS & PANELS */
-        .glass-panel { background: #121214; border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); transition: transform 0.2s; }
-        .glass-panel:hover { border-color: rgba(139,92,246,0.3); }
+        /* GLASS CARD (COMPACT) */
+        .glass-panel { background: #121214; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+        
+        /* VOUCHER TICKET STYLE */
+        .voucher-card {
+            background: radial-gradient(circle at left, transparent 10px, #18181b 10px);
+            background-position: left; background-size: 50% 100%;
+            border: 1px solid rgba(255,255,255,0.1); border-left: none;
+            position: relative; overflow: hidden;
+        }
+        .voucher-card::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--primary);
+        }
+
+        /* INPUT COMPACT */
+        input, select, textarea { width: 100%; background: #09090b; border: 1px solid #27272a; padding: 8px 12px; border-radius: 8px; color: white; outline: none; font-size: 0.8rem; transition: 0.2s; }
+        input:focus { border-color: var(--primary); }
 
         /* ANIMATIONS */
-        .section-view { display: none; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .section-view { display: none; animation: fadeIn 0.3s ease; }
         .section-view.active { display: block; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* INPUTS */
-        input, select, textarea { width: 100%; background: #09090b; border: 1px solid #27272a; padding: 12px 16px; border-radius: 10px; color: white; outline: none; transition: 0.2s; font-size: 0.9rem; }
-        input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(139,92,246,0.2); }
-
-        /* MODAL */
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; backdrop-filter: blur(5px); align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; }
-        .modal.active { display: flex; opacity: 1; }
-        .modal-content { background: #18181b; border: 1px solid #333; border-radius: 20px; max-width: 500px; w: 90%; transform: scale(0.95); transition: transform 0.3s; }
-        .modal.active .modal-content { transform: scale(1); }
+        /* TABLE STYLES */
+        th { font-size: 0.7rem; text-transform: uppercase; color: #71717a; font-weight: 700; padding: 10px; border-bottom: 1px solid #27272a; }
+        td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.02); font-size: 0.8rem; }
+        tr:last-child td { border-bottom: none; }
     </style>
 </head>
 <body>
 
-    <div class="fixed top-0 left-0 right-0 h-16 bg-[#09090b]/90 backdrop-blur-md border-b border-white/5 z-40 flex items-center justify-between px-5 md:hidden">
-        <h1 class="text-lg font-bold text-white tracking-wider">MANZZY<span class="text-purple-500">ADMIN</span></h1>
-        <button onclick="toggleSidebar()" class="text-white text-xl"><i class="fa-solid fa-bars"></i></button>
+    <div class="fixed top-0 left-0 right-0 h-14 bg-[#09090b]/90 backdrop-blur-md border-b border-white/5 z-40 flex items-center justify-between px-4 md:hidden">
+        <h1 class="text-sm font-bold text-white tracking-widest">MANZZY<span class="text-purple-500">ADMIN</span></h1>
+        <button onclick="toggleSidebar()" class="text-white text-lg"><i class="fa-solid fa-bars"></i></button>
     </div>
 
-    <div class="sidebar" id="sidebar">
-        <div class="p-8 pb-4">
-            <h1 class="text-2xl font-extrabold text-white tracking-widest">MANZZY<span class="text-purple-500">ID</span></h1>
-            <p class="text-xs text-gray-500 font-mono mt-1">Admin Dashboard v4.0</p>
+    <div class="sidebar flex flex-col" id="sidebar">
+        <div class="p-6 pb-2">
+            <h1 class="text-xl font-extrabold text-white tracking-widest">MANZZY<span class="text-purple-500">ID</span></h1>
+            <p class="text-[10px] text-gray-600 font-mono mt-1">Admin Panel v4.1 (Compact)</p>
         </div>
         
-        <nav class="flex-1 px-4 overflow-y-auto space-y-1 pb-20">
-            <p class="px-4 text-[10px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2">Utama</p>
-            <div class="nav-item active" onclick="nav('dashboard')"><i class="fa-solid fa-grid-2 w-5 text-center"></i> Dashboard</div>
-            <div class="nav-item" onclick="nav('users')"><i class="fa-solid fa-users w-5 text-center"></i> Kelola User</div>
+        <nav class="flex-1 px-3 overflow-y-auto space-y-0.5 pb-20 custom-scroll">
+            <p class="px-3 text-[9px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2">Utama</p>
+            <div class="nav-item active" onclick="nav('dashboard')"><i class="fa-solid fa-chart-pie w-4"></i> Dashboard</div>
+            <div class="nav-item" onclick="nav('users')"><i class="fa-solid fa-users w-4"></i> Data User</div>
             
-            <p class="px-4 text-[10px] font-bold text-gray-600 uppercase tracking-widest mt-6 mb-2">Transaksi</p>
-            <div class="nav-item" onclick="nav('orders')"><i class="fa-solid fa-cart-shopping w-5 text-center"></i> Riwayat Order</div>
-            <div class="nav-item" onclick="nav('nokos')"><i class="fa-solid fa-sim-card w-5 text-center"></i> Nokos Config</div>
-            <div class="nav-item" onclick="nav('topup')"><i class="fa-solid fa-wallet w-5 text-center"></i> Topup & H2H</div>
+            <p class="px-3 text-[9px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2">Transaksi</p>
+            <div class="nav-item" onclick="nav('orders')"><i class="fa-solid fa-receipt w-4"></i> Riwayat Order</div>
+            <div class="nav-item" onclick="nav('topup')"><i class="fa-solid fa-money-bill-transfer w-4"></i> Riwayat Topup</div>
+            <div class="nav-item" onclick="nav('nokos')"><i class="fa-solid fa-sim-card w-4"></i> Config Nokos</div>
 
-            <p class="px-4 text-[10px] font-bold text-gray-600 uppercase tracking-widest mt-6 mb-2">Produk</p>
-            <div class="nav-item" onclick="nav('products')"><i class="fa-solid fa-box w-5 text-center"></i> Produk Manual</div>
-            <div class="nav-item" onclick="nav('vouchers')"><i class="fa-solid fa-ticket w-5 text-center"></i> Voucher</div>
+            <p class="px-3 text-[9px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2">Layanan</p>
+            <div class="nav-item" onclick="nav('actives')"><i class="fa-solid fa-server w-4 text-green-500"></i> Kelola Bot Aktif</div>
+            <div class="nav-item" onclick="nav('products')"><i class="fa-solid fa-box w-4"></i> Produk Manual</div>
+            <div class="nav-item" onclick="nav('vouchers')"><i class="fa-solid fa-ticket w-4 text-yellow-500"></i> Voucher Promo</div>
         </nav>
 
-        <div class="absolute bottom-0 w-full p-4 border-t border-white/5 bg-[#18181b]">
-            <button onclick="logout()" class="w-full py-3 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-right-from-bracket"></i> Logout
+        <div class="p-3 border-t border-white/5">
+            <button onclick="logout()" class="w-full py-2 bg-red-900/10 text-red-500 hover:bg-red-900/20 border border-red-500/20 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-power-off"></i> Keluar
             </button>
         </div>
     </div>
@@ -95,335 +101,292 @@
     <div class="main-content">
         
         <div id="view-dashboard" class="section-view active">
-            <div class="mb-8">
-                <h2 class="text-3xl font-bold text-white mb-2">Dashboard Overview</h2>
-                <p class="text-gray-400 text-sm">Ringkasan aktivitas website hari ini.</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div class="glass-panel relative overflow-hidden group">
-                    <div class="absolute -right-4 -top-4 w-24 h-24 bg-purple-500/20 rounded-full blur-2xl group-hover:bg-purple-500/30 transition"></div>
-                    <p class="text-gray-400 text-xs font-bold uppercase tracking-wider">Total User</p>
-                    <h3 class="text-3xl font-bold text-white mt-2" id="stat-users">0</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                <div class="glass-panel p-4 flex flex-col justify-between h-24 relative overflow-hidden">
+                    <div class="text-[10px] text-gray-400 font-bold uppercase">Total User</div>
+                    <div class="text-2xl font-bold text-white" id="stat-users">0</div>
+                    <i class="fa-solid fa-users absolute -right-2 -bottom-2 text-4xl text-purple-500/10"></i>
                 </div>
-                <div class="glass-panel relative overflow-hidden group">
-                    <div class="absolute -right-4 -top-4 w-24 h-24 bg-blue-500/20 rounded-full blur-2xl group-hover:bg-blue-500/30 transition"></div>
-                    <p class="text-gray-400 text-xs font-bold uppercase tracking-wider">Transaksi Sukses</p>
-                    <h3 class="text-3xl font-bold text-white mt-2" id="stat-trx">0</h3>
+                <div class="glass-panel p-4 flex flex-col justify-between h-24 relative overflow-hidden">
+                    <div class="text-[10px] text-gray-400 font-bold uppercase">Total Order</div>
+                    <div class="text-2xl font-bold text-white" id="stat-trx">0</div>
+                    <i class="fa-solid fa-cart-shopping absolute -right-2 -bottom-2 text-4xl text-blue-500/10"></i>
                 </div>
-                <div class="glass-panel relative overflow-hidden group">
-                    <div class="absolute -right-4 -top-4 w-24 h-24 bg-green-500/20 rounded-full blur-2xl group-hover:bg-green-500/30 transition"></div>
-                    <p class="text-gray-400 text-xs font-bold uppercase tracking-wider">Deposit Masuk</p>
-                    <h3 class="text-3xl font-bold text-white mt-2" id="stat-depo">Rp 0</h3>
+                <div class="glass-panel p-4 flex flex-col justify-between h-24 relative overflow-hidden">
+                    <div class="text-[10px] text-gray-400 font-bold uppercase">Deposit</div>
+                    <div class="text-lg font-bold text-green-400" id="stat-depo">Rp 0</div>
+                    <i class="fa-solid fa-wallet absolute -right-2 -bottom-2 text-4xl text-green-500/10"></i>
                 </div>
-                <div class="glass-panel relative overflow-hidden group">
-                    <div class="absolute -right-4 -top-4 w-24 h-24 bg-red-500/20 rounded-full blur-2xl group-hover:bg-red-500/30 transition"></div>
-                    <p class="text-gray-400 text-xs font-bold uppercase tracking-wider">Pending Order</p>
-                    <h3 class="text-3xl font-bold text-white mt-2" id="stat-pending">0</h3>
+                <div class="glass-panel p-4 flex flex-col justify-between h-24 relative overflow-hidden">
+                    <div class="text-[10px] text-gray-400 font-bold uppercase">Layanan Aktif</div>
+                    <div class="text-2xl font-bold text-white" id="stat-active">0</div>
+                    <i class="fa-solid fa-server absolute -right-2 -bottom-2 text-4xl text-orange-500/10"></i>
                 </div>
             </div>
+        </div>
 
-            <div class="glass-panel">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-bold text-lg text-white">Transaksi Terakhir</h3>
-                    <button onclick="nav('orders')" class="text-xs text-purple-400 font-bold hover:underline">Lihat Semua</button>
-                </div>
+        <div id="view-actives" class="section-view">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-white"><i class="fa-solid fa-server text-green-500 mr-2"></i>Bot & Layanan Aktif</h2>
+                <button onclick="document.getElementById('form-add-service').classList.toggle('hidden')" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold">+ Input Manual</button>
+            </div>
+
+            <div id="form-add-service" class="glass-panel mb-4 hidden border-l-4 border-l-blue-500">
+                <h4 class="text-xs font-bold text-gray-300 mb-3">Tambah Data Sewa Bot</h4>
+                <form onsubmit="addActiveService(event)" class="grid grid-cols-2 md:grid-cols-6 gap-2">
+                    <input type="text" id="svcUser" placeholder="Username Member" required>
+                    <input type="text" id="svcProd" placeholder="Nama Produk" required>
+                    <input type="text" id="svcTarget" placeholder="No Target" required>
+                    <input type="text" id="svcIp" placeholder="IP Panel" required>
+                    <input type="number" id="svcDays" placeholder="Durasi (Hari)" value="30" required>
+                    <button type="submit" class="bg-green-600 text-white font-bold rounded-lg text-xs hover:bg-green-500 transition">SIMPAN</button>
+                </form>
+            </div>
+
+            <div class="glass-panel overflow-x-auto p-0">
+                <table class="w-full text-left">
+                    <thead class="bg-[#18181b]">
+                        <tr><th class="pl-4">User</th><th>Produk</th><th>Target</th><th>IP Server</th><th>Expired</th><th>Aksi</th></tr>
+                    </thead>
+                    <tbody id="list-services" class="divide-y divide-gray-800"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="view-orders" class="section-view">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-white">Riwayat Transaksi</h2>
+                <div class="relative"><input type="text" placeholder="Cari Invoice..." class="pl-8 py-1.5 w-40 bg-[#121214]"><i class="fa-solid fa-search absolute left-2.5 top-2 text-xs text-gray-500"></i></div>
+            </div>
+            <div class="glass-panel p-0 overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
-                        <thead>
-                            <tr class="text-[10px] text-gray-500 uppercase border-b border-gray-800">
-                                <th class="pb-3 pl-2">Invoice</th>
-                                <th class="pb-3">User</th>
-                                <th class="pb-3">Produk</th>
-                                <th class="pb-3">Nominal</th>
-                                <th class="pb-3">Status</th>
-                            </tr>
+                        <thead class="bg-[#18181b]">
+                            <tr><th class="pl-4">Invoice</th><th>Username</th><th>Item</th><th class="text-right">Harga</th><th>Status</th></tr>
                         </thead>
-                        <tbody id="dash-recent-trx" class="text-sm text-gray-300"></tbody>
+                        <tbody id="list-orders" class="divide-y divide-gray-800"></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <div id="view-users" class="section-view">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-white">Kelola Pengguna</h2>
-                <div class="relative">
-                    <input type="text" placeholder="Cari username..." class="pl-10 w-64 text-sm bg-[#121214]">
-                    <i class="fa-solid fa-search absolute left-3 top-3 text-gray-500 text-sm"></i>
+        <div id="view-vouchers" class="section-view">
+            <h2 class="text-lg font-bold text-white mb-4">Kelola Voucher</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass-panel h-fit">
+                    <form onsubmit="createVoucher(event)">
+                        <div class="mb-3">
+                            <label class="text-[10px] text-gray-500 uppercase font-bold">Kode Voucher</label>
+                            <input type="text" id="vCode" placeholder="ex: PROMO50" class="uppercase font-mono text-sm font-bold text-white border-purple-500/30 focus:border-purple-500" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="text-[10px] text-gray-500 uppercase font-bold">Diskon (%)</label>
+                            <input type="number" id="vPercent" placeholder="10" class="font-bold" required>
+                        </div>
+                        <button type="submit" class="w-full py-2 bg-purple-600 text-white font-bold rounded-lg text-xs mt-2 hover:bg-purple-500 transition">BUAT VOUCHER</button>
+                    </form>
                 </div>
+                <div class="col-span-2 grid grid-cols-2 md:grid-cols-3 gap-3" id="list-vouchers">
+                    </div>
             </div>
-            
-            <div class="glass-panel overflow-hidden">
-                <table class="w-full text-left">
-                    <thead class="bg-[#18181b] text-xs text-gray-500 uppercase">
-                        <tr><th class="p-4">Username</th><th class="p-4">Saldo</th><th class="p-4">Role</th><th class="p-4 text-center">Aksi</th></tr>
-                    </thead>
-                    <tbody id="list-users" class="text-sm divide-y divide-gray-800"></tbody>
+        </div>
+
+        <div id="view-users" class="section-view">
+            <h2 class="text-lg font-bold text-white mb-4">Data Pengguna</h2>
+            <div class="glass-panel p-0 overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-[#18181b]"><tr><th class="pl-4">Username</th><th>Saldo</th><th>Role</th><th class="text-center">Edit</th></tr></thead>
+                    <tbody id="list-users" class="divide-y divide-gray-800"></tbody>
                 </table>
             </div>
         </div>
 
         <div id="view-nokos" class="section-view">
-            <h2 class="text-2xl font-bold text-white mb-6">Konfigurasi Nokos (RumahOTP)</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="glass-panel h-fit">
-                    <form onsubmit="saveNokosConfig(event)">
-                        <div class="mb-4">
-                            <label class="block text-xs text-gray-400 mb-2">API Key RumahOTP</label>
-                            <input type="text" id="nokosKey" placeholder="otp_xxxxx..." class="font-mono text-sm border-purple-500/30">
-                        </div>
-                        <div class="mb-6">
-                            <label class="block text-xs text-gray-400 mb-2">Margin Keuntungan (%)</label>
-                            <input type="number" id="nokosMargin" placeholder="Contoh: 20" value="20">
-                            <p class="text-[10px] text-gray-500 mt-1">*Harga jual = Harga Pusat + Margin%</p>
-                        </div>
-                        <button type="submit" class="w-full py-3 bg-green-600 hover:bg-green-500 text-white font-bold rounded-xl transition shadow-lg shadow-green-900/20">SIMPAN KONFIGURASI</button>
-                    </form>
-                </div>
-
-                <div class="glass-panel">
-                    <h3 class="font-bold text-white mb-4">Riwayat Nokos (Live)</h3>
-                    <div id="nokos-history-list" class="space-y-3 max-h-[400px] overflow-y-auto pr-2"></div>
-                </div>
+            <h2 class="text-lg font-bold text-white mb-4">Setting RumahOTP</h2>
+            <div class="glass-panel max-w-lg">
+                <form onsubmit="saveNokosConfig(event)">
+                    <div class="mb-3"><label class="text-xs text-gray-400">API Key</label><input type="text" id="nokosKey" placeholder="Paste Key..." class="font-mono"></div>
+                    <div class="mb-4"><label class="text-xs text-gray-400">Profit Margin (%)</label><input type="number" id="nokosMargin" placeholder="20"></div>
+                    <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg text-xs font-bold">Simpan</button>
+                </form>
             </div>
         </div>
 
         <div id="view-products" class="section-view">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-white">Produk Manual</h2>
-                <button onclick="openModal('modal-add-product')" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20">+ Tambah Produk</button>
-            </div>
-            <div id="grid-products" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            <div class="flex justify-between mb-4"><h2 class="text-lg font-bold text-white">Produk Manual</h2><button onclick="document.getElementById('modal-add-product').classList.add('active')" class="bg-blue-600 px-3 py-1.5 rounded-lg text-xs text-white font-bold">+ Tambah</button></div>
+            <div id="grid-products" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
         </div>
 
-    </div>
-
-    <div id="modal-saldo" class="modal" onclick="closeModals(event)">
-        <div class="modal-content p-6">
-            <h3 class="text-xl font-bold text-white mb-4">Edit Saldo User</h3>
-            <p class="text-sm text-gray-400 mb-4" id="edit-saldo-username">User: ...</p>
-            <form onsubmit="submitSaldo(event)">
-                <input type="hidden" id="edit-saldo-user">
-                <div class="flex gap-2 mb-4">
-                    <select id="saldo-action" class="w-1/3 bg-[#09090b] border border-gray-700 rounded-lg text-sm">
-                        <option value="add">Tambah (+)</option>
-                        <option value="sub">Kurangi (-)</option>
-                    </select>
-                    <input type="number" id="saldo-amount" placeholder="Nominal" class="w-2/3" required>
-                </div>
-                <button type="submit" class="w-full py-3 bg-purple-600 text-white font-bold rounded-xl">Proses</button>
+    </div> <div id="modal-add-product" class="modal" onclick="if(event.target===this)this.classList.remove('active')">
+        <div class="modal-content p-5">
+            <h3 class="text-lg font-bold text-white mb-4">Tambah Produk</h3>
+            <form onsubmit="saveProduct(event)" class="space-y-3">
+                <input type="text" id="pName" placeholder="Nama Produk" required>
+                <div class="grid grid-cols-2 gap-2"><input type="text" id="pCat" placeholder="Kategori" required><input type="number" id="pPrice" placeholder="Harga" required></div>
+                <textarea id="pDesc" rows="2" placeholder="Deskripsi"></textarea>
+                <input type="text" id="pImg" placeholder="URL Gambar">
+                <button type="submit" class="w-full bg-blue-600 py-2 rounded-lg text-white font-bold text-xs mt-2">Simpan</button>
             </form>
         </div>
     </div>
 
-    <div id="modal-add-product" class="modal" onclick="closeModals(event)">
-        <div class="modal-content p-6 overflow-y-auto max-h-[90vh]">
-            <h3 class="text-xl font-bold text-white mb-4">Tambah Produk</h3>
-            <form onsubmit="saveProduct(event)" class="space-y-3">
-                <input type="text" id="pName" placeholder="Nama Produk" required>
-                <div class="grid grid-cols-2 gap-3">
-                    <input type="text" id="pCat" placeholder="Kategori (Ex: Bot WA)" required>
-                    <input type="number" id="pPrice" placeholder="Harga" required>
+    <div id="modal-saldo" class="modal" onclick="if(event.target===this)this.classList.remove('active')">
+        <div class="modal-content p-5">
+            <h3 class="text-lg font-bold text-white mb-2">Edit Saldo</h3>
+            <p id="edit-saldo-username" class="text-xs text-gray-400 mb-4 font-mono">User: ...</p>
+            <form onsubmit="submitSaldo(event)">
+                <input type="hidden" id="edit-saldo-user">
+                <div class="flex gap-2 mb-3">
+                    <select id="saldo-action" class="w-1/3 text-xs"><option value="add">Tambah (+)</option><option value="sub">Kurang (-)</option></select>
+                    <input type="number" id="saldo-amount" placeholder="Nominal" required>
                 </div>
-                <textarea id="pDesc" rows="3" placeholder="Deskripsi..." required></textarea>
-                <input type="text" id="pImg" placeholder="URL Gambar (Opsional)">
-                <button type="submit" class="w-full py-3 bg-blue-600 text-white font-bold rounded-xl mt-2">Simpan Produk</button>
+                <button type="submit" class="w-full bg-purple-600 py-2 rounded-lg text-white font-bold text-xs">Proses</button>
             </form>
         </div>
     </div>
 
     <script>
-        // --- CORE ADMIN SCRIPT ---
-        
-        // 1. AUTH CHECK
-        const adminToken = localStorage.getItem('user_session'); // Assuming same session for now, logic should be stricter in prod
-        // Idealnya: if (!adminToken || role !== 'admin') window.location.href = '/login.html';
-
-        // 2. NAVIGATION
+        // --- ADMIN LOGIC ---
         function nav(id) {
             document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            
             document.getElementById(`view-${id}`).classList.add('active');
+            event.currentTarget.classList.add('active');
             
-            // Set Active Sidebar Item (Simple logic)
-            const items = document.querySelectorAll('.nav-item');
-            if(id === 'dashboard') items[0].classList.add('active');
-            if(id === 'users') items[1].classList.add('active');
-            // ... dst
+            // Load Data Sesuai Menu
+            if(id==='dashboard') loadDashboard();
+            if(id==='actives') fetchServices(); // Load Bot Aktif
+            if(id==='orders') fetchOrders();
+            if(id==='users') loadUsers();
+            if(id==='vouchers') fetchVouchers();
+            if(id==='products') loadProducts();
             
-            // Load Data based on section
-            if(id === 'dashboard') loadDashboard();
-            if(id === 'users') loadUsers();
-            if(id === 'products') loadProducts();
-            if(id === 'nokos') loadNokosConfig();
-            
-            // Mobile: Close sidebar
             if(window.innerWidth < 768) toggleSidebar();
         }
 
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('active');
-        }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); }
+        function logout() { localStorage.removeItem('user_session'); window.location.href='/login.html'; }
 
-        // 3. LOAD DASHBOARD STATS
+        // 1. DASHBOARD
         async function loadDashboard() {
             try {
-                // Fetch basic stats (Orders, Topups)
-                const [orders, topups] = await Promise.all([
-                    fetch('/api/admin/orders').then(r => r.json()),
-                    fetch('/api/admin/topups').then(r => r.json())
+                const [o, u, s] = await Promise.all([
+                    fetch('/api/admin/orders').then(r=>r.json()),
+                    fetch('/api/admin/users').then(r=>r.json()),
+                    fetch('/api/admin/all-services').then(r=>r.json())
                 ]);
-
-                // Hitung Stat Sederhana
-                document.getElementById('stat-trx').innerText = orders.length;
-                document.getElementById('stat-pending').innerText = orders.filter(o => o.status === 'pending').length || 0;
-                
-                // Hitung Total Deposit (Topups success)
-                const totalDepo = topups.filter(t => t.status === 'success').reduce((acc, curr) => acc + curr.amount, 0);
-                document.getElementById('stat-depo').innerText = `Rp ${totalDepo.toLocaleString()}`;
-
-                // Recent Trx Table
-                const recent = orders.slice(0, 5);
-                document.getElementById('dash-recent-trx').innerHTML = recent.map(o => `
-                    <tr class="border-b border-gray-800 hover:bg-white/5">
-                        <td class="py-3 pl-2 font-mono text-purple-400 text-xs">${o.invoiceId}</td>
-                        <td class="py-3 font-bold">${o.username}</td>
-                        <td class="py-3 text-gray-400">${o.productName}</td>
-                        <td class="py-3 font-mono">Rp ${o.amount.toLocaleString()}</td>
-                        <td class="py-3"><span class="bg-green-500/20 text-green-400 text-[10px] px-2 py-1 rounded font-bold">SUCCESS</span></td>
-                    </tr>
-                `).join('');
-
-            } catch (e) { console.error("Dash Error", e); }
+                document.getElementById('stat-trx').innerText = o.length;
+                document.getElementById('stat-users').innerText = u.length;
+                document.getElementById('stat-active').innerText = s.length;
+            } catch(e){}
         }
 
-        // 4. USER MANAGEMENT (Perlu Endpoint Backend Baru)
-        async function loadUsers() {
-            const list = document.getElementById('list-users');
-            list.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-500">Loading users...</td></tr>';
-            
+        // 2. KELOLA BOT AKTIF (RESTORED)
+        async function fetchServices() {
             try {
-                // NOTE: Anda perlu menambahkan endpoint /api/admin/users di index.js
-                // Jika belum ada, script ini akan error 404.
-                const res = await fetch('/api/admin/users'); 
-                const users = await res.json();
-                
-                document.getElementById('stat-users').innerText = users.length; // Update Dashboard Stat
-
-                list.innerHTML = users.map(u => `
-                    <tr class="hover:bg-white/5 group transition">
-                        <td class="p-4 font-bold text-white">${u.username}</td>
-                        <td class="p-4 font-mono text-green-400">Rp ${u.balance.toLocaleString()}</td>
-                        <td class="p-4"><span class="bg-blue-500/20 text-blue-400 px-2 py-1 rounded text-xs font-bold uppercase">${u.role}</span></td>
-                        <td class="p-4 text-center">
-                            <button onclick="openSaldoModal('${u.username}')" class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">Edit Saldo</button>
-                        </td>
+                const d = await (await fetch('/api/admin/all-services')).json();
+                document.getElementById('list-services').innerHTML = d.map(s => `
+                    <tr class="hover:bg-white/5 border-b border-gray-800/50">
+                        <td class="pl-4 py-3 font-bold text-white">${s.username}</td>
+                        <td class="py-3 text-xs text-gray-400">${s.productName}</td>
+                        <td class="py-3 text-xs font-mono">${s.targetNumber}</td>
+                        <td class="py-3 text-xs text-blue-400">${s.serverIp}</td>
+                        <td class="py-3 text-xs ${new Date(s.expiredDate)<new Date()?'text-red-500':'text-green-400'}">${new Date(s.expiredDate).toLocaleDateString()}</td>
+                        <td class="py-3"><button onclick="delService('${s._id}')" class="text-red-500 hover:bg-red-500/10 p-1.5 rounded"><i class="fa-solid fa-trash"></i></button></td>
                     </tr>
                 `).join('');
-            } catch (e) {
-                list.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-red-500">Gagal memuat user (Endpoint belum tersedia).</td></tr>';
-            }
+                document.getElementById('stat-active').innerText = d.length;
+            } catch(e) { console.log("Gagal load services"); }
         }
 
-        // 5. SALDO MANAGEMENT
-        function openSaldoModal(username) {
-            document.getElementById('edit-saldo-username').innerText = `User: ${username}`;
-            document.getElementById('edit-saldo-user').value = username;
-            openModal('modal-saldo');
+        async function addActiveService(e) {
+            e.preventDefault();
+            const body = {
+                username: document.getElementById('svcUser').value,
+                productName: document.getElementById('svcProd').value,
+                targetNumber: document.getElementById('svcTarget').value,
+                serverIp: document.getElementById('svcIp').value,
+                days: document.getElementById('svcDays').value
+            };
+            await fetch('/api/admin/services', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+            document.getElementById('form-add-service').classList.add('hidden');
+            e.target.reset();
+            fetchServices();
+        }
+        
+        async function delService(id) { if(confirm("Hapus layanan ini?")) { await fetch(`/api/admin/services/${id}`, {method:'DELETE'}); fetchServices(); } }
+
+        // 3. VOUCHER (TICKET STYLE)
+        async function fetchVouchers() {
+            const d = await (await fetch('/api/admin/vouchers')).json();
+            document.getElementById('list-vouchers').innerHTML = d.map(v => `
+                <div class="voucher-card p-3 flex justify-between items-center rounded-lg group hover:border-purple-500 transition">
+                    <div>
+                        <div class="text-lg font-mono font-bold text-white tracking-wider">${v.code}</div>
+                        <div class="text-[10px] text-green-400 font-bold bg-green-900/20 px-2 py-0.5 rounded w-fit mt-1">HEMAT ${v.percent}%</div>
+                    </div>
+                    <button onclick="delVoucher('${v._id}')" class="w-8 h-8 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition"><i class="fa-solid fa-trash text-xs"></i></button>
+                </div>
+            `).join('');
+        }
+        
+        async function createVoucher(e) { e.preventDefault(); await fetch('/api/admin/voucher', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({code:document.getElementById('vCode').value.toUpperCase(), percent:document.getElementById('vPercent').value})}); e.target.reset(); fetchVouchers(); }
+        async function delVoucher(id) { await fetch(`/api/admin/voucher/${id}`, {method:'DELETE'}); fetchVouchers(); }
+
+        // 4. ORDER HISTORY (STYLED TABLE)
+        async function fetchOrders() {
+            const d = await (await fetch('/api/admin/orders')).json();
+            document.getElementById('list-orders').innerHTML = d.map(o => `
+                <tr class="hover:bg-white/5 border-b border-gray-800/50 group">
+                    <td class="pl-4 py-3 font-mono text-[10px] text-purple-400 group-hover:text-purple-300 transition">${o.invoiceId}</td>
+                    <td class="py-3 font-bold text-white text-xs">${o.username}</td>
+                    <td class="py-3 text-[10px] text-gray-400">${o.productName.substring(0,25)}</td>
+                    <td class="py-3 text-right font-mono text-xs text-white">Rp ${o.amount.toLocaleString()}</td>
+                    <td class="py-3"><span class="bg-green-900/30 text-green-400 border border-green-500/20 px-2 py-0.5 rounded text-[9px] font-bold">SUKSES</span></td>
+                </tr>
+            `).join('');
         }
 
+        // 5. USERS & SALDO
+        async function loadUsers() {
+            try {
+                const users = await (await fetch('/api/admin/users')).json();
+                document.getElementById('list-users').innerHTML = users.map(u => `
+                    <tr class="hover:bg-white/5 border-b border-gray-800/50">
+                        <td class="pl-4 py-3 font-bold text-white text-xs">${u.username}</td>
+                        <td class="py-3 font-mono text-green-400 text-xs">Rp ${u.balance.toLocaleString()}</td>
+                        <td class="py-3"><span class="bg-blue-900/30 text-blue-300 px-2 py-0.5 rounded text-[9px] uppercase font-bold">${u.role}</span></td>
+                        <td class="py-3 text-center"><button onclick="openSaldo('${u.username}')" class="text-purple-400 hover:text-white text-[10px] font-bold border border-purple-500/30 px-2 py-1 rounded hover:bg-purple-600 transition">EDIT</button></td>
+                    </tr>
+                `).join('');
+            } catch(e){}
+        }
+
+        function openSaldo(u) { document.getElementById('edit-saldo-username').innerText=`User: ${u}`; document.getElementById('edit-saldo-user').value=u; document.getElementById('modal-saldo').classList.add('active'); }
+        
         async function submitSaldo(e) {
             e.preventDefault();
-            const username = document.getElementById('edit-saldo-user').value;
-            const action = document.getElementById('saldo-action').value;
-            const amount = parseInt(document.getElementById('saldo-amount').value);
-            
-            if(!amount) return alert("Isi nominal!");
-
-            // Kirim ke backend (Perlu endpoint update balance)
-            try {
-                const res = await fetch('/api/admin/user/balance', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ username, action, amount })
-                });
-                const d = await res.json();
-                if(d.success) {
-                    alert("Saldo Berhasil Diupdate!");
-                    closeModals();
-                    loadUsers(); // Refresh list
-                } else {
-                    alert("Gagal: " + d.msg);
-                }
-            } catch(e) { alert("Error koneksi"); }
+            const body = { username: document.getElementById('edit-saldo-user').value, action: document.getElementById('saldo-action').value, amount: document.getElementById('saldo-amount').value };
+            await fetch('/api/admin/user/balance', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+            document.getElementById('modal-saldo').classList.remove('active'); e.target.reset(); loadUsers();
         }
 
-        // 6. NOKOS CONFIG
-        async function saveNokosConfig(e) {
-            e.preventDefault();
-            const apiKey = document.getElementById('nokosKey').value;
-            const margin = document.getElementById('nokosMargin').value;
-            
-            try {
-                const res = await fetch('/api/nokos/admin/config', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ apiKey, marginPercent: margin })
-                });
-                if(res.ok) alert("Konfigurasi Nokos Disimpan!");
-            } catch(e) { alert("Gagal simpan config"); }
-        }
-
-        // 7. PRODUCT MANAGEMENT (Simplified)
+        // 6. PRODUCTS (GRID CARD)
         async function loadProducts() {
-            const grid = document.getElementById('grid-products');
-            try {
-                const res = await fetch('/api/products');
-                const prods = await res.json();
-                
-                grid.innerHTML = prods.map(p => `
-                    <div class="glass-panel p-4 flex gap-4 items-center">
-                        <img src="${p.imageUrl || 'https://via.placeholder.com/50'}" class="w-12 h-12 rounded-lg bg-gray-800 object-cover">
-                        <div class="flex-1">
-                            <h4 class="font-bold text-white text-sm">${p.name}</h4>
-                            <p class="text-xs text-gray-400">Rp ${p.price.toLocaleString()}</p>
-                        </div>
-                        <button onclick="deleteProduct('${p._id}')" class="text-red-500 hover:bg-red-500/10 p-2 rounded transition"><i class="fa-solid fa-trash"></i></button>
+            const d = await (await fetch('/api/products')).json();
+            document.getElementById('grid-products').innerHTML = d.map(p => `
+                <div class="glass-panel p-3 flex gap-3 relative group hover:border-blue-500 transition">
+                    <img src="${p.imageUrl||'https://via.placeholder.com/50'}" class="w-10 h-10 rounded bg-gray-800 object-cover">
+                    <div class="overflow-hidden">
+                        <h4 class="font-bold text-white text-xs truncate">${p.name}</h4>
+                        <p class="text-[10px] text-gray-400 font-mono">Rp ${p.price.toLocaleString()}</p>
                     </div>
-                `).join('');
-            } catch(e) {}
+                    <button onclick="delProd('${p._id}')" class="absolute top-2 right-2 text-red-500 hover:text-white opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-trash text-xs"></i></button>
+                </div>
+            `).join('');
         }
-
-        async function saveProduct(e) {
-            e.preventDefault();
-            const data = {
-                name: document.getElementById('pName').value,
-                category: document.getElementById('pCat').value,
-                price: document.getElementById('pPrice').value,
-                desc: document.getElementById('pDesc').value,
-                imageUrl: document.getElementById('pImg').value
-            };
-            await fetch('/api/products', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
-            closeModals(); loadProducts(); e.target.reset();
-        }
-
-        async function deleteProduct(id) {
-            if(confirm("Hapus produk?")) {
-                await fetch(`/api/products/${id}`, {method:'DELETE'});
-                loadProducts();
-            }
-        }
-
-        // UTILS
-        function logout() { localStorage.removeItem('user_session'); window.location.href = '/login.html'; }
-        function openModal(id) { document.getElementById(id).classList.add('active'); }
-        function closeModals(e) { 
-            if(!e || e.target.classList.contains('modal')) 
-                document.querySelectorAll('.modal').forEach(m => m.classList.remove('active')); 
-        }
+        async function saveProduct(e) { e.preventDefault(); /* Logic simpan sama spt sebelumnya */ await fetch('/api/products', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name:document.getElementById('pName').value, category:document.getElementById('pCat').value, price:document.getElementById('pPrice').value, desc:document.getElementById('pDesc').value, imageUrl:document.getElementById('pImg').value})}); document.getElementById('modal-add-product').classList.remove('active'); e.target.reset(); loadProducts(); }
+        async function delProd(id) { if(confirm("Hapus?")) { await fetch(`/api/products/${id}`,{method:'DELETE'}); loadProducts(); } }
 
         // INIT
         loadDashboard();
