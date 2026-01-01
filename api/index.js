@@ -242,6 +242,18 @@ app.get('/api/history/:username', async (req, res) => {
     })));
 });
 
+// ... kode lainnya ...
+
+// D. MOUNT H2H MODULE (Baru)
+try {
+    const h2hRouter = require('./h2h'); 
+    app.use('/api', h2hRouter); // Ini akan mengaktifkan /api/products/rumahotp dari file h2h.js
+    console.log("✅ H2H Module Loaded");
+} catch (e) {
+    console.error("Warning: h2h.js error/missing", e);
+}
+
+// ... kode lainnya ...
 // Admin System / Status
 app.get('/api/system/status', (req, res) => res.json({ vpsActive: true, vpsStartTime: new Date(Date.now()-36000000), botActive: true, botStartTime: new Date(Date.now()-18000000) }));
 app.post('/api/testimonials', async (req, res) => { await connectDB(); await new Testimonial(req.body).save(); res.json({ success: true }); });
