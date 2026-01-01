@@ -317,4 +317,55 @@ app.get('/api/public/recent-activities', async (req, res) => {
     }
 });
 
+// ==========================================
+// [BARU] ADMIN USER MANAGEMENT ROUTES
+// ==========================================
+
+// 1. Ambil Semua User (Untuk Admin Panel)
+app.get('/api/admin/users', async (req, res) => {
+    try {
+        await connectDB();
+        // Ambil semua user, urutkan dari saldo terbanyak
+        const users = await User.find({}, 'username balance role').sort({ balance: -1 });
+        res.json(users);
+    } catch (e) {
+        res.status(500).json({ error: "Gagal ambil data user" });
+    }
+});
+
+// 2. Edit Saldo User (Manual oleh Admin)
+app.post('/api/admin/user/balance', async (req, res) => {
+    const { username, action, amount } = req.body; // action: 'add' atau 'sub'
+    
+    try {
+        await connectDB();
+        const user = await User.findOne({ username });
+        if (!user) return res.status(404).json({ success: false, msg: "User tidak ditemukan" });
+
+        const val = parseInt(amount);
+        if (action === 'add') {
+            user.balance += val;
+        } else if (action === 'sub') {
+            user.balance -= val;
+            if (user.balance < 0) user.balance = 0; // Cegah minus
+        }
+
+        await user.save();
+        
+        // Catat di Transaksi agar ada jejak
+        await new Transaction({
+            invoiceId: 'ADM-' + Date.now().toString().slice(-6),
+            username: username,
+            productName: action === 'add' ? 'Saldo Ditambah Admin' : 'Saldo Dikurangi Admin',
+            amount: val,
+            status: 'success',
+            type: action === 'add' ? 'IN' : 'OUT'
+        }).save();
+
+        res.json({ success: true, newBalance: user.balance });
+    } catch (e) {
+        res.status(500).json({ success: false, msg: "Server Error" });
+    }
+});
+
 module.exports = app;
