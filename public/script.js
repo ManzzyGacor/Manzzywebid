@@ -30,15 +30,15 @@ let userBalance = 0;
 const ADMIN_WA = "6287756632352";
 
 async function checkUserLogin() {
-    // 1. KONDISI BELUM LOGIN
+    // 1. JIKA BELUM LOGIN
     if (!userSession) {
-        // Tampilkan Banner CTA kalau belum login
+        // Tampilkan Banner CTA jika belum login
         const cta = document.getElementById('cta-banner');
         if(cta) cta.style.display = 'block';
         return;
     }
 
-    // 2. KONDISI SUDAH LOGIN
+    // 2. JIKA SUDAH LOGIN
     try {
         const res = await fetch(`/api/user/${userSession}`);
         const data = await res.json();
@@ -58,7 +58,7 @@ async function checkUserLogin() {
             const sidebar = document.getElementById('user-status-sidebar');
             if(sidebar) sidebar.innerHTML = `Hi, ${userSession}<br><span class="text-green-400 font-bold font-mono">${formatted}</span>`;
             
-            // Buka Menu Member (Topup, History, dll)
+            // Buka Menu Member
             document.getElementById('review-form-container')?.classList.remove('hidden');
             document.getElementById('login-prompt')?.classList.add('hidden');
             document.getElementById('menu-topup')?.classList.remove('hidden');
@@ -66,10 +66,10 @@ async function checkUserLogin() {
             document.getElementById('menu-history')?.classList.remove('hidden');
             document.getElementById('menu-nokos')?.classList.remove('hidden');
             
-            // Ubah Tombol Login jadi Logout
+            // Ubah Tombol Logout
             document.getElementById('auth-menu').innerHTML = `<a href="#" onclick="doLogout()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:bg-white/5 transition"><i class="fa-solid fa-sign-out-alt text-red-500 w-6 text-center"></i><span class="font-medium">Logout</span></a>`;
 
-            // === [PENTING] HILANGKAN BANNER CTA JIKA LOGIN ===
+            // === [LOGIC PENTING] HILANGKAN BANNER CTA JIKA LOGIN ===
             const ctaBanner = document.getElementById('cta-banner');
             if(ctaBanner) ctaBanner.style.display = 'none';
         }
