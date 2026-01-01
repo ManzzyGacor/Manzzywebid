@@ -161,49 +161,156 @@
     <div id="main-container" class="min-h-screen relative w-full max-w-6xl mx-auto px-6 pb-20 pt-28">
         <div class="absolute inset-0 bg-grid -z-10 h-screen fixed opacity-40"></div><div class="absolute top-0 right-0 w-96 h-96 bg-purple-600/10 rounded-full blur-[100px] -z-10 fixed pointer-events-none"></div>
 
-        <section id="view-landing" class="view-section view-active">
-            <div class="text-center max-w-4xl mx-auto mt-10 mb-16">
-                <h1 class="text-5xl md:text-8xl font-bold mb-6 leading-tight"><span class="glitch neon-text" data-text="MANZZY ID">MANZZY ID</span> <br> <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">OFFICIAL</span></h1>
-                <p class="text-gray-400 text-lg md:text-xl mb-10 max-w-2xl mx-auto">Layanan Hosting Bot WhatsApp Profesional & Terpercaya.</p>
-                <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-8">
-                    <button onclick="switchView('store')" class="px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-[0_0_30px_rgba(139,92,246,0.3)] transition hover:scale-105 w-full md:w-auto"><i class="fa-solid fa-store mr-2"></i> Lihat Produk</button>
-                    <button onclick="switchView('nokos')" class="px-8 py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-[0_0_30px_rgba(34,197,94,0.3)] transition hover:scale-105 w-full md:w-auto"><i class="fa-solid fa-sim-card mr-2"></i> Beli Nomor</button>
-                </div>
-                <div class="flex items-center justify-center gap-4 mb-6"><a href="https://instagram.com/Manzz_Wakeup" target="_blank" class="social-btn"><i class="fa-brands fa-instagram"></i></a><a href="https://wa.me/6287756632352" target="_blank" class="social-btn"><i class="fa-solid fa-user-shield"></i></a></div>
-            </div>
-            <div class="w-full max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 mb-24"><div class="glass-card p-6 rounded-2xl flex flex-col justify-between border-l-4 border-l-green-500 space-y-4"><div class="flex justify-between items-center border-b border-gray-800 pb-3"><div><h4 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">VPS Runtime</h4><div class="flex items-center gap-2 text-green-400 font-bold font-mono text-xl"><i class="fa-solid fa-server"></i> <span id="runtime-vps">0d 0h</span></div></div></div><div class="flex justify-between items-center"><div><h4 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Bot Runtime</h4><div class="flex items-center gap-2 text-blue-400 font-bold font-mono text-xl"><i class="fa-solid fa-robot"></i> <span id="runtime-bot">Offline</span></div></div></div></div><div class="glass-card p-6 rounded-2xl border-l-4 border-l-purple-500"><div class="flex justify-between items-start mb-4 border-b border-gray-800 pb-3"><div><h4 class="text-white text-sm font-bold flex items-center gap-2"><i class="fa-brands fa-linux"></i> AMD Ryzen™ 7</h4><p class="text-[10px] text-gray-500 mt-1">High Performance Node</p></div><span id="status-badge" class="text-gray-500 text-[10px] animate-pulse bg-gray-900/50 px-2 py-1 rounded border border-gray-700 font-bold">CONNECTING...</span></div><div class="flex items-center gap-3 text-xs font-mono mb-3"><span class="w-8 text-purple-300">CPU</span><div class="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden"><div id="bar-cpu" class="h-full bg-purple-500 transition-all duration-1000" style="width: 0%"></div></div><span id="text-cpu" class="w-12 text-right text-gray-400">0%</span></div><div class="flex items-center gap-3 text-xs font-mono mb-3"><span class="w-8 text-purple-300">RAM</span><div class="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden"><div id="bar-ram" class="h-full bg-purple-500 transition-all duration-1000" style="width: 0%"></div></div><span id="text-ram" class="w-12 text-right text-gray-400">0G</span></div><div class="flex items-center gap-3 text-xs font-mono"><span class="w-8 text-purple-300">ROM</span><div class="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden"><div id="bar-rom" class="h-full bg-blue-500 transition-all duration-1000" style="width: 0%"></div></div><span id="text-rom" class="w-12 text-right text-gray-400">0G</span></div></div></div>
-            
-            <section id="features" class="mb-24 scroll-mt-32"><div class="text-center mb-12"><h2 class="text-3xl font-bold text-white mb-4">KEUNGGULAN</h2></div><div class="grid grid-cols-1 md:grid-cols-3 gap-8"><div class="glass-card p-8 rounded-2xl text-center border-t-4 border-t-purple-500"><h3 class="text-xl font-bold text-white">Uptime 99%</h3><p class="text-gray-400 text-sm">Server selalu online.</p></div><div class="glass-card p-8 rounded-2xl text-center border-t-4 border-t-blue-500"><h3 class="text-xl font-bold text-white">Cepat</h3><p class="text-gray-400 text-sm">Koneksi stabil.</p></div><div class="glass-card p-8 rounded-2xl text-center border-t-4 border-t-green-500"><h3 class="text-xl font-bold text-white">Aman</h3><p class="text-gray-400 text-sm">Privasi terjaga.</p></div></div></section>
-            
-            <section id="testimonials" class="mb-24 scroll-mt-32">
-                <div class="text-center mb-12"><h2 class="text-3xl font-bold text-white mb-4">ULASAN</h2></div>
-                <div id="review-form-container" class="hidden glass-card p-8 rounded-2xl max-w-lg mx-auto mb-10 border-t-4 border-t-purple-500 relative overflow-hidden group">
-                    <div class="absolute top-0 right-0 w-32 h-32 bg-purple-600/20 rounded-full blur-[50px] -z-10 group-hover:bg-purple-600/30 transition"></div>
-                    <h3 class="text-white font-bold text-lg mb-1">Berikan Ulasan</h3>
-                    <p class="text-gray-400 text-xs mb-6">Bagaimana pengalamanmu menggunakan layanan kami?</p>
-                    <form onsubmit="submitReview(event)">
-                        <div class="flex items-center justify-center gap-3 mb-6 bg-black/40 p-3 rounded-xl border border-white/5">
-                            <input type="hidden" id="ratingValue" value="5">
-                            <div id="star-container" class="flex gap-2">
-                                <i class="fa-solid fa-star text-2xl cursor-pointer text-yellow-500 transition hover:scale-125" onclick="setRating(1)" id="star-1"></i>
-                                <i class="fa-solid fa-star text-2xl cursor-pointer text-yellow-500 transition hover:scale-125" onclick="setRating(2)" id="star-2"></i>
-                                <i class="fa-solid fa-star text-2xl cursor-pointer text-yellow-500 transition hover:scale-125" onclick="setRating(3)" id="star-3"></i>
-                                <i class="fa-solid fa-star text-2xl cursor-pointer text-yellow-500 transition hover:scale-125" onclick="setRating(4)" id="star-4"></i>
-                                <i class="fa-solid fa-star text-2xl cursor-pointer text-yellow-500 transition hover:scale-125" onclick="setRating(5)" id="star-5"></i>
-                            </div>
-                            <span id="rating-text" class="text-yellow-500 font-bold font-mono ml-4 text-xl">5.0</span>
-                        </div>
-                        <div class="relative mb-6"><textarea id="reviewComment" class="w-full bg-black/50 border border-gray-700 rounded-xl p-4 text-white text-sm focus:border-purple-500 outline-none transition" rows="3" placeholder="Tulis pendapatmu di sini..." required></textarea></div>
-                        <button type="submit" id="btn-submit-review" class="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold py-3 rounded-xl shadow-lg transition transform active:scale-95"><i class="fa-solid fa-paper-plane mr-2"></i> Kirim Ulasan</button>
-                    </form>
-                </div>
-                <div id="login-prompt" class="text-center mb-10"><a href="/login_user.html" class="px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full border border-white/10 transition">Login Member untuk Mengulas</a></div>
-                <div id="testimonial-grid" class="flex gap-4 overflow-x-auto pb-8 px-4 no-scrollbar snap-x snap-mandatory"><p class="text-center text-gray-500 w-full py-10">Memuat ulasan...</p></div>
-            </section>
+<section id="view-landing" class="view-section view-active relative w-full overflow-x-hidden pt-28 pb-10">
+    
+    <div class="text-center max-w-5xl mx-auto mt-4 mb-20 relative px-4">
+        
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-purple-600/20 rounded-full blur-[80px] md:blur-[120px] -z-10 animate-pulse pointer-events-none"></div>
 
-            <section id="faq" class="mb-24 scroll-mt-32 max-w-3xl mx-auto"><div class="text-center mb-12"><h2 class="text-3xl font-bold text-white mb-4">PERTANYAAN</h2></div><div class="glass-card p-2 rounded-2xl divide-y divide-gray-800/50"><div class="faq-item p-4"><div class="faq-header" onclick="toggleFaq(this)"><h3 class="font-bold text-white">Metode pembayaran?</h3><i class="fa-solid fa-chevron-down faq-icon text-gray-500"></i></div><div class="faq-content"><p class="text-gray-400 text-sm pb-4">Transfer Bank, E-Wallet, dan QRIS.</p></div></div><div class="faq-item p-4"><div class="faq-header" onclick="toggleFaq(this)"><h3 class="font-bold text-white">Berapa lama aktivasi?</h3><i class="fa-solid fa-chevron-down faq-icon text-gray-500"></i></div><div class="faq-content"><p class="text-gray-400 text-sm pb-4">Instan untuk produk otomatis, 1x24 jam untuk manual.</p></div></div></div></section>
-            <footer class="text-center text-gray-600 text-xs font-mono py-8 border-t border-gray-900">© 2025 Manzzy ID</footer>
-        </section>
+        <div class="inline-block mb-4 px-4 py-1.5 rounded-full border border-purple-500/30 bg-purple-900/10 backdrop-blur-md">
+            <span class="text-[10px] font-bold text-purple-300 tracking-widest uppercase animate-pulse">🚀 #1 Digital Service Provider</span>
+        </div>
+
+        <h1 class="text-4xl md:text-7xl font-black mb-6 leading-tight text-white drop-shadow-2xl">
+            MANZZY ID <br>
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-blue-500 neon-text">OFFICIAL</span>
+        </h1>
+        
+        <p class="text-gray-400 text-sm md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed px-2">
+            Platform penyedia layanan <b>Sewa Bot WhatsApp</b> canggih & <b>Nomor Kosong (Nokos)</b> lintas negara. Solusi praktis untuk kebutuhan verifikasi dan manajemen komunitasmu.
+        </p>
+
+        <div class="flex flex-col md:flex-row items-center justify-center gap-5 px-4">
+            <button onclick="switchView('store')" class="group relative px-8 py-4 bg-white text-black font-bold rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.3)] transition hover:scale-105 w-full md:w-auto overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-r from-purple-400 to-blue-400 opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                <span class="relative z-10 group-hover:text-white transition flex items-center justify-center gap-2"><i class="fa-solid fa-robot"></i> Sewa Bot WA</span>
+            </button>
+            <button onclick="switchView('nokos')" class="px-8 py-4 bg-transparent border border-white/20 text-white font-bold rounded-xl hover:bg-white/5 transition hover:scale-105 w-full md:w-auto flex items-center justify-center gap-2">
+                <i class="fa-solid fa-sim-card text-green-400"></i> Beli Nokos
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto mb-24 px-4">
+        
+        <div class="glass-card p-8 rounded-3xl border border-white/5 relative overflow-hidden group hover:border-purple-500/50 transition duration-500">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition transform group-hover:scale-110">
+                <i class="fa-brands fa-whatsapp text-9xl text-purple-500"></i>
+            </div>
+            <div class="w-14 h-14 bg-purple-600/20 rounded-2xl flex items-center justify-center text-purple-400 text-2xl mb-6 border border-purple-500/20 shadow-[0_0_15px_rgba(168,85,247,0.2)]">
+                <i class="fa-solid fa-server"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-white mb-3">Sewa Bot WhatsApp</h3>
+            <p class="text-gray-400 text-sm mb-6 leading-relaxed">
+                Bot on 24 Jam di server premium. Fitur lengkap: Welcome, Goodbye, Anti-Link, Store Menu, AI Chat, dan Broadcast. Anti-delay dan mudah dikelola via panel.
+            </p>
+            <ul class="space-y-2 mb-6 text-sm text-gray-300">
+                <li class="flex items-center gap-2"><i class="fa-solid fa-check-circle text-green-500"></i> Server Uptime 99.9%</li>
+                <li class="flex items-center gap-2"><i class="fa-solid fa-check-circle text-green-500"></i> Anti Banned System</li>
+                <li class="flex items-center gap-2"><i class="fa-solid fa-check-circle text-green-500"></i> Request Fitur Custom</li>
+            </ul>
+            <button onclick="switchView('store')" class="text-purple-400 font-bold text-sm hover:text-white flex items-center gap-2 transition">Pesan Sekarang <i class="fa-solid fa-arrow-right"></i></button>
+        </div>
+
+        <div class="glass-card p-8 rounded-3xl border border-white/5 relative overflow-hidden group hover:border-green-500/50 transition duration-500">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition transform group-hover:scale-110">
+                <i class="fa-solid fa-message text-9xl text-green-500"></i>
+            </div>
+            <div class="w-14 h-14 bg-green-600/20 rounded-2xl flex items-center justify-center text-green-400 text-2xl mb-6 border border-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.2)]">
+                <i class="fa-solid fa-mobile-screen"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-white mb-3">Nokos Otomatis</h3>
+            <p class="text-gray-400 text-sm mb-6 leading-relaxed">
+                Nomor Kosong virtual untuk verifikasi OTP (WhatsApp, Telegram, TikTok, Shopee, dll). Tersedia 100+ Negara. SMS masuk otomatis dalam hitungan detik.
+            </p>
+            <ul class="space-y-2 mb-6 text-sm text-gray-300">
+                <li class="flex items-center gap-2"><i class="fa-solid fa-check-circle text-green-500"></i> Garansi OTP Masuk</li>
+                <li class="flex items-center gap-2"><i class="fa-solid fa-check-circle text-green-500"></i> Harga Termurah</li>
+                <li class="flex items-center gap-2"><i class="fa-solid fa-check-circle text-green-500"></i> Fresh Number (Private)</li>
+            </ul>
+            <button onclick="switchView('nokos')" class="text-green-400 font-bold text-sm hover:text-white flex items-center gap-2 transition">Ambil Nomor <i class="fa-solid fa-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <div id="cta-banner" class="max-w-5xl mx-auto mb-24 px-6 relative">
+        <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl blur-xl opacity-30"></div>
+        <div class="relative glass-card bg-gradient-to-r from-[#1a1a2e] to-[#16213e] rounded-3xl p-8 md:p-12 border border-white/10 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div class="text-center md:text-left">
+                <h2 class="text-2xl md:text-3xl font-bold text-white mb-2">Belum bergabung dengan Manzzy ID?</h2>
+                <p class="text-gray-400 text-sm md:text-base max-w-lg">
+                    Daftarkan dirimu sekarang untuk akses penuh ke dashboard pengelolaan Bot dan pembelian Nokos dengan harga member spesial.
+                </p>
+            </div>
+            <div class="flex gap-4">
+                <a href="/login_user.html" class="px-6 py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition shadow-lg transform hover:-translate-y-1">Daftar / Login</a>
+            </div>
+        </div>
+    </div>
+
+    <section id="faq" class="mb-24 scroll-mt-32 max-w-4xl mx-auto px-4">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-white mb-2">PERTANYAAN <span class="text-purple-500">UMUM</span></h2>
+            <p class="text-gray-500 text-sm">Jawaban atas hal yang sering ditanyakan pelanggan.</p>
+        </div>
+        
+        <div class="glass-card p-2 rounded-2xl divide-y divide-gray-800/50 border border-white/5">
+            
+            <div class="faq-item p-4 hover:bg-white/5 transition rounded-xl">
+                <div class="faq-header flex justify-between items-center cursor-pointer" onclick="toggleFaq(this)">
+                    <h3 class="font-bold text-white text-sm md:text-base"><i class="fa-solid fa-sim-card text-green-500 mr-2"></i> Apa itu Nokos dan bagaimana cara kerjanya?</h3>
+                    <i class="fa-solid fa-chevron-down faq-icon text-gray-500 transition-transform duration-300"></i>
+                </div>
+                <div class="faq-content max-h-0 overflow-hidden transition-all duration-300">
+                    <p class="text-gray-400 text-sm pt-3 leading-relaxed">
+                        Nokos (Nomor Kosong) adalah nomor virtual sementara yang digunakan untuk menerima kode verifikasi (OTP) pendaftaran aplikasi seperti WhatsApp, Telegram, dll. Anda cukup order, nomor muncul, masukkan ke aplikasi, dan kode OTP akan muncul otomatis di web ini.
+                    </p>
+                </div>
+            </div>
+
+            <div class="faq-item p-4 hover:bg-white/5 transition rounded-xl">
+                <div class="faq-header flex justify-between items-center cursor-pointer" onclick="toggleFaq(this)">
+                    <h3 class="font-bold text-white text-sm md:text-base"><i class="fa-solid fa-rotate text-yellow-500 mr-2"></i> Bagaimana jika kode OTP tidak masuk?</h3>
+                    <i class="fa-solid fa-chevron-down faq-icon text-gray-500 transition-transform duration-300"></i>
+                </div>
+                <div class="faq-content max-h-0 overflow-hidden transition-all duration-300">
+                    <p class="text-gray-400 text-sm pt-3 leading-relaxed">
+                        Tenang! Sistem kami memiliki garansi <b>Saldo Kembali Otomatis</b>. Jika dalam waktu tunggu (biasanya 20 menit) SMS tidak masuk, Anda bisa klik tombol "Cancel" atau sistem akan membatalkan otomatis dan saldo dikembalikan 100%.
+                    </p>
+                </div>
+            </div>
+
+            <div class="faq-item p-4 hover:bg-white/5 transition rounded-xl">
+                <div class="faq-header flex justify-between items-center cursor-pointer" onclick="toggleFaq(this)">
+                    <h3 class="font-bold text-white text-sm md:text-base"><i class="fa-solid fa-robot text-purple-500 mr-2"></i> Apakah Bot WhatsApp aman dari Banned?</h3>
+                    <i class="fa-solid fa-chevron-down faq-icon text-gray-500 transition-transform duration-300"></i>
+                </div>
+                <div class="faq-content max-h-0 overflow-hidden transition-all duration-300">
+                    <p class="text-gray-400 text-sm pt-3 leading-relaxed">
+                        Kami menggunakan sistem session yang dioptimalkan untuk keamanan. Namun, risiko banned tetap ada tergantung penggunaan (spam berlebihan). Kami sarankan gunakan nomor sekunder/nokos untuk bot agar nomor pribadi tetap aman.
+                    </p>
+                </div>
+            </div>
+
+            <div class="faq-item p-4 hover:bg-white/5 transition rounded-xl">
+                <div class="faq-header flex justify-between items-center cursor-pointer" onclick="toggleFaq(this)">
+                    <h3 class="font-bold text-white text-sm md:text-base"><i class="fa-solid fa-wallet text-blue-500 mr-2"></i> Metode pembayaran apa yang tersedia?</h3>
+                    <i class="fa-solid fa-chevron-down faq-icon text-gray-500 transition-transform duration-300"></i>
+                </div>
+                <div class="faq-content max-h-0 overflow-hidden transition-all duration-300">
+                    <p class="text-gray-400 text-sm pt-3 leading-relaxed">
+                        Kami mendukung pembayaran otomatis via <b>QRIS</b> (All E-Wallet: Dana, OVO, Gopay, ShopeePay & Mobile Banking). Saldo akan masuk otomatis 1-5 menit setelah pembayaran berhasil.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </section>
+    
+    <footer class="text-center text-gray-600 text-xs font-mono py-8 border-t border-gray-900 bg-black/40">
+        <p>Manzzy ID Official © 2025</p>
+        <p>Premium WhatsApp Solutions & Virtual Number Provider</p>
+    </footer>
+</section>
 
         <section id="view-store" class="view-section"><div class="w-full mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4"><button onclick="switchView('landing')" class="text-gray-400 hover:text-white flex items-center gap-2 group"><i class="fa-solid fa-arrow-left"></i> Kembali</button><h2 class="text-3xl font-bold text-white">KATALOG</h2></div><div class="search-container"><input type="text" id="searchInput" onkeyup="filterProducts()" placeholder="Cari layanan..." class="search-input"><i class="fa-solid fa-search search-icon"></i></div><div id="section-categories"><h3 class="text-gray-400 text-sm font-bold uppercase mb-4 pl-3 border-l-4 border-purple-500">Kategori</h3><div id="grid-categories" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12"></div></div><div id="section-products" class="hidden"><div class="flex items-center gap-3 mb-6"><button onclick="backToCategories()" class="text-sm bg-gray-800 px-3 py-1 rounded text-white"><i class="fa-solid fa-chevron-left"></i> Kategori</button><span id="current-category-name" class="text-purple-400 font-bold"></span></div><div id="grid-products" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 pb-20"></div></div><div id="loading-store" class="text-center py-20 hidden"><div class="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mb-4"></div></div></section>
 

@@ -30,26 +30,35 @@ let userBalance = 0;
 const ADMIN_WA = "6287756632352";
 
 async function checkUserLogin() {
-    if (!userSession) return;
+    // 1. KONDISI BELUM LOGIN
+    if (!userSession) {
+        // Tampilkan Banner CTA kalau belum login
+        const cta = document.getElementById('cta-banner');
+        if(cta) cta.style.display = 'block';
+        return;
+    }
+
+    // 2. KONDISI SUDAH LOGIN
     try {
         const res = await fetch(`/api/user/${userSession}`);
         const data = await res.json();
+        
         if (data.username) {
             userBalance = data.balance || 0;
             const formatted = `Rp ${userBalance.toLocaleString()}`;
             
-            // Header Balance
+            // Update Header Saldo
             const headerBal = document.getElementById('header-balance');
             if(headerBal) {
                 headerBal.innerHTML = `<i class="fa-solid fa-wallet text-green-400 animate-pulse"></i><span class="text-sm text-white font-mono font-bold tracking-wide">${formatted}</span>`;
                 headerBal.classList.remove('hidden');
             }
             
-            // Sidebar User Info
+            // Update Sidebar User Info
             const sidebar = document.getElementById('user-status-sidebar');
             if(sidebar) sidebar.innerHTML = `Hi, ${userSession}<br><span class="text-green-400 font-bold font-mono">${formatted}</span>`;
             
-            // Show Member Menus
+            // Buka Menu Member (Topup, History, dll)
             document.getElementById('review-form-container')?.classList.remove('hidden');
             document.getElementById('login-prompt')?.classList.add('hidden');
             document.getElementById('menu-topup')?.classList.remove('hidden');
@@ -57,15 +66,14 @@ async function checkUserLogin() {
             document.getElementById('menu-history')?.classList.remove('hidden');
             document.getElementById('menu-nokos')?.classList.remove('hidden');
             
-            // Logout Button
+            // Ubah Tombol Login jadi Logout
             document.getElementById('auth-menu').innerHTML = `<a href="#" onclick="doLogout()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:bg-white/5 transition"><i class="fa-solid fa-sign-out-alt text-red-500 w-6 text-center"></i><span class="font-medium">Logout</span></a>`;
+
+            // === [PENTING] HILANGKAN BANNER CTA JIKA LOGIN ===
+            const ctaBanner = document.getElementById('cta-banner');
+            if(ctaBanner) ctaBanner.style.display = 'none';
         }
     } catch(e) {}
-}
-
-function doLogout() { 
-    localStorage.removeItem('user_session'); 
-    window.location.reload(); 
 }
 
 // ============================================
