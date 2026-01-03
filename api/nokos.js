@@ -287,5 +287,50 @@ router.get('/history/:username', async (req, res) => {
     const list = await NokosTx.find({ username: req.params.username }).sort({ createdAt: -1 });
     res.json(list);
 });
+// ... (Kode sebelumnya)
+
+// ==========================================
+// [BARU] STATISTIK PROFIT NOKOS (ADMIN)
+// ==========================================
+router.get('/admin/stats', async (req, res) => {
+    try {
+        await connectDB();
+        
+        // 1. Ambil Config untuk tau Margin saat ini
+        const config = await NokosConfig.findOne();
+        const margin = config ? config.marginPercent : 20; // Default 20% kalo gak ada setting
+
+        // 2. Ambil Semua Transaksi SUKSES
+        const txs = await NokosTx.find({ status: 'success' });
+
+        let omsetKotor = 0;
+        let untungBersih = 0;
+
+        txs.forEach(tx => {
+            const hargaJual = tx.price;
+            omsetKotor += hargaJual;
+
+            // Hitung Modal Asli (Reverse Calculation)
+            // Rumus: Harga Jual = Modal + (Modal * Margin%)
+            // Maka:  Modal = Harga Jual / (1 + Margin/100)
+            const modalAsli = hargaJual / (1 + (margin / 100));
+            
+            // Profit = Harga Jual - Modal
+            untungBersih += (hargaJual - modalAsli);
+        });
+
+        res.json({
+            success: true,
+            total_trx: txs.length,
+            omset: Math.floor(omsetKotor),
+            profit: Math.floor(untungBersih),
+            margin_used: margin
+        });
+
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: "Gagal hitung profit" });
+    }
+});
 
 module.exports = router; 
