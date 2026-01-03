@@ -2,417 +2,284 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Manzzy ID</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
-        :root { --bg-body: #050505; --bg-card: #0f0f11; --primary: #8b5cf6; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-body); color: #e4e4e7; font-size: 13px; }
+        :root { --primary: #8b5cf6; --bg-dark: #050505; --card: #0f0f11; }
+        body { font-family: 'Space Grotesk', sans-serif; background-color: var(--bg-dark); color: #e0e0e0; overflow-x: hidden; }
         
-        /* SCROLLBAR */
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-track { background: var(--bg-body); }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
-
-        /* SIDEBAR */
-        .sidebar { width: 240px; height: 100vh; position: fixed; left: 0; top: 0; background: #0f0f11; border-right: 1px solid rgba(255,255,255,0.05); z-index: 50; transition: transform 0.3s; }
-        .main-content { margin-left: 240px; padding: 20px; transition: margin-left 0.3s; }
-        
-        @media (max-width: 768px) { 
-            .sidebar { transform: translateX(-100%); width: 220px; } 
-            .sidebar.active { transform: translateX(0); } 
-            .main-content { margin-left: 0; padding: 15px; padding-top: 70px; } 
-        }
-
-        /* NAV ITEM */
-        .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; color: #71717a; border-radius: 8px; cursor: pointer; transition: all 0.2s; font-size: 0.8rem; font-weight: 600; margin-bottom: 2px; }
-        .nav-item:hover, .nav-item.active { background: rgba(139,92,246,0.1); color: var(--primary); }
-        .nav-item.active { border-left: 2px solid var(--primary); }
-
-        /* GLASS PANEL */
-        .glass-panel { background: #121214; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
-        
-        /* VOUCHER CARD */
-        .voucher-card {
-            background: radial-gradient(circle at left, transparent 10px, #18181b 10px);
-            background-position: left; background-size: 50% 100%;
-            border: 1px solid rgba(255,255,255,0.1); border-left: none;
-            position: relative; overflow: hidden;
-        }
-        .voucher-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--primary); }
-
-        /* INPUTS */
-        input, select, textarea { width: 100%; background: #09090b; border: 1px solid #27272a; padding: 8px 12px; border-radius: 8px; color: white; outline: none; font-size: 0.8rem; transition: 0.2s; }
-        input:focus, select:focus { border-color: var(--primary); }
-
-        /* ANIMATIONS & MODAL */
+        /* SIDEBAR STYLES */
+        .sidebar { width: 260px; height: 100vh; position: fixed; left: 0; top: 0; background: var(--card); border-right: 1px solid rgba(255,255,255,0.05); z-index: 50; display: flex; flex-direction: column; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .main-content { margin-left: 260px; padding: 30px; min-height: 100vh; transition: margin-left 0.3s; }
+        @media (max-width: 768px) { .sidebar { transform: translateX(-100%); z-index: 100; box-shadow: 10px 0 30px rgba(0,0,0,0.5); } .sidebar.active { transform: translateX(0); } .main-content { margin-left: 0; padding: 20px; padding-top: 80px; } .mobile-header { display: flex !important; } .overlay-sidebar { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 90; display: none; backdrop-filter: blur(4px); } .overlay-sidebar.active { display: block; } }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #a1a1aa; transition: 0.3s; margin-bottom: 4px; border-radius: 8px; cursor: pointer; }
+        .nav-item:hover, .nav-item.active { background: rgba(139, 92, 246, 0.1); color: var(--primary); }
+        .glass-panel { background: #111; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+        input, select, textarea { width: 100%; background: #000; border: 1px solid #333; padding: 10px 15px; border-radius: 8px; color: white; outline: none; transition: 0.3s; margin-bottom: 10px; font-size: 0.9rem; }
         .section-view { display: none; animation: fadeIn 0.3s ease; }
         .section-view.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* MODAL FIX (PENTING: Default Hidden) */
-        .modal { 
-            display: none; /* Pastikan hidden secara default */
-            position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; 
-            align-items: center; justify-content: center; backdrop-filter: blur(5px);
-            opacity: 0; transition: opacity 0.3s;
-        }
-        .modal.active { display: flex; opacity: 1; }
-        .modal-content { background: #18181b; border: 1px solid #333; border-radius: 16px; width: 90%; max-width: 400px; transform: scale(0.95); transition: transform 0.3s; }
-        .modal.active .modal-content { transform: scale(1); }
-
-        /* TABLE */
-        th { font-size: 0.7rem; text-transform: uppercase; color: #71717a; font-weight: 700; padding: 10px; border-bottom: 1px solid #27272a; }
-        td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.02); font-size: 0.8rem; }
+        .mobile-header { display: none; position: fixed; top: 0; left: 0; right: 0; height: 60px; background: rgba(15, 15, 17, 0.9); backdrop-filter: blur(10px); z-index: 40; border-bottom: 1px solid rgba(255,255,255,0.1); align-items: center; padding: 0 20px; justify-content: space-between; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 200; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
     </style>
 </head>
 <body>
 
-    <div class="fixed top-0 left-0 right-0 h-14 bg-[#09090b]/90 backdrop-blur-md border-b border-white/5 z-40 flex items-center justify-between px-4 md:hidden">
-        <h1 class="text-sm font-bold text-white tracking-widest">MANZZY<span class="text-purple-500">ADMIN</span></h1>
-        <button onclick="toggleSidebar()" class="text-white text-lg"><i class="fa-solid fa-bars"></i></button>
+    <div class="mobile-header">
+        <h1 class="text-xl font-bold text-white">MANZZY<span class="text-purple-500">PANEL</span></h1>
+        <button onclick="toggleSidebar()" class="text-white text-2xl"><i class="fa-solid fa-bars"></i></button>
     </div>
+    <div id="overlay" class="overlay-sidebar" onclick="toggleSidebar()"></div>
 
-    <div class="sidebar flex flex-col" id="sidebar">
-        <div class="p-6 pb-2">
-            <h1 class="text-xl font-extrabold text-white tracking-widest">MANZZY<span class="text-purple-500">ID</span></h1>
-            <p class="text-[10px] text-gray-600 font-mono mt-1">Admin Panel v4.2 (Fixed)</p>
+    <div class="sidebar" id="sidebar">
+        <div class="p-6 border-b border-gray-800 mb-4 hidden md:block">
+            <h1 class="text-2xl font-bold text-white tracking-widest">MANZZY<span class="text-purple-500">ID</span></h1>
+            <p class="text-xs text-gray-500 mt-1">Administrator Manzzy</p>
         </div>
-        
-        <nav class="flex-1 px-3 overflow-y-auto space-y-0.5 pb-20 custom-scroll">
-            <p class="px-3 text-[9px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2">Utama</p>
-            <div class="nav-item active" onclick="nav('dashboard')"><i class="fa-solid fa-chart-pie w-4"></i> Dashboard</div>
-            <div class="nav-item" onclick="nav('users')"><i class="fa-solid fa-users w-4"></i> Data User</div>
+        <nav class="flex-1 px-4 overflow-y-auto pt-4 md:pt-0">
+            <div class="text-xs font-bold text-gray-600 uppercase mb-2 mt-2 px-2">Transaksi</div>
+            <div class="nav-item active" onclick="showSection('dashboard')"><i class="fa-solid fa-chart-pie"></i> Dashboard</div>
+            <div class="nav-item" onclick="showSection('orders')"><i class="fa-solid fa-cart-shopping"></i> Riwayat Order</div>
+            <div class="nav-item" onclick="showSection('topups')"><i class="fa-solid fa-money-bill-transfer"></i> Request Topup</div>
             
-            <p class="px-3 text-[9px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2">Transaksi</p>
-            <div class="nav-item" onclick="nav('orders')"><i class="fa-solid fa-receipt w-4"></i> Riwayat Order</div>
-            <div class="nav-item" onclick="nav('topup')"><i class="fa-solid fa-money-bill-transfer w-4"></i> Riwayat Topup</div>
-            <div class="nav-item" onclick="nav('nokos')"><i class="fa-solid fa-sim-card w-4"></i> Config Nokos</div>
-
-            <p class="px-3 text-[9px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2">Layanan</p>
-            <div class="nav-item" onclick="nav('actives')"><i class="fa-solid fa-server w-4 text-green-500"></i> Bot Aktif</div>
-            <div class="nav-item" onclick="nav('products')"><i class="fa-solid fa-box w-4 text-blue-500"></i> Produk Manual</div>
-            <div class="nav-item" onclick="nav('vouchers')"><i class="fa-solid fa-ticket w-4 text-yellow-500"></i> Voucher</div>
+            <div class="text-xs font-bold text-gray-600 uppercase mb-2 mt-6 px-2">Layanan</div>
+            <div class="nav-item" onclick="showSection('actives')"><i class="fa-solid fa-server"></i> Kelola Bot Aktif</div>
+            <div class="nav-item" onclick="showSection('products')"><i class="fa-solid fa-box-open"></i> Kelola Produk</div>
+            <div class="nav-item" onclick="showSection('categories')"><i class="fa-solid fa-tags"></i> Kategori</div>
+            <div class="nav-item" onclick="showSection('vouchers')"><i class="fa-solid fa-ticket"></i> Kelola Voucher</div>
+            
+            <div class="text-xs font-bold text-gray-600 uppercase mb-2 mt-6 px-2">System</div>
+            <div class="nav-item" onclick="showSection('settings')"><i class="fa-solid fa-gears"></i> Kontrol Sistem</div>
         </nav>
-
-        <div class="p-3 border-t border-white/5">
-            <button onclick="logout()" class="w-full py-2 bg-red-900/10 text-red-500 hover:bg-red-900/20 border border-red-500/20 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-power-off"></i> Keluar
-            </button>
+        <div class="p-4 border-t border-gray-800">
+            <button onclick="logout()" class="w-full py-2 bg-red-900/20 text-red-500 border border-red-900/50 rounded-lg text-sm font-bold">Logout</button>
         </div>
     </div>
 
     <div class="main-content">
-        
-        <div id="view-dashboard" class="section-view active">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                <div class="glass-panel p-4 flex flex-col justify-between h-24 relative overflow-hidden">
-                    <div class="text-[10px] text-gray-400 font-bold uppercase">Total User</div>
-                    <div class="text-2xl font-bold text-white" id="stat-users">0</div>
-                    <i class="fa-solid fa-users absolute -right-2 -bottom-2 text-4xl text-purple-500/10"></i>
+        <div id="sec-dashboard" class="section-view active">
+            <h2 class="text-2xl font-bold text-white mb-6">Overview</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="glass-panel border-l-4 border-l-purple-500"><h3 class="text-gray-400 text-sm font-bold uppercase">Total Order</h3><p class="text-3xl font-bold text-white mt-2" id="stat-orders">0</p></div>
+                <div class="glass-panel border-l-4 border-l-green-500"><h3 class="text-gray-400 text-sm font-bold uppercase">Pending Topup</h3><p class="text-3xl font-bold text-white mt-2" id="stat-topups">0</p></div>
+                <div class="glass-panel border-l-4 border-l-blue-500"><h3 class="text-gray-400 text-sm font-bold uppercase">Layanan Aktif</h3><p class="text-3xl font-bold text-white mt-2" id="stat-services">0</p></div>
+            </div>
+        </div>
+
+        <div id="sec-orders" class="section-view">
+            <h2 class="text-2xl font-bold text-white mb-6">Riwayat Order</h2>
+            <div class="glass-panel overflow-x-auto"><table class="w-full min-w-[600px]"><thead><tr><th class="text-left p-3">Invoice</th><th class="text-left p-3">User</th><th class="text-left p-3">Produk</th><th class="text-left p-3">Data</th></tr></thead><tbody id="list-orders"></tbody></table></div>
+        </div>
+
+        <div id="sec-topups" class="section-view">
+            <h2 class="text-2xl font-bold text-white mb-6">Riwayat Top Up (Otomatis)</h2>
+            <div class="glass-panel overflow-x-auto">
+                <table class="w-full min-w-[600px]">
+                    <thead>
+                        <tr>
+                            <th class="text-left p-3">Order ID</th>
+                            <th class="text-left p-3">User</th>
+                            <th class="text-left p-3">Jumlah</th>
+                            <th class="text-left p-3">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="list-topups"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="sec-actives" class="section-view">
+            <h2 class="text-2xl font-bold text-white mb-6">Bot Aktif</h2>
+            <div class="glass-panel mb-8 border border-blue-500/30">
+                <form onsubmit="addActiveService(event)" class="grid grid-cols-1 md:grid-cols-5 gap-3"><input type="text" id="svcUser" placeholder="Username" required><input type="text" id="svcProd" placeholder="Produk" required><input type="text" id="svcTarget" placeholder="Target No" required><input type="text" id="svcIp" placeholder="IP Panel" required><div class="flex gap-2"><input type="number" id="svcDays" placeholder="Hari" value="30" class="w-1/2" required><button type="submit" class="w-1/2 bg-blue-600 text-white font-bold rounded">ADD</button></div></form>
+            </div>
+            <div class="glass-panel overflow-x-auto"><table class="w-full min-w-[700px]"><thead><tr><th class="text-left p-3">User</th><th class="text-left p-3">Produk</th><th class="text-left p-3">IP</th><th class="text-left p-3">Exp</th><th class="text-left p-3">Aksi</th></tr></thead><tbody id="list-services"></tbody></table></div>
+        </div>
+
+        <div id="sec-products" class="section-view">
+            <div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold text-white">Kelola Produk</h2><button onclick="resetProductForm()" class="text-xs border border-gray-600 px-3 py-1 rounded text-gray-400">Reset</button></div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-1 glass-panel h-fit sticky top-6">
+                    <form id="prodForm" onsubmit="saveProduct(event)">
+                        <input type="hidden" id="editId"><select id="prodCategory" required class="mb-2"><option value="">Pilih Kategori...</option></select>
+                        <div class="flex items-center gap-2 mb-2 bg-black p-2 rounded border border-gray-700"><input type="checkbox" id="prodAvailable" class="w-4 h-4" checked> <span class="text-xs">Ready</span></div>
+                        <input type="text" id="prodName" placeholder="Nama Produk" required><input type="number" id="prodPrice" placeholder="Harga" required><input type="text" id="prodImage" placeholder="URL Gambar"><textarea id="prodDesc" rows="2" placeholder="Deskripsi..." required></textarea>
+                        <select id="prodMode" class="mb-2"><option value="manual">Manual (WA)</option><option value="auto">Otomatis (Success)</option></select><input type="text" id="prodFields" placeholder="Form: No HP, Nickname" value="Nomor WhatsApp">
+                        <button type="submit" id="btnSaveProd" class="w-full bg-purple-600 text-white font-bold py-2 rounded">Simpan</button>
+                    </form>
                 </div>
-                <div class="glass-panel p-4 flex flex-col justify-between h-24 relative overflow-hidden">
-                    <div class="text-[10px] text-gray-400 font-bold uppercase">Order Sukses</div>
-                    <div class="text-2xl font-bold text-white" id="stat-trx">0</div>
-                    <i class="fa-solid fa-cart-shopping absolute -right-2 -bottom-2 text-4xl text-blue-500/10"></i>
+                <div id="productList" class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:col-span-2"></div>
+            </div>
+        </div>
+
+        <div id="sec-categories" class="section-view">
+            <h2 class="text-2xl font-bold text-white mb-6">Kategori</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8"><div class="glass-panel h-fit"><form onsubmit="addCategory(event)"><input type="text" id="catName" placeholder="Nama" required><input type="text" id="catImage" placeholder="URL Background" required><button type="submit" class="w-full bg-green-600 text-white font-bold py-2 rounded">Tambah</button></form></div><div id="categoryList" class="space-y-3"></div></div>
+        </div>
+
+        <div id="sec-vouchers" class="section-view">
+            <h2 class="text-2xl font-bold text-white mb-6">Kelola Voucher (%)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="glass-panel h-fit">
+                    <form onsubmit="createVoucher(event)">
+                        <input type="text" id="vCode" placeholder="Kode (ex: SUPER50)" class="uppercase" required>
+                        <input type="number" id="vPercent" placeholder="Diskon (%)" required>
+                        <button type="submit" class="w-full bg-purple-600 text-white font-bold py-2 rounded mt-2">Buat Voucher</button>
+                    </form>
                 </div>
-                <div class="glass-panel p-4 flex flex-col justify-between h-24 relative overflow-hidden">
-                    <div class="text-[10px] text-gray-400 font-bold uppercase">Total Deposit</div>
-                    <div class="text-lg font-bold text-green-400" id="stat-depo">Rp 0</div>
-                    <i class="fa-solid fa-wallet absolute -right-2 -bottom-2 text-4xl text-green-500/10"></i>
-                </div>
-                <div class="glass-panel p-4 flex flex-col justify-between h-24 relative overflow-hidden">
-                    <div class="text-[10px] text-gray-400 font-bold uppercase">Bot Aktif</div>
-                    <div class="text-2xl font-bold text-white" id="stat-active">0</div>
-                    <i class="fa-solid fa-server absolute -right-2 -bottom-2 text-4xl text-orange-500/10"></i>
+                <div class="col-span-2 glass-panel overflow-x-auto">
+                    <table class="w-full min-w-[500px]">
+                        <thead><tr><th class="text-left p-3">Kode</th><th class="text-left p-3">Diskon</th><th class="text-left p-3">Aksi</th></tr></thead>
+                        <tbody id="list-vouchers"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
-        <div id="view-actives" class="section-view">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold text-white">Bot Aktif</h2>
-                <button onclick="document.getElementById('form-add-service').classList.toggle('hidden')" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold">+ Input Manual</button>
+        <div id="sec-settings" class="section-view">
+            <h2 class="text-2xl font-bold text-white mb-6">Kontrol Sistem</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div class="glass-panel text-center border-t-4 border-t-purple-500">
+                    <h3 class="text-white font-bold text-lg mb-2">VPS SERVER</h3><div id="status-display-vps" class="text-xs font-mono mb-4 text-gray-400">LOADING...</div>
+                    <div class="flex gap-2 justify-center"><button onclick="toggleSystem('vps', 'on')" class="bg-green-600 text-white px-6 py-2 rounded-lg font-bold">ON</button><button onclick="toggleSystem('vps', 'off')" class="bg-red-600 text-white px-6 py-2 rounded-lg font-bold">OFF</button></div>
+                </div>
+                <div class="glass-panel text-center border-t-4 border-t-blue-500">
+                    <h3 class="text-white font-bold text-lg mb-2">BOT WHATSAPP</h3><div id="status-display-bot" class="text-xs font-mono mb-4 text-gray-400">LOADING...</div>
+                    <div class="flex gap-2 justify-center"><button onclick="toggleSystem('bot', 'on')" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">ON</button><button onclick="toggleSystem('bot', 'off')" class="bg-red-600 text-white px-6 py-2 rounded-lg font-bold">OFF</button></div>
+                </div>
             </div>
-            <div id="form-add-service" class="glass-panel mb-4 hidden border-l-4 border-l-blue-500">
-                <form onsubmit="addActiveService(event)" class="grid grid-cols-2 md:grid-cols-6 gap-2">
-                    <input type="text" id="svcUser" placeholder="User" required>
-                    <input type="text" id="svcProd" placeholder="Produk" required>
-                    <input type="text" id="svcTarget" placeholder="Target" required>
-                    <input type="text" id="svcIp" placeholder="IP" required>
-                    <input type="number" id="svcDays" placeholder="Hari" value="30" required>
-                    <button type="submit" class="bg-green-600 text-white font-bold rounded-lg text-xs">SIMPAN</button>
+            
+            <div class="glass-panel mt-8 border-t-4 border-t-green-500">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-white font-bold text-lg">Laporan & Config Nokos</h3>
+                    <button onclick="loadNokosStats()" class="text-xs text-green-400 border border-green-500/30 px-3 py-1 rounded hover:bg-green-500/10"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <div class="bg-black/40 border border-gray-700 p-4 rounded-xl">
+                        <p class="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">Total Transaksi</p>
+                        <h4 class="text-2xl font-bold text-white" id="stat-nokos-count">0</h4>
+                        <p class="text-[10px] text-gray-500">Sukses</p>
+                    </div>
+                    <div class="bg-black/40 border border-gray-700 p-4 rounded-xl">
+                        <p class="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">Omset (Kotor)</p>
+                        <h4 class="text-2xl font-bold text-blue-400 font-mono" id="stat-nokos-gross">Rp 0</h4>
+                        <p class="text-[10px] text-gray-500">Total Pembayaran User</p>
+                    </div>
+                    <div class="bg-black/40 border border-gray-700 p-4 rounded-xl relative overflow-hidden">
+                        <div class="absolute right-0 top-0 p-3 opacity-10"><i class="fa-solid fa-money-bill-wave text-4xl text-green-500"></i></div>
+                        <p class="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">Profit (Bersih)</p>
+                        <h4 class="text-2xl font-bold text-green-400 font-mono" id="stat-nokos-net">Rp 0</h4>
+                        <p class="text-[10px] text-gray-500">Estimasi margin <span id="stat-nokos-margin">0</span>%</p>
+                    </div>
+                </div>
+
+                <form onsubmit="saveNokosConfig(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-gray-800 pt-6">
+                    <div class="md:col-span-2">
+                        <label class="text-xs text-gray-400 mb-1 block">API Key RumahOTP</label>
+                        <input type="text" id="nokosKey" placeholder="Tempel API Key disini..." required class="font-mono text-sm bg-black/50 border-gray-700 focus:border-green-500">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 mb-1 block">Margin Keuntungan (%)</label>
+                        <input type="number" id="nokosMargin" placeholder="20" value="20" required class="bg-black/50 border-gray-700 focus:border-green-500">
+                    </div>
+                    <div class="md:col-span-3">
+                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl w-full transition shadow-lg shadow-green-900/20">
+                            SIMPAN KONFIGURASI
+                        </button>
+                    </div>
                 </form>
             </div>
-            <div class="glass-panel p-0 overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead class="bg-[#18181b]"><tr><th class="pl-4">User</th><th>Produk</th><th>Target</th><th>IP</th><th>Exp</th><th>Aksi</th></tr></thead>
-                    <tbody id="list-services" class="divide-y divide-gray-800"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="view-products" class="section-view">
-            <div class="flex justify-between mb-4">
-                <h2 class="text-lg font-bold text-white">Produk Manual</h2>
-                <button onclick="openProductModal()" class="bg-blue-600 px-3 py-1.5 rounded-lg text-xs text-white font-bold">+ Tambah</button>
-            </div>
-            <div id="grid-products" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
-        </div>
-
-        <div id="view-users" class="section-view">
-            <h2 class="text-lg font-bold text-white mb-4">Data User</h2>
-            <div class="glass-panel p-0 overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-[#18181b]"><tr><th class="pl-4">User</th><th>Saldo</th><th>Role</th><th class="text-center">Edit</th></tr></thead>
-                    <tbody id="list-users" class="divide-y divide-gray-800"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="view-orders" class="section-view">
-            <h2 class="text-lg font-bold text-white mb-4">Riwayat Order</h2>
-            <div class="glass-panel p-0 overflow-x-auto"><table class="w-full"><thead class="bg-[#18181b]"><tr><th class="pl-4">Inv</th><th>User</th><th>Item</th><th class="text-right">Harga</th><th>Status</th></tr></thead><tbody id="list-orders" class="divide-y divide-gray-800"></tbody></table></div>
-        </div>
-        <div id="view-topup" class="section-view">
-            <h2 class="text-lg font-bold text-white mb-4">Riwayat Topup</h2>
-            <div class="glass-panel p-0 overflow-x-auto"><table class="w-full"><thead class="bg-[#18181b]"><tr><th class="pl-4">ID</th><th>User</th><th>Jumlah</th><th>Status</th></tr></thead><tbody id="list-topups" class="divide-y divide-gray-800"></tbody></table></div>
-        </div>
-        <div id="view-vouchers" class="section-view">
-            <h2 class="text-lg font-bold text-white mb-4">Voucher</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="glass-panel h-fit"><form onsubmit="createVoucher(event)"><input type="text" id="vCode" placeholder="KODE" class="uppercase mb-2 font-bold" required><input type="number" id="vPercent" placeholder="DISKON %" required><button type="submit" class="w-full bg-purple-600 text-white font-bold py-2 rounded-lg text-xs mt-2">BUAT</button></form></div>
-                <div class="col-span-2 grid grid-cols-2 gap-3" id="list-vouchers"></div>
-            </div>
-        </div>
-        <div id="view-nokos" class="section-view">
-            <h2 class="text-lg font-bold text-white mb-4">Config Nokos</h2>
-            <div class="glass-panel max-w-lg"><form onsubmit="saveNokosConfig(event)"><input type="text" id="nokosKey" placeholder="API Key RumahOTP" class="font-mono mb-3"><input type="number" id="nokosMargin" placeholder="Margin %" class="mb-3"><button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg text-xs font-bold">Simpan</button></form></div>
-        </div>
-
-    </div>
-
-    <div id="modal-product" class="modal" onclick="if(event.target===this)this.classList.remove('active')">
-        <div class="modal-content p-5">
-            <h3 class="text-lg font-bold text-white mb-4" id="modal-title-prod">Tambah Produk</h3>
-            <form onsubmit="saveProduct(event)" class="space-y-3">
-                <input type="hidden" id="prodId"> <div>
-                    <label class="text-[10px] text-gray-500 uppercase font-bold">Nama Produk</label>
-                    <input type="text" id="pName" placeholder="Contoh: Bot Premium 30 Hari" required>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="text-[10px] text-gray-500 uppercase font-bold">Kategori</label>
-                        <input type="text" id="pCat" placeholder="Bot/Nokos/Dll" required>
-                    </div>
-                    <div>
-                        <label class="text-[10px] text-gray-500 uppercase font-bold">Harga</label>
-                        <input type="number" id="pPrice" placeholder="15000" required>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="text-[10px] text-gray-500 uppercase font-bold">Status</label>
-                        <select id="pStatus" class="bg-[#09090b] border border-[#27272a] rounded-lg text-white text-xs p-2 w-full">
-                            <option value="true">✅ Tersedia</option>
-                            <option value="false">❌ Habis</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-[10px] text-gray-500 uppercase font-bold">Tipe Order</label>
-                        <select id="pMode" class="bg-[#09090b] border border-[#27272a] rounded-lg text-white text-xs p-2 w-full">
-                            <option value="manual">Manual (WA)</option>
-                            <option value="auto">Otomatis</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="text-[10px] text-gray-500 uppercase font-bold">Deskripsi</label>
-                    <textarea id="pDesc" rows="2" placeholder="Keterangan singkat..." class="w-full"></textarea>
-                </div>
-                
-                <div>
-                    <label class="text-[10px] text-gray-500 uppercase font-bold">Gambar (URL)</label>
-                    <input type="text" id="pImg" placeholder="https://...">
-                </div>
-
-                <button type="submit" class="w-full bg-blue-600 py-2.5 rounded-lg text-white font-bold text-xs mt-2 hover:bg-blue-500 transition">SIMPAN DATA</button>
-            </form>
         </div>
     </div>
 
-    <div id="modal-saldo" class="modal" onclick="if(event.target===this)this.classList.remove('active')">
-        <div class="modal-content p-5">
-            <h3 class="text-lg font-bold text-white mb-2">Edit Saldo</h3>
-            <p id="edit-saldo-username" class="text-xs text-gray-400 mb-4 font-mono">User: ...</p>
-            <form onsubmit="submitSaldo(event)">
-                <input type="hidden" id="edit-saldo-user">
-                <div class="flex gap-2 mb-3">
-                    <select id="saldo-action" class="w-1/3 text-xs"><option value="add">Tambah (+)</option><option value="sub">Kurang (-)</option></select>
-                    <input type="number" id="saldo-amount" placeholder="Nominal" required>
-                </div>
-                <button type="submit" class="w-full bg-purple-600 py-2 rounded-lg text-white font-bold text-xs">PROSES</button>
-            </form>
-        </div>
-    </div>
+    <div id="proofModal" class="modal" onclick="this.classList.remove('active')"><img id="proofImg" src="" class="max-w-[90%] max-h-[90vh] rounded-xl border border-white"></div>
 
     <script>
-        function nav(id) {
+        // AUTH CHECK (Session Based on Login.html)
+        if (!localStorage.getItem('user_session')) window.location.href = '/login.html'; // Basic check
+
+        function logout() { localStorage.removeItem('user_session'); window.location.href = '/login.html'; }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); document.getElementById('overlay').classList.toggle('active'); }
+
+        function showSection(id) {
             document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            document.getElementById(`view-${id}`).classList.add('active');
-            event.currentTarget.classList.add('active');
+            document.getElementById(`sec-${id}`).classList.add('active'); event.currentTarget.classList.add('active');
+            if(window.innerWidth <= 768) toggleSidebar();
             
-            if(id==='dashboard') loadDashboard();
-            if(id==='actives') fetchServices();
-            if(id==='products') loadProducts();
-            if(id==='users') loadUsers();
-            if(id==='orders') fetchOrders();
-            if(id==='vouchers') fetchVouchers();
-            if(id==='topup') fetchTopups();
-            
-            if(window.innerWidth < 768) toggleSidebar();
+            // LOAD DATA ACTIONS
+            if(id === 'orders') fetchOrders(); 
+            if(id === 'topups') fetchTopups(); 
+            if(id === 'actives') fetchServices(); 
+            if(id === 'products') { fetchCategories(); fetchProducts(); } 
+            if(id === 'categories') fetchCategories(); 
+            if(id === 'vouchers') fetchVouchers(); 
+            if(id === 'settings') { fetchSystemStatus(); loadNokosStats(); } // <-- TAMBAHAN: Load Stats
+            if(id === 'dashboard') loadDashboardStats();
         }
 
-        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); }
-        function logout() { localStorage.removeItem('user_session'); window.location.href='/login.html'; }
+        async function loadDashboardStats() { try { const [o, t, s] = await Promise.all([fetch('/api/admin/orders').then(r=>r.json()), fetch('/api/admin/topups').then(r=>r.json()), fetch('/api/admin/all-services').then(r=>r.json())]); document.getElementById('stat-orders').innerText = o.length; document.getElementById('stat-topups').innerText = t.filter(x=>x.status==='pending').length; document.getElementById('stat-services').innerText = s.length; } catch(e){} }
 
-        // DASHBOARD
-        async function loadDashboard() {
-            try {
-                const [o, u, s, t] = await Promise.all([
-                    fetch('/api/admin/orders').then(r=>r.json()),
-                    fetch('/api/admin/users').then(r=>r.json()),
-                    fetch('/api/admin/all-services').then(r=>r.json()),
-                    fetch('/api/admin/topups').then(r=>r.json())
-                ]);
-                document.getElementById('stat-trx').innerText = o.length;
-                document.getElementById('stat-users').innerText = u.length;
-                document.getElementById('stat-active').innerText = s.length;
-                const total = t.filter(x=>x.status==='success').reduce((a,b)=>a+b.amount,0);
-                document.getElementById('stat-depo').innerText = `Rp ${total.toLocaleString()}`;
-            } catch(e){}
-        }
-
-        // PRODUCTS (FIXED ADD & EDIT)
-        async function loadProducts() {
-            const d = await (await fetch('/api/products')).json();
-            document.getElementById('grid-products').innerHTML = d.map(p => `
-                <div class="glass-panel p-3 flex gap-3 relative group hover:border-blue-500 transition">
-                    <img src="${p.imageUrl||'https://via.placeholder.com/50'}" class="w-10 h-10 rounded bg-gray-800 object-cover">
-                    <div class="overflow-hidden flex-1">
-                        <h4 class="font-bold text-white text-xs truncate">${p.name}</h4>
-                        <div class="flex justify-between items-center mt-1">
-                            <p class="text-[10px] text-gray-400 font-mono">Rp ${p.price.toLocaleString()}</p>
-                            ${p.isAvailable ? '<span class="text-[9px] text-green-400 font-bold">READY</span>' : '<span class="text-[9px] text-red-500 font-bold">HABIS</span>'}
-                        </div>
-                    </div>
-                    <div class="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition bg-[#121214] p-1 rounded">
-                        <button onclick='editProduct(${JSON.stringify(p)})' class="text-blue-400 hover:text-white p-1"><i class="fa-solid fa-pen text-xs"></i></button>
-                        <button onclick="delProd('${p._id}')" class="text-red-500 hover:text-white p-1"><i class="fa-solid fa-trash text-xs"></i></button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function openProductModal() {
-            document.getElementById('modal-title-prod').innerText = "Tambah Produk";
-            document.getElementById('prodId').value = ""; // Kosongkan ID untuk mode tambah
-            document.getElementById('pName').value = "";
-            document.getElementById('pCat').value = "";
-            document.getElementById('pPrice').value = "";
-            document.getElementById('pDesc').value = "";
-            document.getElementById('pImg').value = "";
-            document.getElementById('pStatus').value = "true";
-            document.getElementById('modal-product').classList.add('active');
-        }
-
-        function editProduct(p) {
-            document.getElementById('modal-title-prod').innerText = "Edit Produk";
-            document.getElementById('prodId').value = p._id; // Set ID
-            document.getElementById('pName').value = p.name;
-            document.getElementById('pCat').value = p.category;
-            document.getElementById('pPrice').value = p.price;
-            document.getElementById('pDesc').value = p.desc || "";
-            document.getElementById('pImg').value = p.imageUrl || "";
-            document.getElementById('pStatus').value = p.isAvailable ? "true" : "false";
-            document.getElementById('pMode').value = p.orderMode || "manual";
-            document.getElementById('modal-product').classList.add('active');
-        }
-
-        async function saveProduct(e) {
-            e.preventDefault();
-            const id = document.getElementById('prodId').value;
-            const data = {
-                name: document.getElementById('pName').value,
-                category: document.getElementById('pCat').value,
-                price: parseInt(document.getElementById('pPrice').value),
-                desc: document.getElementById('pDesc').value,
-                imageUrl: document.getElementById('pImg').value,
-                isAvailable: document.getElementById('pStatus').value === "true",
-                orderMode: document.getElementById('pMode').value
-            };
-
-            const url = id ? `/api/products/${id}` : '/api/products';
-            const method = id ? 'PUT' : 'POST';
-
-            await fetch(url, { method: method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
-            document.getElementById('modal-product').classList.remove('active');
-            loadProducts();
-        }
+        async function fetchOrders() { const d=await (await fetch('/api/admin/orders')).json(); document.getElementById('list-orders').innerHTML=d.map(o=>`<tr class="border-b border-gray-800"><td class="p-3 font-mono text-purple-400 text-xs">${o.invoiceId}</td><td class="p-3 font-bold text-sm">${o.username}</td><td class="p-3 text-xs">${o.productName}</td><td class="p-3 text-xs font-mono text-gray-400 whitespace-pre-wrap">${o.formData||'-'}</td></tr>`).join(''); }
         
-        async function delProd(id) { if(confirm("Hapus?")) { await fetch(`/api/products/${id}`,{method:'DELETE'}); loadProducts(); } }
+        async function fetchTopups() { 
+            const d = await (await fetch('/api/admin/topups')).json(); 
+            document.getElementById('list-topups').innerHTML = d.map(t => {
+                let statusBadge = t.status === 'success' ? '<span class="bg-green-900 text-green-400 px-2 py-1 rounded text-xs font-bold">SUKSES</span>' : t.status === 'pending' ? '<span class="bg-yellow-900 text-yellow-500 px-2 py-1 rounded text-xs font-bold">PENDING</span>' : '<span class="bg-red-900 text-red-500 px-2 py-1 rounded text-xs font-bold">EXPIRED</span>';
+                return `<tr class="border-b border-gray-800 hover:bg-white/5"><td class="p-3 font-mono text-xs text-purple-400">${t.orderId || '-'}</td><td class="p-3 font-bold text-sm">${t.username}</td><td class="p-3 text-white font-mono">Rp ${t.amount.toLocaleString()}</td><td class="p-3">${statusBadge}</td></tr>`;
+            }).join(''); 
+        } 
+        function viewProof(img){ document.getElementById('proofImg').src=img; document.getElementById('proofModal').classList.add('active'); }
+        async function actionTopup(id, action) { if(!confirm(action)) return; await fetch('/api/admin/topup/action', { method: 'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id, action}) }); fetchTopups(); }
 
-        // USERS & SALDO
-        async function loadUsers() {
+        async function fetchServices() { const d=await (await fetch('/api/admin/all-services')).json(); document.getElementById('list-services').innerHTML=d.map(s=>`<tr class="border-b border-gray-800"><td class="p-3 font-bold">${s.username}</td><td class="p-3 text-xs">${s.productName}<br>${s.targetNumber}</td><td class="p-3 font-mono text-blue-400 text-xs">${s.serverIp}</td><td class="p-3 font-mono text-xs ${new Date(s.expiredDate)<new Date()?'text-red-500':'text-green-400'}">${new Date(s.expiredDate).toLocaleDateString()}</td><td class="p-3"><button onclick="deleteService('${s._id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button></td></tr>`).join(''); }
+        async function addActiveService(e) { e.preventDefault(); await fetch('/api/admin/services', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:document.getElementById('svcUser').value, productName:document.getElementById('svcProd').value, targetNumber:document.getElementById('svcTarget').value, serverIp:document.getElementById('svcIp').value, days:document.getElementById('svcDays').value})}); fetchServices(); e.target.reset(); }
+        async function deleteService(id) { if(confirm("Hapus?")) { await fetch(`/api/admin/services/${id}`, {method:'DELETE'}); fetchServices(); } }
+
+        let categories=[]; async function fetchCategories(){ categories=await (await fetch('/api/categories')).json(); document.getElementById('categoryList').innerHTML=categories.map(c=>`<div class="flex justify-between bg-gray-800 p-3 rounded items-center"><span class="font-bold text-sm">${c.name}</span><button onclick="delCat('${c._id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button></div>`).join(''); document.getElementById('prodCategory').innerHTML='<option value="">Pilih...</option>'+categories.map(c=>`<option value="${c.name}">${c.name}</option>`).join(''); }
+        async function addCategory(e){ e.preventDefault(); await fetch('/api/categories',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:document.getElementById('catName').value, imageUrl:document.getElementById('catImage').value})}); e.target.reset(); fetchCategories(); }
+        async function delCat(id){ await fetch(`/api/categories/${id}`,{method:'DELETE'}); fetchCategories(); }
+
+        async function fetchProducts() { const d=await (await fetch('/api/products')).json(); document.getElementById('productList').innerHTML=d.map(p=>`<div class="glass-panel p-3 flex gap-3 relative group border hover:border-purple-500 transition"><img src="${p.imageUrl||'https://via.placeholder.com/100'}" class="w-16 h-16 object-cover rounded bg-gray-900"><div class="flex-1"><h4 class="font-bold text-white text-sm">${p.name}</h4><p class="text-xs text-gray-400">Rp ${p.price.toLocaleString()}</p></div><div class="absolute bottom-2 right-2 flex gap-2"><button onclick='editProduct(${JSON.stringify(p)})' class="text-blue-500 text-xs">Edit</button><button onclick="delProd('${p._id}')" class="text-red-500 text-xs">Hapus</button></div></div>`).join(''); }
+        async function saveProduct(e){ e.preventDefault(); const id=document.getElementById('editId').value; const d={category:document.getElementById('prodCategory').value, isAvailable:document.getElementById('prodAvailable').checked, name:document.getElementById('prodName').value, price:document.getElementById('prodPrice').value, imageUrl:document.getElementById('prodImage').value, desc:document.getElementById('prodDesc').value, orderMode:document.getElementById('prodMode').value, formFields:document.getElementById('prodFields').value}; await fetch(id?`/api/products/${id}`:'/api/products',{method:id?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}); resetProductForm(); fetchProducts(); }
+        function editProduct(p){ document.getElementById('editId').value=p._id; document.getElementById('prodCategory').value=p.category; document.getElementById('prodName').value=p.name; document.getElementById('prodPrice').value=p.price; document.getElementById('prodImage').value=p.imageUrl; document.getElementById('prodDesc').value=p.desc; document.getElementById('prodMode').value=p.orderMode||'manual'; document.getElementById('prodFields').value=p.formFields||''; document.getElementById('btnSaveProd').innerText='Update'; }
+        function resetProductForm(){ document.getElementById('prodForm').reset(); document.getElementById('editId').value=''; document.getElementById('btnSaveProd').innerText='Simpan'; }
+        async function delProd(id){ if(confirm('Hapus?')) await fetch(`/api/products/${id}`,{method:'DELETE'}); fetchProducts(); }
+
+        // VOUCHER %
+        async function fetchVouchers() { const d=await (await fetch('/api/admin/vouchers')).json(); document.getElementById('list-vouchers').innerHTML=d.map(v=>`<tr class="border-b border-gray-800"><td class="p-3 font-mono">${v.code}</td><td class="p-3 text-green-400 font-bold">${v.percent}%</td><td class="p-3"><button onclick="delVoucher('${v._id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button></td></tr>`).join(''); }
+        async function createVoucher(e){ e.preventDefault(); await fetch('/api/admin/voucher',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:document.getElementById('vCode').value.toUpperCase(), percent:document.getElementById('vPercent').value})}); e.target.reset(); fetchVouchers(); }
+        async function delVoucher(id){ await fetch(`/api/admin/voucher/${id}`,{method:'DELETE'}); fetchVouchers(); }
+
+        async function fetchSystemStatus() { const d=await (await fetch('/api/system/status')).json(); document.getElementById('status-display-vps').innerHTML=d.vpsActive?`<span class="text-green-400 font-bold">ONLINE</span> sejak ${new Date(d.vpsStartTime).toLocaleTimeString()}`:`<span class="text-red-500 font-bold">OFFLINE</span>`; document.getElementById('status-display-bot').innerHTML=d.botActive?`<span class="text-blue-400 font-bold">ONLINE</span> sejak ${new Date(d.botStartTime).toLocaleTimeString()}`:`<span class="text-red-500 font-bold">OFFLINE</span>`; }
+        async function toggleSystem(type, action) { if(confirm("Yakin?")) { await fetch('/api/admin/system/toggle',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,action})}); fetchSystemStatus(); } }
+        async function saveNokosConfig(e) { e.preventDefault(); const apiKey = document.getElementById('nokosKey').value; const margin = document.getElementById('nokosMargin').value; if(!confirm("Simpan?")) return; try { const res = await fetch('/api/nokos/admin/config', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey, margin})}); if(res.ok) alert("Berhasil"); } catch(e){alert("Error");} }
+
+        // --- NEW: NOKOS STATS ---
+        async function loadNokosStats() {
             try {
-                const u = await (await fetch('/api/admin/users')).json();
-                document.getElementById('list-users').innerHTML = u.map(x => `
-                    <tr class="hover:bg-white/5 border-b border-gray-800/50">
-                        <td class="pl-4 py-3 font-bold text-white text-xs">${x.username}</td>
-                        <td class="py-3 font-mono text-green-400 text-xs">Rp ${x.balance.toLocaleString()}</td>
-                        <td class="py-3"><span class="bg-blue-900/30 text-blue-300 px-2 py-0.5 rounded text-[9px] font-bold uppercase">${x.role}</span></td>
-                        <td class="py-3 text-center"><button onclick="openSaldo('${x.username}')" class="text-purple-400 border border-purple-500/30 px-2 py-1 rounded text-[10px] font-bold hover:bg-purple-500 hover:text-white transition">EDIT</button></td>
-                    </tr>
-                `).join('');
-            } catch(e){}
-        }
-        function openSaldo(u) { document.getElementById('edit-saldo-username').innerText=`User: ${u}`; document.getElementById('edit-saldo-user').value=u; document.getElementById('modal-saldo').classList.add('active'); }
-        async function submitSaldo(e) {
-            e.preventDefault();
-            const body = { username: document.getElementById('edit-saldo-user').value, action: document.getElementById('saldo-action').value, amount: document.getElementById('saldo-amount').value };
-            await fetch('/api/admin/user/balance', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
-            document.getElementById('modal-saldo').classList.remove('active'); e.target.reset(); loadUsers();
+                document.getElementById('stat-nokos-gross').innerText = "...";
+                const res = await fetch('/api/nokos/admin/stats');
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('stat-nokos-count').innerText = data.total_trx;
+                    document.getElementById('stat-nokos-gross').innerText = `Rp ${data.omset.toLocaleString()}`;
+                    document.getElementById('stat-nokos-net').innerText = `Rp ${data.profit.toLocaleString()}`;
+                    document.getElementById('stat-nokos-margin').innerText = data.margin_used;
+                    document.getElementById('nokosMargin').value = data.margin_used;
+                }
+            } catch (e) { console.error("Gagal load stats"); }
         }
 
-        // SERVICES (BOT)
-        async function fetchServices() {
-            try { const d = await (await fetch('/api/admin/all-services')).json(); document.getElementById('list-services').innerHTML = d.map(s => `<tr class="hover:bg-white/5 border-b border-gray-800/50"><td class="pl-4 py-3 font-bold text-white">${s.username}</td><td class="py-3 text-xs text-gray-400">${s.productName}</td><td class="py-3 text-xs font-mono">${s.targetNumber}</td><td class="py-3 text-xs text-blue-400">${s.serverIp}</td><td class="py-3 text-xs ${new Date(s.expiredDate)<new Date()?'text-red-500':'text-green-400'}">${new Date(s.expiredDate).toLocaleDateString()}</td><td class="py-3"><button onclick="delService('${s._id}')" class="text-red-500 hover:bg-red-500/10 p-1.5 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`).join(''); } catch(e){}
-        }
-        async function addActiveService(e) { e.preventDefault(); const body = { username: document.getElementById('svcUser').value, productName: document.getElementById('svcProd').value, targetNumber: document.getElementById('svcTarget').value, serverIp: document.getElementById('svcIp').value, days: document.getElementById('svcDays').value }; await fetch('/api/admin/services', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)}); document.getElementById('form-add-service').classList.add('hidden'); e.target.reset(); fetchServices(); }
-        async function delService(id) { if(confirm("Hapus?")) { await fetch(`/api/admin/services/${id}`, {method:'DELETE'}); fetchServices(); } }
-
-        // ORDERS
-        async function fetchOrders() { const d = await (await fetch('/api/admin/orders')).json(); document.getElementById('list-orders').innerHTML = d.map(o => `<tr class="hover:bg-white/5 border-b border-gray-800/50 group"><td class="pl-4 py-3 font-mono text-[10px] text-purple-400 group-hover:text-purple-300 transition">${o.invoiceId}</td><td class="py-3 font-bold text-white text-xs">${o.username}</td><td class="py-3 text-[10px] text-gray-400">${o.productName.substring(0,25)}</td><td class="py-3 text-right font-mono text-xs text-white">Rp ${o.amount.toLocaleString()}</td><td class="py-3"><span class="bg-green-900/30 text-green-400 border border-green-500/20 px-2 py-0.5 rounded text-[9px] font-bold">SUKSES</span></td></tr>`).join(''); }
-        
-        // TOPUPS
-        async function fetchTopups() { const d = await (await fetch('/api/admin/topups')).json(); document.getElementById('list-topups').innerHTML = d.map(t => `<tr class="border-b border-gray-800 hover:bg-white/5"><td class="pl-4 py-3 font-mono text-xs text-purple-400">${t.orderId||'-'}</td><td class="py-3 font-bold text-sm">${t.username}</td><td class="py-3 text-white font-mono text-xs">Rp ${t.amount.toLocaleString()}</td><td class="py-3"><span class="${t.status==='success'?'text-green-400 bg-green-900/20':'text-yellow-500 bg-yellow-900/20'} px-2 py-1 rounded text-[9px] font-bold uppercase">${t.status}</span></td></tr>`).join(''); }
-
-        // VOUCHER & NOKOS CONFIG
-        async function fetchVouchers() { const d = await (await fetch('/api/admin/vouchers')).json(); document.getElementById('list-vouchers').innerHTML = d.map(v => `<div class="voucher-card p-3 flex justify-between items-center rounded-lg group hover:border-purple-500 transition"><div><div class="text-lg font-mono font-bold text-white tracking-wider">${v.code}</div><div class="text-[10px] text-green-400 font-bold bg-green-900/20 px-2 py-0.5 rounded w-fit mt-1">DISKON ${v.percent}%</div></div><button onclick="delVoucher('${v._id}')" class="w-8 h-8 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition"><i class="fa-solid fa-trash text-xs"></i></button></div>`).join(''); }
-        async function createVoucher(e) { e.preventDefault(); await fetch('/api/admin/voucher', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({code:document.getElementById('vCode').value.toUpperCase(), percent:document.getElementById('vPercent').value})}); e.target.reset(); fetchVouchers(); }
-        async function delVoucher(id) { await fetch(`/api/admin/voucher/${id}`, {method:'DELETE'}); fetchVouchers(); }
-        async function saveNokosConfig(e) { e.preventDefault(); const apiKey = document.getElementById('nokosKey').value; const margin = document.getElementById('nokosMargin').value; try { const res = await fetch('/api/nokos/admin/config', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey, marginPercent: margin})}); if(res.ok) alert("Disimpan!"); } catch(e){alert("Gagal");} }
-
-        // INIT
-        loadDashboard();
+        loadDashboardStats();
     </script>
 </body>
 </html>
