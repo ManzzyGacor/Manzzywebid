@@ -368,4 +368,81 @@ app.post('/api/admin/user/balance', async (req, res) => {
     }
 });
 
+// ==========================================
+// [WAJIB] ADMIN DASHBOARD ROUTES (TAMBAHAN)
+// ==========================================
+
+// 1. AMBIL SEMUA ORDER (Manual Produk)
+app.get('/api/admin/orders', async (req, res) => {
+    try {
+        await connectDB();
+        // Ambil 100 transaksi terakhir dari schema Transaction
+        const orders = await Transaction.find().sort({ createdAt: -1 }).limit(100);
+        res.json(orders);
+    } catch (e) {
+        console.error("Gagal load orders admin:", e);
+        res.status(500).json([]);
+    }
+});
+
+// 2. KELOLA VOUCHER (List, Create, Delete)
+app.get('/api/admin/vouchers', async (req, res) => {
+    try {
+        await connectDB();
+        const vouchers = await Voucher.find().sort({ createdAt: -1 });
+        res.json(vouchers);
+    } catch (e) { res.status(500).json([]); }
+});
+
+app.post('/api/admin/voucher', async (req, res) => {
+    try {
+        await connectDB();
+        // Validasi duplikat
+        const exist = await Voucher.findOne({ code: req.body.code });
+        if(exist) return res.status(400).json({ success: false, msg: "Kode sudah ada" });
+        
+        await new Voucher(req.body).save();
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ success: false }); }
+});
+
+app.delete('/api/admin/voucher/:id', async (req, res) => {
+    try {
+        await connectDB();
+        await Voucher.findByIdAndDelete(req.params.id);
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ success: false }); }
+});
+
+// 3. KELOLA BOT AKTIF (Active Services)
+app.get('/api/admin/all-services', async (req, res) => {
+    try {
+        await connectDB();
+        const services = await ActiveService.find().sort({ expiredDate: 1 });
+        res.json(services);
+    } catch (e) { res.status(500).json([]); }
+});
+
+app.post('/api/admin/services', async (req, res) => {
+    try {
+        await connectDB();
+        const { username, productName, targetNumber, serverIp, days } = req.body;
+        const expiredDate = new Date(Date.now() + (parseInt(days) * 24 * 60 * 60 * 1000));
+        
+        await new ActiveService({ 
+            username, productName, targetNumber, serverIp, expiredDate 
+        }).save();
+        
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ success: false }); }
+});
+
+app.delete('/api/admin/services/:id', async (req, res) => {
+    try {
+        await connectDB();
+        await ActiveService.findByIdAndDelete(req.params.id);
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ success: false }); }
+});
+
 module.exports = app;
