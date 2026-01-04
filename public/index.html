@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manzzy ID Official - Premium Bot Services</title>
-    <meta name="description" content="Layanan Hosting Bot WhatsApp Terbaik.">
+    <title>Manzzy ID Official - Premium Services</title>
+    <meta name="description" content="Layanan Nokos Terbaik.">
     <meta name="keywords" content="hosting bot wa, nokos wa, vps murah">
     <meta property="og:title" content="Manzzy ID - Premium Services">
     <meta property="og:image" content="https://raw.githubusercontent.com/ManzzyGacor/Urlmanzzy/main/file_1766890211382_23.jpg">
@@ -29,6 +29,9 @@
         .active-card { border-color: #22c55e !important; background: rgba(34, 197, 94, 0.1) !important; color: white !important; }
         .animate-fade-in-up { animation: fadeInUp 0.3s ease-out forwards; }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* CSS Tambahan untuk Ulasan */
+        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
     </style>
 </head>
 <body>
@@ -37,101 +40,20 @@
     
     <div id="toast-container" class="fixed top-24 right-5 z-[100] flex flex-col gap-3 pointer-events-none"></div>
 
-    <div id="modal-overlay" class="modal-overlay" onclick="closeModal(event)">
-        <div class="modal-box" onclick="event.stopPropagation()">
-            <div class="relative">
-                <button onclick="closeModalDirect()" class="absolute -top-2 -right-2 text-gray-400 hover:text-white bg-gray-800 rounded-full w-8 h-8 flex items-center justify-center border border-gray-600 z-10"><i class="fa-solid fa-xmark"></i></button>
-                <div id="modal-content-product">
-                    <img id="modal-img" src="" class="w-full h-48 object-cover rounded-xl mb-5 border border-gray-800">
-                    <div class="flex justify-between items-start mb-2"><h2 id="modal-title" class="text-2xl font-bold text-white leading-tight"></h2><span id="modal-price" class="text-purple-400 font-mono font-bold text-lg bg-purple-900/30 px-3 py-1 rounded-lg border border-purple-500/30"></span></div>
-                    <div class="h-px bg-gray-800 w-full my-4"></div><h4 class="text-xs text-gray-500 font-bold uppercase mb-2">Deskripsi Layanan</h4><p id="modal-desc" class="text-gray-300 text-sm leading-relaxed mb-6 whitespace-pre-wrap font-sans"></p>
-                    <form id="orderForm" onsubmit="processOrder(event)" class="space-y-4 mb-4">
-                        <div id="dynamic-inputs" class="space-y-3"></div>
-                        
-                        <div class="flex gap-2 items-end pt-2">
-                            <div class="flex-1"><label class="text-[10px] text-gray-500 font-bold block mb-1">KODE PROMO (Opsional)</label><input type="text" id="voucherInput" class="w-full bg-black/50 border border-gray-700 rounded-lg p-3 text-white text-sm uppercase font-mono tracking-wider focus:border-purple-500 outline-none" placeholder="Masukan Kode"></div>
-                            <button type="button" onclick="checkVoucher()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-600 rounded-lg px-4 py-3 text-xs font-bold h-[46px] transition">Cek</button>
-                        </div>
-                        <div id="voucher-msg" class="text-[10px] hidden mb-2"></div>
-                        <div class="bg-gray-900 border border-gray-800 p-3 rounded-lg flex justify-between items-center text-sm mt-2"><span class="text-gray-400">Total Bayar:</span><div class="text-right"><span id="price-original" class="hidden text-xs text-gray-500 line-through mr-1"></span><span id="price-final" class="font-bold font-mono text-white">Loading...</span></div></div>
-                        <div class="bg-gray-900 border border-gray-800 p-3 rounded-lg flex justify-between items-center text-sm"><span class="text-gray-400">Saldo Kamu:</span><span id="user-balance-display" class="font-bold font-mono">Loading...</span></div>
-                        <button type="submit" id="btn-buy" class="w-full py-4 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold flex items-center justify-center gap-3 transition shadow-lg shadow-purple-500/20"><i class="fa-solid fa-cart-shopping text-lg"></i> Bayar Sekarang</button>
-                    </form>
-                </div>
-                <div id="modal-content-receipt" class="hidden text-center py-4">
-                    <div class="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/30"><i class="fa-solid fa-check text-4xl text-green-500"></i></div>
-                    <h2 class="text-2xl font-bold text-white mb-2">Order Berhasil!</h2><p class="text-gray-400 text-sm mb-6">Terima kasih telah berlangganan.</p>
-                    <div class="bg-gray-900 p-5 rounded-xl text-left space-y-3 text-sm mb-6 font-mono border border-gray-800">
-                        <div class="flex justify-between border-b border-gray-800 pb-2"><span class="text-gray-500">Invoice ID</span><span id="rec-inv" class="text-purple-400"></span></div>
-                        <div class="flex justify-between border-b border-gray-800 pb-2"><span class="text-gray-500">Layanan</span><span id="rec-item" class="text-white font-bold"></span></div>
-                        <div class="flex justify-between"><span class="text-gray-500">Status</span><span id="rec-mode" class="text-green-400 uppercase font-bold"></span></div>
-                    </div>
-                    <button id="btn-continue" onclick="closeModalDirect()" class="w-full py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white font-bold border border-gray-700 transition">Tutup</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <button onclick="scrollToTop()" id="btn-scroll" class="scroll-top-btn"><i class="fa-solid fa-arrow-up"></i></button>
-
-<div id="modal-invoice" class="fixed inset-0 bg-black/80 z-[200] hidden items-center justify-center backdrop-blur-sm px-4" onclick="closeInvoice()">
-    <div class="bg-[#18181b] border border-gray-700 w-full max-w-md rounded-2xl overflow-hidden relative shadow-2xl" onclick="event.stopPropagation()">
-        
-        <div class="bg-gradient-to-r from-purple-900 to-blue-900 p-6 text-center relative overflow-hidden">
-            <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-            <h2 class="text-2xl font-bold text-white tracking-widest relative z-10">INVOICE</h2>
-            <p id="inv-status" class="text-xs font-mono font-bold mt-2 bg-black/30 inline-block px-3 py-1 rounded-full relative z-10 text-white">SUCCESS</p>
-        </div>
-
-        <div class="p-6 space-y-4">
-            <div class="flex justify-between items-center border-b border-dashed border-gray-700 pb-4">
-                <span class="text-gray-400 text-xs">No. Transaksi</span>
-                <span id="inv-id" class="text-white font-mono text-sm font-bold">INV-XXXXX</span>
-            </div>
-            
-            <div class="flex justify-between items-center border-b border-dashed border-gray-700 pb-4">
-                <span class="text-gray-400 text-xs">Tanggal</span>
-                <span id="inv-date" class="text-white text-sm">01/01/2025 12:00</span>
-            </div>
-
-            <div class="py-2">
-                <span class="text-gray-400 text-xs block mb-1">Produk / Layanan</span>
-                <h3 id="inv-product" class="text-white font-bold text-lg leading-tight">Nokos WhatsApp</h3>
-                <p id="inv-desc" class="text-gray-500 text-xs mt-1">Negara: Indonesia</p>
-            </div>
-
-            <div id="inv-data-box" class="bg-black/50 border border-gray-700 rounded-xl p-4 relative hidden">
-                <span class="text-[10px] text-gray-500 font-bold uppercase block mb-1">Data / SN / OTP</span>
-                <p id="inv-data-text" class="text-green-400 font-mono text-lg font-bold tracking-wide break-all">...</p>
-                <button onclick="copyInvoiceData()" class="absolute top-3 right-3 text-gray-400 hover:text-white"><i class="fa-regular fa-copy"></i></button>
-            </div>
-
-            <div class="flex justify-between items-center pt-2">
-                <span class="text-gray-400 text-sm">Total Bayar</span>
-                <span id="inv-price" class="text-purple-400 font-bold text-xl font-mono">Rp 0</span>
-            </div>
-        </div>
-
-        <div class="p-4 bg-[#101012] flex gap-3">
-            <button onclick="closeInvoice()" class="flex-1 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-xl font-bold text-sm transition">Tutup</button>
-            <button onclick="window.print()" class="flex-1 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-bold text-sm transition"><i class="fa-solid fa-print mr-2"></i> Print</button>
-        </div>
-    </div>
-</div>
-
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
     <aside id="sidebar-menu" class="sidebar-menu flex flex-col p-6 pt-10">
         <div class="flex items-center gap-3 mb-10 border-b border-gray-800 pb-6"><div class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-500/30"><i class="fa-solid fa-robot text-white text-lg"></i></div><div><h3 class="font-bold text-white text-lg leading-none">MANZZY<span class="text-purple-400">ID</span></h3><p id="user-status-sidebar" class="text-xs text-gray-500 font-mono mt-1">Guest Mode</p></div></div>
         <nav class="flex-1 space-y-2">
             <a href="#features" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-star w-6 text-center text-yellow-500"></i><span class="font-medium">Keunggulan</span></a>
-            <a href="#testimonials" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-comment-dots w-6 text-center text-pink-500"></i><span class="font-medium">Testimoni</span></a>
+            <a href="#testimonials" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-comments w-6 text-center text-pink-500"></i><span class="font-medium">Ulasan</span></a>
+            
             <div id="menu-topup" class="hidden"><a href="#" onclick="switchView('topup'); toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-wallet w-6 text-center text-green-500"></i><span class="font-medium">Top Up Saldo</span></a></div>
             <div id="menu-myservices" class="hidden"><a href="#" onclick="switchView('myservices'); toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-server w-6 text-center text-blue-500"></i><span class="font-medium">Layanan Saya</span></a></div>
             <div id="menu-history" class="hidden"><a href="#" onclick="switchView('history'); toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-clock-rotate-left w-6 text-center text-orange-500"></i><span class="font-medium">Riwayat Transaksi</span></a></div>
-<a href="/profile.html" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group">
-    <i class="fa-solid fa-id-card w-6 text-center text-pink-500"></i>
-    <span class="font-medium">Profil Saya</span>
-</a>           
+            <a href="/profile.html" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group">
+                <i class="fa-solid fa-id-card w-6 text-center text-pink-500"></i>
+                <span class="font-medium">Profil Saya</span>
+            </a>           
             <a href="#faq" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-circle-question w-6 text-center text-blue-500"></i><span class="font-medium">FAQ</span></a>
             <div class="h-px bg-gray-800 my-4"></div>
             <div id="auth-menu"><a href="/login_user.html" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-user w-6 text-center text-purple-500"></i><span class="font-medium">Login Member</span></a></div>
@@ -140,7 +62,7 @@
         <div class="mt-auto pt-6 border-t border-gray-800 text-center"><p class="text-[10px] text-gray-600 font-mono">© Manzzy ID Official</p></div>
     </aside>
 
-<nav class="fixed top-0 w-full z-50 backdrop-blur-md bg-black/60 border-b border-white/5">
+    <nav class="fixed top-0 w-full z-50 backdrop-blur-md bg-black/60 border-b border-white/5">
         <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
             <div class="flex items-center gap-4">
                 <button onclick="toggleSidebar()" class="text-gray-300 hover:text-white transition p-2 hover:bg-white/10 rounded-lg">
@@ -151,6 +73,13 @@
                     <h2 class="text-lg font-bold tracking-widest text-white">MANZZY<span class="text-purple-400">ID</span></h2>
                 </div>
             </div>
+            
+            <div class="hidden md:flex gap-6 text-sm font-bold text-gray-400">
+                <a href="#view-landing" onclick="switchView('landing')" class="hover:text-white transition">Beranda</a>
+                <a href="manzzyid.html" class="hover:text-white transition">Game Store</a>
+                <a href="#testimonials" class="hover:text-white transition text-purple-400">Ulasan</a>
+            </div>
+
             <div id="header-balance" class="flex items-center gap-3 px-4 py-2 rounded-full bg-black/50 border border-gray-700 hover:border-purple-500 transition cursor-default">
                 <i class="fa-solid fa-wallet text-green-400 animate-pulse"></i>
                 <span class="text-sm text-white font-mono font-bold tracking-wide">Loading...</span>
@@ -161,110 +90,48 @@
     <div id="main-container" class="min-h-screen relative w-full max-w-6xl mx-auto px-6 pb-20 pt-28">
         <div class="absolute inset-0 bg-grid -z-10 h-screen fixed opacity-40"></div><div class="absolute top-0 right-0 w-96 h-96 bg-purple-600/10 rounded-full blur-[100px] -z-10 fixed pointer-events-none"></div>
 
-<section id="view-landing" class="view-section view-active relative w-full overflow-x-hidden pt-28 pb-10">
-    
-    <div class="text-center max-w-5xl mx-auto mt-4 mb-20 relative px-4">
-        
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-purple-600/20 rounded-full blur-[80px] md:blur-[120px] -z-10 animate-pulse pointer-events-none"></div>
+        <section id="view-landing" class="view-section view-active relative w-full overflow-x-hidden pt-28 pb-10">
+            
+            <div class="text-center max-w-5xl mx-auto mt-4 mb-20 relative px-4">
+                
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-purple-600/20 rounded-full blur-[80px] md:blur-[120px] -z-10 animate-pulse pointer-events-none"></div>
 
-        <div class="inline-block mb-4 px-4 py-1.5 rounded-full border border-purple-500/30 bg-purple-900/10 backdrop-blur-md">
-            <span class="text-[10px] font-bold text-purple-300 tracking-widest uppercase animate-pulse">🚀 #1 Digital Service Provider</span>
-        </div>
+                <div class="inline-block mb-4 px-4 py-1.5 rounded-full border border-purple-500/30 bg-purple-900/10 backdrop-blur-md">
+                    <span class="text-[10px] font-bold text-purple-300 tracking-widest uppercase animate-pulse">🚀 #1 Digital Service Provider</span>
+                </div>
 
-        <h1 class="text-4xl md:text-7xl font-black mb-6 leading-tight text-white drop-shadow-2xl">
-            MANZZY ID <br>
-            <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-blue-500 neon-text">OFFICIAL</span>
-        </h1>
-        
-        <p class="text-gray-400 text-sm md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed px-2">
-            Platform penyedia layanan <b>Sewa Bot WhatsApp</b> canggih & <b>Nomor Kosong (Nokos)</b> lintas negara. Solusi praktis untuk kebutuhan verifikasi dan manajemen komunitasmu.
-        </p>
-
-        <div class="flex flex-col md:flex-row items-center justify-center gap-5 px-4">
-            <button onclick="switchView('store')" class="group relative px-8 py-4 bg-white text-black font-bold rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.3)] transition hover:scale-105 w-full md:w-auto overflow-hidden">
-                <div class="absolute inset-0 bg-gradient-to-r from-purple-400 to-blue-400 opacity-0 group-hover:opacity-100 transition duration-500"></div>
-                <span class="relative z-10 group-hover:text-white transition flex items-center justify-center gap-2"><i class="fa-solid fa-robot"></i> Sewa Bot WA</span>
-            </button>
-            <button onclick="switchView('nokos')" class="px-8 py-4 bg-transparent border border-white/20 text-white font-bold rounded-xl hover:bg-white/5 transition hover:scale-105 w-full md:w-auto flex items-center justify-center gap-2">
-                <i class="fa-solid fa-sim-card text-green-400"></i> Beli Nokos
-            </button>
-        </div>
-    </div>
-    <div class="flex flex-col md:flex-row items-center justify-center gap-4 px-4">
-    
-    <button onclick="switchView('store')" class="...">...</button>
-    
-    <a href="manzzyid.html" class="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold rounded-xl shadow-[0_0_25px_rgba(6,182,212,0.6)] transition hover:scale-105 w-full md:w-auto flex items-center justify-center gap-2 border border-white/20 overflow-hidden">
-        <div class="absolute top-0 -left-[100%] w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent transform -skew-x-12 transition-all duration-1000 group-hover:left-[100%]"></div>
-        
-        <i class="fa-solid fa-gamepad text-xl"></i> 
-        <div class="text-left leading-tight">
-            <span class="block text-[10px] font-normal opacity-80">Murah & Otomatis</span>
-            <span class="block text-sm">TOP UP GAME&E-WALLET</span>
-        </div>
-    </a>
-
-    <button onclick="switchView('nokos')" class="...">...</button>
-    
-</div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto mb-24 px-4">
-        
-        <div class="glass-card p-8 rounded-3xl border border-white/5 relative overflow-hidden group hover:border-purple-500/50 transition duration-500">
-            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition transform group-hover:scale-110">
-                <i class="fa-brands fa-whatsapp text-9xl text-purple-500"></i>
-            </div>
-            <div class="w-14 h-14 bg-purple-600/20 rounded-2xl flex items-center justify-center text-purple-400 text-2xl mb-6 border border-purple-500/20 shadow-[0_0_15px_rgba(168,85,247,0.2)]">
-                <i class="fa-solid fa-server"></i>
-            </div>
-            <h3 class="text-2xl font-bold text-white mb-3">Sewa Bot WhatsApp</h3>
-            <p class="text-gray-400 text-sm mb-6 leading-relaxed">
-                Bot on 24 Jam di server premium. Fitur lengkap: Welcome, Goodbye, Anti-Link, Store Menu, AI Chat, dan Broadcast. Anti-delay dan mudah dikelola via panel.
-            </p>
-            <ul class="space-y-2 mb-6 text-sm text-gray-300">
-                <li class="flex items-center gap-2"><i class="fa-solid fa-check-circle text-green-500"></i> Server Uptime 99.9%</li>
-                <li class="flex items-center gap-2"><i class="fa-solid fa-check-circle text-green-500"></i> Anti Banned System</li>
-                <li class="flex items-center gap-2"><i class="fa-solid fa-check-circle text-green-500"></i> Request Fitur Custom</li>
-            </ul>
-            <button onclick="switchView('store')" class="text-purple-400 font-bold text-sm hover:text-white flex items-center gap-2 transition">Pesan Sekarang <i class="fa-solid fa-arrow-right"></i></button>
-        </div>
-
-        <div class="glass-card p-8 rounded-3xl border border-white/5 relative overflow-hidden group hover:border-green-500/50 transition duration-500">
-            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition transform group-hover:scale-110">
-                <i class="fa-solid fa-message text-9xl text-green-500"></i>
-            </div>
-            <div class="w-14 h-14 bg-green-600/20 rounded-2xl flex items-center justify-center text-green-400 text-2xl mb-6 border border-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.2)]">
-                <i class="fa-solid fa-mobile-screen"></i>
-            </div>
-            <h3 class="text-2xl font-bold text-white mb-3">Nokos Otomatis</h3>
-            <p class="text-gray-400 text-sm mb-6 leading-relaxed">
-                Nomor Kosong virtual untuk verifikasi OTP (WhatsApp, Telegram, TikTok, Shopee, dll). Tersedia 100+ Negara. SMS masuk otomatis dalam hitungan detik.
-            </p>
-            <ul class="space-y-2 mb-6 text-sm text-gray-300">
-                <li class="flex items-center gap-2"><i class="fa-solid fa-check-circle text-green-500"></i> Garansi OTP Masuk</li>
-                <li class="flex items-center gap-2"><i class="fa-solid fa-check-circle text-green-500"></i> Harga Termurah</li>
-                <li class="flex items-center gap-2"><i class="fa-solid fa-check-circle text-green-500"></i> Fresh Number (Private)</li>
-            </ul>
-            <button onclick="switchView('nokos')" class="text-green-400 font-bold text-sm hover:text-white flex items-center gap-2 transition">Ambil Nomor <i class="fa-solid fa-arrow-right"></i></button>
-        </div>
-    </div>
-
-    <div id="cta-banner" class="max-w-5xl mx-auto mb-24 px-6 relative">
-        <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl blur-xl opacity-30"></div>
-        <div class="relative glass-card bg-gradient-to-r from-[#1a1a2e] to-[#16213e] rounded-3xl p-8 md:p-12 border border-white/10 flex flex-col md:flex-row items-center justify-between gap-8">
-            <div class="text-center md:text-left">
-                <h2 class="text-2xl md:text-3xl font-bold text-white mb-2">Belum bergabung dengan Manzzy ID?</h2>
-                <p class="text-gray-400 text-sm md:text-base max-w-lg">
-                    Daftarkan dirimu sekarang untuk akses penuh ke dashboard pengelolaan Bot dan pembelian Nokos dengan harga member spesial.
+                <h1 class="text-4xl md:text-7xl font-black mb-6 leading-tight text-white drop-shadow-2xl">
+                    MANZZY ID <br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-blue-500 neon-text">OFFICIAL</span>
+                </h1>
+                
+                <p class="text-gray-400 text-sm md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed px-2">
+                    Platform penyedia layanan <b>Sewa Bot WhatsApp</b> canggih & <b>Nomor Kosong (Nokos)</b> lintas negara. Solusi praktis untuk kebutuhan verifikasi dan manajemen komunitasmu.
                 </p>
-            </div>
-            <div class="flex gap-4">
-                <a href="/login_user.html" class="px-6 py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition shadow-lg transform hover:-translate-y-1">Daftar / Login</a>
-            </div>
-        </div>
-    </div>
 
-    <section class="mb-24 px-4 max-w-6xl mx-auto scroll-mt-32">
+                <div class="flex flex-col md:flex-row items-center justify-center gap-5 px-4">
+                    <button onclick="switchView('store')" class="group relative px-8 py-4 bg-white text-black font-bold rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.3)] transition hover:scale-105 w-full md:w-auto overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-r from-purple-400 to-blue-400 opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                        <span class="relative z-10 group-hover:text-white transition flex items-center justify-center gap-2"><i class="fa-solid fa-robot"></i> Sewa Bot WA</span>
+                    </button>
+                    <button onclick="switchView('nokos')" class="px-8 py-4 bg-transparent border border-white/20 text-white font-bold rounded-xl hover:bg-white/5 transition hover:scale-105 w-full md:w-auto flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-sim-card text-green-400"></i> Beli Nokos
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex flex-col md:flex-row items-center justify-center gap-4 px-4 mb-20">
+                <a href="manzzyid.html" class="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold rounded-xl shadow-[0_0_25px_rgba(6,182,212,0.6)] transition hover:scale-105 w-full md:w-auto flex items-center justify-center gap-2 border border-white/20 overflow-hidden">
+                    <div class="absolute top-0 -left-[100%] w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent transform -skew-x-12 transition-all duration-1000 group-hover:left-[100%]"></div>
+                    <i class="fa-solid fa-gamepad text-xl"></i> 
+                    <div class="text-left leading-tight">
+                        <span class="block text-[10px] font-normal opacity-80">Murah & Otomatis</span>
+                        <span class="block text-sm">TOP UP GAME&E-WALLET</span>
+                    </div>
+                </a>
+            </div>
+
+            <section class="mb-24 px-4 max-w-6xl mx-auto scroll-mt-32">
                 <div class="text-center mb-16">
                     <h2 class="text-3xl font-bold text-white mb-2">CARA <span class="text-purple-500">ORDER</span></h2>
                     <p class="text-gray-500 text-sm">Mulai gunakan layanan kami dalam 3 langkah mudah.</p>
@@ -298,66 +165,104 @@
                     </div>
                 </div>
             </section>
-    <section id="faq" class="mb-24 scroll-mt-32 max-w-4xl mx-auto px-4">
-        <div class="text-center mb-12">
-            <h2 class="text-3xl font-bold text-white mb-2">PERTANYAAN <span class="text-purple-500">UMUM</span></h2>
-            <p class="text-gray-500 text-sm">Jawaban atas hal yang sering ditanyakan pelanggan.</p>
-        </div>
+
+<section id="testimonials" class="mb-24 px-4 max-w-6xl mx-auto scroll-mt-32">
+    <div class="text-center mb-8">
+        <h2 class="text-3xl font-bold text-white mb-2">ULASAN <span class="text-purple-500">MEMBER</span></h2>
+        <p class="text-gray-500 text-sm">Apa kata mereka tentang layanan kami?</p>
+    </div>
+
+    <div id="review-form-container" class="hidden glass-card p-6 rounded-2xl max-w-lg mx-auto mb-10 border-l-4 border-l-purple-500 relative z-20 transition-all duration-500">
+        <h3 class="text-white font-bold mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-pen-nib text-purple-400"></i> Tulis Ulasan Kamu
+        </h3>
         
-        <div class="glass-card p-2 rounded-2xl divide-y divide-gray-800/50 border border-white/5">
+        <form onsubmit="submitReview(event)">
+            <div class="flex justify-center gap-2 mb-2 text-2xl">
+                <i class="fa-solid fa-star text-gray-700 cursor-pointer transition hover:scale-110 hover:text-yellow-500" id="star-1" onclick="setRating(1)"></i>
+                <i class="fa-solid fa-star text-gray-700 cursor-pointer transition hover:scale-110 hover:text-yellow-500" id="star-2" onclick="setRating(2)"></i>
+                <i class="fa-solid fa-star text-gray-700 cursor-pointer transition hover:scale-110 hover:text-yellow-500" id="star-3" onclick="setRating(3)"></i>
+                <i class="fa-solid fa-star text-gray-700 cursor-pointer transition hover:scale-110 hover:text-yellow-500" id="star-4" onclick="setRating(4)"></i>
+                <i class="fa-solid fa-star text-gray-700 cursor-pointer transition hover:scale-110 hover:text-yellow-500" id="star-5" onclick="setRating(5)"></i>
+            </div>
             
-            <div class="faq-item p-4 hover:bg-white/5 transition rounded-xl">
-                <div class="faq-header flex justify-between items-center cursor-pointer" onclick="toggleFaq(this)">
-                    <h3 class="font-bold text-white text-sm md:text-base"><i class="fa-solid fa-sim-card text-green-500 mr-2"></i> Apa itu Nokos dan bagaimana cara kerjanya?</h3>
-                    <i class="fa-solid fa-chevron-down faq-icon text-gray-500 transition-transform duration-300"></i>
-                </div>
-                <div class="faq-content max-h-0 overflow-hidden transition-all duration-300">
-                    <p class="text-gray-400 text-sm pt-3 leading-relaxed">
-                        Nokos (Nomor Kosong) adalah nomor virtual sementara yang digunakan untuk menerima kode verifikasi (OTP) pendaftaran aplikasi seperti WhatsApp, Telegram, dll. Anda cukup order, nomor muncul, masukkan ke aplikasi, dan kode OTP akan muncul otomatis di web ini.
-                    </p>
-                </div>
+            <div class="text-center mb-4">
+                <span id="rating-text" class="text-xs font-bold text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded">0.0</span>
             </div>
+            <input type="hidden" id="ratingValue" value="0">
 
-            <div class="faq-item p-4 hover:bg-white/5 transition rounded-xl">
-                <div class="faq-header flex justify-between items-center cursor-pointer" onclick="toggleFaq(this)">
-                    <h3 class="font-bold text-white text-sm md:text-base"><i class="fa-solid fa-rotate text-yellow-500 mr-2"></i> Bagaimana jika kode OTP tidak masuk?</h3>
-                    <i class="fa-solid fa-chevron-down faq-icon text-gray-500 transition-transform duration-300"></i>
-                </div>
-                <div class="faq-content max-h-0 overflow-hidden transition-all duration-300">
-                    <p class="text-gray-400 text-sm pt-3 leading-relaxed">
-                        Tenang! Sistem kami memiliki garansi <b>Saldo Kembali Otomatis</b>. Jika dalam waktu tunggu (biasanya 20 menit) SMS tidak masuk, Anda bisa klik tombol "Cancel" atau sistem akan membatalkan otomatis dan saldo dikembalikan 100%.
-                    </p>
-                </div>
-            </div>
+            <textarea id="reviewComment" rows="2" class="w-full bg-black/50 border border-gray-700 rounded-xl p-3 text-white text-sm focus:border-purple-500 outline-none mb-3 transition placeholder-gray-600" placeholder="Ceritakan pengalamanmu..."></textarea>
+            
+            <button type="submit" id="btn-submit-review" class="w-full bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-500 hover:to-purple-700 text-white font-bold py-2.5 rounded-xl transition text-sm shadow-lg shadow-purple-500/20 active:scale-95">
+                Kirim Ulasan
+            </button>
+        </form>
+    </div>
+    <div id="testimonial-grid" class="flex overflow-x-auto gap-4 pb-4 snap-x custom-scroll no-scrollbar">
+        <div class="w-full text-center text-gray-500 italic py-10 glass-card rounded-xl">Memuat ulasan...</div>
+    </div>
+</section>
 
-            <div class="faq-item p-4 hover:bg-white/5 transition rounded-xl">
-                <div class="faq-header flex justify-between items-center cursor-pointer" onclick="toggleFaq(this)">
-                    <h3 class="font-bold text-white text-sm md:text-base"><i class="fa-solid fa-robot text-purple-500 mr-2"></i> Apakah Bot WhatsApp aman dari Banned?</h3>
-                    <i class="fa-solid fa-chevron-down faq-icon text-gray-500 transition-transform duration-300"></i>
+            <section id="faq" class="mb-24 scroll-mt-32 max-w-4xl mx-auto px-4">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-white mb-2">PERTANYAAN <span class="text-purple-500">UMUM</span></h2>
+                    <p class="text-gray-500 text-sm">Jawaban atas hal yang sering ditanyakan pelanggan.</p>
                 </div>
-                <div class="faq-content max-h-0 overflow-hidden transition-all duration-300">
-                    <p class="text-gray-400 text-sm pt-3 leading-relaxed">
-                        Kami menggunakan sistem session yang dioptimalkan untuk keamanan. Namun, risiko banned tetap ada tergantung penggunaan (spam berlebihan). Kami sarankan gunakan nomor sekunder/nokos untuk bot agar nomor pribadi tetap aman.
-                    </p>
-                </div>
-            </div>
+                
+                <div class="glass-card p-2 rounded-2xl divide-y divide-gray-800/50 border border-white/5">
+                    
+                    <div class="faq-item p-4 hover:bg-white/5 transition rounded-xl">
+                        <div class="faq-header flex justify-between items-center cursor-pointer" onclick="toggleFaq(this)">
+                            <h3 class="font-bold text-white text-sm md:text-base"><i class="fa-solid fa-sim-card text-green-500 mr-2"></i> Apa itu Nokos dan bagaimana cara kerjanya?</h3>
+                            <i class="fa-solid fa-chevron-down faq-icon text-gray-500 transition-transform duration-300"></i>
+                        </div>
+                        <div class="faq-content max-h-0 overflow-hidden transition-all duration-300">
+                            <p class="text-gray-400 text-sm pt-3 leading-relaxed">
+                                Nokos (Nomor Kosong) adalah nomor virtual sementara yang digunakan untuk menerima kode verifikasi (OTP) pendaftaran aplikasi seperti WhatsApp, Telegram, dll. Anda cukup order, nomor muncul, masukkan ke aplikasi, dan kode OTP akan muncul otomatis di web ini.
+                            </p>
+                        </div>
+                    </div>
 
-            <div class="faq-item p-4 hover:bg-white/5 transition rounded-xl">
-                <div class="faq-header flex justify-between items-center cursor-pointer" onclick="toggleFaq(this)">
-                    <h3 class="font-bold text-white text-sm md:text-base"><i class="fa-solid fa-wallet text-blue-500 mr-2"></i> Metode pembayaran apa yang tersedia?</h3>
-                    <i class="fa-solid fa-chevron-down faq-icon text-gray-500 transition-transform duration-300"></i>
-                </div>
-                <div class="faq-content max-h-0 overflow-hidden transition-all duration-300">
-                    <p class="text-gray-400 text-sm pt-3 leading-relaxed">
-                        Kami mendukung pembayaran otomatis via <b>QRIS</b> (All E-Wallet: Dana, OVO, Gopay, ShopeePay & Mobile Banking). Saldo akan masuk otomatis 1-5 menit setelah pembayaran berhasil.
-                    </p>
-                </div>
-            </div>
+                    <div class="faq-item p-4 hover:bg-white/5 transition rounded-xl">
+                        <div class="faq-header flex justify-between items-center cursor-pointer" onclick="toggleFaq(this)">
+                            <h3 class="font-bold text-white text-sm md:text-base"><i class="fa-solid fa-rotate text-yellow-500 mr-2"></i> Bagaimana jika kode OTP tidak masuk?</h3>
+                            <i class="fa-solid fa-chevron-down faq-icon text-gray-500 transition-transform duration-300"></i>
+                        </div>
+                        <div class="faq-content max-h-0 overflow-hidden transition-all duration-300">
+                            <p class="text-gray-400 text-sm pt-3 leading-relaxed">
+                                Tenang! Sistem kami memiliki garansi <b>Saldo Kembali Otomatis</b>. Jika dalam waktu tunggu (biasanya 20 menit) SMS tidak masuk, Anda bisa klik tombol "Cancel" atau sistem akan membatalkan otomatis dan saldo dikembalikan 100%.
+                            </p>
+                        </div>
+                    </div>
 
-        </div>
-    </section>
-    
-<footer class="border-t border-white/5 bg-[#08080a] pt-16 pb-8 mt-20 relative overflow-hidden">
+                    <div class="faq-item p-4 hover:bg-white/5 transition rounded-xl">
+                        <div class="faq-header flex justify-between items-center cursor-pointer" onclick="toggleFaq(this)">
+                            <h3 class="font-bold text-white text-sm md:text-base"><i class="fa-solid fa-robot text-purple-500 mr-2"></i> Apakah Bot WhatsApp aman dari Banned?</h3>
+                            <i class="fa-solid fa-chevron-down faq-icon text-gray-500 transition-transform duration-300"></i>
+                        </div>
+                        <div class="faq-content max-h-0 overflow-hidden transition-all duration-300">
+                            <p class="text-gray-400 text-sm pt-3 leading-relaxed">
+                                Kami menggunakan sistem session yang dioptimalkan untuk keamanan. Namun, risiko banned tetap ada tergantung penggunaan (spam berlebihan). Kami sarankan gunakan nomor sekunder/nokos untuk bot agar nomor pribadi tetap aman.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item p-4 hover:bg-white/5 transition rounded-xl">
+                        <div class="faq-header flex justify-between items-center cursor-pointer" onclick="toggleFaq(this)">
+                            <h3 class="font-bold text-white text-sm md:text-base"><i class="fa-solid fa-wallet text-blue-500 mr-2"></i> Metode pembayaran apa yang tersedia?</h3>
+                            <i class="fa-solid fa-chevron-down faq-icon text-gray-500 transition-transform duration-300"></i>
+                        </div>
+                        <div class="faq-content max-h-0 overflow-hidden transition-all duration-300">
+                            <p class="text-gray-400 text-sm pt-3 leading-relaxed">
+                                Kami mendukung pembayaran otomatis via <b>QRIS</b> (All E-Wallet: Dana, OVO, Gopay, ShopeePay & Mobile Banking). Saldo akan masuk otomatis 1-5 menit setelah pembayaran berhasil.
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+            
+            <footer class="border-t border-white/5 bg-[#08080a] pt-16 pb-8 mt-20 relative overflow-hidden">
                 <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-1 bg-gradient-to-r from-transparent via-purple-600 to-transparent opacity-50 shadow-[0_0_30px_#9333ea]"></div>
 
                 <div class="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
@@ -410,75 +315,70 @@
                     </p>
                 </div>
             </footer>
-</section>
+        </section>
 
         <section id="view-store" class="view-section"><div class="w-full mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4"><button onclick="switchView('landing')" class="text-gray-400 hover:text-white flex items-center gap-2 group"><i class="fa-solid fa-arrow-left"></i> Kembali</button><h2 class="text-3xl font-bold text-white">KATALOG</h2></div><div class="search-container"><input type="text" id="searchInput" onkeyup="filterProducts()" placeholder="Cari layanan..." class="search-input"><i class="fa-solid fa-search search-icon"></i></div><div id="section-categories"><h3 class="text-gray-400 text-sm font-bold uppercase mb-4 pl-3 border-l-4 border-purple-500">Kategori</h3><div id="grid-categories" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12"></div></div><div id="section-products" class="hidden"><div class="flex items-center gap-3 mb-6"><button onclick="backToCategories()" class="text-sm bg-gray-800 px-3 py-1 rounded text-white"><i class="fa-solid fa-chevron-left"></i> Kategori</button><span id="current-category-name" class="text-purple-400 font-bold"></span></div><div id="grid-products" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 pb-20"></div></div><div id="loading-store" class="text-center py-20 hidden"><div class="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mb-4"></div></div></section>
 
-<section id="view-topup" class="view-section">
-    <div class="max-w-md mx-auto min-h-screen flex flex-col justify-center px-4 relative">
-        
-        <div class="flex items-center justify-between mb-8">
-            <button onclick="switchView('landing'); resetTopUpView()" class="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition">
-                <i class="fa-solid fa-arrow-left"></i>
-            </button>
-            <h2 class="text-xl font-bold text-white tracking-widest">TOP UP</h2>
-            <div class="w-10"></div>
-        </div>
-
-        <div id="topup-form-area" class="animate-fade-in-up">
-            <div class="glass-card p-8 rounded-3xl border border-white/10 relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-32 h-32 bg-green-500/20 rounded-full blur-[60px] -z-10"></div>
-                <div class="text-center mb-6">
-                    <div class="w-16 h-16 bg-white rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-lg shadow-white/10 p-2"><img src="https://raw.githubusercontent.com/ManzzyGacor/Urlmanzzy/main/file_1767158467865_891.jpg" class="w-full h-full object-contain"></div>
-                    <h3 class="text-2xl font-bold text-white">Isi Saldo Otomatis</h3>
-                    <p class="text-xs text-gray-400 mt-1">Metode QRIS (All E-Wallet & Bank)</p>
+        <section id="view-topup" class="view-section">
+            <div class="max-w-md mx-auto min-h-screen flex flex-col justify-center px-4 relative">
+                <div class="flex items-center justify-between mb-8">
+                    <button onclick="switchView('landing'); resetTopUpView()" class="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <h2 class="text-xl font-bold text-white tracking-widest">TOP UP</h2>
+                    <div class="w-10"></div>
                 </div>
-                <form onsubmit="requestTopUp(event)" class="space-y-5">
-                    <div class="relative group">
-                        <label class="text-[10px] font-bold text-green-400 uppercase tracking-wider mb-1 block ml-1">Nominal Top Up</label>
-                        <div class="relative">
-                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-mono text-lg">Rp</span>
-                            <input type="number" id="topupAmount" class="w-full bg-[#0a0a0c] border border-gray-700 rounded-xl py-4 pl-12 pr-4 text-white text-xl font-bold focus:border-green-500 outline-none transition placeholder-gray-700 font-mono" placeholder="50000" min="1000" required>
+                <div id="topup-form-area" class="animate-fade-in-up">
+                    <div class="glass-card p-8 rounded-3xl border border-white/10 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-green-500/20 rounded-full blur-[60px] -z-10"></div>
+                        <div class="text-center mb-6">
+                            <div class="w-16 h-16 bg-white rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-lg shadow-white/10 p-2"><img src="https://raw.githubusercontent.com/ManzzyGacor/Urlmanzzy/main/file_1767158467865_891.jpg" class="w-full h-full object-contain"></div>
+                            <h3 class="text-2xl font-bold text-white">Isi Saldo Otomatis</h3>
+                            <p class="text-xs text-gray-400 mt-1">Metode QRIS (All E-Wallet & Bank)</p>
                         </div>
+                        <form onsubmit="requestTopUp(event)" class="space-y-5">
+                            <div class="relative group">
+                                <label class="text-[10px] font-bold text-green-400 uppercase tracking-wider mb-1 block ml-1">Nominal Top Up</label>
+                                <div class="relative">
+                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-mono text-lg">Rp</span>
+                                    <input type="number" id="topupAmount" class="w-full bg-[#0a0a0c] border border-gray-700 rounded-xl py-4 pl-12 pr-4 text-white text-xl font-bold focus:border-green-500 outline-none transition placeholder-gray-700 font-mono" placeholder="50000" min="1000" required>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2">
+                                <button type="button" onclick="document.getElementById('topupAmount').value=10000" class="py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-mono text-gray-300 transition">10.000</button>
+                                <button type="button" onclick="document.getElementById('topupAmount').value=25000" class="py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-mono text-gray-300 transition">25.000</button>
+                                <button type="button" onclick="document.getElementById('topupAmount').value=50000" class="py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-mono text-gray-300 transition">50.000</button>
+                            </div>
+                            <button type="submit" id="btn-topup-process" class="w-full py-4 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold shadow-lg shadow-green-500/20 transition transform active:scale-95 flex items-center justify-center gap-2">Buat QRIS <i class="fa-solid fa-arrow-right"></i></button>
+                        </form>
                     </div>
-                    <div class="grid grid-cols-3 gap-2">
-                        <button type="button" onclick="document.getElementById('topupAmount').value=10000" class="py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-mono text-gray-300 transition">10.000</button>
-                        <button type="button" onclick="document.getElementById('topupAmount').value=25000" class="py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-mono text-gray-300 transition">25.000</button>
-                        <button type="button" onclick="document.getElementById('topupAmount').value=50000" class="py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-mono text-gray-300 transition">50.000</button>
-                    </div>
-                    <button type="submit" id="btn-topup-process" class="w-full py-4 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold shadow-lg shadow-green-500/20 transition transform active:scale-95 flex items-center justify-center gap-2">Buat QRIS <i class="fa-solid fa-arrow-right"></i></button>
-                </form>
-            </div>
-        </div>
-
-        <div id="topup-qr-area" class="hidden animate-fade-in-up">
-            <div class="glass-card p-6 rounded-3xl border border-green-500/30 text-center relative overflow-hidden">
-                <div class="absolute top-0 left-0 w-full h-1 bg-green-500/50 shadow-[0_0_15px_#22c55e] z-20 animate-[scan_2s_ease-in-out_infinite]"></div>
-                <h3 class="text-white font-bold text-lg mb-1">Scan QRIS</h3>
-                <p class="text-xs text-gray-400 mb-4">Bayar sebelum waktu habis</p>
-                <div class="bg-white p-3 rounded-2xl mx-auto w-fit mb-4 relative group">
-                    <div id="qris-image"></div>
-                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none"><div class="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1 shadow-md"><img src="https://raw.githubusercontent.com/ManzzyGacor/Urlmanzzy/main/file_1767158158919_170.jpg" class="w-full"></div></div>
                 </div>
-                <div class="mb-6"><p class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Total Pembayaran</p><h2 id="qris-amount" class="text-3xl font-bold text-white font-mono tracking-tight">Rp 0</h2><p class="text-[10px] text-gray-600 mt-2 font-mono" id="qris-id">ORDER-ID</p></div>
-                <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3 mb-4 flex items-center justify-center gap-2"><div class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></div><span class="text-xs text-yellow-500 font-bold">Menunggu Pembayaran...</span></div>
-                <button onclick="resetTopUpView()" class="text-xs text-red-500 hover:text-red-400 underline">Batalkan Transaksi</button>
+                <div id="topup-qr-area" class="hidden animate-fade-in-up">
+                    <div class="glass-card p-6 rounded-3xl border border-green-500/30 text-center relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-green-500/50 shadow-[0_0_15px_#22c55e] z-20 animate-[scan_2s_ease-in-out_infinite]"></div>
+                        <h3 class="text-white font-bold text-lg mb-1">Scan QRIS</h3>
+                        <p class="text-xs text-gray-400 mb-4">Bayar sebelum waktu habis</p>
+                        <div class="bg-white p-3 rounded-2xl mx-auto w-fit mb-4 relative group">
+                            <div id="qris-image"></div>
+                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none"><div class="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1 shadow-md"><img src="https://raw.githubusercontent.com/ManzzyGacor/Urlmanzzy/main/file_1767158158919_170.jpg" class="w-full"></div></div>
+                        </div>
+                        <div class="mb-6"><p class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Total Pembayaran</p><h2 id="qris-amount" class="text-3xl font-bold text-white font-mono tracking-tight">Rp 0</h2><p class="text-[10px] text-gray-600 mt-2 font-mono" id="qris-id">ORDER-ID</p></div>
+                        <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3 mb-4 flex items-center justify-center gap-2"><div class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></div><span class="text-xs text-yellow-500 font-bold">Menunggu Pembayaran...</span></div>
+                        <button onclick="resetTopUpView()" class="text-xs text-red-500 hover:text-red-400 underline">Batalkan Transaksi</button>
+                    </div>
+                    <style>@keyframes scan { 0% { top: 0; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }</style>
+                </div>
+                <div id="topup-success-area" class="hidden animate-fade-in-up text-center">
+                    <div class="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_40px_rgba(34,197,94,0.5)]"><i class="fa-solid fa-check text-4xl text-white"></i></div>
+                    <h2 class="text-3xl font-bold text-white mb-2">Berhasil!</h2>
+                    <p class="text-gray-400 text-sm mb-8">Saldo telah ditambahkan ke akunmu.</p>
+                    <button onclick="switchView('landing'); resetTopUpView()" class="w-full py-4 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold border border-white/10 transition">Kembali ke Dashboard</button>
+                </div>
             </div>
-            <style>@keyframes scan { 0% { top: 0; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }</style>
-        </div>
+        </section>
 
-        <div id="topup-success-area" class="hidden animate-fade-in-up text-center">
-            <div class="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_40px_rgba(34,197,94,0.5)]"><i class="fa-solid fa-check text-4xl text-white"></i></div>
-            <h2 class="text-3xl font-bold text-white mb-2">Berhasil!</h2>
-            <p class="text-gray-400 text-sm mb-8">Saldo telah ditambahkan ke akunmu.</p>
-            <button onclick="switchView('landing'); resetTopUpView()" class="w-full py-4 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold border border-white/10 transition">Kembali ke Dashboard</button>
-        </div>
-    </div>
-</section>
-
-<section id="view-nokos" class="view-section relative">
+        <section id="view-nokos" class="view-section relative">
             <div class="max-w-md mx-auto min-h-screen relative pb-24">
-                
                 <div class="relative bg-gradient-to-b from-[#1e1e24] to-[#050505] pt-10 pb-24 px-6 rounded-b-[3rem] border-b border-white/5 shadow-2xl">
                     <div class="flex justify-between items-start mb-8">
                         <div>
@@ -492,7 +392,6 @@
                         <h1 class="text-4xl font-extrabold text-white font-sans tracking-tight" id="nokos-balance-display">Rp 0</h1>
                     </div>
                 </div>
-
                 <div class="px-6 -mt-12 relative z-10">
                     <div class="glass-card bg-[#141416]/90 backdrop-blur-xl border border-white/10 p-5 rounded-2xl shadow-2xl flex justify-between items-center px-8">
                         <div onclick="switchView('topup')" class="flex flex-col items-center gap-2 cursor-pointer group"><div class="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center text-xl text-white shadow-lg shadow-blue-500/30 group-hover:scale-105 transition"><i class="fa-solid fa-wallet"></i></div><span class="text-[10px] font-bold text-gray-400">TOP UP</span></div>
@@ -500,153 +399,176 @@
                         <div onclick="openNokosSheet()" class="flex flex-col items-center gap-2 cursor-pointer group"><div class="w-12 h-12 bg-[#25252a] rounded-2xl flex items-center justify-center text-xl text-white border border-white/10 group-hover:bg-[#303036] transition"><i class="fa-solid fa-cart-shopping"></i></div><span class="text-[10px] font-bold text-gray-400">ORDER</span></div>
                     </div>
                 </div>
-
                 <div class="px-6 mt-10">
                     <div class="flex justify-between items-center mb-5"><h3 class="text-white font-bold text-sm">Pesanan Pending</h3><button onclick="fetchNokosHistory()" class="text-xs text-white bg-blue-600 px-3 py-1.5 rounded-lg"><i class="fa-solid fa-rotate mr-1"></i> Refresh</button></div>
                     <div id="nokos-active-container" class="space-y-4"><div class="text-center py-12 border border-dashed border-gray-800 rounded-2xl bg-[#0a0a0a]"><p class="text-gray-600 text-xs italic">Tidak ada pesanan.</p></div></div>
                 </div>
             </div>
-
- <div id="nokos-sheet-overlay" onclick="closeNokosSheet()" class="fixed inset-0 bg-black/80 z-[60] hidden transition-opacity duration-300 opacity-0 backdrop-blur-sm"></div>
-            
+            <div id="nokos-sheet-overlay" onclick="closeNokosSheet()" class="fixed inset-0 bg-black/80 z-[60] hidden transition-opacity duration-300 opacity-0 backdrop-blur-sm"></div>
             <div id="nokos-sheet" style="display: none;" class="hidden fixed bottom-0 left-0 right-0 bg-[#121214] z-[70] rounded-t-[2rem] border-t border-gray-800 transition-transform duration-500 translate-y-full h-[75vh] flex flex-col shadow-[0_-10px_50px_rgba(0,0,0,0.8)]">
-                
-                <div class="w-full flex justify-center pt-4 pb-2 flex-none" onclick="closeNokosSheet()">
-                    <div class="w-14 h-1.5 bg-gray-700 rounded-full cursor-pointer hover:bg-gray-500 transition"></div>
-                </div>
-
+                <div class="w-full flex justify-center pt-4 pb-2 flex-none" onclick="closeNokosSheet()"><div class="w-14 h-1.5 bg-gray-700 rounded-full cursor-pointer hover:bg-gray-500 transition"></div></div>
                 <div class="flex-1 overflow-hidden relative bg-[#121214]">
-                    
                     <div id="sheet-view-apps" class="absolute inset-0 p-6 overflow-y-auto custom-scroll transition-transform duration-300">
                         <h3 class="text-lg font-bold text-white mb-6">Beli Nomor Virtual</h3>
-                        
-                        <div class="relative mb-8">
-                            <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
-                            <input type="text" id="searchAppInput" onkeyup="filterApps()" placeholder="Cari nama aplikasi..." class="w-full bg-[#1c1c1f] border border-gray-800 rounded-xl py-3.5 pl-12 pr-4 text-white text-sm focus:border-purple-500 outline-none placeholder-gray-600 transition">
-                        </div>
-
-                        <div id="section-popular-apps">
-                            <h4 class="text-[10px] font-bold text-gray-500 uppercase mb-4 tracking-widest"><i class="fa-solid fa-bolt text-yellow-500 mr-1"></i> Aplikasi Populer</h4>
-                            <div id="grid-popular-apps" class="grid grid-cols-3 gap-3 mb-8"></div>
-                        </div>
-
-                        <h4 class="text-[10px] font-bold text-gray-500 uppercase mb-4 tracking-widest">Semua Aplikasi</h4>
-                        <div id="list-all-apps" class="space-y-2 pb-20"></div>
+                        <div class="relative mb-8"><i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i><input type="text" id="searchAppInput" onkeyup="filterApps()" placeholder="Cari nama aplikasi..." class="w-full bg-[#1c1c1f] border border-gray-800 rounded-xl py-3.5 pl-12 pr-4 text-white text-sm focus:border-purple-500 outline-none placeholder-gray-600 transition"></div>
+                        <div id="section-popular-apps"><h4 class="text-[10px] font-bold text-gray-500 uppercase mb-4 tracking-widest"><i class="fa-solid fa-bolt text-yellow-500 mr-1"></i> Aplikasi Populer</h4><div id="grid-popular-apps" class="grid grid-cols-3 gap-3 mb-8"></div></div>
+                        <h4 class="text-[10px] font-bold text-gray-500 uppercase mb-4 tracking-widest">Semua Aplikasi</h4><div id="list-all-apps" class="space-y-2 pb-20"></div>
                     </div>
-
                     <div id="sheet-view-countries" class="absolute inset-0 p-0 overflow-hidden flex flex-col bg-[#121214] translate-x-full transition-transform duration-300">
-                        
-                        <div class="px-6 py-4 border-b border-gray-800 flex items-center gap-4 bg-[#121214] flex-none">
-                            <button onclick="backToApps()" class="w-9 h-9 rounded-full bg-[#1c1c1f] text-gray-400 flex items-center justify-center hover:text-white transition border border-gray-800"><i class="fa-solid fa-arrow-left"></i></button>
-                            <div class="flex items-center gap-3">
-                                <img id="header-app-icon" src="" class="w-8 h-8 object-contain">
-                                <div>
-                                    <h4 id="header-app-name" class="font-bold text-white text-lg leading-none">WhatsApp</h4>
-                                    <p class="text-[10px] text-gray-500 mt-1">Pilih negara tujuan</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="px-6 py-4 bg-[#121214] flex-none">
-                            <div class="relative">
-                                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
-                                <input type="text" id="searchCountryInput" onkeyup="filterCountries()" placeholder="Cari negara..." class="w-full bg-[#1c1c1f] border border-gray-800 rounded-xl py-3.5 pl-12 pr-4 text-white text-sm focus:border-purple-500 outline-none placeholder-gray-600">
-                            </div>
-                        </div>
-
-                        <div id="list-countries" class="flex-1 overflow-y-auto px-6 pb-24 custom-scroll space-y-3">
-                            </div>
+                        <div class="px-6 py-4 border-b border-gray-800 flex items-center gap-4 bg-[#121214] flex-none"><button onclick="backToApps()" class="w-9 h-9 rounded-full bg-[#1c1c1f] text-gray-400 flex items-center justify-center hover:text-white transition border border-gray-800"><i class="fa-solid fa-arrow-left"></i></button><div class="flex items-center gap-3"><img id="header-app-icon" src="" class="w-8 h-8 object-contain"><div><h4 id="header-app-name" class="font-bold text-white text-lg leading-none">WhatsApp</h4><p class="text-[10px] text-gray-500 mt-1">Pilih negara tujuan</p></div></div></div>
+                        <div class="px-6 py-4 bg-[#121214] flex-none"><div class="relative"><i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i><input type="text" id="searchCountryInput" onkeyup="filterCountries()" placeholder="Cari negara..." class="w-full bg-[#1c1c1f] border border-gray-800 rounded-xl py-3.5 pl-12 pr-4 text-white text-sm focus:border-purple-500 outline-none placeholder-gray-600"></div></div>
+                        <div id="list-countries" class="flex-1 overflow-y-auto px-6 pb-24 custom-scroll space-y-3"></div>
                     </div>
                 </div>
             </div>
-
-<div id="sheet-operator" style="display: none;" class="fixed bottom-0 left-0 right-0 bg-[#1a1a1d] border-t border-gray-700 z-[80] p-6 rounded-t-[2rem] transform translate-y-full transition-transform duration-300 shadow-[0_-10px_40px_rgba(0,0,0,0.9)] hidden">
-                <div class="flex justify-between items-center mb-4">
-                    <div>
-                        <h3 class="text-white font-bold text-lg">Pilih Operator</h3>
-                        <p class="text-xs text-gray-400" id="op-server-info">Server - ID</p>
-                    </div>
-                    <button onclick="closeOperatorSheet()" class="w-8 h-8 rounded-full bg-gray-800 text-gray-400 hover:text-white flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-                
-                <div id="list-operators" class="flex gap-3 overflow-x-auto pb-4 custom-scroll snap-x">
-                    </div>
+            <div id="sheet-operator" style="display: none;" class="fixed bottom-0 left-0 right-0 bg-[#1a1a1d] border-t border-gray-700 z-[80] p-6 rounded-t-[2rem] transform translate-y-full transition-transform duration-300 shadow-[0_-10px_40px_rgba(0,0,0,0.9)] hidden">
+                <div class="flex justify-between items-center mb-4"><div><h3 class="text-white font-bold text-lg">Pilih Operator</h3><p class="text-xs text-gray-400" id="op-server-info">Server - ID</p></div><button onclick="closeOperatorSheet()" class="w-8 h-8 rounded-full bg-gray-800 text-gray-400 hover:text-white flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button></div>
+                <div id="list-operators" class="flex gap-3 overflow-x-auto pb-4 custom-scroll snap-x"></div>
             </div>
         </section>
         
         <section id="view-myservices" class="view-section"><div class="w-full mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4"><button onclick="switchView('landing')" class="text-gray-400 hover:text-white flex items-center gap-2 group"><i class="fa-solid fa-arrow-left"></i> Kembali</button><h2 class="text-3xl font-bold text-white">BOT <span class="text-blue-500">AKTIF</span></h2></div><div id="myservices-list" class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20"><p class="text-gray-500 col-span-full text-center py-10">Memuat layanan...</p></div></section>
     
- <section id="view-history" class="view-section pt-24 pb-24">
-        <div class="max-w-4xl mx-auto min-h-[50vh] px-4">
-            <div class="flex items-center justify-between mb-4 mt-8 border-b border-gray-800 pb-4">
-                <button onclick="switchView('myservices')" class="text-gray-400 hover:text-white text-sm flex items-center gap-2 transition group">
-                    <i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition"></i> Kembali
-                </button>
-                <h2 class="text-lg md:text-xl font-bold text-white tracking-widest uppercase">Riwayat <span class="text-purple-500">Transaksi</span></h2>
-            </div>
-            <div class="glass-card rounded-xl overflow-hidden border border-gray-800/50 relative z-10">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-white/5 text-[10px] text-gray-500 uppercase tracking-wider">
-                                <th class="p-3 pl-4">Waktu</th>
-                                <th class="p-3">Keterangan</th>
-                                <th class="p-3 text-right">Nominal</th>
-                                <th class="p-3 text-center pr-4">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="history-list" class="divide-y divide-gray-800 text-sm">
-                            <tr><td colspan="4" class="p-6 text-center text-gray-500 text-xs">Memuat data...</td></tr>
-                        </tbody>
-                    </table>
+        <section id="view-history" class="view-section pt-24 pb-24">
+            <div class="max-w-4xl mx-auto min-h-[50vh] px-4">
+                <div class="flex items-center justify-between mb-4 mt-8 border-b border-gray-800 pb-4">
+                    <button onclick="switchView('myservices')" class="text-gray-400 hover:text-white text-sm flex items-center gap-2 transition group">
+                        <i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition"></i> Kembali
+                    </button>
+                    <h2 class="text-lg md:text-xl font-bold text-white tracking-widest uppercase">Riwayat <span class="text-purple-500">Transaksi</span></h2>
+                </div>
+                <div class="glass-card rounded-xl overflow-hidden border border-gray-800/50 relative z-10">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-white/5 text-[10px] text-gray-500 uppercase tracking-wider">
+                                    <th class="p-3 pl-4">Waktu</th>
+                                    <th class="p-3">Keterangan</th>
+                                    <th class="p-3 text-right">Nominal</th>
+                                    <th class="p-3 text-center pr-4">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-list" class="divide-y divide-gray-800 text-sm">
+                                <tr><td colspan="4" class="p-6 text-center text-gray-500 text-xs">Memuat data...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
+
         <div class="fixed bottom-24 right-6 z-50 flex flex-col items-end font-sans">
-        
-        <div id="cs-menu" class="hidden mb-4 bg-[#1a1a1d] border border-gray-700 rounded-2xl p-4 shadow-2xl w-64 transform transition-all duration-300 origin-bottom-right scale-0">
-            <div class="flex items-center gap-3 border-b border-gray-700 pb-3 mb-3">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="w-8 h-8">
-                <div>
-                    <h4 class="text-white font-bold text-sm">Pusat Bantuan</h4>
-                    <p class="text-[10px] text-green-400">Online • Siap Membantu</p>
+            <div id="cs-menu" class="hidden mb-4 bg-[#1a1a1d] border border-gray-700 rounded-2xl p-4 shadow-2xl w-64 transform transition-all duration-300 origin-bottom-right scale-0">
+                <div class="flex items-center gap-3 border-b border-gray-700 pb-3 mb-3">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="w-8 h-8">
+                    <div>
+                        <h4 class="text-white font-bold text-sm">Pusat Bantuan</h4>
+                        <p class="text-[10px] text-green-400">Online • Siap Membantu</p>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <button onclick="contactWA('Top Up Belum Masuk')" class="w-full text-left text-xs text-gray-300 hover:text-white hover:bg-white/10 p-2.5 rounded-lg transition flex items-center gap-3 group">
+                        <div class="w-6 h-6 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center"><i class="fa-solid fa-wallet"></i></div>
+                        <span>Top Up Belum Masuk</span>
+                    </button>
+                    <button onclick="contactWA('Saldo Tidak Kembali')" class="w-full text-left text-xs text-gray-300 hover:text-white hover:bg-white/10 p-2.5 rounded-lg transition flex items-center gap-3 group">
+                        <div class="w-6 h-6 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center"><i class="fa-solid fa-rotate-left"></i></div>
+                        <span>Refund Gagal / Error</span>
+                    </button>
+                    <button onclick="contactWA('Order Lama/Pending')" class="w-full text-left text-xs text-gray-300 hover:text-white hover:bg-white/10 p-2.5 rounded-lg transition flex items-center gap-3 group">
+                        <div class="w-6 h-6 rounded-full bg-yellow-500/20 text-yellow-400 flex items-center justify-center"><i class="fa-solid fa-clock"></i></div>
+                        <span>Order Lama Diproses</span>
+                    </button>
+                    <button onclick="contactWA('Pertanyaan Umum')" class="w-full text-left text-xs text-gray-300 hover:text-white hover:bg-white/10 p-2.5 rounded-lg transition flex items-center gap-3 group">
+                        <div class="w-6 h-6 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center"><i class="fa-solid fa-comments"></i></div>
+                        <span>Chat Admin / Lainnya</span>
+                    </button>
                 </div>
             </div>
-            
-            <div class="space-y-2">
-                <button onclick="contactWA('Top Up Belum Masuk')" class="w-full text-left text-xs text-gray-300 hover:text-white hover:bg-white/10 p-2.5 rounded-lg transition flex items-center gap-3 group">
-                    <div class="w-6 h-6 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center"><i class="fa-solid fa-wallet"></i></div>
-                    <span>Top Up Belum Masuk</span>
-                </button>
-                
-                <button onclick="contactWA('Saldo Tidak Kembali')" class="w-full text-left text-xs text-gray-300 hover:text-white hover:bg-white/10 p-2.5 rounded-lg transition flex items-center gap-3 group">
-                    <div class="w-6 h-6 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center"><i class="fa-solid fa-rotate-left"></i></div>
-                    <span>Refund Gagal / Error</span>
-                </button>
-                
-                <button onclick="contactWA('Order Lama/Pending')" class="w-full text-left text-xs text-gray-300 hover:text-white hover:bg-white/10 p-2.5 rounded-lg transition flex items-center gap-3 group">
-                    <div class="w-6 h-6 rounded-full bg-yellow-500/20 text-yellow-400 flex items-center justify-center"><i class="fa-solid fa-clock"></i></div>
-                    <span>Order Lama Diproses</span>
-                </button>
-                
-                <button onclick="contactWA('Pertanyaan Umum')" class="w-full text-left text-xs text-gray-300 hover:text-white hover:bg-white/10 p-2.5 rounded-lg transition flex items-center gap-3 group">
-                    <div class="w-6 h-6 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center"><i class="fa-solid fa-comments"></i></div>
-                    <span>Chat Admin / Lainnya</span>
-                </button>
+            <button onclick="toggleCS()" class="w-14 h-14 bg-[#25D366] hover:bg-[#1ebd56] text-white rounded-full shadow-[0_0_20px_rgba(37,211,102,0.4)] flex items-center justify-center transition-all transform hover:scale-110 active:scale-95 group relative">
+                <i class="fa-solid fa-headset text-2xl animate-pulse"></i>
+                <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-black"></span>
+            </button>
+        </div>
+    </div>
+
+    <div id="modal-overlay" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-box" onclick="event.stopPropagation()">
+            <div class="relative">
+                <button onclick="closeModalDirect()" class="absolute -top-2 -right-2 text-gray-400 hover:text-white bg-gray-800 rounded-full w-8 h-8 flex items-center justify-center border border-gray-600 z-10"><i class="fa-solid fa-xmark"></i></button>
+                <div id="modal-content-product">
+                    <img id="modal-img" src="" class="w-full h-48 object-cover rounded-xl mb-5 border border-gray-800">
+                    <div class="flex justify-between items-start mb-2"><h2 id="modal-title" class="text-2xl font-bold text-white leading-tight"></h2><span id="modal-price" class="text-purple-400 font-mono font-bold text-lg bg-purple-900/30 px-3 py-1 rounded-lg border border-purple-500/30"></span></div>
+                    <div class="h-px bg-gray-800 w-full my-4"></div><h4 class="text-xs text-gray-500 font-bold uppercase mb-2">Deskripsi Layanan</h4><p id="modal-desc" class="text-gray-300 text-sm leading-relaxed mb-6 whitespace-pre-wrap font-sans"></p>
+                    <form id="orderForm" onsubmit="processOrder(event)" class="space-y-4 mb-4">
+                        <div id="dynamic-inputs" class="space-y-3"></div>
+                        <div class="flex gap-2 items-end pt-2">
+                            <div class="flex-1"><label class="text-[10px] text-gray-500 font-bold block mb-1">KODE PROMO (Opsional)</label><input type="text" id="voucherInput" class="w-full bg-black/50 border border-gray-700 rounded-lg p-3 text-white text-sm uppercase font-mono tracking-wider focus:border-purple-500 outline-none" placeholder="Masukan Kode"></div>
+                            <button type="button" onclick="checkVoucher()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-600 rounded-lg px-4 py-3 text-xs font-bold h-[46px] transition">Cek</button>
+                        </div>
+                        <div id="voucher-msg" class="text-[10px] hidden mb-2"></div>
+                        <div class="bg-gray-900 border border-gray-800 p-3 rounded-lg flex justify-between items-center text-sm mt-2"><span class="text-gray-400">Total Bayar:</span><div class="text-right"><span id="price-original" class="hidden text-xs text-gray-500 line-through mr-1"></span><span id="price-final" class="font-bold font-mono text-white">Loading...</span></div></div>
+                        <div class="bg-gray-900 border border-gray-800 p-3 rounded-lg flex justify-between items-center text-sm"><span class="text-gray-400">Saldo Kamu:</span><span id="user-balance-display" class="font-bold font-mono">Loading...</span></div>
+                        <button type="submit" id="btn-buy" class="w-full py-4 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold flex items-center justify-center gap-3 transition shadow-lg shadow-purple-500/20"><i class="fa-solid fa-cart-shopping text-lg"></i> Bayar Sekarang</button>
+                    </form>
+                </div>
+                <div id="modal-content-receipt" class="hidden text-center py-4">
+                    <div class="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/30"><i class="fa-solid fa-check text-4xl text-green-500"></i></div>
+                    <h2 class="text-2xl font-bold text-white mb-2">Order Berhasil!</h2><p class="text-gray-400 text-sm mb-6">Terima kasih telah berlangganan.</p>
+                    <div class="bg-gray-900 p-5 rounded-xl text-left space-y-3 text-sm mb-6 font-mono border border-gray-800">
+                        <div class="flex justify-between border-b border-gray-800 pb-2"><span class="text-gray-500">Invoice ID</span><span id="rec-inv" class="text-purple-400"></span></div>
+                        <div class="flex justify-between border-b border-gray-800 pb-2"><span class="text-gray-500">Layanan</span><span id="rec-item" class="text-white font-bold"></span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Status</span><span id="rec-mode" class="text-green-400 uppercase font-bold"></span></div>
+                    </div>
+                    <button id="btn-continue" onclick="closeModalDirect()" class="w-full py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white font-bold border border-gray-700 transition">Tutup</button>
+                </div>
             </div>
         </div>
-
-        <button onclick="toggleCS()" class="w-14 h-14 bg-[#25D366] hover:bg-[#1ebd56] text-white rounded-full shadow-[0_0_20px_rgba(37,211,102,0.4)] flex items-center justify-center transition-all transform hover:scale-110 active:scale-95 group relative">
-            <i class="fa-solid fa-headset text-2xl animate-pulse"></i>
-            <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-black"></span>
-        </button>
     </div>
 
+    <div id="modal-invoice" class="fixed inset-0 bg-black/80 z-[200] hidden items-center justify-center backdrop-blur-sm px-4" onclick="closeInvoice()">
+        <div class="bg-[#18181b] border border-gray-700 w-full max-w-md rounded-2xl overflow-hidden relative shadow-2xl" onclick="event.stopPropagation()">
+            <div class="bg-gradient-to-r from-purple-900 to-blue-900 p-6 text-center relative overflow-hidden">
+                <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                <h2 class="text-2xl font-bold text-white tracking-widest relative z-10">INVOICE</h2>
+                <p id="inv-status" class="text-xs font-mono font-bold mt-2 bg-black/30 inline-block px-3 py-1 rounded-full relative z-10 text-white">SUCCESS</p>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="flex justify-between items-center border-b border-dashed border-gray-700 pb-4"><span class="text-gray-400 text-xs">No. Transaksi</span><span id="inv-id" class="text-white font-mono text-sm font-bold">INV-XXXXX</span></div>
+                <div class="flex justify-between items-center border-b border-dashed border-gray-700 pb-4"><span class="text-gray-400 text-xs">Tanggal</span><span id="inv-date" class="text-white text-sm">01/01/2025 12:00</span></div>
+                <div class="py-2"><span class="text-gray-400 text-xs block mb-1">Produk / Layanan</span><h3 id="inv-product" class="text-white font-bold text-lg leading-tight">Nokos WhatsApp</h3><p id="inv-desc" class="text-gray-500 text-xs mt-1">Negara: Indonesia</p></div>
+                <div id="inv-data-box" class="bg-black/50 border border-gray-700 rounded-xl p-4 relative hidden"><span class="text-[10px] text-gray-500 font-bold uppercase block mb-1">Data / SN / OTP</span><p id="inv-data-text" class="text-green-400 font-mono text-lg font-bold tracking-wide break-all">...</p><button onclick="copyInvoiceData()" class="absolute top-3 right-3 text-gray-400 hover:text-white"><i class="fa-regular fa-copy"></i></button></div>
+                <div class="flex justify-between items-center pt-2"><span class="text-gray-400 text-sm">Total Bayar</span><span id="inv-price" class="text-purple-400 font-bold text-xl font-mono">Rp 0</span></div>
+            </div>
+            <div class="p-4 bg-[#101012] flex gap-3"><button onclick="closeInvoice()" class="flex-1 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-xl font-bold text-sm transition">Tutup</button><button onclick="window.print()" class="flex-1 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-bold text-sm transition"><i class="fa-solid fa-print mr-2"></i> Print</button></div>
+        </div>
     </div>
+
+    <div id="modal-review" class="modal-overlay" onclick="if(event.target===this) this.classList.remove('active')">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-white">Beri Ulasan</h3>
+                <button onclick="document.getElementById('modal-review').classList.remove('active')" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="submitReview(event)">
+                <div class="flex justify-center gap-2 mb-4 text-2xl">
+                    <i class="fa-solid fa-star text-gray-600 cursor-pointer transition hover:scale-110" id="star-1" onclick="setRating(1)"></i>
+                    <i class="fa-solid fa-star text-gray-600 cursor-pointer transition hover:scale-110" id="star-2" onclick="setRating(2)"></i>
+                    <i class="fa-solid fa-star text-gray-600 cursor-pointer transition hover:scale-110" id="star-3" onclick="setRating(3)"></i>
+                    <i class="fa-solid fa-star text-gray-600 cursor-pointer transition hover:scale-110" id="star-4" onclick="setRating(4)"></i>
+                    <i class="fa-solid fa-star text-gray-600 cursor-pointer transition hover:scale-110" id="star-5" onclick="setRating(5)"></i>
+                </div>
+                <p id="rating-text" class="text-center text-sm font-bold text-yellow-500 mb-4">0.0</p>
+                <input type="hidden" id="ratingValue" value="0">
+                <textarea id="reviewComment" rows="3" class="w-full bg-black/50 border border-gray-700 rounded-xl p-3 text-white text-sm focus:border-purple-500 outline-none mb-4" placeholder="Tulis pengalamanmu..."></textarea>
+                <button type="submit" id="btn-submit-review" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-purple-500/20">Kirim Ulasan</button>
+            </form>
+        </div>
+    </div>
+
     <script src="script.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="topup.js"></script>
+    <script src="topup.js"></script>
     <script src="manzzyid.js"></script>
 </body>
 </html>
