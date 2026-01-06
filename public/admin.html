@@ -80,7 +80,7 @@
     <div class="sidebar flex flex-col" id="sidebar">
         <div class="p-6 pb-2">
             <h1 class="text-xl font-extrabold text-white tracking-widest">MANZZY<span class="text-purple-500">ID</span></h1>
-            <p class="text-[10px] text-gray-600 font-mono mt-1">Admin Panel v4.5 (Pay)</p>
+            <p class="text-[10px] text-gray-600 font-mono mt-1">Admin Panel v4.3 (Stats)</p>
         </div>
         
         <nav class="flex-1 px-3 overflow-y-auto space-y-0.5 pb-20 custom-scroll">
@@ -91,15 +91,12 @@
             <p class="px-3 text-[9px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2">Transaksi</p>
             <div class="nav-item" onclick="nav('orders')"><i class="fa-solid fa-receipt w-4"></i> Riwayat Order</div>
             <div class="nav-item" onclick="nav('topup')"><i class="fa-solid fa-money-bill-transfer w-4"></i> Riwayat Topup</div>
-            
+            <div class="nav-item" onclick="nav('nokos')"><i class="fa-solid fa-sim-card w-4"></i> Config Nokos</div>
+
             <p class="px-3 text-[9px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2">Layanan</p>
             <div class="nav-item" onclick="nav('actives')"><i class="fa-solid fa-server w-4 text-green-500"></i> Bot Aktif</div>
             <div class="nav-item" onclick="nav('products')"><i class="fa-solid fa-box w-4 text-blue-500"></i> Produk Manual</div>
             <div class="nav-item" onclick="nav('vouchers')"><i class="fa-solid fa-ticket w-4 text-yellow-500"></i> Voucher</div>
-
-            <p class="px-3 text-[9px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2">Pengaturan</p>
-            <div class="nav-item" onclick="nav('nokos')"><i class="fa-solid fa-sim-card w-4 text-purple-500"></i> Config Nokos</div>
-            <div class="nav-item" onclick="nav('payment')"><i class="fa-solid fa-wallet w-4 text-orange-500"></i> Payment Config</div>
         </nav>
 
         <div class="p-3 border-t border-white/5">
@@ -198,40 +195,27 @@
                 <h2 class="text-lg font-bold text-white">Config Nokos</h2>
                 <button onclick="loadNokosStats()" class="text-xs text-blue-400 bg-blue-900/20 border border-blue-500/30 px-3 py-1.5 rounded-lg"><i class="fa-solid fa-rotate mr-1"></i> Refresh Data</button>
             </div>
+
             <div class="grid grid-cols-3 gap-3 mb-6">
-                <div class="glass-panel p-3 border-l-2 border-l-blue-500"><p class="text-[9px] text-gray-400 uppercase font-bold">Total Trx</p><h3 class="text-xl font-bold text-white" id="stat-nokos-count">0</h3></div>
-                <div class="glass-panel p-3 border-l-2 border-l-yellow-500"><p class="text-[9px] text-gray-400 uppercase font-bold">Omset (Kotor)</p><h3 class="text-xl font-bold text-yellow-400" id="stat-nokos-gross">Rp 0</h3></div>
-                <div class="glass-panel p-3 border-l-2 border-l-green-500 bg-green-900/10"><p class="text-[9px] text-gray-400 uppercase font-bold">Profit (Bersih)</p><h3 class="text-xl font-bold text-green-400" id="stat-nokos-net">Rp 0</h3></div>
+                <div class="glass-panel p-3 border-l-2 border-l-blue-500">
+                    <p class="text-[9px] text-gray-400 uppercase font-bold">Total Trx</p>
+                    <h3 class="text-xl font-bold text-white" id="stat-nokos-count">0</h3>
+                </div>
+                <div class="glass-panel p-3 border-l-2 border-l-yellow-500">
+                    <p class="text-[9px] text-gray-400 uppercase font-bold">Omset (Kotor)</p>
+                    <h3 class="text-xl font-bold text-yellow-400" id="stat-nokos-gross">Rp 0</h3>
+                </div>
+                <div class="glass-panel p-3 border-l-2 border-l-green-500 bg-green-900/10">
+                    <p class="text-[9px] text-gray-400 uppercase font-bold">Profit (Bersih)</p>
+                    <h3 class="text-xl font-bold text-green-400" id="stat-nokos-net">Rp 0</h3>
+                </div>
             </div>
+
             <div class="glass-panel max-w-lg">
                 <form onsubmit="saveNokosConfig(event)">
                     <div class="mb-3"><label class="text-xs text-gray-400">API Key RumahOTP</label><input type="text" id="nokosKey" placeholder="Paste Key..." class="font-mono mb-1"></div>
                     <div class="mb-4"><label class="text-xs text-gray-400">Profit Margin (%)</label><input type="number" id="nokosMargin" placeholder="20"></div>
                     <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg text-xs font-bold w-full">SIMPAN SETTING</button>
-                </form>
-            </div>
-        </div>
-
-        <div id="view-payment" class="section-view">
-            <h2 class="text-lg font-bold text-white mb-4">Pengaturan Pembayaran</h2>
-            <div class="glass-panel max-w-lg">
-                <form onsubmit="savePaymentConfig(event)">
-                    <div class="mb-4">
-                        <label class="text-xs text-gray-400 font-bold block mb-1">Status Auto Topup (Pakasir)</label>
-                        <select id="payAutoStatus" class="w-full bg-[#09090b] border border-gray-700 rounded-lg p-2 text-white text-sm">
-                            <option value="true">✅ AKTIF (Online)</option>
-                            <option value="false">⛔ MAINTENANCE (Manual Only)</option>
-                        </select>
-                        <p class="text-[10px] text-gray-500 mt-1">Jika maintenance, user akan diarahkan ke manual.</p>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label class="text-xs text-gray-400 font-bold block mb-1">Link Gambar QRIS Manual</label>
-                        <input type="text" id="payManualImg" placeholder="https://..." class="w-full bg-[#09090b] border border-gray-700 rounded-lg p-2 text-white text-sm">
-                        <p class="text-[10px] text-gray-500 mt-1">Upload gambar QRIS kamu ke hosting gambar, lalu tempel linknya di sini.</p>
-                    </div>
-
-                    <button type="submit" class="bg-orange-600 hover:bg-orange-500 text-white px-4 py-2 rounded-lg text-xs font-bold w-full">SIMPAN PENGATURAN</button>
                 </form>
             </div>
         </div>
@@ -242,19 +226,50 @@
         <div class="modal-content p-5">
             <h3 class="text-lg font-bold text-white mb-4" id="modal-title-prod">Tambah Produk</h3>
             <form onsubmit="saveProduct(event)" class="space-y-3">
-                <input type="hidden" id="prodId"> 
-                <div><label class="text-[10px] text-gray-500 uppercase font-bold">Nama</label><input type="text" id="pName" placeholder="Contoh: Bot Premium" required></div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div><label class="text-[10px] text-gray-500 uppercase font-bold">Kategori</label><input type="text" id="pCat" placeholder="Bot/Nokos" required></div>
-                    <div><label class="text-[10px] text-gray-500 uppercase font-bold">Harga</label><input type="number" id="pPrice" placeholder="15000" required></div>
+                <input type="hidden" id="prodId"> <div>
+                    <label class="text-[10px] text-gray-500 uppercase font-bold">Nama Produk</label>
+                    <input type="text" id="pName" placeholder="Contoh: Bot Premium 30 Hari" required>
                 </div>
+                
                 <div class="grid grid-cols-2 gap-2">
-                    <div><label class="text-[10px] text-gray-500 uppercase font-bold">Status</label><select id="pStatus" class="bg-[#09090b] border border-[#27272a] rounded-lg text-white text-xs p-2 w-full"><option value="true">✅ Ready</option><option value="false">❌ Habis</option></select></div>
-                    <div><label class="text-[10px] text-gray-500 uppercase font-bold">Mode</label><select id="pMode" class="bg-[#09090b] border border-[#27272a] rounded-lg text-white text-xs p-2 w-full"><option value="manual">Manual (WA)</option><option value="auto">Otomatis</option></select></div>
+                    <div>
+                        <label class="text-[10px] text-gray-500 uppercase font-bold">Kategori</label>
+                        <input type="text" id="pCat" placeholder="Bot/Nokos/Dll" required>
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-500 uppercase font-bold">Harga</label>
+                        <input type="number" id="pPrice" placeholder="15000" required>
+                    </div>
                 </div>
-                <div><label class="text-[10px] text-gray-500 uppercase font-bold">Deskripsi</label><textarea id="pDesc" rows="2" class="w-full"></textarea></div>
-                <div><label class="text-[10px] text-gray-500 uppercase font-bold">Gambar (URL)</label><input type="text" id="pImg"></div>
-                <button type="submit" class="w-full bg-blue-600 py-2.5 rounded-lg text-white font-bold text-xs mt-2">SIMPAN</button>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[10px] text-gray-500 uppercase font-bold">Status</label>
+                        <select id="pStatus" class="bg-[#09090b] border border-[#27272a] rounded-lg text-white text-xs p-2 w-full">
+                            <option value="true">✅ Tersedia</option>
+                            <option value="false">❌ Habis</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-500 uppercase font-bold">Tipe Order</label>
+                        <select id="pMode" class="bg-[#09090b] border border-[#27272a] rounded-lg text-white text-xs p-2 w-full">
+                            <option value="manual">Manual (WA)</option>
+                            <option value="auto">Otomatis</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[10px] text-gray-500 uppercase font-bold">Deskripsi</label>
+                    <textarea id="pDesc" rows="2" placeholder="Keterangan singkat..." class="w-full"></textarea>
+                </div>
+                
+                <div>
+                    <label class="text-[10px] text-gray-500 uppercase font-bold">Gambar (URL)</label>
+                    <input type="text" id="pImg" placeholder="https://...">
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 py-2.5 rounded-lg text-white font-bold text-xs mt-2 hover:bg-blue-500 transition">SIMPAN DATA</button>
             </form>
         </div>
     </div>
@@ -265,7 +280,10 @@
             <p id="edit-saldo-username" class="text-xs text-gray-400 mb-4 font-mono">User: ...</p>
             <form onsubmit="submitSaldo(event)">
                 <input type="hidden" id="edit-saldo-user">
-                <div class="flex gap-2 mb-3"><select id="saldo-action" class="w-1/3 text-xs"><option value="add">Tambah (+)</option><option value="sub">Kurang (-)</option></select><input type="number" id="saldo-amount" placeholder="Nominal" required></div>
+                <div class="flex gap-2 mb-3">
+                    <select id="saldo-action" class="w-1/3 text-xs"><option value="add">Tambah (+)</option><option value="sub">Kurang (-)</option></select>
+                    <input type="number" id="saldo-amount" placeholder="Nominal" required>
+                </div>
                 <button type="submit" class="w-full bg-purple-600 py-2 rounded-lg text-white font-bold text-xs">PROSES</button>
             </form>
         </div>
@@ -285,8 +303,7 @@
             if(id==='orders') fetchOrders();
             if(id==='vouchers') fetchVouchers();
             if(id==='topup') fetchTopups();
-            if(id==='nokos') loadNokosStats();
-            if(id==='payment') loadPaymentConfig(); // [BARU]
+            if(id==='nokos') loadNokosStats(); // Load stats saat menu nokos dibuka
             
             if(window.innerWidth < 768) toggleSidebar();
         }
@@ -311,7 +328,7 @@
             } catch(e){}
         }
 
-        // PRODUCTS
+        // PRODUCTS (FIXED ADD & EDIT)
         async function loadProducts() {
             const d = await (await fetch('/api/products')).json();
             document.getElementById('grid-products').innerHTML = d.map(p => `
@@ -332,33 +349,98 @@
             `).join('');
         }
 
-        function openProductModal() { document.getElementById('modal-title-prod').innerText="Tambah"; document.getElementById('prodId').value=""; document.getElementById('pName').value=""; document.getElementById('pCat').value=""; document.getElementById('pPrice').value=""; document.getElementById('pDesc').value=""; document.getElementById('pImg').value=""; document.getElementById('pStatus').value="true"; document.getElementById('modal-product').classList.add('active'); }
-        function editProduct(p) { document.getElementById('modal-title-prod').innerText="Edit"; document.getElementById('prodId').value=p._id; document.getElementById('pName').value=p.name; document.getElementById('pCat').value=p.category; document.getElementById('pPrice').value=p.price; document.getElementById('pDesc').value=p.desc||""; document.getElementById('pImg').value=p.imageUrl||""; document.getElementById('pStatus').value=p.isAvailable?"true":"false"; document.getElementById('pMode').value=p.orderMode||"manual"; document.getElementById('modal-product').classList.add('active'); }
-        async function saveProduct(e) { e.preventDefault(); const id=document.getElementById('prodId').value; const data={name:document.getElementById('pName').value, category:document.getElementById('pCat').value, price:parseInt(document.getElementById('pPrice').value), desc:document.getElementById('pDesc').value, imageUrl:document.getElementById('pImg').value, isAvailable:document.getElementById('pStatus').value==="true", orderMode:document.getElementById('pMode').value}; await fetch(id?`/api/products/${id}`:'/api/products', {method:id?'PUT':'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)}); document.getElementById('modal-product').classList.remove('active'); loadProducts(); }
+        function openProductModal() {
+            document.getElementById('modal-title-prod').innerText = "Tambah Produk";
+            document.getElementById('prodId').value = ""; // Kosongkan ID untuk mode tambah
+            document.getElementById('pName').value = "";
+            document.getElementById('pCat').value = "";
+            document.getElementById('pPrice').value = "";
+            document.getElementById('pDesc').value = "";
+            document.getElementById('pImg').value = "";
+            document.getElementById('pStatus').value = "true";
+            document.getElementById('modal-product').classList.add('active');
+        }
+
+        function editProduct(p) {
+            document.getElementById('modal-title-prod').innerText = "Edit Produk";
+            document.getElementById('prodId').value = p._id; // Set ID
+            document.getElementById('pName').value = p.name;
+            document.getElementById('pCat').value = p.category;
+            document.getElementById('pPrice').value = p.price;
+            document.getElementById('pDesc').value = p.desc || "";
+            document.getElementById('pImg').value = p.imageUrl || "";
+            document.getElementById('pStatus').value = p.isAvailable ? "true" : "false";
+            document.getElementById('pMode').value = p.orderMode || "manual";
+            document.getElementById('modal-product').classList.add('active');
+        }
+
+        async function saveProduct(e) {
+            e.preventDefault();
+            const id = document.getElementById('prodId').value;
+            const data = {
+                name: document.getElementById('pName').value,
+                category: document.getElementById('pCat').value,
+                price: parseInt(document.getElementById('pPrice').value),
+                desc: document.getElementById('pDesc').value,
+                imageUrl: document.getElementById('pImg').value,
+                isAvailable: document.getElementById('pStatus').value === "true",
+                orderMode: document.getElementById('pMode').value
+            };
+
+            const url = id ? `/api/products/${id}` : '/api/products';
+            const method = id ? 'PUT' : 'POST';
+
+            await fetch(url, { method: method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
+            document.getElementById('modal-product').classList.remove('active');
+            loadProducts();
+        }
+        
         async function delProd(id) { if(confirm("Hapus?")) { await fetch(`/api/products/${id}`,{method:'DELETE'}); loadProducts(); } }
 
-        // USERS
+        // USERS & SALDO
         async function loadUsers() {
-            try { const u = await (await fetch('/api/admin/users')).json(); document.getElementById('list-users').innerHTML = u.map(x => `<tr class="hover:bg-white/5 border-b border-gray-800/50"><td class="pl-4 py-3 font-bold text-white text-xs">${x.username}</td><td class="py-3 font-mono text-green-400 text-xs">Rp ${x.balance.toLocaleString()}</td><td class="py-3"><span class="bg-blue-900/30 text-blue-300 px-2 py-0.5 rounded text-[9px] font-bold uppercase">${x.role}</span></td><td class="py-3 text-center"><button onclick="openSaldo('${x.username}')" class="text-purple-400 border border-purple-500/30 px-2 py-1 rounded text-[10px] font-bold hover:bg-purple-500 hover:text-white transition">EDIT</button></td></tr>`).join(''); } catch(e){}
+            try {
+                const u = await (await fetch('/api/admin/users')).json();
+                document.getElementById('list-users').innerHTML = u.map(x => `
+                    <tr class="hover:bg-white/5 border-b border-gray-800/50">
+                        <td class="pl-4 py-3 font-bold text-white text-xs">${x.username}</td>
+                        <td class="py-3 font-mono text-green-400 text-xs">Rp ${x.balance.toLocaleString()}</td>
+                        <td class="py-3"><span class="bg-blue-900/30 text-blue-300 px-2 py-0.5 rounded text-[9px] font-bold uppercase">${x.role}</span></td>
+                        <td class="py-3 text-center"><button onclick="openSaldo('${x.username}')" class="text-purple-400 border border-purple-500/30 px-2 py-1 rounded text-[10px] font-bold hover:bg-purple-500 hover:text-white transition">EDIT</button></td>
+                    </tr>
+                `).join('');
+            } catch(e){}
         }
         function openSaldo(u) { document.getElementById('edit-saldo-username').innerText=`User: ${u}`; document.getElementById('edit-saldo-user').value=u; document.getElementById('modal-saldo').classList.add('active'); }
-        async function submitSaldo(e) { e.preventDefault(); const body={username:document.getElementById('edit-saldo-user').value, action:document.getElementById('saldo-action').value, amount:document.getElementById('saldo-amount').value}; await fetch('/api/admin/user/balance', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)}); document.getElementById('modal-saldo').classList.remove('active'); e.target.reset(); loadUsers(); }
+        async function submitSaldo(e) {
+            e.preventDefault();
+            const body = { username: document.getElementById('edit-saldo-user').value, action: document.getElementById('saldo-action').value, amount: document.getElementById('saldo-amount').value };
+            await fetch('/api/admin/user/balance', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+            document.getElementById('modal-saldo').classList.remove('active'); e.target.reset(); loadUsers();
+        }
 
-        // SERVICES
-        async function fetchServices() { try { const d = await (await fetch('/api/admin/all-services')).json(); document.getElementById('list-services').innerHTML = d.map(s => `<tr class="hover:bg-white/5 border-b border-gray-800/50"><td class="pl-4 py-3 font-bold text-white">${s.username}</td><td class="py-3 text-xs text-gray-400">${s.productName}</td><td class="py-3 text-xs font-mono">${s.targetNumber}</td><td class="py-3 text-xs text-blue-400">${s.serverIp}</td><td class="py-3 text-xs ${new Date(s.expiredDate)<new Date()?'text-red-500':'text-green-400'}">${new Date(s.expiredDate).toLocaleDateString()}</td><td class="py-3"><button onclick="delService('${s._id}')" class="text-red-500 hover:bg-red-500/10 p-1.5 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`).join(''); } catch(e){} }
+        // SERVICES (BOT)
+        async function fetchServices() {
+            try { const d = await (await fetch('/api/admin/all-services')).json(); document.getElementById('list-services').innerHTML = d.map(s => `<tr class="hover:bg-white/5 border-b border-gray-800/50"><td class="pl-4 py-3 font-bold text-white">${s.username}</td><td class="py-3 text-xs text-gray-400">${s.productName}</td><td class="py-3 text-xs font-mono">${s.targetNumber}</td><td class="py-3 text-xs text-blue-400">${s.serverIp}</td><td class="py-3 text-xs ${new Date(s.expiredDate)<new Date()?'text-red-500':'text-green-400'}">${new Date(s.expiredDate).toLocaleDateString()}</td><td class="py-3"><button onclick="delService('${s._id}')" class="text-red-500 hover:bg-red-500/10 p-1.5 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>`).join(''); } catch(e){}
+        }
         async function addActiveService(e) { e.preventDefault(); const body = { username: document.getElementById('svcUser').value, productName: document.getElementById('svcProd').value, targetNumber: document.getElementById('svcTarget').value, serverIp: document.getElementById('svcIp').value, days: document.getElementById('svcDays').value }; await fetch('/api/admin/services', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)}); document.getElementById('form-add-service').classList.add('hidden'); e.target.reset(); fetchServices(); }
         async function delService(id) { if(confirm("Hapus?")) { await fetch(`/api/admin/services/${id}`, {method:'DELETE'}); fetchServices(); } }
 
-        // ORDERS & TOPUP
+        // ORDERS
         async function fetchOrders() { const d = await (await fetch('/api/admin/orders')).json(); document.getElementById('list-orders').innerHTML = d.map(o => `<tr class="hover:bg-white/5 border-b border-gray-800/50 group"><td class="pl-4 py-3 font-mono text-[10px] text-purple-400 group-hover:text-purple-300 transition">${o.invoiceId}</td><td class="py-3 font-bold text-white text-xs">${o.username}</td><td class="py-3 text-[10px] text-gray-400">${o.productName.substring(0,25)}</td><td class="py-3 text-right font-mono text-xs text-white">Rp ${o.amount.toLocaleString()}</td><td class="py-3"><span class="bg-green-900/30 text-green-400 border border-green-500/20 px-2 py-0.5 rounded text-[9px] font-bold">SUKSES</span></td></tr>`).join(''); }
+        
+        // TOPUPS
         async function fetchTopups() { const d = await (await fetch('/api/admin/topups')).json(); document.getElementById('list-topups').innerHTML = d.map(t => `<tr class="border-b border-gray-800 hover:bg-white/5"><td class="pl-4 py-3 font-mono text-xs text-purple-400">${t.orderId||'-'}</td><td class="py-3 font-bold text-sm">${t.username}</td><td class="py-3 text-white font-mono text-xs">Rp ${t.amount.toLocaleString()}</td><td class="py-3"><span class="${t.status==='success'?'text-green-400 bg-green-900/20':'text-yellow-500 bg-yellow-900/20'} px-2 py-1 rounded text-[9px] font-bold uppercase">${t.status}</span></td></tr>`).join(''); }
 
-        // VOUCHER & NOKOS
+        // VOUCHER
         async function fetchVouchers() { const d = await (await fetch('/api/admin/vouchers')).json(); document.getElementById('list-vouchers').innerHTML = d.map(v => `<div class="voucher-card p-3 flex justify-between items-center rounded-lg group hover:border-purple-500 transition"><div><div class="text-lg font-mono font-bold text-white tracking-wider">${v.code}</div><div class="text-[10px] text-green-400 font-bold bg-green-900/20 px-2 py-0.5 rounded w-fit mt-1">DISKON ${v.percent}%</div></div><button onclick="delVoucher('${v._id}')" class="w-8 h-8 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition"><i class="fa-solid fa-trash text-xs"></i></button></div>`).join(''); }
         async function createVoucher(e) { e.preventDefault(); await fetch('/api/admin/voucher', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({code:document.getElementById('vCode').value.toUpperCase(), percent:document.getElementById('vPercent').value})}); e.target.reset(); fetchVouchers(); }
         async function delVoucher(id) { await fetch(`/api/admin/voucher/${id}`, {method:'DELETE'}); fetchVouchers(); }
+        
+        // NOKOS CONFIG & STATS
         async function saveNokosConfig(e) { e.preventDefault(); const apiKey = document.getElementById('nokosKey').value; const margin = document.getElementById('nokosMargin').value; try { const res = await fetch('/api/nokos/admin/config', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey, marginPercent: margin})}); if(res.ok) alert("Disimpan!"); } catch(e){alert("Gagal");} }
         
+        // [TAMBAHAN] LOAD STATISTIK
         async function loadNokosStats() {
             try {
                 document.getElementById('stat-nokos-gross').innerText = "...";
@@ -371,33 +453,6 @@
                     document.getElementById('nokosMargin').value = data.margin_used;
                 }
             } catch (e) {}
-        }
-
-        // [BARU] PAYMENT CONFIG FUNCTIONS
-        async function loadPaymentConfig() {
-            try {
-                const res = await fetch('/api/admin/payment-config');
-                const data = await res.json();
-                if(data) {
-                    document.getElementById('payAutoStatus').value = data.isAutoActive ? "true" : "false";
-                    document.getElementById('payManualImg').value = data.manualQrisUrl || "";
-                }
-            } catch(e) { console.error("Config Load Error:", e); }
-        }
-
-        async function savePaymentConfig(e) {
-            e.preventDefault();
-            const isAutoActive = document.getElementById('payAutoStatus').value === "true";
-            const manualQrisUrl = document.getElementById('payManualImg').value;
-
-            if(!confirm("Simpan pengaturan pembayaran?")) return;
-
-            await fetch('/api/admin/payment-config', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ isAutoActive, manualQrisUrl })
-            });
-            alert("Pengaturan Disimpan!");
         }
 
         // INIT
