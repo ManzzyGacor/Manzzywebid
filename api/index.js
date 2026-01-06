@@ -40,13 +40,6 @@ const UserSchema = new mongoose.Schema({
 });
 const User = mongoose.models.User || mongoose.model('User', UserSchema);
 
-// [BARU] Schema Konfigurasi Pembayaran
-const PaymentConfig = mongoose.models.PaymentConfig || mongoose.model('PaymentConfig', new mongoose.Schema({
-    isAutoActive: { type: Boolean, default: true }, // True = Nyala, False = Maintenance
-    manualQrisUrl: { type: String, default: "https://raw.githubusercontent.com/ManzzyGacor/Urlmanzzy/main/file_1767695871671_444.jpg" },
-    adminWa: { type: String, default: "6282230391990" }
-}));
-
 // Schema Lainnya (Tetap Sama)
 const ActiveService = mongoose.models.ActiveService || mongoose.model('ActiveService', new mongoose.Schema({ username: String, productName: String, targetNumber: String, serverIp: String, expiredDate: Date }));
 const Product = mongoose.models.Product || mongoose.model('Product', new mongoose.Schema({ name: String, category: String, price: Number, desc: String, imageUrl: String, formFields: String, isAvailable: { type: Boolean, default: true }, orderMode: { type: String, default: 'manual' } }));
@@ -450,29 +443,6 @@ app.delete('/api/admin/services/:id', async (req, res) => {
         await ActiveService.findByIdAndDelete(req.params.id);
         res.json({ success: true });
     } catch (e) { res.status(500).json({ success: false }); }
-});
-
-// ==========================================
-// [BARU] PAYMENT CONFIG ROUTES
-// ==========================================
-app.get('/api/admin/payment-config', async (req, res) => {
-    await connectDB();
-    let config = await PaymentConfig.findOne();
-    if (!config) config = await new PaymentConfig().save();
-    res.json(config);
-});
-
-app.post('/api/admin/payment-config', async (req, res) => {
-    await connectDB();
-    const { isAutoActive, manualQrisUrl } = req.body;
-    
-    // Update atau Create jika belum ada
-    await PaymentConfig.findOneAndUpdate({}, {
-        isAutoActive,
-        manualQrisUrl
-    }, { upsert: true, new: true });
-    
-    res.json({ success: true });
 });
 
 module.exports = app;

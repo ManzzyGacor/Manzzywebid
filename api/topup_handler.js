@@ -56,60 +56,43 @@ async function callPakasir(endpoint, data) {
 
 // 1. BUAT QRIS (CREATE)
 router.post('/create', async (req, res) => {
-    try {
-        await connectDB(); // Pastikan konek dulu
-        const { username, amount } = req.body;
+    await connectDB();
+    const { username, amount } = req.body;
 
-        // Cek Status Maintenance
-        // Menggunakan try-catch agar jika config belum ada, tidak error fatal
-        try {
-            const PaymentConfig = mongoose.models.PaymentConfig || mongoose.model('PaymentConfig');
-            const config = await PaymentConfig.findOne();
-            
-            if (config && config.isAutoActive === false) {
-                return res.json({ success: false, msg: "⛔ Sistem Otomatis Maintenance. Gunakan Manual." });
-            }
-        } catch (errConfig) {
-            console.log("Config belum diset, lanjut default.");
-        }
+    if (amount < 1000) return res.json({ success: false, msg: "Min Top Up Rp 1.000" });
 
-        if (amount < 1000) return res.json({ success: false, msg: "Min Top Up Rp 1.000" });
-        
-        const orderId = 'TOP-' + Date.now().toString().slice(-8) + Math.floor(Math.random() * 999);
+    // Buat Order ID Unik
+    const orderId = 'TOP-' + Date.now().toString().slice(-8) + Math.floor(Math.random() * 999);
 
-        // Request ke Pakasir
-        const result = await callPakasir('transactioncreate/qris', {
-            order_id: orderId,
-            amount: parseInt(amount)
-        });
+    // Request ke Pakasir
+    const result = await callPakasir('transactioncreate/qris', {
+        order_id: orderId,
+        amount: parseInt(amount)
+    });
 
-        if (result.payment) {
-            await new TopUpTx({
+    if (result.payment) {
+        await new TopUpTx({
+            orderId: orderId,
+            username: username,
+            amount: parseInt(amount), // Saldo murni yg masuk
+            fee: result.payment.fee,
+            totalPayment: result.payment.total_payment, // Total yg harus dibayar user
+            paymentNumber: result.payment.payment_number,
+            expiredAt: new Date(result.payment.expired_at)
+        }).save();
+
+        res.json({ 
+            success: true, 
+            data: {
                 orderId: orderId,
-                username: username,
-                amount: parseInt(amount),
-                fee: result.payment.fee,
-                totalPayment: result.payment.total_payment,
-                paymentNumber: result.payment.payment_number,
-                expiredAt: new Date(result.payment.expired_at)
-            }).save();
-
-            res.json({ 
-                success: true, 
-                data: {
-                    orderId: orderId,
-                    total: result.payment.total_payment,
-                    qrString: result.payment.payment_number,
-                    expiredAt: result.payment.expired_at
-                }
-            });
-        } else {
-            console.error("Pakasir Error:", result);
-            res.json({ success: false, msg: "Gagal membuat QRIS (API Error)." });
-        }
-    } catch (e) {
-        console.error("Topup Error:", e);
-        res.status(500).json({ success: false, msg: "Server Error" });
+                total: result.payment.total_payment,
+                qrString: result.payment.payment_number,
+                expiredAt: result.payment.expired_at
+            }
+        });
+    } else {
+        console.error("Pakasir Error:", result);
+        res.json({ success: false, msg: "Gagal membuat QRIS. Cek API Key." });
     }
 });
 
