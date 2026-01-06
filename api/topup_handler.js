@@ -54,13 +54,24 @@ async function callPakasir(endpoint, data) {
 // ROUTES
 // ==========================================
 
+// ... (Kode Sebelumnya)
+
 // 1. BUAT QRIS (CREATE)
 router.post('/create', async (req, res) => {
     await connectDB();
     const { username, amount } = req.body;
 
-    if (amount < 1000) return res.json({ success: false, msg: "Min Top Up Rp 1.000" });
+    // [BARU] CEK STATUS MAINTENANCE
+    const PaymentConfig = mongoose.models.PaymentConfig || mongoose.model('PaymentConfig');
+    const config = await PaymentConfig.findOne();
+    
+    // Jika config ada DAN Auto Active = False, tolak transaksi
+    if (config && config.isAutoActive === false) {
+        return res.json({ success: false, msg: "⛔ Metode Otomatis Sedang Maintenance. Silakan gunakan Top Up Manual." });
+    }
 
+    if (amount < 1000) return res.json({ success: false, msg: "Min Top Up Rp 1.000" });
+    
     // Buat Order ID Unik
     const orderId = 'TOP-' + Date.now().toString().slice(-8) + Math.floor(Math.random() * 999);
 
