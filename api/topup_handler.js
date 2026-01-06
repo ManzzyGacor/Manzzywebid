@@ -54,56 +54,62 @@ async function callPakasir(endpoint, data) {
 // ROUTES
 // ==========================================
 
-// ... (Kode Sebelumnya)
-
 // 1. BUAT QRIS (CREATE)
 router.post('/create', async (req, res) => {
-    await connectDB();
-    const { username, amount } = req.body;
+    try {
+        await connectDB(); // Pastikan konek dulu
+        const { username, amount } = req.body;
 
-    // [BARU] CEK STATUS MAINTENANCE
-    const PaymentConfig = mongoose.models.PaymentConfig || mongoose.model('PaymentConfig');
-    const config = await PaymentConfig.findOne();
-    
-    // Jika config ada DAN Auto Active = False, tolak transaksi
-    if (config && config.isAutoActive === false) {
-        return res.json({ success: false, msg: "⛔ Metode Otomatis Sedang Maintenance. Silakan gunakan Top Up Manual." });
-    }
-
-    if (amount < 1000) return res.json({ success: false, msg: "Min Top Up Rp 1.000" });
-    
-    // Buat Order ID Unik
-    const orderId = 'TOP-' + Date.now().toString().slice(-8) + Math.floor(Math.random() * 999);
-
-    // Request ke Pakasir
-    const result = await callPakasir('transactioncreate/qris', {
-        order_id: orderId,
-        amount: parseInt(amount)
-    });
-
-    if (result.payment) {
-        await new TopUpTx({
-            orderId: orderId,
-            username: username,
-            amount: parseInt(amount), // Saldo murni yg masuk
-            fee: result.payment.fee,
-            totalPayment: result.payment.total_payment, // Total yg harus dibayar user
-            paymentNumber: result.payment.payment_number,
-            expiredAt: new Date(result.payment.expired_at)
-        }).save();
-
-        res.json({ 
-            success: true, 
-            data: {
-                orderId: orderId,
-                total: result.payment.total_payment,
-                qrString: result.payment.payment_number,
-                expiredAt: result.payment.expired_at
+        // Cek Status Maintenance
+        // Menggunakan try-catch agar jika config belum ada, tidak error fatal
+        try {
+            const PaymentConfig = mongoose.models.PaymentConfig || mongoose.model('PaymentConfig');
+            const config = await PaymentConfig.findOne();
+            
+            if (config && config.isAutoActive === false) {
+                return res.json({ success: false, msg: "⛔ Sistem Otomatis Maintenance. Gunakan Manual." });
             }
+        } catch (errConfig) {
+            console.log("Config belum diset, lanjut default.");
+        }
+
+        if (amount < 1000) return res.json({ success: false, msg: "Min Top Up Rp 1.000" });
+        
+        const orderId = 'TOP-' + Date.now().toString().slice(-8) + Math.floor(Math.random() * 999);
+
+        // Request ke Pakasir
+        const result = await callPakasir('transactioncreate/qris', {
+            order_id: orderId,
+            amount: parseInt(amount)
         });
-    } else {
-        console.error("Pakasir Error:", result);
-        res.json({ success: false, msg: "Gagal membuat QRIS. Cek API Key." });
+
+        if (result.payment) {
+            await new TopUpTx({
+                orderId: orderId,
+                username: username,
+                amount: parseInt(amount),
+                fee: result.payment.fee,
+                totalPayment: result.payment.total_payment,
+                paymentNumber: result.payment.payment_number,
+                expiredAt: new Date(result.payment.expired_at)
+            }).save();
+
+            res.json({ 
+                success: true, 
+                data: {
+                    orderId: orderId,
+                    total: result.payment.total_payment,
+                    qrString: result.payment.payment_number,
+                    expiredAt: result.payment.expired_at
+                }
+            });
+        } else {
+            console.error("Pakasir Error:", result);
+            res.json({ success: false, msg: "Gagal membuat QRIS (API Error)." });
+        }
+    } catch (e) {
+        console.error("Topup Error:", e);
+        res.status(500).json({ success: false, msg: "Server Error" });
     }
 });
 
