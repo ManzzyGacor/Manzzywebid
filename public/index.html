@@ -9,36 +9,10 @@
     <meta property="og:title" content="Manzzy ID - Premium Services">
     <meta property="og:image" content="https://raw.githubusercontent.com/ManzzyGacor/Urlmanzzy/main/file_1766890211382_23.jpg">
     
-    <script src="https://cdn.tailwindcss.com"></script> 
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-   <link href="./style.css" rel="stylesheet">
-    
-  <script>
-    // 1. Blokir Klik Kanan
-    document.addEventListener('contextmenu', (e) => e.preventDefault());
-
-    function ctrlShiftKey(e, keyCode) {
-        return e.ctrlKey && e.shiftKey && e.keyCode === keyCode.charCodeAt(0);
-    }
-
-    document.onkeydown = (e) => {
-        // 2. Blokir F12
-        if (event.keyCode === 123) return false;
-
-        // 3. Blokir Ctrl+Shift+I (Inspect)
-        if (ctrlShiftKey(e, 'I')) return false;
-
-        // 4. Blokir Ctrl+Shift+J (Console)
-        if (ctrlShiftKey(e, 'J')) return false;
-
-        // 5. Blokir Ctrl+Shift+C (Inspect Element)
-        if (ctrlShiftKey(e, 'C')) return false;
-
-        // 6. Blokir Ctrl+U (View Source)
-        if (e.ctrlKey && e.keyCode === 'U'.charCodeAt(0)) return false;
-    };
-</script>  
+    <link rel="stylesheet" href="style.css">
     
     <style>
         #loader { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s ease; }
@@ -769,9 +743,9 @@
         </div>
     </div>
 
-    <script type="module" src="script.js"></script>
+    <script src="script.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script type="module" src="topup.js"></script>
-    <script type="module" src="manzzyid.js"></script>
+    <script src="topup.js"></script>
+    <script src="manzzyid.js"></script>
 </body>
 </html>
