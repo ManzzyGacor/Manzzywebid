@@ -445,4 +445,7 @@ app.delete('/api/admin/services/:id', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
+//dashboard buat saldo cek
+app.use('/api', require('./dashboard'));
+
 module.exports = app;
