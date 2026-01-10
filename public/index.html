@@ -91,7 +91,40 @@
         <div class="absolute inset-0 bg-grid -z-10 h-screen fixed opacity-40"></div><div class="absolute top-0 right-0 w-96 h-96 bg-purple-600/10 rounded-full blur-[100px] -z-10 fixed pointer-events-none"></div>
 
         <section id="view-landing" class="view-section view-active relative w-full overflow-x-hidden pt-28 pb-10">
-            
+            <div id="announcement-container" class="hidden max-w-4xl mx-auto px-4 mb-10 fade-in-up">
+                <div class="glass-card p-4 rounded-xl border-l-4 border-l-purple-500 flex items-center gap-4 relative overflow-hidden group">
+                    
+                    <div class="absolute -right-10 -top-10 w-32 h-32 bg-purple-600/20 rounded-full blur-[40px] group-hover:bg-purple-600/30 transition"></div>
+
+                    <div class="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white shrink-0 z-10">
+                        <i class="fa-solid fa-bullhorn animate-pulse"></i>
+                    </div>
+
+                    <div class="overflow-hidden w-full z-10">
+                        <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Announcement</h4>
+                        <div class="relative h-6 overflow-hidden w-full">
+                            <p id="user-announcement-text" class="text-sm font-bold text-white whitespace-nowrap absolute animate-marquee">
+                                Memuat pengumuman...
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <style>
+                @keyframes marquee {
+                    0% { transform: translateX(100%); }
+                    100% { transform: translateX(-100%); }
+                }
+                .animate-marquee {
+                    animation: marquee 15s linear infinite;
+                    min-width: 100%; /* Agar durasi konsisten */
+                }
+                /* Pause saat di-hover user */
+                #announcement-container:hover .animate-marquee {
+                    animation-play-state: paused;
+                }
+            </style>
             <div class="text-center max-w-5xl mx-auto mt-4 mb-20 relative px-4">
                 
                 <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-purple-600/20 rounded-full blur-[80px] md:blur-[120px] -z-10 animate-pulse pointer-events-none"></div>
@@ -817,6 +850,33 @@
         </div>
     </div>
 
+        // --- ANNOUNCEMENT SYSTEM ---
+        async function fetchAnnouncement() {
+            try {
+                const res = await fetch('/api/announcement');
+                const data = await res.json();
+                
+                const container = document.getElementById('announcement-container');
+                const textEl = document.getElementById('user-announcement-text');
+                
+                if (data.isActive && data.text) {
+                    textEl.innerText = data.text;
+                    container.classList.remove('hidden');
+                    
+                    // Sesuaikan kecepatan marquee berdasarkan panjang teks
+                    // Semakin panjang teks, semakin lama durasinya agar enak dibaca
+                    const duration = Math.max(10, data.text.length * 0.2); 
+                    textEl.style.animationDuration = `${duration}s`;
+                } else {
+                    container.classList.add('hidden');
+                }
+            } catch (e) {
+                console.error("Gagal load pengumuman");
+            }
+        }
+
+        // Panggil saat web diload
+        fetchAnnouncement();
     <script src="script.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="topup.js"></script>
