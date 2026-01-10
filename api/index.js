@@ -5,7 +5,7 @@ const app = express();
 
 // Konfigurasi Middleware
 app.use(cors());
-app.use(express.json({ limit: '10mb' })); 
+app.use(express.json({ limit: '10mb' }));
 
 // Helper Fetch (Untuk verifikasi token Google / External API)
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
@@ -253,7 +253,7 @@ try {
     console.error("Warning: h2h.js error/missing", e);
 }
 
-app.use(express.json());
+
 // Admin System / Status
 app.get('/api/system/status', (req, res) => res.json({ vpsActive: true, vpsStartTime: new Date(Date.now()-36000000), botActive: true, botStartTime: new Date(Date.now()-18000000) }));
 app.post('/api/testimonials', async (req, res) => { await connectDB(); await new Testimonial(req.body).save(); res.json({ success: true }); });
