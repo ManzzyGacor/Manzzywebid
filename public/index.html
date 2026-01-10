@@ -367,7 +367,7 @@
                                 <div class="h-px bg-gray-700 flex-1"></div><span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Cara Bayar</span><div class="h-px bg-gray-700 flex-1"></div>
                             </div>
                             <div class="space-y-4">
-                                <div class="flex gap-4"><div class="w-8 h-8 rounded-full bg-[#1c1c1f] border border-gray-700 flex items-center justify-center text-xs font-bold text-gray-400 shrink-0">1</div><div><h4 class="text-white text-xs font-bold">Isi Nominal</h4><p class="text-gray-500 text-[10px]">Min Rp 1.000, klik tombol buat tagihan.</p></div></div>
+                                <div class="flex gap-4"><div class="w-8 h-8 rounded-full bg-[#1c1c1f] border border-gray-700 flex items-center justify-center text-xs font-bold text-gray-400 shrink-0">1</div><div><h4 class="text-white text-xs font-bold">Isi Nominal</h4><p class="text-gray-500 text-[10px]">Min Rp 2.000, klik tombol buat tagihan.</p></div></div>
                                 <div class="flex gap-4"><div class="w-8 h-8 rounded-full bg-[#1c1c1f] border border-gray-700 flex items-center justify-center text-xs font-bold text-gray-400 shrink-0">2</div><div><h4 class="text-white text-xs font-bold">Scan QRIS</h4><p class="text-gray-500 text-[10px]">Muncul QR Code, scan pakai E-Wallet/Bank.</p></div></div>
                                 <div class="flex gap-4"><div class="w-8 h-8 rounded-full bg-[#1c1c1f] border border-gray-700 flex items-center justify-center text-xs font-bold text-gray-400 shrink-0">3</div><div><h4 class="text-white text-xs font-bold">Selesai</h4><p class="text-gray-500 text-[10px]">Tunggu 1-2 menit, saldo masuk otomatis.</p></div></div>
                             </div>
@@ -425,7 +425,7 @@
             let paymentConfig = {};
             let checkInterval = null;
 
-            // Load Config (Gambar Manual & Status Maintenance)
+            // 1. Load Config & Cek Transaksi Pending saat web dibuka
             async function loadPublicConfig() {
                 try {
                     const res = await fetch('/api/admin/payment-config');
@@ -436,12 +436,58 @@
                         document.getElementById('manual-qris-link').href = paymentConfig.manualQrisUrl;
                     }
                 } catch(e) {}
+                
+                // [BARU] Cek apakah ada transaksi pending di LocalStorage?
+                checkPendingTransaction();
             }
             loadPublicConfig();
 
+            // [BARU] Fungsi Mengembalikan Tampilan QR jika user refresh halaman
+            function checkPendingTransaction() {
+                const pending = localStorage.getItem('manzzy_pending_topup');
+                if (pending) {
+                    try {
+                        const data = JSON.parse(pending);
+                        console.log("Mengembalikan transaksi pending:", data.orderId);
+                        
+                        // Pindah ke View Topup & Tab Otomatis
+                        switchView('topup'); 
+                        switchTopUpTab('auto');
+
+                        // Restore Tampilan QR
+                        document.getElementById('topup-form-area').classList.add('hidden');
+                        document.getElementById('topup-qr-area').classList.remove('hidden');
+                        
+                        document.getElementById('qris-amount').innerText = `Rp ${data.total.toLocaleString()}`;
+                        document.getElementById('qris-id').innerText = `ID: ${data.orderId}`;
+
+                        // Render Gambar Base64
+                        const qrContainer = document.getElementById("qris-image");
+                        qrContainer.innerHTML = ''; 
+                        if (data.qrString.startsWith('data:image')) {
+                            const img = document.createElement('img');
+                            img.src = data.qrString;
+                            img.className = 'w-full h-full object-contain rounded-lg';
+                            qrContainer.appendChild(img);
+                        } else {
+                            // Fallback jika pakai text
+                            if(typeof QRCode !== 'undefined') {
+                                new QRCode(qrContainer, { text: data.qrString, width: 180, height: 180 });
+                            }
+                        }
+
+                        // Lanjutkan Cek Status
+                        startCheckStatus(data.orderId);
+                        
+                    } catch (e) {
+                        console.error("Gagal restore transaksi", e);
+                        localStorage.removeItem('manzzy_pending_topup'); // Hapus jika data corrupt
+                    }
+                }
+            }
+
             function setAmount(n) { document.getElementById('topupAmount').value = n; }
 
-            // Ganti Tab
             function switchTopUpTab(mode) {
                 const btnAuto = document.getElementById('tab-auto');
                 const btnManual = document.getElementById('tab-manual');
@@ -484,13 +530,21 @@
                     const data = await res.json();
 
                     if (data.success) {
+                        // [BARU] Simpan data ke LocalStorage
+                        const txData = {
+                            orderId: data.data.orderId,
+                            total: data.data.total,
+                            qrString: data.data.qrString
+                        };
+                        localStorage.setItem('manzzy_pending_topup', JSON.stringify(txData));
+
+                        // Update Tampilan
                         document.getElementById('topup-form-area').classList.add('hidden');
                         document.getElementById('topup-qr-area').classList.remove('hidden');
                         
                         document.getElementById('qris-amount').innerText = `Rp ${data.data.total.toLocaleString()}`;
                         document.getElementById('qris-id').innerText = `ID: ${data.data.orderId}`;
 
-                        // Render Gambar Base64
                         const qrContainer = document.getElementById("qris-image");
                         qrContainer.innerHTML = ''; 
                         if (data.data.qrString.startsWith('data:image')) {
@@ -517,18 +571,38 @@
                     try {
                         const res = await fetch(`/api/topup/check/${orderId}`);
                         const d = await res.json();
+                        
+                        // Jika Sukses
                         if (d.success && d.status === 'success') {
+                            finishTransaction();
+                        }
+                        // Jika Dibatalkan oleh sistem
+                        else if (d.success && d.status === 'canceled') {
                             clearInterval(checkInterval);
-                            document.getElementById('topup-qr-area').classList.add('hidden');
-                            document.getElementById('topup-success-area').classList.remove('hidden');
-                            if(typeof checkUserLogin === 'function') checkUserLogin();
+                            localStorage.removeItem('manzzy_pending_topup');
+                            alert("Transaksi dibatalkan/kadaluarsa.");
+                            resetTopUpView();
                         }
                     } catch(e) {}
                 }, 5000);
             }
 
+            // [BARU] Fungsi saat sukses
+            function finishTransaction() {
+                clearInterval(checkInterval);
+                localStorage.removeItem('manzzy_pending_topup'); // Hapus data pending
+                
+                document.getElementById('topup-qr-area').classList.add('hidden');
+                document.getElementById('topup-success-area').classList.remove('hidden');
+                
+                if(typeof checkUserLogin === 'function') checkUserLogin(); // Refresh saldo header
+            }
+
             function resetTopUpView() {
                 if(checkInterval) clearInterval(checkInterval);
+                // [BARU] Hapus data pending saat user manual klik batal
+                localStorage.removeItem('manzzy_pending_topup');
+
                 document.getElementById('topup-form-area').classList.remove('hidden');
                 document.getElementById('topup-qr-area').classList.add('hidden');
                 document.getElementById('topup-success-area').classList.add('hidden');
@@ -541,7 +615,7 @@
                 const amt = parseInt(document.getElementById('manualAmount').value);
                 if(!amt || amt < 5000) { alert("Minimal Rp 5.000"); return; }
 
-                const fee = Math.ceil(amt * 0.007); 
+                const fee = Math.ceil(amt * 0.020); 
                 const total = amt + fee;
                 const user = localStorage.getItem('user_session') || 'Guest';
                 const adminNum = paymentConfig.adminWa || "6282230391990"; 
