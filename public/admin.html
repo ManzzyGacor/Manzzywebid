@@ -92,6 +92,9 @@
             <div class="nav-item" onclick="nav('orders')"><i class="fa-solid fa-receipt w-4"></i> Riwayat Order</div>
             <div class="nav-item" onclick="nav('topup')"><i class="fa-solid fa-money-bill-transfer w-4"></i> Riwayat Topup</div>
             <div class="nav-item" onclick="nav('nokos')"><i class="fa-solid fa-sim-card w-4"></i> Config Nokos</div>
+            <div class="nav-item" onclick="nav('payment')">
+    <i class="fa-solid fa-wallet w-4 text-orange-500"></i> Payment Config
+</div>
 
             <p class="px-3 text-[9px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2">Layanan</p>
             <div class="nav-item" onclick="nav('actives')"><i class="fa-solid fa-server w-4 text-green-500"></i> Bot Aktif</div>
@@ -274,6 +277,7 @@
         </div>
     </div>
 
+    
     <div id="modal-saldo" class="modal" onclick="if(event.target===this)this.classList.remove('active')">
         <div class="modal-content p-5">
             <h3 class="text-lg font-bold text-white mb-2">Edit Saldo</h3>
@@ -288,7 +292,40 @@
             </form>
         </div>
     </div>
+    
+<div id="view-payment" class="section-view">
+    <h2 class="text-lg font-bold text-white mb-4">Pengaturan Pembayaran</h2>
+    
+    <div class="glass-panel max-w-lg border-l-4 border-l-orange-500">
+        <form onsubmit="savePaymentConfig(event)">
+            
+            <div class="mb-6">
+                <label class="text-xs text-gray-400 font-bold block mb-2 uppercase tracking-wider">Status Top Up Otomatis (Pakasir/RumahOTP)</label>
+                <div class="relative">
+                    <select id="payAutoStatus" class="w-full bg-[#0a0a0c] border border-gray-700 rounded-xl p-3 text-white text-sm focus:border-orange-500 outline-none appearance-none">
+                        <option value="true">✅ AKTIF (ONLINE)</option>
+                        <option value="false">⛔ MAINTENANCE (OFFLINE)</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down absolute right-4 top-3.5 text-gray-500"></i>
+                </div>
+                <p class="text-[10px] text-gray-500 mt-2 bg-white/5 p-2 rounded">
+                    <i class="fa-solid fa-circle-info text-blue-400 mr-1"></i> 
+                    Jika diset <b>MAINTENANCE</b>, menu "Otomatis" di user akan dikunci, dan user dipaksa pakai Manual.
+                </p>
+            </div>
+            
+            <div class="mb-6">
+                <label class="text-xs text-gray-400 font-bold block mb-2 uppercase tracking-wider">URL Gambar QRIS Manual</label>
+                <input type="text" id="payManualImg" placeholder="https://imgur.com/..." class="w-full bg-[#0a0a0c] border border-gray-700 rounded-xl p-3 text-white text-sm focus:border-orange-500 outline-none font-mono">
+                <p class="text-[10px] text-gray-500 mt-1">Upload gambar QRIS kamu ke hosting gambar (Imgur/Postimage), lalu tempel linknya di sini.</p>
+            </div>
 
+            <button type="submit" class="w-full py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-bold rounded-xl shadow-lg shadow-orange-900/20 transition transform active:scale-95">
+                SIMPAN PENGATURAN
+            </button>
+        </form>
+    </div>
+</div>
     <script>
         function nav(id) {
             document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
@@ -304,6 +341,7 @@
             if(id==='vouchers') fetchVouchers();
             if(id==='topup') fetchTopups();
             if(id==='nokos') loadNokosStats(); // Load stats saat menu nokos dibuka
+            if(id==='payment') loadPaymentConfig();
             
             if(window.innerWidth < 768) toggleSidebar();
         }
@@ -454,7 +492,44 @@
                 }
             } catch (e) {}
         }
+// --- LOGIC PAYMENT CONFIG ---
+        
+        // 1. Load Data Config saat menu dibuka
+        async function loadPaymentConfig() {
+            try {
+                const res = await fetch('/api/admin/payment-config');
+                const data = await res.json();
+                if(data) {
+                    document.getElementById('payAutoStatus').value = data.isAutoActive ? "true" : "false";
+                    document.getElementById('payManualImg').value = data.manualQrisUrl || "";
+                }
+            } catch(e) { console.error("Gagal load payment config"); }
+        }
 
+        // 2. Simpan Config
+        async function savePaymentConfig(e) {
+            e.preventDefault();
+            const isAutoActive = document.getElementById('payAutoStatus').value === "true";
+            const manualQrisUrl = document.getElementById('payManualImg').value;
+
+            if(!confirm("Simpan perubahan pengaturan pembayaran?")) return;
+
+            try {
+                await fetch('/api/admin/payment-config', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ isAutoActive, manualQrisUrl })
+                });
+                alert("✅ Pengaturan Berhasil Disimpan!");
+            } catch(e) {
+                alert("❌ Gagal menyimpan.");
+            }
+        }
+
+        // 3. JANGAN LUPA UPDATE FUNGSI NAV()
+        // Cari fungsi nav(id) yang sudah ada, tambahkan baris ini di dalamnya:
+        /* if(id === 'payment') loadPaymentConfig(); 
+        */
         // INIT
         loadDashboard();
     </script>
