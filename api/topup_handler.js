@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const router = express.Router();
 
-// 1. DATABASE & SCHEMA
+// 1. DATABASE CONNECTION
 let isConnected = false;
 const connectDB = async () => {
     if (isConnected) return;
@@ -11,27 +11,25 @@ const connectDB = async () => {
     catch (err) { console.error("DB Error:", err); }
 };
 
-// --- KONFIGURASI RUMAHOTP ---
-// Ganti dengan API Key kamu
-const RUMAHOTP_API_KEY = "otp_bEiRJAgrGjhzWAvz"; 
+// API KEY RUMAHOTP (Pastikan Benar)
+const RUMAHOTP_API_KEY = "otp_bEiRJAgrGjhzWAvz"; // Ganti dengan API Key kamu
 
+// SCHEMA
 const User = mongoose.models.User || mongoose.model('User');
 const Transaction = mongoose.models.Transaction || mongoose.model('Transaction');
-
-// Schema Transaksi TopUp
 const TopUpTx = mongoose.models.TopUpTx || mongoose.model('TopUpTx', new mongoose.Schema({
-    orderId: String,        // ID dari RumahOTP (RO...)
+    orderId: String,        
     username: String,
-    amount: Number,         // Nominal yang diterima user (misal 2000)
-    fee: Number,            // Biaya admin
-    totalPayment: Number,   // Total yang harus dibayar (misal 2112)
-    paymentNumber: String,  // QR String (Base64 Image)
+    amount: Number,         
+    fee: Number,            
+    totalPayment: Number,   
+    paymentNumber: String,  
     status: { type: String, default: 'pending' }, 
     expiredAt: Date,
     createdAt: { type: Date, default: Date.now }
 }));
 
-// 2. HELPER REQUEST KE RUMAHOTP
+// HELPER FUNCTION
 async function callRumahOTP(url, method = 'GET') {
     try {
         const res = await fetch(url, {
@@ -43,7 +41,7 @@ async function callRumahOTP(url, method = 'GET') {
         });
         return await res.json();
     } catch (e) {
-        console.error("API Error:", e);
+        console.error("API Call Error:", e);
         return { success: false, message: e.message };
     }
 }
@@ -52,39 +50,38 @@ async function callRumahOTP(url, method = 'GET') {
 // ROUTES
 // ==========================================
 
-// 1. BUAT QRIS (CREATE DEPOSIT)
+// 1. CREATE DEPOSIT
 router.post('/create', async (req, res) => {
     try {
         await connectDB();
         const { username, amount } = req.body;
 
-        // [CEK MAINTENANCE DARI ADMIN]
+        // Cek Config Maintenance
         try {
             const PaymentConfig = mongoose.models.PaymentConfig || mongoose.model('PaymentConfig');
             const config = await PaymentConfig.findOne();
             if (config && config.isAutoActive === false) {
-                return res.json({ success: false, msg: "⛔ Sistem Otomatis Maintenance. Gunakan Manual." });
+                return res.json({ success: false, msg: "⛔ Metode Otomatis Maintenance." });
             }
-        } catch (errConfig) {}
+        } catch (e) {}
 
-        if (amount < 1000) return res.json({ success: false, msg: "Min Top Up Rp 2.000" });
+        if (amount < 1000) return res.json({ success: false, msg: "Min Top Up Rp 1.000" });
 
         // Request ke RumahOTP
-        // Endpoint: /api/v1/deposit/create?amount=NOMINAL&payment_id=qris
         const apiUrl = `https://www.rumahotp.com/api/v1/deposit/create?amount=${amount}&payment_id=qris`;
         const result = await callRumahOTP(apiUrl);
 
         if (result.success && result.data) {
             const d = result.data;
-
-            // Simpan ke Database
+            
+            // Simpan Transaksi Baru
             await new TopUpTx({
-                orderId: d.id, // ID Deposit (ROxxxx)
+                orderId: d.id, // ID dari RumahOTP (ROxxx)
                 username: username,
-                amount: d.currency.diterima, // Saldo bersih yang akan masuk
+                amount: d.currency.diterima, 
                 fee: d.currency.fee,
-                totalPayment: d.currency.total, // Total bayar (+fee)
-                paymentNumber: d.qr, // Base64 Image QRIS
+                totalPayment: d.currency.total, 
+                paymentNumber: d.qr, 
                 status: 'pending',
                 expiredAt: new Date(d.expired)
             }).save();
@@ -94,67 +91,78 @@ router.post('/create', async (req, res) => {
                 data: {
                     orderId: d.id,
                     total: d.currency.total,
-                    qrString: d.qr, // Ini Base64 Image
+                    qrString: d.qr,
                     expiredAt: d.expired
                 }
             });
         } else {
-            console.error("RumahOTP Error:", result);
-            res.json({ success: false, msg: "Gagal membuat QRIS. Cek nominal/server." });
+            console.error("Gagal Create:", result);
+            res.json({ success: false, msg: "Gagal membuat QRIS (Server Error)." });
         }
     } catch (e) {
-        console.error("Topup Create Error:", e);
+        console.error("Create Error:", e);
         res.status(500).json({ success: false, msg: "Server Error" });
     }
 });
 
-// 2. CEK STATUS (POLLING / MANUAL CHECK)
+// 2. CEK STATUS (Polling dari Browser) - [BAGIAN INI DIPERBAIKI]
 router.get('/check/:orderId', async (req, res) => {
     try {
         await connectDB();
-        const tx = await TopUpTx.findOne({ orderId: req.params.orderId });
+        const { orderId } = req.params;
+        const tx = await TopUpTx.findOne({ orderId: orderId });
         
         if (!tx) return res.json({ success: false, status: 'not_found' });
-        if (tx.status === 'success') return res.json({ success: true, status: 'success' });
-        if (tx.status === 'canceled') return res.json({ success: true, status: 'canceled' });
 
-        // Cek ke RumahOTP (Pakai V2 sesuai request agar lebih detail)
-        const apiUrl = `https://www.rumahotp.com/api/v2/deposit/get_status?deposit_id=${tx.orderId}`;
+        // Jika di database sudah sukses, langsung return sukses
+        if (tx.status === 'success') return res.json({ success: true, status: 'success' });
+        
+        // JIKA MASIH PENDING, CEK LAGI KE RUMAHOTP (Force Check)
+        const apiUrl = `https://www.rumahotp.com/api/v2/deposit/get_status?deposit_id=${orderId}`;
         const check = await callRumahOTP(apiUrl);
 
-        if (check.success && check.data) {
-            const statusPusat = check.data.status; // success, pending, cancel
+        console.log(`🔍 Checking ${orderId}:`, check); // Debug Log di Vercel
 
-            if (statusPusat === 'success' && tx.status !== 'success') {
-                // UPDATE SUKSES
+        if (check.success && check.data) {
+            const statusPusat = check.data.status.toLowerCase(); // success/pending/cancel
+
+            // KONDISI SUKSES
+            if (statusPusat === 'success') {
+                // Update Database Lokal
                 tx.status = 'success';
                 await tx.save();
 
+                // Tambah Saldo User
                 const user = await User.findOne({ username: tx.username });
-                if(user) {
-                    user.balance += tx.amount; 
+                if (user) {
+                    // Pastikan angka benar-benar number
+                    const saldoMasuk = parseInt(tx.amount);
+                    user.balance = (user.balance || 0) + saldoMasuk;
                     await user.save();
 
-                    // Catat di History Transaksi
+                    // Catat History
                     await new Transaction({ 
                         invoiceId: tx.orderId, 
                         username: user.username, 
                         productName: 'Deposit Otomatis', 
                         formData: `Via QRIS (Fee: ${tx.fee})`, 
-                        amount: tx.amount,
+                        amount: saldoMasuk,
                         status: 'success' 
                     }).save();
+
+                    console.log(`✅ Saldo ${saldoMasuk} masuk ke ${user.username}`);
                 }
                 return res.json({ success: true, status: 'success' });
-
-            } else if (statusPusat === 'cancel' && tx.status !== 'canceled') {
-                // UPDATE GAGAL/CANCEL
+            } 
+            // KONDISI BATAL
+            else if (statusPusat === 'cancel' || statusPusat === 'canceled') {
                 tx.status = 'canceled';
                 await tx.save();
                 return res.json({ success: true, status: 'canceled' });
             }
         }
-
+        
+        // Jika masih pending
         res.json({ success: true, status: 'pending' });
 
     } catch (e) {
@@ -163,30 +171,49 @@ router.get('/check/:orderId', async (req, res) => {
     }
 });
 
-// 3. BATALKAN TRANSAKSI (CANCEL)
-router.post('/cancel', async (req, res) => {
+// 3. WEBHOOK (Callback Otomatis)
+// URL Webhook kamu: https://domain-kamu.vercel.app/api/topup/webhook
+router.post('/webhook', async (req, res) => {
     try {
         await connectDB();
-        const { orderId } = req.body;
-        
-        const tx = await TopUpTx.findOne({ orderId });
-        if (!tx) return res.status(404).json({ success: false, msg: "Transaksi tidak ditemukan" });
-        if (tx.status !== 'pending') return res.json({ success: false, msg: "Transaksi sudah selesai/batal" });
+        const data = req.body; 
+        console.log("🔔 Webhook Masuk:", data);
 
-        // Request Cancel ke RumahOTP
-        const apiUrl = `https://www.rumahotp.com/api/v1/deposit/cancel?deposit_id=${orderId}`;
-        const result = await callRumahOTP(apiUrl);
+        // Sesuaikan cara baca data webhook RumahOTP
+        // RumahOTP biasanya kirim: { id: 'RO...', status: 'success' }
+        const orderId = data.id || data.deposit_id;
+        const status = data.status ? data.status.toLowerCase() : '';
 
-        if (result.success) {
-            tx.status = 'canceled';
-            await tx.save();
-            res.json({ success: true, msg: "Transaksi dibatalkan." });
-        } else {
-            res.json({ success: false, msg: "Gagal membatalkan di server pusat." });
+        if (status === 'success') {
+            const tx = await TopUpTx.findOne({ orderId: orderId });
+            
+            // Cek biar gak double saldo
+            if (tx && tx.status === 'pending') {
+                tx.status = 'success';
+                await tx.save();
+
+                const user = await User.findOne({ username: tx.username });
+                if (user) {
+                    const saldoMasuk = parseInt(tx.amount);
+                    user.balance = (user.balance || 0) + saldoMasuk;
+                    await user.save();
+
+                    await new Transaction({ 
+                        invoiceId: tx.orderId, 
+                        username: user.username, 
+                        productName: 'Deposit Otomatis', 
+                        formData: 'Auto by Webhook', 
+                        amount: saldoMasuk,
+                        status: 'success' 
+                    }).save();
+                    console.log(`✅ Webhook: Saldo masuk ke ${user.username}`);
+                }
+            }
         }
-
+        res.json({ success: true }); // Wajib balas 200 OK
     } catch (e) {
-        res.status(500).json({ success: false, msg: "Server Error" });
+        console.error("Webhook Error:", e);
+        res.status(500).json({ error: "Server Error" });
     }
 });
 
