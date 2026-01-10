@@ -448,6 +448,6 @@ app.delete('/api/admin/services/:id', async (req, res) => {
 //dashboard buat saldo cek
 app.use('/api', require('./dashboard'));
 // announce
-app.use('/api/announcement', require('./announcement'));
+app.use('/api', require('./announcement'));
 
 module.exports = app;
