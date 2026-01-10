@@ -113,6 +113,7 @@
         
         <div id="view-dashboard" class="section-view active">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+              
                 <div class="glass-panel p-4 flex flex-col justify-between h-24 relative overflow-hidden">
                     <div class="text-[10px] text-gray-400 font-bold uppercase">Total User</div>
                     <div class="text-2xl font-bold text-white" id="stat-users">0</div>
@@ -132,6 +133,20 @@
                     <div class="text-[10px] text-gray-400 font-bold uppercase">Bot Aktif</div>
                     <div class="text-2xl font-bold text-white" id="stat-active">0</div>
                     <i class="fa-solid fa-server absolute -right-2 -bottom-2 text-4xl text-orange-500/10"></i>
+                </div>
+                <div class="glass-panel p-4 flex flex-col justify-between h-24 relative overflow-hidden border-l-4 border-l-pink-500 group hover:bg-white/5 transition">
+                    <div class="flex justify-between items-start z-10">
+                        <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Saldo Pusat (Server)</div>
+                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_#22c55e]"></div>
+                    </div>
+                    
+                    <div class="z-10">
+                        <div class="text-xl font-bold text-white tracking-tight" id="stat-provider-bal">Loading...</div>
+                        <p class="text-[10px] text-pink-400 font-mono mt-1 truncate" id="stat-provider-email">...</p>
+                    </div>
+
+                    <i class="fa-solid fa-server absolute -right-3 -bottom-3 text-5xl text-pink-500/10 group-hover:scale-110 transition duration-500"></i>
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-pink-500/10 rounded-full blur-[30px] -z-0"></div>
                 </div>
             </div>
         </div>
@@ -350,20 +365,36 @@
         function logout() { localStorage.removeItem('user_session'); window.location.href='/login.html'; }
 
         // DASHBOARD
+ // DASHBOARD UPDATE
         async function loadDashboard() {
             try {
-                const [o, u, s, t] = await Promise.all([
-                    fetch('/api/admin/orders').then(r=>r.json()),
-                    fetch('/api/admin/users').then(r=>r.json()),
-                    fetch('/api/admin/all-services').then(r=>r.json()),
-                    fetch('/api/admin/topups').then(r=>r.json())
+                // Panggil semua data secara paralel agar cepat
+                const [o, u, s, t, p] = await Promise.all([
+                    fetch('/api/admin/orders').then(r=>r.json()),      // Order
+                    fetch('/api/admin/users').then(r=>r.json()),       // User
+                    fetch('/api/admin/all-services').then(r=>r.json()), // Bot Aktif
+                    fetch('/api/admin/topups').then(r=>r.json()),      // Topup
+                    fetch('/api/admin/provider-balance').then(r=>r.json()) // [BARU] Saldo Pusat
                 ]);
+
+                // Update UI Statistik Biasa
                 document.getElementById('stat-trx').innerText = o.length;
                 document.getElementById('stat-users').innerText = u.length;
                 document.getElementById('stat-active').innerText = s.length;
                 const total = t.filter(x=>x.status==='success').reduce((a,b)=>a+b.amount,0);
                 document.getElementById('stat-depo').innerText = `Rp ${total.toLocaleString()}`;
-            } catch(e){}
+
+                // Update UI Saldo Pusat [BARU]
+                if(p.success) {
+                    document.getElementById('stat-provider-bal').innerText = p.balance;
+                    document.getElementById('stat-provider-email').innerText = p.email || "RumahOTP Connected";
+                } else {
+                    document.getElementById('stat-provider-bal').innerText = "Gagal Load";
+                }
+
+            } catch(e){
+                console.error("Dashboard Error:", e);
+            }
         }
 
         // PRODUCTS (FIXED ADD & EDIT)
