@@ -448,6 +448,16 @@ app.delete('/api/admin/services/:id', async (req, res) => {
 //dashboard buat saldo cek
 app.use('/api', require('./dashboard'));
 // announce
-app.use('/api', require('./announcement'));
+// ==========================================
+// MOUNT ROUTE TAMBAHAN (DENGAN TRY-CATCH)
+// ==========================================
+
+// 2. Announcement (Pengumuman)
+try {
+    // [FIX] Ubah path jadi '/api/announcement' agar cocok dengan Frontend
+    app.use('/api/announcement', require('./announcement'));
+} catch (e) {
+    console.log("⚠️ Announcement route skip");
+}
 
 module.exports = app;
