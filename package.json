@@ -1,13 +1,12 @@
+
 {
   "name": "manzzy-web",
   "version": "1.0.0",
   "description": "Manzzy ID Official Premium Bot Services",
   "main": "api/index.js",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "start": "node api/index.js"
+    "start": "node api/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "whatsapp-bot",
@@ -25,12 +24,6 @@
     "mongoose": "^8.2.0",
     "axios": "^1.7.9",
     "node-fetch": "^2.6.9"
-  },
-  "devDependencies": {
-    "vite": "^5.0.0",
-    "tailwindcss": "^3.3.5",
-    "postcss": "^8.4.31",
-    "autoprefixer": "^10.4.16"
   },
   "engines": {
     "node": ">=18.0.0"
