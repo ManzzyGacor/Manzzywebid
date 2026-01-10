@@ -1,3 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ... (kode CSS kamu yang lama di bawah sini jangan dihapus) ... */
+
 /* =========================================
    1. CONFIG & GLOBAL SETTINGS
    ========================================= */
