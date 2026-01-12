@@ -445,18 +445,6 @@ app.delete('/api/admin/services/:id', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// announce
-try {
-    const announcementRoute = require('./announcement');
-    // [FIX PENTING] Ubah path jadi '/api/announcement'
-    // Karena di Admin & Index HTML kamu fetch ke '/api/announcement'
-    app.use('/api/announcement', announcementRoute);
-} catch (e) {
-    console.log("⚠️ Announcement route skip: File api/announcement.js error.");
-    console.error(e);
-}
-
-
 //dashboard buat saldo cek
 app.use('/api', require('./dashboard'));
 module.exports = app;
