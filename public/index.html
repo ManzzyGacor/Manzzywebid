@@ -436,10 +436,30 @@
         </section>
 
 <script>
+    
             let paymentConfig = {};
             let checkInterval = null; // Cek status ke server
             let timerInterval = null; // Hitung mundur
 
+    // --- FUNGSI NAVIGASI (SWITCH VIEW) ---
+            function switchView(viewName) {
+                // 1. Daftar semua halaman utama yang kamu punya
+                const views = ['view-landing', 'view-topup', 'view-history', 'view-profile'];
+                
+                // 2. Sembunyikan semua halaman
+                views.forEach(id => {
+                    const el = document.getElementById(id);
+                    if(el) el.classList.add('hidden');
+                });
+
+                // 3. Munculkan halaman yang dipilih
+                const target = document.getElementById('view-' + viewName);
+                if(target) {
+                    target.classList.remove('hidden');
+                    window.scrollTo(0, 0); // Scroll ke paling atas
+                }
+            }
+    
             // 1. Load Config & Cek LocalStorage
             async function loadPublicConfig() {
                 try {
