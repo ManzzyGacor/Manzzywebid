@@ -29,8 +29,6 @@
         .active-card { border-color: #22c55e !important; background: rgba(34, 197, 94, 0.1) !important; color: white !important; }
         .animate-fade-in-up { animation: fadeInUp 0.3s ease-out forwards; }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* CSS Tambahan untuk Ulasan */
         .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
     </style>
 </head>
@@ -44,8 +42,7 @@
     <aside id="sidebar-menu" class="sidebar-menu flex flex-col p-6 pt-10">
         <div class="flex items-center gap-3 mb-10 border-b border-gray-800 pb-6"><div class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-500/30"><i class="fa-solid fa-robot text-white text-lg"></i></div><div><h3 class="font-bold text-white text-lg leading-none">MANZZY<span class="text-purple-400">ID</span></h3><p id="user-status-sidebar" class="text-xs text-gray-500 font-mono mt-1">Guest Mode</p></div></div>
         <nav class="flex-1 space-y-2">
-            <a href="#features" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-star w-6 text-center text-yellow-500"></i><span class="font-medium">Keunggulan</span></a>
-            <a href="#testimonials" onclick="toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-comments w-6 text-center text-pink-500"></i><span class="font-medium">Ulasan</span></a>
+            <a href="#" onclick="switchView('landing'); toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-star w-6 text-center text-yellow-500"></i><span class="font-medium">Beranda</span></a>
             
             <div id="menu-topup" class="hidden"><a href="#" onclick="switchView('topup'); toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-wallet w-6 text-center text-green-500"></i><span class="font-medium">Top Up Saldo</span></a></div>
             <div id="menu-myservices" class="hidden"><a href="#" onclick="switchView('myservices'); toggleSidebar()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition group"><i class="fa-solid fa-server w-6 text-center text-blue-500"></i><span class="font-medium">Layanan Saya</span></a></div>
@@ -75,8 +72,8 @@
             </div>
             
             <div class="hidden md:flex gap-6 text-sm font-bold text-gray-400">
-                <a href="#view-landing" onclick="switchView('landing')" class="hover:text-white transition">Beranda</a>
-                <a href="manzzyid.html" class="hover:text-white transition">Game Store</a>
+                <a href="#" onclick="switchView('landing')" class="hover:text-white transition">Beranda</a>
+                <a href="#" onclick="switchView('store')" class="hover:text-white transition">Game Store</a>
                 <a href="#testimonials" class="hover:text-white transition text-purple-400">Ulasan</a>
             </div>
 
@@ -90,6 +87,7 @@
     <div id="main-container" class="min-h-screen relative w-full max-w-6xl mx-auto px-6 pb-20 pt-28">
         <div class="absolute inset-0 bg-grid -z-10 h-screen fixed opacity-40"></div><div class="absolute top-0 right-0 w-96 h-96 bg-purple-600/10 rounded-full blur-[100px] -z-10 fixed pointer-events-none"></div>
 
+        <div id="view-landing" class="view-section view-active">
             <div class="text-center max-w-5xl mx-auto mt-4 mb-20 relative px-4">
                 
                 <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-purple-600/20 rounded-full blur-[80px] md:blur-[120px] -z-10 animate-pulse pointer-events-none"></div>
@@ -164,42 +162,42 @@
                 </div>
             </section>
 
-<section id="testimonials" class="mb-24 px-4 max-w-6xl mx-auto scroll-mt-32">
-    <div class="text-center mb-8">
-        <h2 class="text-3xl font-bold text-white mb-2">ULASAN <span class="text-purple-500">MEMBER</span></h2>
-        <p class="text-gray-500 text-sm">Apa kata mereka tentang layanan kami?</p>
-    </div>
+            <section id="testimonials" class="mb-24 px-4 max-w-6xl mx-auto scroll-mt-32">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-white mb-2">ULASAN <span class="text-purple-500">MEMBER</span></h2>
+                    <p class="text-gray-500 text-sm">Apa kata mereka tentang layanan kami?</p>
+                </div>
 
-    <div id="review-form-container" class="hidden glass-card p-6 rounded-2xl max-w-lg mx-auto mb-10 border-l-4 border-l-purple-500 relative z-20 transition-all duration-500">
-        <h3 class="text-white font-bold mb-4 flex items-center gap-2">
-            <i class="fa-solid fa-pen-nib text-purple-400"></i> Tulis Ulasan Kamu
-        </h3>
-        
-        <form onsubmit="submitReview(event)">
-            <div class="flex justify-center gap-2 mb-2 text-2xl">
-                <i class="fa-solid fa-star text-gray-700 cursor-pointer transition hover:scale-110 hover:text-yellow-500" id="star-1" onclick="setRating(1)"></i>
-                <i class="fa-solid fa-star text-gray-700 cursor-pointer transition hover:scale-110 hover:text-yellow-500" id="star-2" onclick="setRating(2)"></i>
-                <i class="fa-solid fa-star text-gray-700 cursor-pointer transition hover:scale-110 hover:text-yellow-500" id="star-3" onclick="setRating(3)"></i>
-                <i class="fa-solid fa-star text-gray-700 cursor-pointer transition hover:scale-110 hover:text-yellow-500" id="star-4" onclick="setRating(4)"></i>
-                <i class="fa-solid fa-star text-gray-700 cursor-pointer transition hover:scale-110 hover:text-yellow-500" id="star-5" onclick="setRating(5)"></i>
-            </div>
-            
-            <div class="text-center mb-4">
-                <span id="rating-text" class="text-xs font-bold text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded">0.0</span>
-            </div>
-            <input type="hidden" id="ratingValue" value="0">
+                <div id="review-form-container" class="hidden glass-card p-6 rounded-2xl max-w-lg mx-auto mb-10 border-l-4 border-l-purple-500 relative z-20 transition-all duration-500">
+                    <h3 class="text-white font-bold mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-pen-nib text-purple-400"></i> Tulis Ulasan Kamu
+                    </h3>
+                    
+                    <form onsubmit="submitReview(event)">
+                        <div class="flex justify-center gap-2 mb-2 text-2xl">
+                            <i class="fa-solid fa-star text-gray-700 cursor-pointer transition hover:scale-110 hover:text-yellow-500" id="star-1" onclick="setRating(1)"></i>
+                            <i class="fa-solid fa-star text-gray-700 cursor-pointer transition hover:scale-110 hover:text-yellow-500" id="star-2" onclick="setRating(2)"></i>
+                            <i class="fa-solid fa-star text-gray-700 cursor-pointer transition hover:scale-110 hover:text-yellow-500" id="star-3" onclick="setRating(3)"></i>
+                            <i class="fa-solid fa-star text-gray-700 cursor-pointer transition hover:scale-110 hover:text-yellow-500" id="star-4" onclick="setRating(4)"></i>
+                            <i class="fa-solid fa-star text-gray-700 cursor-pointer transition hover:scale-110 hover:text-yellow-500" id="star-5" onclick="setRating(5)"></i>
+                        </div>
+                        
+                        <div class="text-center mb-4">
+                            <span id="rating-text" class="text-xs font-bold text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded">0.0</span>
+                        </div>
+                        <input type="hidden" id="ratingValue" value="0">
 
-            <textarea id="reviewComment" rows="2" class="w-full bg-black/50 border border-gray-700 rounded-xl p-3 text-white text-sm focus:border-purple-500 outline-none mb-3 transition placeholder-gray-600" placeholder="Ceritakan pengalamanmu..."></textarea>
-            
-            <button type="submit" id="btn-submit-review" class="w-full bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-500 hover:to-purple-700 text-white font-bold py-2.5 rounded-xl transition text-sm shadow-lg shadow-purple-500/20 active:scale-95">
-                Kirim Ulasan
-            </button>
-        </form>
-    </div>
-    <div id="testimonial-grid" class="flex overflow-x-auto gap-4 pb-4 snap-x custom-scroll no-scrollbar">
-        <div class="w-full text-center text-gray-500 italic py-10 glass-card rounded-xl">Memuat ulasan...</div>
-    </div>
-</section>
+                        <textarea id="reviewComment" rows="2" class="w-full bg-black/50 border border-gray-700 rounded-xl p-3 text-white text-sm focus:border-purple-500 outline-none mb-3 transition placeholder-gray-600" placeholder="Ceritakan pengalamanmu..."></textarea>
+                        
+                        <button type="submit" id="btn-submit-review" class="w-full bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-500 hover:to-purple-700 text-white font-bold py-2.5 rounded-xl transition text-sm shadow-lg shadow-purple-500/20 active:scale-95">
+                            Kirim Ulasan
+                        </button>
+                    </form>
+                </div>
+                <div id="testimonial-grid" class="flex overflow-x-auto gap-4 pb-4 snap-x custom-scroll no-scrollbar">
+                    <div class="w-full text-center text-gray-500 italic py-10 glass-card rounded-xl">Memuat ulasan...</div>
+                </div>
+            </section>
 
             <section id="faq" class="mb-24 scroll-mt-32 max-w-4xl mx-auto px-4">
                 <div class="text-center mb-12">
@@ -313,11 +311,18 @@
                     </p>
                 </div>
             </footer>
+        </div> <section id="view-store" class="view-section hidden">
+            <div class="w-full mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <button onclick="switchView('landing')" class="text-gray-400 hover:text-white flex items-center gap-2 group"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
+                <h2 class="text-3xl font-bold text-white">KATALOG</h2>
+            </div>
+            <div class="search-container"><input type="text" id="searchInput" onkeyup="filterProducts()" placeholder="Cari layanan..." class="search-input"><i class="fa-solid fa-search search-icon"></i></div>
+            <div id="section-categories"><h3 class="text-gray-400 text-sm font-bold uppercase mb-4 pl-3 border-l-4 border-purple-500">Kategori</h3><div id="grid-categories" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12"></div></div>
+            <div id="section-products" class="hidden"><div class="flex items-center gap-3 mb-6"><button onclick="backToCategories()" class="text-sm bg-gray-800 px-3 py-1 rounded text-white"><i class="fa-solid fa-chevron-left"></i> Kategori</button><span id="current-category-name" class="text-purple-400 font-bold"></span></div><div id="grid-products" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 pb-20"></div></div>
+            <div id="loading-store" class="text-center py-20 hidden"><div class="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mb-4"></div></div>
         </section>
 
-        <section id="view-store" class="view-section"><div class="w-full mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4"><button onclick="switchView('landing')" class="text-gray-400 hover:text-white flex items-center gap-2 group"><i class="fa-solid fa-arrow-left"></i> Kembali</button><h2 class="text-3xl font-bold text-white">KATALOG</h2></div><div class="search-container"><input type="text" id="searchInput" onkeyup="filterProducts()" placeholder="Cari layanan..." class="search-input"><i class="fa-solid fa-search search-icon"></i></div><div id="section-categories"><h3 class="text-gray-400 text-sm font-bold uppercase mb-4 pl-3 border-l-4 border-purple-500">Kategori</h3><div id="grid-categories" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12"></div></div><div id="section-products" class="hidden"><div class="flex items-center gap-3 mb-6"><button onclick="backToCategories()" class="text-sm bg-gray-800 px-3 py-1 rounded text-white"><i class="fa-solid fa-chevron-left"></i> Kategori</button><span id="current-category-name" class="text-purple-400 font-bold"></span></div><div id="grid-products" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 pb-20"></div></div><div id="loading-store" class="text-center py-20 hidden"><div class="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mb-4"></div></div></section>
-
-<section id="view-topup" class="view-section hidden">
+        <section id="view-topup" class="view-section hidden">
             <div class="max-w-md mx-auto min-h-screen flex flex-col justify-center px-4 relative py-20"> 
                 
                 <div class="flex items-center justify-between mb-6">
@@ -373,30 +378,30 @@
                     </div>
 
                     <div id="topup-qr-area" class="hidden text-center fade-in-up">
-                <div class="bg-yellow-500/10 border border-yellow-500/50 p-3 rounded-lg mb-4">
-                    <p class="text-yellow-500 text-xs font-bold animate-pulse">
-                        <i class="fa-solid fa-clock mr-1"></i> MENUNGGU PEMBAYARAN
-                    </p>
-                    <h2 id="payment-timer" class="text-2xl font-mono font-bold text-white mt-1">05:00</h2>
-                </div>
+                        <div class="bg-yellow-500/10 border border-yellow-500/50 p-3 rounded-lg mb-4">
+                            <p class="text-yellow-500 text-xs font-bold animate-pulse">
+                                <i class="fa-solid fa-clock mr-1"></i> MENUNGGU PEMBAYARAN
+                            </p>
+                            <h2 id="payment-timer" class="text-2xl font-mono font-bold text-white mt-1">05:00</h2>
+                        </div>
 
-                <div class="bg-white p-4 rounded-xl inline-block mb-4 relative group">
-                    <div id="qris-image" class="w-[180px] h-[180px] bg-gray-200 flex items-center justify-center"></div>
-                    <p class="text-black font-bold mt-2 text-lg" id="qris-amount">Rp 0</p>
-                    <p class="text-gray-500 text-xs font-mono" id="qris-id">ID: ...</p>
-                </div>
+                        <div class="bg-white p-4 rounded-xl inline-block mb-4 relative group">
+                            <div id="qris-image" class="w-[180px] h-[180px] bg-gray-200 flex items-center justify-center"></div>
+                            <p class="text-black font-bold mt-2 text-lg" id="qris-amount">Rp 0</p>
+                            <p class="text-gray-500 text-xs font-mono" id="qris-id">ID: ...</p>
+                        </div>
 
-                <p class="text-gray-400 text-xs mb-6">
-                    Silakan scan QRIS di atas sebelum waktu habis.<br>
-                    Saldo masuk otomatis dalam 1-3 detik setelah bayar.
-                </p>
+                        <p class="text-gray-400 text-xs mb-6">
+                            Silakan scan QRIS di atas sebelum waktu habis.<br>
+                            Saldo masuk otomatis dalam 1-3 detik setelah bayar.
+                        </p>
 
-                <button onclick="cancelTopUp()" class="w-full py-3 bg-red-900/20 text-red-500 border border-red-500/30 hover:bg-red-900/40 font-bold rounded-xl transition mb-2">
-                    <i class="fa-solid fa-xmark mr-2"></i> BATALKAN TRANSAKSI
-                </button>
-                
-                <p class="text-[10px] text-gray-600">Salah nominal? Klik batalkan dulu.</p>
-            </div>
+                        <button onclick="cancelTopUp()" class="w-full py-3 bg-red-900/20 text-red-500 border border-red-500/30 hover:bg-red-900/40 font-bold rounded-xl transition mb-2">
+                            <i class="fa-solid fa-xmark mr-2"></i> BATALKAN TRANSAKSI
+                        </button>
+                        
+                        <p class="text-[10px] text-gray-600">Salah nominal? Klik batalkan dulu.</p>
+                    </div>
                     
                     <div id="topup-success-area" class="hidden animate-fade-in-up text-center pt-10">
                         <div class="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(34,197,94,0.5)]"><i class="fa-solid fa-check text-4xl text-white"></i></div>
@@ -435,13 +440,12 @@
             </div>
         </section>
 
-<script>
-    
+        <script>
             let paymentConfig = {};
             let checkInterval = null; // Cek status ke server
             let timerInterval = null; // Hitung mundur
 
-    // --- FUNGSI NAVIGASI (PERBAIKAN) ---
+            // --- FUNGSI NAVIGASI (FIXED) ---
             function switchView(viewName) {
                 // 1. Ambil semua elemen yang punya class 'view-section'
                 const allViews = document.querySelectorAll('.view-section');
@@ -465,6 +469,7 @@
                     window.scrollTo(0, 0); // Scroll ke paling atas
                 }
             }
+
             // 1. Load Config & Cek LocalStorage
             async function loadPublicConfig() {
                 try {
@@ -530,7 +535,7 @@
                 if(!user) return alert("Silakan Login dulu!");
 
                 const amt = document.getElementById('topupAmount').value;
-                if(!amt || amt < 1000) return alert("Minimal Rp 1.000");
+                if(!amt || amt < 2000) return alert("Minimal Rp 2.000");
 
                 const btn = document.getElementById('btn-topup-process');
                 btn.innerHTML = 'Memproses...'; btn.disabled = true;
@@ -627,14 +632,19 @@
                         const res = await fetch(`/api/topup/check/${orderId}`);
                         const d = await res.json();
                         
+                        // Jika Sukses
                         if (d.success && d.status === 'success') {
                             finishTransaction();
-                        } else if (d.success && d.status === 'canceled') {
-                            cancelTopUp(false);
-                            alert("Transaksi dibatalkan dari sistem.");
+                        }
+                        // Jika Dibatalkan oleh sistem
+                        else if (d.success && d.status === 'canceled') {
+                            clearInterval(checkInterval);
+                            localStorage.removeItem('manzzy_pending_topup');
+                            alert("Transaksi dibatalkan/kadaluarsa.");
+                            resetTopUpView();
                         }
                     } catch(e) {}
-                }, 3000); // Cek tiap 3 detik
+                }, 5000);
             }
 
             // 7. Transaksi Sukses
@@ -689,111 +699,12 @@
                 }
             }
 
-            // --- REQUEST TOP UP OTOMATIS (RUMAHOTP) ---
-            async function requestTopUp(e) {
-                e.preventDefault();
-                const user = localStorage.getItem('user_session');
-                if(!user) return alert("Silakan Login terlebih dahulu!");
-
-                const amt = document.getElementById('topupAmount').value;
-                const btn = document.getElementById('btn-topup-process');
-                
-                btn.innerHTML = 'Memproses...'; btn.disabled = true;
-
-                try {
-                    const res = await fetch('/api/topup/create', {
-                        method: 'POST', headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ username: user, amount: amt })
-                    });
-                    const data = await res.json();
-
-                    if (data.success) {
-                        // [BARU] Simpan data ke LocalStorage
-                        const txData = {
-                            orderId: data.data.orderId,
-                            total: data.data.total,
-                            qrString: data.data.qrString
-                        };
-                        localStorage.setItem('manzzy_pending_topup', JSON.stringify(txData));
-
-                        // Update Tampilan
-                        document.getElementById('topup-form-area').classList.add('hidden');
-                        document.getElementById('topup-qr-area').classList.remove('hidden');
-                        
-                        document.getElementById('qris-amount').innerText = `Rp ${data.data.total.toLocaleString()}`;
-                        document.getElementById('qris-id').innerText = `ID: ${data.data.orderId}`;
-
-                        const qrContainer = document.getElementById("qris-image");
-                        qrContainer.innerHTML = ''; 
-                        if (data.data.qrString.startsWith('data:image')) {
-                            const img = document.createElement('img');
-                            img.src = data.data.qrString;
-                            img.className = 'w-full h-full object-contain rounded-lg';
-                            qrContainer.appendChild(img);
-                        } else {
-                            new QRCode(qrContainer, { text: data.data.qrString, width: 180, height: 180 });
-                        }
-
-                        startCheckStatus(data.data.orderId);
-                    } else {
-                        alert(data.msg || "Gagal membuat transaksi.");
-                    }
-                } catch (err) { alert("Error koneksi."); } 
-                finally { btn.innerHTML = 'Buat Tagihan QRIS'; btn.disabled = false; }
-            }
-
-            // Cek Status Berkala
-            function startCheckStatus(orderId) {
-                if(checkInterval) clearInterval(checkInterval);
-                checkInterval = setInterval(async () => {
-                    try {
-                        const res = await fetch(`/api/topup/check/${orderId}`);
-                        const d = await res.json();
-                        
-                        // Jika Sukses
-                        if (d.success && d.status === 'success') {
-                            finishTransaction();
-                        }
-                        // Jika Dibatalkan oleh sistem
-                        else if (d.success && d.status === 'canceled') {
-                            clearInterval(checkInterval);
-                            localStorage.removeItem('manzzy_pending_topup');
-                            alert("Transaksi dibatalkan/kadaluarsa.");
-                            resetTopUpView();
-                        }
-                    } catch(e) {}
-                }, 5000);
-            }
-
-            // [BARU] Fungsi saat sukses
-            function finishTransaction() {
-                clearInterval(checkInterval);
-                localStorage.removeItem('manzzy_pending_topup'); // Hapus data pending
-                
-                document.getElementById('topup-qr-area').classList.add('hidden');
-                document.getElementById('topup-success-area').classList.remove('hidden');
-                
-                if(typeof checkUserLogin === 'function') checkUserLogin(); // Refresh saldo header
-            }
-
-            function resetTopUpView() {
-                if(checkInterval) clearInterval(checkInterval);
-                // [BARU] Hapus data pending saat user manual klik batal
-                localStorage.removeItem('manzzy_pending_topup');
-
-                document.getElementById('topup-form-area').classList.remove('hidden');
-                document.getElementById('topup-qr-area').classList.add('hidden');
-                document.getElementById('topup-success-area').classList.add('hidden');
-                document.getElementById('topupAmount').value = '';
-            }
-
-            // --- REQUEST MANUAL (WA + FEE 0.7%) ---
             function processManualTopup(e) {
                 e.preventDefault();
                 const amt = parseInt(document.getElementById('manualAmount').value);
                 if(!amt || amt < 5000) { alert("Minimal Rp 5.000"); return; }
 
-                const fee = Math.ceil(amt * 0.020); 
+                const fee = Math.ceil(amt * 0.007); 
                 const total = amt + fee;
                 const user = localStorage.getItem('user_session') || 'Guest';
                 const adminNum = paymentConfig.adminWa || "6282230391990"; 
