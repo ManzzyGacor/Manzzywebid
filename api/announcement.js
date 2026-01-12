@@ -2,7 +2,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const router = express.Router();
 
-// 1. KONEKSI DB (Penting biar gak putus)
+// 1. KONEKSI DATABASE
+// (Penting: Gunakan satu koneksi global biar hemat resource)
 let isConnected = false;
 const connectDB = async () => {
     if (isConnected) return;
@@ -16,37 +17,44 @@ const connectDB = async () => {
 
 // 2. SCHEMA
 const Announcement = mongoose.models.Announcement || mongoose.model('Announcement', new mongoose.Schema({
-    text: { type: String, default: "Selamat datang di Manzzy ID Official!" },
-    isActive: { type: Boolean, default: true }
+    text: { type: String, default: "" }
 }));
 
-// 3. ROUTE GET (Untuk Frontend/User)
+// 3. GET DATA (Dipanggil Frontend)
 router.get('/', async (req, res) => {
     try {
         await connectDB();
         let data = await Announcement.findOne();
-        if (!data) data = await new Announcement().save();
+        if (!data) data = await new Announcement({ text: "" }).save();
         res.json(data);
     } catch (e) {
-        res.status(500).json({ error: e.message });
+        console.error("GET Announcement Error:", e);
+        res.status(500).json({ text: "" }); 
     }
 });
 
-// 4. ROUTE POST (Untuk Admin Simpan)
+// 4. POST DATA (Dipanggil Admin untuk Simpan)
 router.post('/', async (req, res) => {
     try {
         await connectDB();
-        const { text, isActive } = req.body;
-        const data = await Announcement.findOneAndUpdate(
-            {}, 
-            { text, isActive }, 
-            { upsert: true, new: true }
-        );
-        res.json({ success: true, data });
+        const { text } = req.body;
+        await Announcement.findOneAndUpdate({}, { text: text }, { upsert: true, new: true });
+        res.json({ success: true });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
 });
 
-// [WAJIB ADA] KUNCI AGAR TIDAK ERROR "APPLY"
+// 5. DELETE DATA (Dipanggil Admin untuk Hapus)
+router.delete('/', async (req, res) => {
+    try {
+        await connectDB();
+        await Announcement.findOneAndUpdate({}, { text: "" });
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// [WAJIB ADA] Ini kunci biar tidak error "reading 'apply'"
 module.exports = router;
