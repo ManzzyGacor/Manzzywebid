@@ -90,41 +90,6 @@
     <div id="main-container" class="min-h-screen relative w-full max-w-6xl mx-auto px-6 pb-20 pt-28">
         <div class="absolute inset-0 bg-grid -z-10 h-screen fixed opacity-40"></div><div class="absolute top-0 right-0 w-96 h-96 bg-purple-600/10 rounded-full blur-[100px] -z-10 fixed pointer-events-none"></div>
 
-        <section id="view-landing" class="view-section view-active relative w-full overflow-x-hidden pt-28 pb-10">
-            <div id="announcement-container" class="hidden max-w-4xl mx-auto px-4 mb-10 fade-in-up">
-                <div class="glass-card p-4 rounded-xl border-l-4 border-l-purple-500 flex items-center gap-4 relative overflow-hidden group">
-                    
-                    <div class="absolute -right-10 -top-10 w-32 h-32 bg-purple-600/20 rounded-full blur-[40px] group-hover:bg-purple-600/30 transition"></div>
-
-                    <div class="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white shrink-0 z-10">
-                        <i class="fa-solid fa-bullhorn animate-pulse"></i>
-                    </div>
-
-                    <div class="overflow-hidden w-full z-10">
-                        <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Announcement</h4>
-                        <div class="relative h-6 overflow-hidden w-full">
-                            <p id="user-announcement-text" class="text-sm font-bold text-white whitespace-nowrap absolute animate-marquee">
-                                Memuat pengumuman...
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <style>
-                @keyframes marquee {
-                    0% { transform: translateX(100%); }
-                    100% { transform: translateX(-100%); }
-                }
-                .animate-marquee {
-                    animation: marquee 15s linear infinite;
-                    min-width: 100%; /* Agar durasi konsisten */
-                }
-                /* Pause saat di-hover user */
-                #announcement-container:hover .animate-marquee {
-                    animation-play-state: paused;
-                }
-            </style>
             <div class="text-center max-w-5xl mx-auto mt-4 mb-20 relative px-4">
                 
                 <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-purple-600/20 rounded-full blur-[80px] md:blur-[120px] -z-10 animate-pulse pointer-events-none"></div>
@@ -407,14 +372,31 @@
                         </div>
                     </div>
 
-                    <div id="topup-qr-area" class="hidden animate-fade-in-up glass-card p-6 rounded-3xl text-center border border-green-500/30">
-                        <h3 class="text-white font-bold text-lg mb-4">Scan QRIS</h3>
-                        <div class="bg-white p-3 rounded-xl mx-auto w-fit mb-4"><div id="qris-image" class="w-48 h-48 flex items-center justify-center overflow-hidden"></div></div>
-                        <h2 id="qris-amount" class="text-2xl font-bold text-white font-mono mb-2">Rp 0</h2>
-                        <p class="text-[10px] text-gray-500 font-mono mb-4" id="qris-id">ID: -</p>
-                        <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-2 mb-4"><span class="text-xs text-yellow-500 font-bold animate-pulse">Menunggu pembayaran...</span></div>
-                        <button onclick="resetTopUpView()" class="text-xs text-red-500 underline">Batalkan Transaksi</button>
-                    </div>
+                    <div id="topup-qr-area" class="hidden text-center fade-in-up">
+                <div class="bg-yellow-500/10 border border-yellow-500/50 p-3 rounded-lg mb-4">
+                    <p class="text-yellow-500 text-xs font-bold animate-pulse">
+                        <i class="fa-solid fa-clock mr-1"></i> MENUNGGU PEMBAYARAN
+                    </p>
+                    <h2 id="payment-timer" class="text-2xl font-mono font-bold text-white mt-1">05:00</h2>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl inline-block mb-4 relative group">
+                    <div id="qris-image" class="w-[180px] h-[180px] bg-gray-200 flex items-center justify-center"></div>
+                    <p class="text-black font-bold mt-2 text-lg" id="qris-amount">Rp 0</p>
+                    <p class="text-gray-500 text-xs font-mono" id="qris-id">ID: ...</p>
+                </div>
+
+                <p class="text-gray-400 text-xs mb-6">
+                    Silakan scan QRIS di atas sebelum waktu habis.<br>
+                    Saldo masuk otomatis dalam 1-3 detik setelah bayar.
+                </p>
+
+                <button onclick="cancelTopUp()" class="w-full py-3 bg-red-900/20 text-red-500 border border-red-500/30 hover:bg-red-900/40 font-bold rounded-xl transition mb-2">
+                    <i class="fa-solid fa-xmark mr-2"></i> BATALKAN TRANSAKSI
+                </button>
+                
+                <p class="text-[10px] text-gray-600">Salah nominal? Klik batalkan dulu.</p>
+            </div>
                     
                     <div id="topup-success-area" class="hidden animate-fade-in-up text-center pt-10">
                         <div class="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(34,197,94,0.5)]"><i class="fa-solid fa-check text-4xl text-white"></i></div>
@@ -453,74 +435,212 @@
             </div>
         </section>
 
-        <script>
-            // --- LOGIC MANUAL & AUTO ---
+<script>
             let paymentConfig = {};
-            let checkInterval = null;
+            let checkInterval = null; // Cek status ke server
+            let timerInterval = null; // Hitung mundur
 
-            // 1. Load Config & Cek Transaksi Pending saat web dibuka
+            // 1. Load Config & Cek LocalStorage
             async function loadPublicConfig() {
                 try {
                     const res = await fetch('/api/admin/payment-config');
                     paymentConfig = await res.json();
-                    
-                    if(paymentConfig.manualQrisUrl) {
-                        document.getElementById('manual-qris-img').src = paymentConfig.manualQrisUrl;
-                        document.getElementById('manual-qris-link').href = paymentConfig.manualQrisUrl;
-                    }
                 } catch(e) {}
-                
-                // [BARU] Cek apakah ada transaksi pending di LocalStorage?
+
+                // Cek apakah ada transaksi nyangkut?
                 checkPendingTransaction();
             }
             loadPublicConfig();
 
-            // [BARU] Fungsi Mengembalikan Tampilan QR jika user refresh halaman
+            // 2. Cek Transaksi Pending (Anti Lupa)
             function checkPendingTransaction() {
                 const pending = localStorage.getItem('manzzy_pending_topup');
+                
                 if (pending) {
                     try {
                         const data = JSON.parse(pending);
-                        console.log("Mengembalikan transaksi pending:", data.orderId);
                         
-                        // Pindah ke View Topup & Tab Otomatis
-                        switchView('topup'); 
-                        switchTopUpTab('auto');
+                        // Cek apakah sudah expired (Lewat 5 menit)?
+                        const now = Date.now();
+                        if (now > data.expiredTime) {
+                            cancelTopUp(false); // False = jangan tanya user, langsung batal
+                            return;
+                        }
 
-                        // Restore Tampilan QR
+                        // Restore Tampilan
+                        console.log("Mengembalikan transaksi pending:", data.orderId);
+                        switchView('topup');
+                        
+                        // Kunci tampilan ke QR
                         document.getElementById('topup-form-area').classList.add('hidden');
                         document.getElementById('topup-qr-area').classList.remove('hidden');
                         
                         document.getElementById('qris-amount').innerText = `Rp ${data.total.toLocaleString()}`;
                         document.getElementById('qris-id').innerText = `ID: ${data.orderId}`;
-
-                        // Render Gambar Base64
-                        const qrContainer = document.getElementById("qris-image");
-                        qrContainer.innerHTML = ''; 
-                        if (data.qrString.startsWith('data:image')) {
-                            const img = document.createElement('img');
-                            img.src = data.qrString;
-                            img.className = 'w-full h-full object-contain rounded-lg';
-                            qrContainer.appendChild(img);
-                        } else {
-                            // Fallback jika pakai text
-                            if(typeof QRCode !== 'undefined') {
-                                new QRCode(qrContainer, { text: data.qrString, width: 180, height: 180 });
-                            }
-                        }
-
-                        // Lanjutkan Cek Status
-                        startCheckStatus(data.orderId);
                         
+                        renderQR(data.qrString);
+                        
+                        // Jalankan Timer & Cek Status
+                        startTimer(data.expiredTime);
+                        startCheckStatus(data.orderId);
+
                     } catch (e) {
-                        console.error("Gagal restore transaksi", e);
-                        localStorage.removeItem('manzzy_pending_topup'); // Hapus jika data corrupt
+                        localStorage.removeItem('manzzy_pending_topup');
                     }
                 }
             }
 
-            function setAmount(n) { document.getElementById('topupAmount').value = n; }
+            // 3. Request Top Up Baru
+            async function requestTopUp(e) {
+                e.preventDefault();
 
+                // CEK KERAS: Jangan boleh kalau ada pending
+                if (localStorage.getItem('manzzy_pending_topup')) {
+                    alert("⚠️ Anda memiliki transaksi yang belum selesai!\nSilakan bayar atau batalkan transaksi sebelumnya.");
+                    checkPendingTransaction(); // Arahkan ke QR
+                    return;
+                }
+
+                const user = localStorage.getItem('user_session');
+                if(!user) return alert("Silakan Login dulu!");
+
+                const amt = document.getElementById('topupAmount').value;
+                if(!amt || amt < 1000) return alert("Minimal Rp 1.000");
+
+                const btn = document.getElementById('btn-topup-process');
+                btn.innerHTML = 'Memproses...'; btn.disabled = true;
+
+                try {
+                    const res = await fetch('/api/topup/create', {
+                        method: 'POST', headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ username: user, amount: amt })
+                    });
+                    const data = await res.json();
+
+                    if (data.success) {
+                        // SET WAKTU EXPIRED (5 Menit dari sekarang)
+                        const expireInMs = 5 * 60 * 1000; // 5 menit
+                        const expiredTime = Date.now() + expireInMs;
+
+                        // SIMPAN KE LOCALSTORAGE
+                        const txData = {
+                            orderId: data.data.orderId,
+                            total: data.data.total,
+                            qrString: data.data.qrString,
+                            expiredTime: expiredTime
+                        };
+                        localStorage.setItem('manzzy_pending_topup', JSON.stringify(txData));
+
+                        // UPDATE UI
+                        document.getElementById('topup-form-area').classList.add('hidden');
+                        document.getElementById('topup-qr-area').classList.remove('hidden');
+                        
+                        document.getElementById('qris-amount').innerText = `Rp ${data.data.total.toLocaleString()}`;
+                        document.getElementById('qris-id').innerText = `ID: ${data.data.orderId}`;
+                        renderQR(data.data.qrString);
+
+                        // MULAI TIMER & CHECKER
+                        startTimer(expiredTime);
+                        startCheckStatus(data.data.orderId);
+
+                    } else {
+                        alert(data.msg || "Gagal membuat transaksi.");
+                    }
+                } catch (err) { alert("Error koneksi."); } 
+                finally { btn.innerHTML = 'Buat Tagihan QRIS'; btn.disabled = false; }
+            }
+
+            // 4. Logic Timer Hitung Mundur
+            function startTimer(endTime) {
+                if(timerInterval) clearInterval(timerInterval);
+                
+                function update() {
+                    const now = Date.now();
+                    const diff = endTime - now;
+
+                    if (diff <= 0) {
+                        // Waktu Habis -> Otomatis Batal
+                        document.getElementById('payment-timer').innerText = "00:00";
+                        cancelTopUp(false); // Batal tanpa konfirmasi
+                        alert("Waktu pembayaran habis. Transaksi dibatalkan otomatis.");
+                        return;
+                    }
+
+                    // Format Menit:Detik
+                    const m = Math.floor(diff / 60000);
+                    const s = Math.floor((diff % 60000) / 1000);
+                    document.getElementById('payment-timer').innerText = 
+                        `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                }
+
+                update(); // Jalanin sekali langsung
+                timerInterval = setInterval(update, 1000);
+            }
+
+            // 5. Fungsi Batalkan Transaksi (Manual / Otomatis)
+            function cancelTopUp(askConfirm = true) {
+                if (askConfirm && !confirm("Yakin ingin membatalkan transaksi ini?")) return;
+
+                // Bersihkan Interval
+                if (checkInterval) clearInterval(checkInterval);
+                if (timerInterval) clearInterval(timerInterval);
+
+                // Hapus Data
+                localStorage.removeItem('manzzy_pending_topup');
+
+                // Reset Tampilan ke Form Awal
+                document.getElementById('topup-qr-area').classList.add('hidden');
+                document.getElementById('topup-form-area').classList.remove('hidden');
+                document.getElementById('topupAmount').value = '';
+            }
+
+            // 6. Cek Status ke Server (Polling)
+            function startCheckStatus(orderId) {
+                if(checkInterval) clearInterval(checkInterval);
+                checkInterval = setInterval(async () => {
+                    try {
+                        const res = await fetch(`/api/topup/check/${orderId}`);
+                        const d = await res.json();
+                        
+                        if (d.success && d.status === 'success') {
+                            finishTransaction();
+                        } else if (d.success && d.status === 'canceled') {
+                            cancelTopUp(false);
+                            alert("Transaksi dibatalkan dari sistem.");
+                        }
+                    } catch(e) {}
+                }, 3000); // Cek tiap 3 detik
+            }
+
+            // 7. Transaksi Sukses
+            function finishTransaction() {
+                if (checkInterval) clearInterval(checkInterval);
+                if (timerInterval) clearInterval(timerInterval);
+                localStorage.removeItem('manzzy_pending_topup');
+                
+                document.getElementById('topup-qr-area').classList.add('hidden');
+                document.getElementById('topup-success-area').classList.remove('hidden');
+                
+                if(typeof checkUserLogin === 'function') checkUserLogin(); // Update saldo header
+            }
+
+            // Helper Render QR
+            function renderQR(qrString) {
+                const c = document.getElementById("qris-image");
+                c.innerHTML = '';
+                if (qrString.startsWith('data:image')) {
+                    const img = document.createElement('img');
+                    img.src = qrString;
+                    img.className = 'w-full h-full object-contain rounded-lg';
+                    c.appendChild(img);
+                } else if(typeof QRCode !== 'undefined') {
+                    new QRCode(c, { text: qrString, width: 180, height: 180 });
+                }
+            }
+
+            // Helper Set Amount (Tombol Pilihan)
+            function setAmount(n) { document.getElementById('topupAmount').value = n; }
+        
             function switchTopUpTab(mode) {
                 const btnAuto = document.getElementById('tab-auto');
                 const btnManual = document.getElementById('tab-manual');
