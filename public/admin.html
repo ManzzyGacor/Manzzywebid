@@ -87,9 +87,7 @@
             <p class="px-3 text-[9px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2">Utama</p>
             <div class="nav-item active" onclick="nav('dashboard')"><i class="fa-solid fa-chart-pie w-4"></i> Dashboard</div>
             <div class="nav-item" onclick="nav('users')"><i class="fa-solid fa-users w-4"></i> Data User</div>
-            <div class="nav-item" onclick="nav('announcement')">
-    <i class="fa-solid fa-bullhorn w-4 text-pink-500"></i> Pengumuman
-</div>
+           
             
             <p class="px-3 text-[9px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2">Transaksi</p>
             <div class="nav-item" onclick="nav('orders')"><i class="fa-solid fa-receipt w-4"></i> Riwayat Order</div>
@@ -344,53 +342,7 @@
         </form>
     </div>
 </div>
-    <div id="view-announcement" class="section-view">
-    <h2 class="text-lg font-bold text-white mb-4">Atur Pengumuman</h2>
-    
-    <div class="glass-panel max-w-lg border-l-4 border-l-pink-500 relative overflow-hidden">
-        <i class="fa-solid fa-bullhorn absolute -right-5 -bottom-5 text-9xl text-pink-500/10 rotate-12"></i>
-        
-        <form onsubmit="saveAnnouncement(event)">
-            <div class="mb-6 flex items-center justify-between bg-black/30 p-4 rounded-xl border border-gray-700">
-                <div>
-                    <label class="text-xs text-gray-300 font-bold uppercase block">Status Tampil</label>
-                    <p class="text-[10px] text-gray-500">Tampilkan di halaman depan?</p>
-                </div>
-                <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
-                    <input type="checkbox" name="toggle" id="annCheck" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-200 ease-in-out"/>
-                    <label for="annCheck" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-700 cursor-pointer"></label>
-                </div>
-                <style>
-                    .toggle-checkbox:checked { right: 0; border-color: #ec4899; }
-                    .toggle-checkbox:checked + .toggle-label { background-color: #ec4899; }
-                    .toggle-checkbox { right: calc(100% - 1.5rem); border-color: gray; }
-                </style>
-            </div>
-            
-            <div class="mb-6">
-                <label class="text-xs text-gray-400 font-bold block mb-2 uppercase tracking-wider">Isi Pesan Pengumuman</label>
-                <textarea id="annText" rows="3" placeholder="Contoh: Admin Ganda, Hati-hati penipuan..." class="w-full bg-[#0a0a0c] border border-gray-700 rounded-xl p-3 text-white text-sm focus:border-pink-500 outline-none"></textarea>
-            </div>
 
-            <button type="submit" class="w-full py-3 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold rounded-xl shadow-lg transition active:scale-95">
-                <i class="fa-solid fa-floppy-disk mr-2"></i> SIMPAN PENGUMUMAN
-            </button>
-        </form>
-        
-        <div class="mt-8 pt-6 border-t border-gray-700">
-            <p class="text-[10px] text-gray-500 uppercase mb-2">Preview Tampilan User:</p>
-            <div class="bg-[#151518] border border-gray-700 rounded-xl p-4 flex gap-4 items-center">
-                <div class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 shrink-0">
-                    <i class="fa-solid fa-bullhorn"></i>
-                </div>
-                <div class="overflow-hidden w-full">
-                    <h4 class="text-gray-400 text-[10px] font-bold uppercase mb-1">Announcement</h4>
-                    <p class="text-xs text-white whitespace-nowrap overflow-hidden text-ellipsis" id="preview-text">...</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
     <script>
         function nav(id) {
             document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
@@ -407,7 +359,6 @@
             if(id==='topup') fetchTopups();
             if(id==='nokos') loadNokosStats(); // Load stats saat menu nokos dibuka
             if(id==='payment') loadPaymentConfig();
-            if(id==='announcement') loadAnnouncement(); 
             
             if(window.innerWidth < 768) toggleSidebar();
         }
@@ -608,58 +559,7 @@
             }
         }
 
- // --- LOGIC PENGUMUMAN (ANNOUNCEMENT) ---
 
-        // 1. Load Data saat menu dibuka
-        async function loadAnnouncement() {
-            try {
-                const res = await fetch('/api/announcement');
-                const data = await res.json();
-                
-                // Isi Form
-                document.getElementById('annText').value = data.text;
-                document.getElementById('annCheck').checked = data.isActive;
-                
-                // Update Preview Realtime
-                document.getElementById('preview-text').innerText = data.text;
-            } catch(e) { console.error("Gagal load pengumuman"); }
-        }
-
-        // 2. Simpan Data
-        async function saveAnnouncement(e) {
-            e.preventDefault();
-            const text = document.getElementById('annText').value;
-            const isActive = document.getElementById('annCheck').checked;
-            const btn = e.submitter; // Tombol simpan
-
-            btn.innerHTML = 'Menyimpan...';
-            
-            try {
-                const res = await fetch('/api/announcement', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ text, isActive })
-                });
-                
-                if(res.ok) {
-                    alert("✅ Pengumuman Berhasil Disimpan!");
-                    document.getElementById('preview-text').innerText = text; // Update preview
-                } else {
-                    alert("Gagal menyimpan.");
-                }
-            } catch(e) {
-                alert("Error koneksi.");
-            } finally {
-                btn.innerHTML = '<i class="fa-solid fa-floppy-disk mr-2"></i> SIMPAN PENGUMUMAN';
-            }
-        }
-
-        // 3. Update Preview saat ngetik
-        document.getElementById('annText').addEventListener('input', function(e) {
-            document.getElementById('preview-text').innerText = e.target.value;
-        });
-
-      
         // INIT
         loadDashboard();
     </script>
