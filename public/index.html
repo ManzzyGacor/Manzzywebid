@@ -441,25 +441,30 @@
             let checkInterval = null; // Cek status ke server
             let timerInterval = null; // Hitung mundur
 
-    // --- FUNGSI NAVIGASI (SWITCH VIEW) ---
+    // --- FUNGSI NAVIGASI (PERBAIKAN) ---
             function switchView(viewName) {
-                // 1. Daftar semua halaman utama yang kamu punya
-                const views = ['view-landing', 'view-topup', 'view-history', 'view-profile'];
+                // 1. Ambil semua elemen yang punya class 'view-section'
+                const allViews = document.querySelectorAll('.view-section');
                 
-                // 2. Sembunyikan semua halaman
-                views.forEach(id => {
-                    const el = document.getElementById(id);
-                    if(el) el.classList.add('hidden');
+                // 2. Sembunyikan semua (Hapus class aktif & tambah hidden)
+                allViews.forEach(el => {
+                    el.classList.remove('view-active'); // Matikan animasi
+                    el.classList.add('hidden');         // Sembunyikan (Tailwind)
                 });
 
-                // 3. Munculkan halaman yang dipilih
+                // 3. Munculkan yang dipilih
                 const target = document.getElementById('view-' + viewName);
                 if(target) {
-                    target.classList.remove('hidden');
+                    target.classList.remove('hidden'); // Hapus hidden
+                    
+                    // Kasih delay dikit biar animasi 'fadeInUp' jalan mulus
+                    setTimeout(() => {
+                        target.classList.add('view-active');
+                    }, 10);
+                    
                     window.scrollTo(0, 0); // Scroll ke paling atas
                 }
             }
-    
             // 1. Load Config & Cek LocalStorage
             async function loadPublicConfig() {
                 try {
