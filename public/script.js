@@ -27,7 +27,7 @@ async function initData() {
 
 const userSession = localStorage.getItem('user_session');
 let userBalance = 0;
-const ADMIN_WA = "6287756632352";
+const ADMIN_WA = "639050933558";
 
 async function checkUserLogin() {
     // 1. JIKA BELUM LOGIN
@@ -67,7 +67,7 @@ async function checkUserLogin() {
             document.getElementById('menu-nokos')?.classList.remove('hidden');
             
             // Ubah Tombol Logout
-            document.getElementById('auth-menu').innerHTML = `<a href="#" onclick="doLogout()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:bg-white/5 transition"><i class="fa-solid fa-sign-out-alt text-red-500 w-6 text-center"></i><span class="font-medium">Logout</span></a>`;
+            document.getElementById('auth-menu').innerHTML = `<a href="login_user.html" onclick="doLogout()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:bg-white/5 transition"><i class="fa-solid fa-sign-out-alt text-red-500 w-6 text-center"></i><span class="font-medium">Logout</span></a>`;
 
             // === [LOGIC PENTING] HILANGKAN BANNER CTA JIKA LOGIN ===
             const ctaBanner = document.getElementById('cta-banner');
