@@ -176,35 +176,56 @@ async function placeOrder() {
     
     if(!serviceId || !target || !qty) return alert("Lengkapi data pesanan!");
 
-    const session = JSON.parse(localStorage.getItem('user_session'));
+    const sessionRaw = localStorage.getItem('user_session');
+    if (!sessionRaw) return alert("Sesi habis, silakan login kembali.");
+    const session = JSON.parse(sessionRaw);
+
     const btn = document.getElementById('place-order-btn');
+    const originalText = btn.innerHTML;
     
-    btn.innerHTML = "Memproses..."; btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...'; 
+    btn.disabled = true;
 
     try {
         const res = await fetch('/api/buzzer', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
+                // SESUAIKAN DENGAN CONTOH REQUEST API KAMU
+                api_key: "API_KEY_ANDA",    // Ganti dengan API Key Buzzer kamu
+                secret_key: "SECRET_KEY_ANDA", // Ganti dengan Secret Key Buzzer kamu
                 action: 'order',
-                userId: session.id,
-                service: serviceId,
+                service: parseInt(serviceId),
                 data: target,
-                quantity: qty
+                quantity: parseInt(qty),
+                userId: session.id // Tetap kirim userId untuk potong saldo di database kamu
             })
         });
-        const result = await res.json();
+
+        // Cek jika respon bukan JSON
+        const text = await res.text();
+        let result;
+        try {
+            result = JSON.parse(text);
+        } catch (e) {
+            throw new Error("Respon Server Bukan JSON: " + text);
+        }
         
-        if (result.status) {
-            alert("Pesanan Berhasil!");
-            // Update saldo lokal
-            // session.balance -= harga... (bisa ditambahkan logika ini)
+        if (result.status === true || result.status === "true") {
+            alert("Pesanan Berhasil! ID Order: " + result.data.id);
             location.reload();
         } else {
-            alert("Gagal: " + result.data);
+            // Jika gagal, tampilkan pesan error yang jelas, bukan [object Object]
+            const errorMsg = typeof result.data === 'object' ? JSON.stringify(result.data) : result.data;
+            alert("Gagal: " + (errorMsg || "Terjadi kesalahan pada provider"));
         }
-    } catch (e) { alert("Error koneksi"); }
-    finally { btn.innerHTML = "Submit Pesanan"; btn.disabled = false; }
+    } catch (e) { 
+        console.error("Order Error:", e);
+        alert("Error: " + e.message); 
+    } finally { 
+        btn.innerHTML = originalText; 
+        btn.disabled = false; 
+    }
 }
 
 // ==========================================
