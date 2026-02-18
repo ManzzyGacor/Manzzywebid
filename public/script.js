@@ -27,7 +27,7 @@ async function initData() {
 
 const userSession = localStorage.getItem('user_session');
 let userBalance = 0;
-const ADMIN_WA = "6287756632352";
+const ADMIN_WA = "6285815196595";
 
 async function checkUserLogin() {
     // 1. JIKA BELUM LOGIN
