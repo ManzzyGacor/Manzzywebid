@@ -37,7 +37,36 @@
     <script>window.addEventListener('load',()=>{setTimeout(()=>{const l=document.getElementById('loader');if(l){l.style.opacity='0';l.style.pointerEvents='none';setTimeout(()=>{l.style.display='none'},500)}},3000)});setTimeout(()=>{const l=document.getElementById('loader');if(l&&l.style.display!=='none')l.style.display='none'},5000);</script>
     
     <div id="toast-container" class="fixed top-24 right-5 z-[100] flex flex-col gap-3 pointer-events-none"></div>
+<div id="announcement-modal" class="fixed inset-0 z-[1000] hidden items-center justify-center px-4 transition-opacity duration-300 opacity-0 pointer-events-none">
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeAnnouncement()"></div>
+    
+    <div class="relative w-full max-w-md bg-[#0f0f11] border border-purple-500/30 rounded-2xl shadow-[0_0_40px_rgba(139,92,246,0.2)] transform scale-95 transition-transform duration-300" id="announcement-card">
+        
+        <div class="w-full h-32 bg-gradient-to-r from-purple-900/50 to-blue-900/50 rounded-t-2xl relative overflow-hidden flex items-center justify-center">
+            <div class="absolute inset-0 bg-grid opacity-30"></div>
+            <i class="fa-solid fa-bullhorn text-5xl text-purple-400 drop-shadow-[0_0_15px_rgba(168,85,247,0.8)] animate-bounce"></i>
+            
+            <button onclick="closeAnnouncement()" class="absolute top-3 right-3 w-8 h-8 flex items-center justify-center bg-black/50 hover:bg-red-500/80 text-white rounded-full transition-colors z-10">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
 
+        <div class="p-6 text-center">
+            <div class="inline-block mb-2 px-3 py-1 rounded-full border border-purple-500/30 bg-purple-900/20">
+                <span class="text-[10px] font-bold text-purple-300 tracking-widest uppercase">INFO TERBARU</span>
+            </div>
+            <h3 class="text-2xl font-bold text-white mb-2">Selamat Datang di <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500">MANZZY ID</span></h3>
+            
+            <p class="text-gray-400 text-sm leading-relaxed mb-6">
+                Nikmati layanan Nokos dan Sewa Bot WhatsApp terbaik dengan harga termurah. Sedang ada <b>Diskon Spesial</b> untuk member baru! Segera top up saldo dan nikmati layanannya.
+            </p>
+
+            <button onclick="closeAnnouncement()" class="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg shadow-purple-500/25 transition hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-rocket"></i> Lanjutkan ke Website
+            </button>
+        </div>
+    </div>
+</div>
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
     <aside id="sidebar-menu" class="sidebar-menu flex flex-col p-6 pt-10">
         <div class="flex items-center gap-3 mb-10 border-b border-gray-800 pb-6"><div class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-500/30"><i class="fa-solid fa-robot text-white text-lg"></i></div><div><h3 class="font-bold text-white text-lg leading-none">MANZZY<span class="text-purple-400">ID</span></h3><p id="user-status-sidebar" class="text-xs text-gray-500 font-mono mt-1">Guest Mode</p></div></div>
@@ -905,7 +934,55 @@
             </form>
         </div>
     </div>
+        //script popup
+        <script>
+    // Fungsi untuk menampilkan pengumuman
+    function showAnnouncement() {
+        // Cek apakah user sudah melihat pengumuman di sesi ini (opsional, hapus kondisi ini jika ingin selalu muncul)
+        if (!sessionStorage.getItem('announcementSeen')) {
+            const modal = document.getElementById('announcement-modal');
+            const card = document.getElementById('announcement-card');
+            
+            // Tampilkan modal
+            modal.classList.remove('hidden');
+            
+            // Beri sedikit jeda agar transisi CSS berjalan mulus
+            setTimeout(() => {
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                modal.classList.add('opacity-100');
+                card.classList.remove('scale-95');
+                card.classList.add('scale-100');
+            }, 50);
+        }
+    }
+
+    // Fungsi untuk menutup pengumuman
+    function closeAnnouncement() {
+        const modal = document.getElementById('announcement-modal');
+        const card = document.getElementById('announcement-card');
         
+        // Animasi keluar
+        modal.classList.remove('opacity-100');
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        card.classList.remove('scale-100');
+        card.classList.add('scale-95');
+        
+        // Sembunyikan elemen setelah animasi selesai (300ms)
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+
+        // Tandai bahwa user sudah melihat pengumuman agar tidak muncul terus saat pindah menu
+        sessionStorage.setItem('announcementSeen', 'true');
+    }
+
+    // Trigger pop-up muncul SETELAH loading screen hilang (Loading hilang di detik ke-3)
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            showAnnouncement();
+        }, 3500); // Muncul pada detik ke 3.5 (setelah loader sepenuhnya hilang)
+    });
+</script>
     <script src="script.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="topup.js"></script>
