@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gacha Saldo - Manzzy ID</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Space Grotesk', sans-serif; background-color: #050505; color: #e0e0e0; }
+        @keyframes gachaShake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+        .gacha-shaking { animation: gachaShake 0.4s infinite; }
+        @keyframes popOut {
+            0% { transform: scale(0.5); opacity: 0; }
+            80% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .prize-pop { animation: popOut 0.5s ease-out forwards; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+    <div class="absolute inset-0 z-0 opacity-10" style="background-image: radial-gradient(#8b5cf6 1px, transparent 1px); background-size: 30px 30px;"></div>
+
+    <div class="relative z-10 w-full max-w-md bg-[#0f0f11] border border-purple-500/20 rounded-3xl p-6 shadow-[0_0_40px_rgba(139,92,246,0.15)] text-center">
+        
+        <div class="flex items-center justify-between mb-4">
+            <a href="index.html" class="text-gray-400 hover:text-white transition"><i class="fa-solid fa-arrow-left text-xl"></i></a>
+            <h2 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500">Gacha Saldo Hoki</h2>
+            <div class="w-5"></div> 
+        </div>
+
+        <div class="flex flex-col items-center gap-1 mb-6">
+            <span class="text-xs text-gray-400">Pemain: <b class="text-purple-400" id="user-name">Memuat...</b></span>
+            <div class="inline-flex items-center gap-2 bg-black/50 border border-gray-800 rounded-full px-4 py-2 mt-1">
+                <i class="fa-solid fa-wallet text-purple-400"></i>
+                <span class="text-sm text-gray-300">Saldo: <b class="text-white" id="user-balance">Rp ...</b></span>
+            </div>
+        </div>
+
+        <div class="relative h-48 flex items-center justify-center mb-6">
+            <div id="gacha-glow" class="absolute w-32 h-32 bg-purple-600/30 rounded-full blur-2xl transition-all duration-500"></div>
+            
+            <i id="gacha-box" class="fa-solid fa-gift text-8xl text-purple-500 drop-shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-transform duration-300 z-10"></i>
+            
+            <div id="prize-result" class="absolute inset-0 flex flex-col items-center justify-center hidden z-20">
+                <span id="prize-icon" class="text-5xl mb-2"></span>
+                <span id="prize-amount" class="text-3xl font-bold text-white drop-shadow-md"></span>
+                <span id="prize-text" class="text-sm font-bold mt-1"></span>
+            </div>
+        </div>
+
+        <p class="text-xs text-gray-400 mb-4">Harga 1x Buka: <b class="text-red-400">Rp 1.000</b>. Hadiah max Rp 5.000!</p>
+
+        <button id="btn-play" onclick="playGacha()" class="w-full py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold rounded-2xl shadow-lg shadow-purple-500/25 transition hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Buka Gacha Sekarang!
+        </button>
+
+        <div class="mt-6 border-t border-gray-800 pt-4">
+            <h4 class="text-left text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Log Terakhir</h4>
+            <div id="history-log" class="text-left text-[11px] text-gray-500 space-y-1 h-16 overflow-y-auto no-scrollbar">
+                <p>Belum ada riwayat gacha.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Set konfigurasi backend (Sesuaikan jika backend beda port)
+        const API_URL = window.location.origin; // Atau 'http://localhost:3000' jika testing local
+        
+        let isPlaying = false;
+        let currentUser = localStorage.getItem('username'); // Ambil sesi user
+
+        const COOLDOWN_TIME = 30 * 60 * 1000; 
+        let countdownInterval;
+
+        function formatRp(angka) {
+            return "Rp " + angka.toLocaleString('id-ID');
+        }
+
+        // ==========================================
+        // INISIALISASI HALAMAN
+        // ==========================================
+        async function loadUserData() {
+            if (!currentUser) {
+                alert("Kamu harus login dulu untuk bermain gacha!");
+                window.location.href = "index.html"; // Ubah ke halaman login jika ada
+                return;
+            }
+
+            document.getElementById('user-name').innerText = currentUser;
+
+            try {
+                // Ambil Saldo Asli dari Database
+                const res = await fetch(`${API_URL}/api/user/${currentUser}`);
+                const data = await res.json();
+                
+                if (data && data.balance !== undefined) {
+                    document.getElementById('user-balance').innerText = formatRp(data.balance);
+                }
+            } catch (err) {
+                console.error("Gagal memuat saldo:", err);
+                document.getElementById('user-balance').innerText = "Error";
+            }
+        }
+
+        // ==========================================
+        // LOGIKA COOLDOWN WAKTU
+        // ==========================================
+        function checkCooldown() {
+            const lastPlayed = localStorage.getItem(`manzzy_gacha_${currentUser}`);
+            if (!lastPlayed) return false;
+
+            const timePassed = Date.now() - parseInt(lastPlayed);
+            if (timePassed < COOLDOWN_TIME) {
+                return COOLDOWN_TIME - timePassed; 
+            }
+            return false;
+        }
+
+        function updateBtnTimer() {
+            const timeLeft = checkCooldown();
+            const btn = document.getElementById('btn-play');
+
+            if (timeLeft) {
+                const minutes = Math.floor(timeLeft / (1000 * 60));
+                const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                
+                btn.innerHTML = `<i class="fa-solid fa-clock"></i> Coba lagi dalam ${minutes}m ${seconds}s`;
+                btn.classList.remove('from-purple-600', 'to-blue-600', 'hover:from-purple-500', 'hover:to-blue-500');
+                btn.classList.add('bg-gray-700', 'text-gray-400');
+                btn.disabled = true;
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Buka Gacha Sekarang!';
+                btn.classList.add('from-purple-600', 'to-blue-600', 'hover:from-purple-500', 'hover:to-blue-500');
+                btn.classList.remove('bg-gray-700', 'text-gray-400');
+                btn.disabled = false;
+                clearInterval(countdownInterval); 
+            }
+        }
+
+        // ==========================================
+        // EKSEKUSI MAIN GACHA
+        // ==========================================
+        async function playGacha() {
+            if (isPlaying || checkCooldown()) return;
+            
+            isPlaying = true;
+            const btn = document.getElementById('btn-play');
+            
+            // UI Mengacak Dimulai
+            const box = document.getElementById('gacha-box');
+            const resultBox = document.getElementById('prize-result');
+            const glow = document.getElementById('gacha-glow');
+            
+            resultBox.classList.add('hidden');
+            resultBox.classList.remove('prize-pop');
+            box.style.display = 'block';
+            box.classList.add('gacha-shaking', 'text-yellow-400');
+            glow.classList.add('scale-150', 'bg-yellow-500/50');
+            
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menghubungkan Server...';
+
+            try {
+                // Tembak API Backend
+                const response = await fetch(`${API_URL}/api/gacha/play`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: currentUser })
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    alert(data.msg); // Muncul jika saldo kurang dll
+                    box.classList.remove('gacha-shaking', 'text-yellow-400');
+                    glow.classList.remove('scale-150', 'bg-yellow-500/50');
+                    btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Buka Gacha Sekarang!';
+                    isPlaying = false;
+                    return;
+                }
+
+                // Berhasil, Catat waktu main ke Storage
+                localStorage.setItem(`manzzy_gacha_${currentUser}`, Date.now());
+                countdownInterval = setInterval(updateBtnTimer, 1000);
+                updateBtnTimer(); 
+
+                // Beri jeda animasi 2 detik biar deg-degan
+                setTimeout(() => {
+                    // Update Saldo Baru
+                    document.getElementById('user-balance').innerText = formatRp(data.newBalance);
+
+                    // Stop animasi, Tampilkan hasil dari Server
+                    box.classList.remove('gacha-shaking', 'text-yellow-400');
+                    box.style.display = 'none';
+                    
+                    const prize = data.prize;
+                    document.getElementById('prize-icon').innerText = prize.icon;
+                    document.getElementById('prize-amount').innerText = formatRp(prize.amount);
+                    document.getElementById('prize-amount').className = `text-3xl font-bold drop-shadow-md ${prize.color}`;
+                    document.getElementById('prize-text').innerText = prize.text;
+                    document.getElementById('prize-text').className = `text-sm font-bold mt-1 ${prize.color}`;
+                    
+                    resultBox.classList.remove('hidden');
+                    resultBox.classList.add('prize-pop'); 
+                    glow.classList.remove('scale-150', 'bg-yellow-500/50');
+
+                    // Catat Log
+                    const logContainer = document.getElementById('history-log');
+                    const now = new Date();
+                    const timeStr = `${now.getHours()}:${now.getMinutes() < 10 ? '0' : ''}${now.getMinutes()}`;
+                    const logEntry = `<p>[${timeStr}] Gacha hasil: <b class="${prize.color}">${formatRp(prize.amount)}</b></p>`;
+                    
+                    if (logContainer.innerHTML.includes("Belum ada riwayat")) logContainer.innerHTML = '';
+                    logContainer.insertAdjacentHTML('afterbegin', logEntry);
+
+                    isPlaying = false;
+                }, 2000);
+
+            } catch (err) {
+                console.error("Error:", err);
+                alert("Koneksi ke server gagal.");
+                box.classList.remove('gacha-shaking', 'text-yellow-400');
+                isPlaying = false;
+            }
+        }
+
+        // Jalankan saat halaman dibuka
+        window.onload = () => {
+            loadUserData();
+            if (checkCooldown()) {
+                countdownInterval = setInterval(updateBtnTimer, 1000);
+                updateBtnTimer();
+            }
+        };
+    </script>
+</body>
+</html>
