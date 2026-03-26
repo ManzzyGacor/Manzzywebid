@@ -445,7 +445,64 @@ app.delete('/api/admin/services/:id', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
+// ==========================================
+// FITUR GACHA SALDO
+// ==========================================
+app.post('/api/gacha/play', async (req, res) => {
+    try {
+        // Menggunakan fungsi connectDB bawaan index.js
+        await connectDB(); 
+        
+        const { username } = req.body;
+        const cost = 1000;
 
+        // Validasi input
+        if (!username) {
+            return res.status(400).json({ success: false, msg: "Sesi tidak valid, silakan login ulang." });
+        }
+
+        // 1. Cari User di Database (Menggunakan UserSchema bawaan index.js)
+        const user = await User.findOne({ username });
+        if (!user) {
+            return res.status(404).json({ success: false, msg: "User tidak ditemukan di database." });
+        }
+
+        // 2. Cek apakah saldo mencukupi
+        if (user.balance < cost) {
+            return res.status(400).json({ success: false, msg: "Saldo tidak mencukupi untuk gacha!" });
+        }
+
+        // 3. Potong saldo untuk biaya main
+        user.balance -= cost;
+
+        // 4. Logika Probabilitas (Diacak murni oleh Server backend)
+        const chance = Math.random() * 100;
+        let prize = {};
+
+        if (chance <= 55) {
+            prize = { amount: 0, text: "Yahh, ZONK!", type: 'zonk', icon: '🥺', color: 'text-red-400' };
+        } else if (chance <= 85) {
+            prize = { amount: 1000, text: "Balik Modal!", type: 'normal', icon: '👍', color: 'text-blue-400' };
+        } else if (chance <= 99) {
+            prize = { amount: 2000, text: "Cuan Dikit!", type: 'good', icon: '🔥', color: 'text-green-400' };
+        } else {
+            prize = { amount: 5000, text: "JACKPOT!!!", type: 'jackpot', icon: '🤑', color: 'text-yellow-400' };
+        }
+
+        // 5. Tambahkan hadiah ke saldo user
+        user.balance += prize.amount;
+        
+        // 6. Simpan perubahan saldo ke MongoDB
+        await user.save(); 
+
+        // 7. Kembalikan hasil ke frontend (gacha.html)
+        res.json({ success: true, prize, newBalance: user.balance });
+
+    } catch (error) {
+        console.error("Gacha Error:", error);
+        res.status(500).json({ success: false, msg: "Terjadi kesalahan server saat memproses Gacha." });
+    }
+});
 //dashboard buat saldo cek
 app.use('/api', require('./dashboard'));
 module.exports = app;
