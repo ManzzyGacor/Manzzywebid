@@ -79,11 +79,13 @@
     </div>
 
     <script>
-        // Set konfigurasi backend (Sesuaikan jika backend beda port)
-        const API_URL = window.location.origin; // Atau 'http://localhost:3000' jika testing local
+        // Set konfigurasi backend (Mengikuti format relative path di script.js Anda)
+        const API_URL = window.location.origin; 
         
         let isPlaying = false;
-        let currentUser = localStorage.getItem('username'); // Ambil sesi user
+        
+        // [PERBAIKAN KUNCI SESSION] Menggunakan 'user_session' sesuai logic web Anda
+        let currentUser = localStorage.getItem('user_session'); 
 
         const COOLDOWN_TIME = 30 * 60 * 1000; 
         let countdownInterval;
@@ -96,21 +98,25 @@
         // INISIALISASI HALAMAN
         // ==========================================
         async function loadUserData() {
+            // Jika user_session kosong (belum login)
             if (!currentUser) {
                 alert("Kamu harus login dulu untuk bermain gacha!");
-                window.location.href = "index.html"; // Ubah ke halaman login jika ada
+                window.location.href = "index.html"; // Kembalikan ke beranda
                 return;
             }
 
+            // Tampilkan nama user di UI
             document.getElementById('user-name').innerText = currentUser;
 
             try {
-                // Ambil Saldo Asli dari Database
-                const res = await fetch(`${API_URL}/api/user/${currentUser}`);
+                // Tarik Saldo Asli dari Database (Sesuai endpoint di script.js)
+                const res = await fetch(`/api/user/${currentUser}`);
                 const data = await res.json();
                 
                 if (data && data.balance !== undefined) {
                     document.getElementById('user-balance').innerText = formatRp(data.balance);
+                } else {
+                    document.getElementById('user-balance').innerText = "Rp 0";
                 }
             } catch (err) {
                 console.error("Gagal memuat saldo:", err);
@@ -149,7 +155,7 @@
                 btn.classList.add('from-purple-600', 'to-blue-600', 'hover:from-purple-500', 'hover:to-blue-500');
                 btn.classList.remove('bg-gray-700', 'text-gray-400');
                 btn.disabled = false;
-                clearInterval(countdownInterval); 
+                if (countdownInterval) clearInterval(countdownInterval); 
             }
         }
 
@@ -162,7 +168,7 @@
             isPlaying = true;
             const btn = document.getElementById('btn-play');
             
-            // UI Mengacak Dimulai
+            // UI Animasi Mengacak Dimulai
             const box = document.getElementById('gacha-box');
             const resultBox = document.getElementById('prize-result');
             const glow = document.getElementById('gacha-glow');
@@ -177,7 +183,7 @@
 
             try {
                 // Tembak API Backend
-                const response = await fetch(`${API_URL}/api/gacha/play`, {
+                const response = await fetch(`/api/gacha/play`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username: currentUser })
@@ -204,7 +210,7 @@
                     // Update Saldo Baru
                     document.getElementById('user-balance').innerText = formatRp(data.newBalance);
 
-                    // Stop animasi, Tampilkan hasil dari Server
+                    // Stop animasi, Tampilkan hasil
                     box.classList.remove('gacha-shaking', 'text-yellow-400');
                     box.style.display = 'none';
                     
@@ -233,8 +239,10 @@
 
             } catch (err) {
                 console.error("Error:", err);
-                alert("Koneksi ke server gagal.");
+                alert("Koneksi ke server gagal. Coba lagi.");
                 box.classList.remove('gacha-shaking', 'text-yellow-400');
+                glow.classList.remove('scale-150', 'bg-yellow-500/50');
+                btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Buka Gacha Sekarang!';
                 isPlaying = false;
             }
         }
