@@ -208,7 +208,55 @@
                 <div class="col-span-2 grid grid-cols-2 gap-3" id="list-vouchers"></div>
             </div>
         </div>
-        
+        <div class="bg-card p-6 rounded-2xl border border-gray-800 mt-8 shadow-lg">
+    <h2 class="text-xl font-bold text-white mb-6 border-b border-gray-800 pb-3"><i class="fa-solid fa-crown text-yellow-400 mr-2"></i> Kelola App Premium</h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="bg-black/30 p-5 rounded-xl border border-gray-800">
+            <h3 class="text-sm font-bold text-purple-400 mb-4">1. Setting Harga Aplikasi</h3>
+            <form onsubmit="saveAppConfig(event)" class="space-y-4">
+                <div>
+                    <label class="text-xs text-gray-400 block mb-1">Nama App (ex: netflix, capcut)</label>
+                    <input type="text" id="confApp" class="w-full bg-[#0f0f11] border border-gray-700 rounded-lg p-2.5 text-sm text-white focus:border-purple-500 outline-none" required>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-400 block mb-1">Harga (Angka)</label>
+                    <input type="number" id="confPrice" class="w-full bg-[#0f0f11] border border-gray-700 rounded-lg p-2.5 text-sm text-white focus:border-purple-500 outline-none" required>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-400 block mb-1">Deskripsi Singkat / S&K</label>
+                    <textarea id="confDesc" rows="2" class="w-full bg-[#0f0f11] border border-gray-700 rounded-lg p-2.5 text-sm text-white focus:border-purple-500 outline-none"></textarea>
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white text-sm font-bold rounded-lg transition">Simpan Konfigurasi</button>
+            </form>
+        </div>
+
+        <div class="bg-black/30 p-5 rounded-xl border border-gray-800">
+            <h3 class="text-sm font-bold text-green-400 mb-4">2. Suntik Stok Akun (1 per 1)</h3>
+            <form onsubmit="addAppStock(event)" class="space-y-4">
+                <div>
+                    <label class="text-xs text-gray-400 block mb-1">Nama App (Harus sama dgn kiri)</label>
+                    <input type="text" id="stockApp" class="w-full bg-[#0f0f11] border border-gray-700 rounded-lg p-2.5 text-sm text-white focus:border-green-500 outline-none" required>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">Email / Username</label>
+                        <input type="text" id="stockEmail" class="w-full bg-[#0f0f11] border border-gray-700 rounded-lg p-2.5 text-sm text-white focus:border-green-500 outline-none" required>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">Password</label>
+                        <input type="text" id="stockPass" class="w-full bg-[#0f0f11] border border-gray-700 rounded-lg p-2.5 text-sm text-white focus:border-green-500 outline-none" required>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-400 block mb-1">Cara Penggunaan (Opsional)</label>
+                    <input type="text" id="stockInst" placeholder="Contoh: Dilarang ganti profile" class="w-full bg-[#0f0f11] border border-gray-700 rounded-lg p-2.5 text-sm text-white focus:border-green-500 outline-none">
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-green-600 hover:bg-green-500 text-white text-sm font-bold rounded-lg transition">Tambahkan Stok (+1)</button>
+            </form>
+        </div>
+    </div>
+</div>
         <div id="view-nokos" class="section-view">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-bold text-white">Config Nokos</h2>
@@ -559,7 +607,35 @@
             }
         }
 
+    // Taruh script ini di dalam area <script> Admin Panel Anda
+    async function saveAppConfig(e) {
+        e.preventDefault();
+        const data = {
+            appName: document.getElementById('confApp').value.toLowerCase(),
+            price: document.getElementById('confPrice').value,
+            description: document.getElementById('confDesc').value
+        };
+        await fetch('/api/admin/app-premium/config', {
+            method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)
+        });
+        alert('Config App Premium Disimpan!');
+    }
 
+    async function addAppStock(e) {
+        e.preventDefault();
+        const data = {
+            appName: document.getElementById('stockApp').value.toLowerCase(),
+            email: document.getElementById('stockEmail').value,
+            password: document.getElementById('stockPass').value,
+            instructions: document.getElementById('stockInst').value
+        };
+        await fetch('/api/admin/app-premium/stock', {
+            method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)
+        });
+        alert('Stok Akun Berhasil Ditambahkan!');
+        document.getElementById('stockEmail').value = ''; // Reset form email
+        document.getElementById('stockPass').value = '';  // Reset form pass
+    }
         // INIT
         loadDashboard();
     </script>
