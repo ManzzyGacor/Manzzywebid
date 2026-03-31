@@ -532,7 +532,7 @@
                         <p class="text-xs text-gray-400 mb-6">Scan QRIS ini atau minta No Rekening ke Admin.</p>
                         
                         <div class="bg-white p-3 rounded-2xl mx-auto w-64 mb-6 shadow-lg relative group">
-                            <img id="manual-qris-img" src="https://via.placeholder.com/300?text=Loading..." class="w-full h-full object-contain rounded-lg">
+                            <img id="manual-qris-img" src="https://raw.githubusercontent.com/ManzzyGacor/Urlmanzzy/main/file_1767695871671_444.jpg" class="w-full h-full object-contain rounded-lg">
                             <a id="manual-qris-link" href="#" target="_blank" class="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition rounded-lg text-white font-bold text-xs">Klik untuk Perbesar</a>
                         </div>
 
@@ -540,7 +540,7 @@
                             <div class="text-left">
                                 <label class="text-[10px] font-bold text-gray-500 uppercase ml-1">Nominal Transfer</label>
                                 <input type="number" id="manualAmount" class="w-full bg-[#0a0a0c] border border-gray-700 rounded-xl py-3 px-4 text-white font-bold focus:border-green-500 outline-none mt-1" placeholder="Contoh: 20000" required>
-                                <p class="text-[10px] text-green-400 mt-1 ml-1 italic">*Biaya Admin Manual 0.7%</p>
+                                <p class="text-[10px] text-green-400 mt-1 ml-1 italic">*Biaya Admin Manual 0.30%</p>
                             </div>
                             <button type="submit" class="w-full py-3 rounded-xl bg-green-600 hover:bg-green-500 text-white font-bold shadow-lg flex items-center justify-center gap-2 transition hover:scale-105">
                                 <i class="fa-brands fa-whatsapp text-xl"></i> Konfirmasi ke Admin
@@ -819,14 +819,14 @@
                 const amt = parseInt(document.getElementById('manualAmount').value);
                 if(!amt || amt < 5000) { alert("Minimal Rp 5.000"); return; }
 
-                const fee = Math.ceil(amt * 0.007); 
+                const fee = Math.ceil(amt * 0.030); 
                 const total = amt + fee;
                 const user = localStorage.getItem('user_session') || 'Guest';
                 const adminNum = paymentConfig.adminWa || "6285815196595"; 
                 
                 const text = `Halo Admin Manzzy ID,\nSaya mau deposit saldo via MANUAL.\n\n👤 Username: ${user}\n💰 Nominal: Rp ${amt.toLocaleString()}\n💸 Fee (0.7%): Rp ${fee.toLocaleString()}\n---------------------------\n💵 *TOTAL: Rp ${total.toLocaleString()}*\n\nMohon dicek bukti transfer saya. Terima kasih.`;
                 
-                if(confirm(`Total Transfer (+Fee 0.7%): Rp ${total.toLocaleString()}\n\nLanjut ke WhatsApp?`)) {
+                if(confirm(`Total Transfer (+Fee 0.30%): Rp ${total.toLocaleString()}\n\nLanjut ke WhatsApp?`)) {
                     window.open(`https://wa.me/${adminNum}?text=${encodeURIComponent(text)}`, '_blank');
                 }
             }
