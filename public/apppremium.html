@@ -12,6 +12,7 @@
         .app-card { background: linear-gradient(145deg, #13131a, #0f0f11); border: 1px solid rgba(139, 92, 246, 0.1); transition: all 0.3s ease; }
         .app-card:hover { transform: translateY(-5px); border-color: rgba(139, 92, 246, 0.5); box-shadow: 0 10px 30px rgba(139, 92, 246, 0.15); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="relative min-h-screen">
@@ -23,7 +24,7 @@
 
     <div id="sidebar" class="fixed inset-y-0 right-0 w-80 bg-[#0f0f11] border-l border-purple-500/20 transform translate-x-full transition-transform duration-300 z-[60] flex flex-col shadow-2xl">
         <div class="p-6 border-b border-gray-800 flex justify-between items-center">
-            <h2 class="text-lg font-bold text-white"><i class="fa-solid fa-clock-rotate-left mr-2"></i> Riwayat Pembelian</h2>
+            <h2 class="text-lg font-bold text-white"><i class="fa-solid fa-clock-rotate-left mr-2"></i> Riwayat Anda</h2>
             <button onclick="toggleSidebar()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-times text-xl"></i></button>
         </div>
         <div id="history-container" class="p-4 flex-1 overflow-y-auto space-y-3">
@@ -43,9 +44,9 @@
                 <h1 class="text-2xl font-bold text-white mb-2">Pilih Layanan Premium</h1>
                 <p class="text-sm text-gray-400">Beli akun premium legal dengan harga termurah.</p>
             </div>
-            <div class="bg-purple-900/30 border border-purple-500/30 px-4 py-2 rounded-xl">
+            <div class="bg-purple-900/30 border border-purple-500/30 px-4 py-2 rounded-xl text-center">
                 <span class="text-xs text-purple-300 block">Saldo Anda</span>
-                <span class="text-sm font-bold text-white" id="user-balance">Rp ...</span>
+                <span class="text-sm font-bold text-white" id="user-balance">Rp 000</span>
             </div>
         </div>
 
@@ -58,13 +59,15 @@
         <div class="bg-[#0f0f11] border border-gray-800 w-full max-w-md rounded-2xl overflow-hidden transform scale-95 transition-transform duration-300" id="buy-card">
             <div class="p-6">
                 <div class="flex items-center gap-4 mb-4 pb-4 border-b border-gray-800">
-                    <div class="w-12 h-12 rounded-xl bg-gray-800 flex items-center justify-center text-2xl" id="modal-icon"></div>
+                    <div class="w-14 h-14 rounded-full bg-black/50 border border-gray-800 flex items-center justify-center text-2xl overflow-hidden shadow-inner" id="modal-icon"></div>
                     <div>
                         <h3 class="text-xl font-bold text-white capitalize" id="modal-title">App Name</h3>
                         <p class="text-xs text-green-400 font-bold" id="modal-stock">Stok: 0</p>
                     </div>
                 </div>
+                
                 <p class="text-sm text-gray-300 mb-6 leading-relaxed" id="modal-desc">Deskripsi aplikasi...</p>
+                
                 <div class="flex justify-between items-center bg-black/50 p-4 rounded-xl mb-6 border border-gray-800">
                     <span class="text-sm text-gray-400">Total Pembayaran</span>
                     <span class="text-lg font-bold text-purple-400" id="modal-price">Rp 0</span>
@@ -94,12 +97,15 @@
         let currentHistoryPage = 1;
         const itemsPerPage = 5;
 
+        // Fallback Ikon jika Admin tidak mengisi link gambar
         const appIcons = {
             'netflix': '<i class="fa-solid fa-film text-red-500"></i>',
             'capcut': '<i class="fa-solid fa-scissors text-white"></i>',
             'vidio': '<i class="fa-solid fa-play text-red-600"></i>',
             'alight motion': '<i class="fa-solid fa-bezier-curve text-green-400"></i>',
-            'viu': '<i class="fa-solid fa-video text-yellow-400"></i>'
+            'viu': '<i class="fa-solid fa-video text-yellow-400"></i>',
+            'canva': '<i class="fa-solid fa-palette text-blue-400"></i>',
+            'spotify': '<i class="fa-brands fa-spotify text-green-500"></i>'
         };
 
         function formatRp(angka) { return "Rp " + angka.toLocaleString('id-ID'); }
@@ -109,14 +115,20 @@
                 alert("Silakan login terlebih dahulu!");
                 window.location.href = "index.html"; return;
             }
-            // Load Saldo
-            fetch(`/api/user/${currentUser}`).then(r => r.json()).then(d => {
-                if(d.balance !== undefined) document.getElementById('user-balance').innerText = formatRp(d.balance);
-            });
+            // Load Saldo User
+            try {
+                const res = await fetch(`/api/user/${currentUser}`);
+                const data = await res.json();
+                if(data.balance !== undefined) document.getElementById('user-balance').innerText = formatRp(data.balance);
+            } catch(e) { console.log("Gagal load saldo"); }
+            
             loadKatalog();
             loadHistory();
         }
 
+        // ==========================================
+        // 1. LOAD KATALOG & GAMBAR PRODUK
+        // ==========================================
         async function loadKatalog() {
             try {
                 const res = await fetch(`/api/app-premium/list`);
@@ -124,12 +136,25 @@
                 const grid = document.getElementById('app-grid');
                 grid.innerHTML = '';
                 
+                if (data.length === 0) {
+                    grid.innerHTML = '<div class="col-span-full text-center py-10 text-gray-500">Belum ada produk yang tersedia.</div>';
+                    return;
+                }
+
                 data.forEach(app => {
-                    const icon = appIcons[app.appName.toLowerCase()] || '<i class="fa-solid fa-mobile-screen-button text-purple-400"></i>';
+                    // Penentu Visual: Pakai Gambar atau Pakai Ikon?
+                    const visualHTML = app.imageUrl 
+                        ? `<img src="${app.imageUrl}" class="w-full h-full object-cover rounded-full" alt="${app.appName}">`
+                        : (appIcons[app.appName.toLowerCase()] || '<i class="fa-solid fa-mobile-screen-button text-purple-400"></i>');
+
+                    // Escape petik pada deskripsi & imgUrl agar onclick tidak error
+                    const safeDesc = (app.description || "").replace(/"/g, '&quot;').replace(/'/g, "\\'");
+                    const safeImg = (app.imageUrl || "");
+
                     grid.innerHTML += `
-                        <div class="app-card rounded-2xl p-5 cursor-pointer flex flex-col items-center text-center" onclick="openModal('${app.appName}', ${app.price}, ${app.stock}, \`${app.description}\`)">
-                            <div class="w-14 h-14 rounded-full bg-black/50 border border-gray-800 flex items-center justify-center text-2xl mb-3 shadow-inner">
-                                ${icon}
+                        <div class="app-card rounded-2xl p-5 cursor-pointer flex flex-col items-center text-center" onclick="openModal('${app.appName}', ${app.price}, ${app.stock}, '${safeDesc}', '${safeImg}')">
+                            <div class="w-16 h-16 rounded-full bg-black/50 border border-gray-800 flex items-center justify-center text-2xl mb-3 overflow-hidden shadow-inner">
+                                ${visualHTML}
                             </div>
                             <h3 class="font-bold text-white capitalize mb-1 text-sm md:text-base">${app.appName}</h3>
                             <p class="text-xs font-bold text-purple-400 mb-2">${formatRp(app.price)}</p>
@@ -139,19 +164,28 @@
                         </div>
                     `;
                 });
-            } catch (e) { console.error("Gagal muat katalog"); }
+            } catch (e) { console.error("Gagal muat katalog", e); }
         }
 
-        // === MODAL LOGIC ===
-        function openModal(name, price, stock, desc) {
+        // ==========================================
+        // 2. LOGIKA MODAL (POP-UP BELI)
+        // ==========================================
+        function openModal(name, price, stock, desc, imgUrl) {
             if (stock <= 0) { alert("Mohon maaf, stok aplikasi ini sedang kosong."); return; }
             selectedApp = name;
+            
             document.getElementById('modal-title').innerText = name;
             document.getElementById('modal-price').innerText = formatRp(price);
             document.getElementById('modal-stock').innerText = `Tersedia: ${stock} Akun`;
             document.getElementById('modal-desc').innerText = desc || "Beli akun premium aman dan bergaransi.";
-            document.getElementById('modal-icon').innerHTML = appIcons[name.toLowerCase()] || '<i class="fa-solid fa-box"></i>';
             
+            // Set Ikon/Gambar di Modal
+            const modalVisual = imgUrl 
+                ? `<img src="${imgUrl}" class="w-full h-full object-cover">`
+                : (appIcons[name.toLowerCase()] || '<i class="fa-solid fa-box"></i>');
+            document.getElementById('modal-icon').innerHTML = modalVisual;
+            
+            // Tampilkan Animasi Pop-up
             const modal = document.getElementById('buy-modal');
             const card = document.getElementById('buy-card');
             modal.classList.remove('hidden');
@@ -169,6 +203,9 @@
             setTimeout(() => { modal.classList.add('hidden'); }, 300);
         }
 
+        // ==========================================
+        // 3. PROSES PEMBELIAN
+        // ==========================================
         async function processBuy() {
             if(!selectedApp) return;
             document.getElementById('buy-actions').classList.add('hidden');
@@ -183,23 +220,24 @@
                 const data = await res.json();
                 
                 if(data.success) {
+                    // Berhasil, Update Saldo & Tampilan
                     document.getElementById('user-balance').innerText = formatRp(data.newBalance);
                     document.getElementById('loading-state').innerHTML = `
                         <i class="fa-solid fa-circle-check text-5xl text-green-500 mb-3 animate-bounce"></i>
                         <p class="text-sm font-bold text-white mb-2">Pembelian Berhasil!</p>
-                        <div class="bg-black/50 p-3 rounded-lg text-left text-xs text-gray-300 border border-green-500/30">
-                            <p><b>Email:</b> ${data.account.email}</p>
-                            <p><b>Pass:</b> ${data.account.password}</p>
+                        <div class="bg-black/50 p-3 rounded-lg text-left text-xs text-gray-300 border border-green-500/30 w-full mt-2">
+                            <p><b>Email:</b> <span class="select-all text-white font-mono">${data.account.email}</span></p>
+                            <p><b>Pass:</b> <span class="select-all text-white font-mono">${data.account.password}</span></p>
                             <p class="mt-2 italic text-green-400">${data.account.instructions}</p>
                         </div>
-                        <button onclick="closeModal(); resetModal(); loadKatalog(); loadHistory(); toggleSidebar();" class="mt-4 w-full py-2 bg-gray-800 text-white rounded-lg text-sm hover:bg-gray-700">Lihat di Riwayat</button>
+                        <button onclick="closeModal(); resetModal(); loadKatalog(); loadHistory(); toggleSidebar();" class="mt-5 w-full py-3 bg-gray-800 text-white rounded-xl text-sm font-bold hover:bg-gray-700 transition">Lihat di Riwayat</button>
                     `;
                 } else {
                     alert(data.msg);
                     resetModal(); closeModal();
                 }
             } catch (e) {
-                alert("Koneksi gagal."); resetModal(); closeModal();
+                alert("Koneksi gagal. Coba lagi nanti."); resetModal(); closeModal();
             }
         }
 
@@ -212,7 +250,9 @@
             `;
         }
 
-        // === SIDEBAR & HISTORY LOGIC ===
+        // ==========================================
+        // 4. SIDEBAR HISTORY LOGIC
+        // ==========================================
         function toggleSidebar() {
             const sb = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebar-overlay');
@@ -240,6 +280,7 @@
             
             if(historyData.length === 0) {
                 container.innerHTML = '<p class="text-sm text-gray-500 text-center mt-10">Belum ada pembelian.</p>';
+                document.getElementById('page-info').innerText = `Hal 1`;
                 return;
             }
 
@@ -248,21 +289,26 @@
             const paginatedItems = historyData.slice(start, end);
 
             paginatedItems.forEach(item => {
-                const date = new Date(item.purchasedAt).toLocaleDateString('id-ID');
+                const dateObj = new Date(item.purchasedAt);
+                const dateStr = `${dateObj.getDate()}/${dateObj.getMonth()+1}/${dateObj.getFullYear()}`;
+                
                 container.innerHTML += `
-                    <div class="bg-[#1a1a24] p-4 rounded-xl border border-gray-800">
-                        <div class="flex justify-between items-center mb-2">
+                    <div class="bg-[#1a1a24] p-4 rounded-xl border border-gray-800 hover:border-purple-500/30 transition">
+                        <div class="flex justify-between items-center mb-3 border-b border-gray-800 pb-2">
                             <span class="font-bold text-white capitalize text-sm">${item.appName}</span>
-                            <span class="text-[10px] text-gray-500">${date}</span>
+                            <span class="text-[10px] text-gray-500 bg-black/50 px-2 py-1 rounded">${dateStr}</span>
                         </div>
-                        <div class="bg-black/40 p-2 rounded text-xs font-mono text-gray-300 select-all mb-2 border border-gray-800/50">
-                            E: ${item.email}<br>P: ${item.password}
+                        <div class="bg-black/60 p-3 rounded-lg text-[11px] font-mono text-gray-300 select-all mb-2 border border-gray-800/50 shadow-inner">
+                            <span class="text-gray-500 block mb-1">Email:</span> <span class="text-white">${item.email}</span><br>
+                            <span class="text-gray-500 block mt-2 mb-1">Password:</span> <span class="text-white">${item.password}</span>
                         </div>
-                        <p class="text-[10px] text-green-400 italic">${item.instructions}</p>
+                        ${item.instructions ? `<p class="text-[10px] text-green-400 italic mt-2"><i class="fa-solid fa-circle-info mr-1"></i> ${item.instructions}</p>` : ''}
                     </div>
                 `;
             });
-            document.getElementById('page-info').innerText = `Hal ${currentHistoryPage} dari ${Math.ceil(historyData.length / itemsPerPage)}`;
+            
+            const maxPage = Math.ceil(historyData.length / itemsPerPage);
+            document.getElementById('page-info').innerText = `Hal ${currentHistoryPage} dari ${maxPage || 1}`;
         }
 
         function changePage(dir) {
@@ -273,6 +319,7 @@
             }
         }
 
+        // Eksekusi fungsi utama
         window.onload = initApp;
     </script>
 </body>
