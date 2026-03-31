@@ -126,8 +126,8 @@
             loadHistory();
         }
 
-        // ==========================================
-        // 1. LOAD KATALOG & GAMBAR PRODUK
+// ==========================================
+        // 1. LOAD KATALOG & GAMBAR PRODUK (ANTI-ERROR)
         // ==========================================
         async function loadKatalog() {
             try {
@@ -142,14 +142,13 @@
                 }
 
                 data.forEach(app => {
-                    // Penentu Visual: Pakai Gambar atau Pakai Ikon?
                     const visualHTML = app.imageUrl 
                         ? `<img src="${app.imageUrl}" class="w-full h-full object-cover rounded-full" alt="${app.appName}">`
                         : (appIcons[app.appName.toLowerCase()] || '<i class="fa-solid fa-mobile-screen-button text-purple-400"></i>');
 
-                    // Escape petik pada deskripsi & imgUrl agar onclick tidak error
-                    const safeDesc = (app.description || "").replace(/"/g, '&quot;').replace(/'/g, "\\'");
-                    const safeImg = (app.imageUrl || "");
+                    // [PERBAIKAN] Enkripsi teks agar Enter, Spasi, & Tanda Petik tidak merusak HTML
+                    const safeDesc = encodeURIComponent(app.description || "");
+                    const safeImg = encodeURIComponent(app.imageUrl || "");
 
                     grid.innerHTML += `
                         <div class="app-card rounded-2xl p-5 cursor-pointer flex flex-col items-center text-center" onclick="openModal('${app.appName}', ${app.price}, ${app.stock}, '${safeDesc}', '${safeImg}')">
@@ -170,22 +169,24 @@
         // ==========================================
         // 2. LOGIKA MODAL (POP-UP BELI)
         // ==========================================
-        function openModal(name, price, stock, desc, imgUrl) {
+        function openModal(name, price, stock, safeDesc, safeImg) {
             if (stock <= 0) { alert("Mohon maaf, stok aplikasi ini sedang kosong."); return; }
             selectedApp = name;
+            
+            // [PERBAIKAN] Kembalikan teks asli dari enkripsi
+            const desc = decodeURIComponent(safeDesc);
+            const imgUrl = decodeURIComponent(safeImg);
             
             document.getElementById('modal-title').innerText = name;
             document.getElementById('modal-price').innerText = formatRp(price);
             document.getElementById('modal-stock').innerText = `Tersedia: ${stock} Akun`;
             document.getElementById('modal-desc').innerText = desc || "Beli akun premium aman dan bergaransi.";
             
-            // Set Ikon/Gambar di Modal
             const modalVisual = imgUrl 
                 ? `<img src="${imgUrl}" class="w-full h-full object-cover">`
                 : (appIcons[name.toLowerCase()] || '<i class="fa-solid fa-box"></i>');
             document.getElementById('modal-icon').innerHTML = modalVisual;
             
-            // Tampilkan Animasi Pop-up
             const modal = document.getElementById('buy-modal');
             const card = document.getElementById('buy-card');
             modal.classList.remove('hidden');
@@ -194,15 +195,6 @@
                 card.classList.remove('scale-95');
             }, 10);
         }
-
-        function closeModal() {
-            const modal = document.getElementById('buy-modal');
-            const card = document.getElementById('buy-card');
-            modal.classList.add('opacity-0');
-            card.classList.add('scale-95');
-            setTimeout(() => { modal.classList.add('hidden'); }, 300);
-        }
-
         // ==========================================
         // 3. PROSES PEMBELIAN
         // ==========================================
