@@ -508,11 +508,12 @@ app.post('/api/gacha/play', async (req, res) => {
 // FITUR APP PREMIUM (DB & API)
 // ==========================================
 
-// 1. Schema Config (Harga & Deskripsi per App)
+// 1. Schema Config (Harga, Deskripsi, & Foto per App)
 const AppPremiumConfigSchema = new mongoose.Schema({
-    appName: { type: String, required: true, unique: true }, // 'netflix', 'capcut', 'vidio', dll
+    appName: { type: String, required: true, unique: true },
     price: { type: Number, default: 0 },
-    description: { type: String, default: '' }
+    description: { type: String, default: '' },
+    imageUrl: { type: String, default: '' } // Field untuk link foto
 });
 const AppPremiumConfig = mongoose.models.AppPremiumConfig || mongoose.model('AppPremiumConfig', AppPremiumConfigSchema);
 
@@ -527,6 +528,7 @@ const AppPremiumStockSchema = new mongoose.Schema({
     purchasedAt: { type: Date, default: null }
 });
 const AppPremiumStock = mongoose.models.AppPremiumStock || mongoose.model('AppPremiumStock', AppPremiumStockSchema);
+
 
 // --- API UNTUK USER (FRONTEND) ---
 
@@ -543,6 +545,7 @@ app.get('/api/app-premium/list', async (req, res) => {
                 appName: conf.appName,
                 price: conf.price,
                 description: conf.description,
+                imageUrl: conf.imageUrl,
                 stock: stockCount
             });
         }
@@ -561,28 +564,28 @@ app.post('/api/app-premium/buy', async (req, res) => {
         const user = await User.findOne({ username });
         const config = await AppPremiumConfig.findOne({ appName });
         
-        if (!user || !config) return res.status(400).json({ success: false, msg: "Data tidak valid." });
+        if (!user || !config) return res.status(400).json({ success: false, msg: "Data produk tidak valid." });
         if (user.balance < config.price) return res.status(400).json({ success: false, msg: "Saldo tidak mencukupi." });
 
-        // Cari 1 stock yang available
+        // Cari 1 stock yang masih 'available'
         const stock = await AppPremiumStock.findOne({ appName, status: 'available' });
-        if (!stock) return res.status(400).json({ success: false, msg: "Maaf, stock habis!" });
+        if (!stock) return res.status(400).json({ success: false, msg: "Maaf, stock aplikasi ini habis!" });
 
         // Potong Saldo
         user.balance -= config.price;
         await user.save();
 
-        // Update Stock jadi sold
+        // Update Stock jadi 'sold'
         stock.status = 'sold';
         stock.buyer = username;
         stock.purchasedAt = new Date();
         await stock.save();
 
-        // Catat ke Riwayat Transaksi Global (jika ada Schema Transaction)
+        // (Opsional) Jika Anda pakai Schema Transaction global, buka komentar ini:
         // await new Transaction({ invoiceId: 'APP-'+Date.now(), username, productName: `Akun ${appName}`, amount: config.price, status: 'success', type: 'OUT' }).save();
 
         res.json({ success: true, newBalance: user.balance, account: stock });
-    } catch (e) { res.status(500).json({ success: false, msg: "Terjadi kesalahan server." }); }
+    } catch (e) { res.status(500).json({ success: false, msg: "Terjadi kesalahan server saat proses pembelian." }); }
 });
 
 // Riwayat Pembelian User
@@ -594,22 +597,50 @@ app.get('/api/app-premium/history/:username', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
+
 // --- API UNTUK ADMIN PANGKAS ---
+
+// Ambil semua daftar config untuk tabel admin
+app.get('/api/admin/app-premium/configs', async (req, res) => {
+    try {
+        await connectDB();
+        const configs = await AppPremiumConfig.find();
+        res.json({ success: true, data: configs });
+    } catch (e) { res.status(500).json({ success: false }); }
+});
+
+// Update / Simpan Config (Harga, Deskripsi, Foto)
 app.post('/api/admin/app-premium/config', async (req, res) => {
     try {
         await connectDB();
-        const { appName, price, description } = req.body;
-        await AppPremiumConfig.findOneAndUpdate({ appName }, { price, description }, { upsert: true, new: true });
+        const { appName, price, description, imageUrl } = req.body;
+        await AppPremiumConfig.findOneAndUpdate(
+            { appName: appName.toLowerCase() }, 
+            { price, description, imageUrl }, 
+            { upsert: true, new: true } // Upsert berarti: Kalau belum ada dibikin baru, kalau sudah ada diedit
+        );
         res.json({ success: true });
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
+// Tambah Stock (Suntik Akun Baru)
 app.post('/api/admin/app-premium/stock', async (req, res) => {
     try {
         await connectDB();
         const { appName, email, password, instructions } = req.body;
-        await new AppPremiumStock({ appName, email, password, instructions }).save();
+        await new AppPremiumStock({ appName: appName.toLowerCase(), email, password, instructions, status: 'available' }).save();
         res.json({ success: true });
+    } catch (e) { res.status(500).json({ success: false }); }
+});
+
+// Hapus Produk & Semua Stok Akun Terkait
+app.delete('/api/admin/app-premium/:appName', async (req, res) => {
+    try {
+        await connectDB();
+        const { appName } = req.params;
+        await AppPremiumConfig.findOneAndDelete({ appName: appName.toLowerCase() }); // Hapus di konfigurasi/katalog
+        await AppPremiumStock.deleteMany({ appName: appName.toLowerCase() }); // Hapus semua akun terkait (walaupun yang udah laku, atau bisa difilter statusnya)
+        res.json({ success: true, msg: "Produk & Seluruh stok akunnya berhasil dihapus!" });
     } catch (e) { res.status(500).json({ success: false }); }
 });
 //dashboard buat saldo cek
