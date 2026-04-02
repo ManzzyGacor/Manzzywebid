@@ -12,7 +12,7 @@ const connectDB = async () => {
 };
 
 // API KEY RUMAHOTP (Pastikan Benar)
-const RUMAHOTP_API_KEY = "otp_bEiRJAgrGjhzWAvz"; // Ganti dengan API Key kamu
+const RUMAHOTP_API_KEY = "rk-dev-TEjAEh29JdgEB6oItLoFdt4uoj34MEjM"; // Ganti dengan API Key kamu
 
 // SCHEMA
 const User = mongoose.models.User || mongoose.model('User');
@@ -68,7 +68,7 @@ router.post('/create', async (req, res) => {
         if (amount < 1000) return res.json({ success: false, msg: "Min Top Up Rp 1.000" });
 
         // Request ke RumahOTP
-        const apiUrl = `https://www.rumahotp.com/api/v1/deposit/create?amount=${amount}&payment_id=qris`;
+        const apiUrl = `https://www.rumahotp.io/api/v1/deposit/create?amount=${amount}&payment_id=qris`;
         const result = await callRumahOTP(apiUrl);
 
         if (result.success && result.data) {
@@ -118,7 +118,7 @@ router.get('/check/:orderId', async (req, res) => {
         if (tx.status === 'success') return res.json({ success: true, status: 'success' });
         
         // JIKA MASIH PENDING, CEK LAGI KE RUMAHOTP (Force Check)
-        const apiUrl = `https://www.rumahotp.com/api/v2/deposit/get_status?deposit_id=${orderId}`;
+        const apiUrl = `https://www.rumahotp.io/api/v2/deposit/get_status?deposit_id=${orderId}`;
         const check = await callRumahOTP(apiUrl);
 
         console.log(`🔍 Checking ${orderId}:`, check); // Debug Log di Vercel

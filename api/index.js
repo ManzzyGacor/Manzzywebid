@@ -6,7 +6,16 @@ const app = express();
 // Konfigurasi Middleware
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+const path = require('path');
+// Melayani file statis dari folder 'public' yang ada di luar folder 'api'
+app.use(express.static(path.join(__dirname, '../public')));
 
+// Mengarahkan semua request non-API ke index.html (untuk SPA)
+app.get('*', (req, res) => {
+    if (!req.path.startsWith('/api')) {
+        res.sendFile(path.join(__dirname, '../public', 'index.html'));
+    }
+});
 // Helper Fetch (Untuk verifikasi token Google / External API)
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
@@ -646,3 +655,8 @@ app.delete('/api/admin/app-premium/:appName', async (req, res) => {
 //dashboard buat saldo cek
 app.use('/api', require('./dashboard'));
 module.exports = app;
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+});

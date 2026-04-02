@@ -9,12 +9,12 @@ const Transaction = mongoose.model('Transaction');
 
 // --- KONFIGURASI ---
 // Ganti dengan API Key RumahOTP kamu atau ambil dari database jika sudah ada fitur config admin
-const RUMAHOTP_API_KEY = "otp_bEiRJAgrGjhzWAvz"; 
+const RUMAHOTP_API_KEY = "rk-dev-TEjAEh29JdgEB6oItLoFdt4uoj34MEjM"; 
 const DEFAULT_MARGIN_PERCENT = 5; // Default profit 10% jika config tidak ditemukan
 
 // Helper Request ke RumahOTP
 async function requestRumahOTP(endpoint, params = {}) {
-    const url = new URL("https://www.rumahotp.com/api/v1/h2h" + endpoint);
+    const url = new URL("https://www.rumahotp.io/api/v1/h2h" + endpoint);
     Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
     
     // Header wajib sesuai dokumentasi

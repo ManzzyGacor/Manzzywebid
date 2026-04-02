@@ -42,7 +42,7 @@ async function callRumahOTP(endpoint, method = 'GET', data = null) {
     if (endpoint.startsWith('v1/')) path = `/api/${endpoint}`;
 
     const options = {
-        hostname: 'www.rumahotp.com',
+        hostname: 'www.rumahotp.io',
         path: path,
         method: method,
         headers: {
