@@ -426,6 +426,16 @@
 </div>
 
     <script>
+    
+    // Cek Keamanan Admin
+const session = localStorage.getItem('user_session');
+const role = localStorage.getItem('user_role');
+
+if (!session || role !== 'admin') {
+    alert("Akses Khusus Admin Lukman!");
+    window.location.href = 'index.html';
+}
+
         function nav(id) {
             document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
