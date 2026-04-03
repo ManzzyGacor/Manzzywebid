@@ -23,9 +23,15 @@ app.get('*', (req, res) => {
 // Helper Fetch (Untuk verifikasi token Google / External API)
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
-// ==========================================
+// (Ini yang kamu mau, tapi versinya lebih aman/modern)
+app.use('/api', async (req, res, next) => {
+    await connectDB();
+    next();
+});
+
+// ===============================
 // KONEKSI DATABASE (VERSI ANTI-MACET)
-// ==========================================
+// ================================
 const connectDB = async () => {
     try {
         // Cek dulu, kalau sudah tersambung (state 1), jangan konek lagi
@@ -185,31 +191,34 @@ app.post('/api/login-user', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// ====================================
-// FIX ROUTE PROFILE (Hapus await connectDB di sini)
-// ====================================
+// ==========================================
+// GET USER PROFILE (MURNI DARI DATABASE)
+// ==========================================
 app.get('/api/user/:username', async (req, res) => {
     try {
-        // Bypass khusus Admin/Owner
-        if(req.params.username === 'Manzzy (Owner)' || req.params.username === 'man') {
-            return res.json({ success: true, username: req.params.username, balance: 999999999, role: 'admin' });
-        }
-        
         await connectDB();
+        
+        // Cari user berdasarkan username yang dikirim dari frontend
         const user = await User.findOne({ username: req.params.username });
         
+        // Kalau user gak ketemu di database
         if (!user) {
-            return res.status(404).json({ success: false, msg: "User tidak ditemukan" });
+            return res.status(404).json({ 
+                success: false, 
+                msg: "User tidak ditemukan" 
+            });
         }
 
-        // Kirim data dengan format yang jelas
+        // Kirim data ASLI dari MongoDB apa adanya
         res.json({ 
             success: true, 
             username: user.username, 
             balance: user.balance || 0, 
             role: user.role || 'member' 
         });
+
     } catch (e) {
+        console.error("Error Fetch User:", e);
         res.status(500).json({ success: false, msg: "Server Error" });
     }
 });
@@ -672,9 +681,12 @@ app.delete('/api/admin/app-premium/:appName', async (req, res) => {
 //dashboard buat saldo cek
 app.use('/api', require('./dashboard'));
 
-const PORT = 3000; 
+// JALANKAN SERVER SEGERA (Agar Cloudflare Tunnel Gak Loading)
+const PORT = 3000;
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`✅ Backend running on port ${PORT}`);
+    console.log(`🚀 Server Is Ready on port ${PORT}`);
+    // Panggil koneksi DB setelah server nyala
+    connectDB(); 
 });
 
 module.exports = app;
