@@ -220,50 +220,57 @@
             }
         }
 
-        // 2. Handle Login Manual
+// 2. Handle Login Manual
 async function handleLogin(e) {
-    e.preventDefault(); // Mencegah reload halaman otomatis
+    e.preventDefault(); // Mencegah reload halaman
     
-    const user = document.getElementById('loginUser').value;
-    const pass = document.getElementById('loginPass').value;
-    const btn = document.getElementById('loginBtn');
-
-    // Animasi Loading
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Memverifikasi...';
+    // Pastikan ID ini sesuai dengan yang ada di tag <button>
+    const btn = document.getElementById('loginBtn'); 
+    const originalText = btn.innerText;
+    
+    // UI Feedback
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> CEK DATA...';
     btn.disabled = true;
+    btn.classList.add('opacity-70');
+
+    // Ambil input - pastikan ID 'loginUser' dan 'loginPass' ada di tag <input>
+    const u = document.getElementById('loginUser').value;
+    const p = document.getElementById('loginPass').value;
 
     try {
         const res = await fetch('/api/login-user', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: user, password: pass })
+            body: JSON.stringify({ username: u, password: p })
         });
-
+        
         const data = await res.json();
 
         if (data.success) {
-            // --- SIMPAN SESSION AGAR TIDAK JADI GUEST ---
+            // SIMPAN SESSION - Ini yang bikin produk muncul di index
             localStorage.setItem('user_session', data.username);
             localStorage.setItem('user_role', data.role);
-            localStorage.setItem('manzzyUser', data.username); // Backup key
+            localStorage.setItem('manzzyUser', data.username);
 
-            // Animasi Berhasil
-            btn.innerHTML = '<i class="fa-solid fa-check"></i> Berhasil!';
-            btn.className = "w-full bg-green-600 text-white font-bold py-3 rounded-xl transition";
+            // Animasi Keluar Mewah
+            document.body.style.transform = 'scale(1.05)';
+            document.body.style.opacity = '0';
+            document.body.style.transition = 'all 0.5s ease';
             
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 800);
+            // Redirect ke index.html
+            setTimeout(() => window.location.href = 'index.html', 500);
         } else {
-            alert("❌ Gagal: " + (data.msg || "Username atau Password salah!"));
+            // Tampilkan pesan error dari server (Plain text login)
+            alert(data.msg || "Login Gagal. Cek username/password.");
             btn.innerHTML = originalText;
             btn.disabled = false;
+            btn.classList.remove('opacity-70');
         }
-    } catch (err) {
-        alert("❌ Error: Tidak dapat terhubung ke server.");
+    } catch (err) { 
+        alert("Gagal terhubung ke server. Pastikan VPS jalan.");
         btn.innerHTML = originalText;
         btn.disabled = false;
+        btn.classList.remove('opacity-70');
     }
 }
         // 3. Handle Register Manual
