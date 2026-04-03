@@ -14,11 +14,17 @@ window.addEventListener('load', () => {
 });
 
 async function initData() {
-    checkUserLogin();
-    fetchTestimonials();
-    updateServerStats();
-    startLiveNotif(); 
-    setInterval(updateServerStats, 5000);
+    // Menjalankan semua fetch secara paralel (barengan)
+    // Ini jauh lebih cepat daripada dijalankan satu-satu
+    Promise.all([
+        checkUserLogin(),
+        fetchTestimonials(),
+        updateServerStats()
+    ]).then(() => {
+        startLiveNotif();
+    }).catch(err => console.error("Error loading data:", err));
+
+    setInterval(updateServerStats, 10000); // Ubah ke 10 detik agar tidak terlalu sering membebani VPS
 }
 
 // ============================================
@@ -30,52 +36,76 @@ let userBalance = 0;
 const ADMIN_WA = "6285815196595";
 
 async function checkUserLogin() {
+    const userSession = localStorage.getItem('user_session');
+    const ctaBanner = document.getElementById('cta-banner');
+
     // 1. JIKA BELUM LOGIN
     if (!userSession) {
-        // Tampilkan Banner CTA jika belum login
-        const cta = document.getElementById('cta-banner');
-        if(cta) cta.style.display = 'block';
+        if(ctaBanner) ctaBanner.style.display = 'block';
         return;
     }
 
-    // 2. JIKA SUDAH LOGIN
+    // 2. OPTIMASI: Tampilkan data dari Cache dulu supaya tidak nunggu (Instan)
+    const cachedBalance = localStorage.getItem('cached_balance');
+    if (cachedBalance) {
+        updateLoginUI(userSession, parseInt(cachedBalance));
+    }
+
+    // 3. JIKA SUDAH LOGIN (Ambil data terbaru dari server di background)
     try {
-        const res = await fetch(`/api/user/${userSession}`);
+        // Tambahkan timeout 5 detik supaya kalau server VPS lagi overload, web gak hang
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        const res = await fetch(`/api/user/${userSession}`, { signal: controller.signal });
         const data = await res.json();
+        clearTimeout(timeoutId);
         
         if (data.username) {
-            userBalance = data.balance || 0;
-            const formatted = `Rp ${userBalance.toLocaleString()}`;
+            // Update UI dengan data asli dari server
+            updateLoginUI(data.username, data.balance || 0);
             
-            // Update Header Saldo
-            const headerBal = document.getElementById('header-balance');
-            if(headerBal) {
-                headerBal.innerHTML = `<i class="fa-solid fa-wallet text-green-400 animate-pulse"></i><span class="text-sm text-white font-mono font-bold tracking-wide">${formatted}</span>`;
-                headerBal.classList.remove('hidden');
-            }
-            
-            // Update Sidebar User Info
-            const sidebar = document.getElementById('user-status-sidebar');
-            if(sidebar) sidebar.innerHTML = `Hi, ${userSession}<br><span class="text-green-400 font-bold font-mono">${formatted}</span>`;
-            
-            // Buka Menu Member
-            document.getElementById('review-form-container')?.classList.remove('hidden');
-            document.getElementById('login-prompt')?.classList.add('hidden');
-            document.getElementById('menu-topup')?.classList.remove('hidden');
-            document.getElementById('menu-myservices')?.classList.remove('hidden');
-            document.getElementById('menu-history')?.classList.remove('hidden');
-            document.getElementById('menu-nokos')?.classList.remove('hidden');
-            
-            // Ubah Tombol Logout
-            document.getElementById('auth-menu').innerHTML = `<a href="#" onclick="doLogout()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:bg-white/5 transition"><i class="fa-solid fa-sign-out-alt text-red-500 w-6 text-center"></i><span class="font-medium">Logout</span></a>`;
-
-            // === [LOGIC PENTING] HILANGKAN BANNER CTA JIKA LOGIN ===
-            const ctaBanner = document.getElementById('cta-banner');
-            if(ctaBanner) ctaBanner.style.display = 'none';
+            // Simpan ke cache untuk kunjungan berikutnya
+            localStorage.setItem('cached_balance', data.balance || 0);
+        } else {
+            // Jika user tidak ditemukan di DB (mungkin dihapus), paksa logout
+            doLogout();
         }
-    } catch(e) {}
+    } catch(e) {
+        console.log("Gagal sinkron server, menggunakan mode offline.");
+    }
 }
 
+// Fungsi pembantu untuk Update UI agar kode tidak berantakan
+function updateLoginUI(username, balance) {
+    const formatted = `Rp ${balance.toLocaleString()}`;
+    
+    // Update Header Saldo
+    const headerBal = document.getElementById('header-balance');
+    if(headerBal) {
+        headerBal.innerHTML = `<i class="fa-solid fa-wallet text-green-400 animate-pulse"></i><span class="text-sm text-white font-mono font-bold tracking-wide">${formatted}</span>`;
+        headerBal.classList.remove('hidden');
+    }
+    
+    // Update Sidebar User Info
+    const sidebar = document.getElementById('user-status-sidebar');
+    if(sidebar) sidebar.innerHTML = `Hi, ${username}<br><span class="text-green-400 font-bold font-mono">${formatted}</span>`;
+    
+    // Buka Menu Member & Hilangkan Banner
+    document.getElementById('review-form-container')?.classList.remove('hidden');
+    document.getElementById('login-prompt')?.classList.add('hidden');
+    document.getElementById('menu-topup')?.classList.remove('hidden');
+    document.getElementById('menu-myservices')?.classList.remove('hidden');
+    document.getElementById('menu-history')?.classList.remove('hidden');
+    document.getElementById('menu-nokos')?.classList.remove('hidden');
+    document.getElementById('cta-banner') && (document.getElementById('cta-banner').style.display = 'none');
+    
+    // Ubah Tombol Logout
+    const authMenu = document.getElementById('auth-menu');
+    if(authMenu) {
+        authMenu.innerHTML = `<a href="#" onclick="doLogout()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:bg-white/5 transition"><i class="fa-solid fa-sign-out-alt text-red-500 w-6 text-center"></i><span class="font-medium">Logout</span></a>`;
+    }
+}
 // ============================================
 // 3. UI HELPER (TOAST, SIDEBAR, MODAL)
 // ============================================
@@ -971,115 +1001,112 @@ document.addEventListener('click', function(e) {
 // ============================================
 // 9. LIVE SOCIAL PROOF (REAL DATA DARI DATABASE)
 // ============================================
+let liveQueue = []; // Antrean notifikasi
+let isFetching = false;
 
-let liveQueue = [];     // Penampung data dari server
-let queueIndex = 0;     // Penunjuk giliran data
-
-// 1. Ambil Data Real dari Server Backend
 async function fetchRealActivities() {
+    if (isFetching) return;
+    isFetching = true;
+    
     try {
+        // Ambil data aktivitas terbaru dari server
         const res = await fetch('/api/public/recent-activities');
         const data = await res.json();
         
-        if (data && data.length > 0) {
+        if (Array.isArray(data) && data.length > 0) {
+            // Masukkan data ke antrean, tapi jangan duplikat
+            // Kita simpan maksimal 20 data terakhir di memory browser
             liveQueue = data;
-            // Reset index jika data berubah drastis
-            if (queueIndex >= liveQueue.length) queueIndex = 0;
         }
     } catch (e) {
-        console.log("Menunggu data live...");
+        console.error("Gagal mengambil notifikasi live");
+    } finally {
+        isFetching = false;
     }
+}
+
+// 1. Inisialisasi Elemen Notifikasi (Jalankan sekali saja)
+function setupNotifElement() {
+    if(document.getElementById('live-notification')) return;
+    
+    const div = document.createElement('div');
+    div.id = 'live-notification';
+    // Gunakan transition-all untuk animasi slide & fade yang smooth
+    div.className = "fixed bottom-5 left-5 z-50 flex flex-col gap-2 pointer-events-none transition-all duration-700 transform translate-y-20 opacity-0";
+    div.innerHTML = `
+        <div id="notif-card" class="glass-card p-3 rounded-xl border-l-4 flex items-center gap-3 w-72 shadow-2xl bg-black/90 backdrop-blur-md border-white/10">
+            <div id="notif-icon-bg" class="w-10 h-10 rounded-full flex items-center justify-center shrink-0">
+                <i id="notif-icon" class="fa-solid"></i>
+            </div>
+            <div>
+                <h4 id="notif-title" class="text-xs font-bold text-white mb-0.5">Aktivitas</h4>
+                <p id="notif-desc" class="text-[10px] text-gray-300 leading-tight line-clamp-2">Memuat...</p>
+                <p id="notif-time" class="text-[9px] text-gray-500 mt-1 font-mono">Baru saja</p>
+            </div>
+        </div>`;
+    document.body.appendChild(div);
 }
 
 // 2. Tampilkan Notifikasi (Satu per satu)
 function showLiveNotification() {
-    // Kalau belum ada data transaksi, jangan muncul dulu
     if (liveQueue.length === 0) return;
 
-    // Ambil data antrian
-    const item = liveQueue[queueIndex];
-    
-    // Buat elemen HTML jika belum ada
-    if(!document.getElementById('live-notification')) {
-        const div = document.createElement('div');
-        div.id = 'live-notification';
-        div.className = "fixed bottom-5 left-5 z-50 flex flex-col gap-2 pointer-events-none transition-all duration-500 transform translate-y-20 opacity-0";
-        div.innerHTML = `
-            <div class="glass-card p-3 rounded-xl border-l-4 flex items-center gap-3 w-72 shadow-2xl bg-black/90 backdrop-blur-md border-white/10">
-                <div id="notif-icon-bg" class="w-10 h-10 rounded-full flex items-center justify-center shrink-0">
-                    <i id="notif-icon"></i>
-                </div>
-                <div>
-                    <h4 id="notif-title" class="text-xs font-bold text-white mb-0.5">Title</h4>
-                    <p id="notif-desc" class="text-[10px] text-gray-300 leading-tight line-clamp-2">Desc</p>
-                    <p id="notif-time" class="text-[9px] text-gray-500 mt-1 font-mono">Baru saja</p>
-                </div>
-            </div>`;
-        document.body.appendChild(div);
-    }
+    setupNotifElement(); // Pastikan elemen ada
 
+    const item = liveQueue[queueIndex];
     const container = document.getElementById('live-notification');
-    const cardEl = container.querySelector('.glass-card');
+    const card = document.getElementById('notif-card');
     const iconBg = document.getElementById('notif-icon-bg');
-    const iconEl = document.getElementById('notif-icon');
-    
-    // Isi Konten dengan Data Asli
+    const icon = document.getElementById('notif-icon');
+    const title = document.getElementById('notif-title');
+
+    // Update Konten
     document.getElementById('notif-desc').innerText = `${item.user} • ${item.desc}`;
     document.getElementById('notif-time').innerText = timeAgo(item.time);
 
-    // Ganti Style Sesuai Tipe (Beli / Topup)
+    // Reset dan Set Style berdasarkan Tipe
     if (item.type === 'topup') {
-        document.getElementById('notif-title').innerText = "Deposit Masuk";
-        cardEl.className = "glass-card p-3 rounded-xl border-l-4 border-l-green-500 flex items-center gap-3 w-72 shadow-2xl bg-black/90 backdrop-blur-md border-white/10";
+        title.innerText = "Deposit Masuk";
+        card.style.borderLeftColor = "#22c55e"; // green-500
         iconBg.className = "w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 shrink-0";
-        iconEl.className = "fa-solid fa-wallet";
+        icon.className = "fa-solid fa-wallet";
     } else {
-        document.getElementById('notif-title').innerText = "Pembelian Sukses";
-        cardEl.className = "glass-card p-3 rounded-xl border-l-4 border-l-purple-500 flex items-center gap-3 w-72 shadow-2xl bg-black/90 backdrop-blur-md border-white/10";
+        title.innerText = "Pembelian Sukses";
+        card.style.borderLeftColor = "#a855f7"; // purple-500
         iconBg.className = "w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 shrink-0";
-        iconEl.className = "fa-solid fa-cart-shopping";
+        icon.className = "fa-solid fa-cart-shopping";
     }
 
-    // Animasi Masuk (Slide Up)
+    // Tampilkan
     container.classList.remove('translate-y-20', 'opacity-0');
     
-    // Animasi Keluar (Slide Down) setelah 4 detik
+    // Sembunyikan setelah 5 detik
     setTimeout(() => { 
         container.classList.add('translate-y-20', 'opacity-0'); 
-    }, 4000);
+    }, 5000);
 
-    // Pindah ke data berikutnya (Looping)
+    // Maju ke antrean berikutnya
     queueIndex = (queueIndex + 1) % liveQueue.length;
 }
 
-// Helper Waktu (biar terlihat real: "2 menit lalu")
-function timeAgo(dateString) {
-    const seconds = Math.floor((new Date() - new Date(dateString)) / 1000);
-    if (seconds < 60) return "Baru saja";
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes} menit lalu`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours} jam lalu`;
-    return "Kemarin";
-}
-
-// 3. Jalankan Loop Notifikasi
+// 3. Start Loop
 function startLiveNotif() {
-    fetchRealActivities(); // Tarik data pertama kali
+    setupNotifElement(); // Buat elemen di awal
+    fetchRealActivities(); // Ambil data
     
-    // Update data dari server tiap 30 detik (biar transaksi baru masuk antrian)
-    setInterval(fetchRealActivities, 30000);
+    // Tarik data baru tiap 1 menit saja (biar VPS gak overheat)
+    setInterval(fetchRealActivities, 60000);
 
-    // Loop Tampilan (Muncul random tiap 8-15 detik)
+    // Mulai siklus muncul
     loopDisplay();
 }
 
 function loopDisplay() {
-    // Delay random antara 8 sampai 15 detik biar gak spamming
+    // Delay random biar gak kaku (8 - 15 detik)
     const randomDelay = Math.floor(Math.random() * (15000 - 8000 + 1) + 8000);
     setTimeout(() => {
         showLiveNotification();
-        loopDisplay(); // Panggil diri sendiri terus menerus
+        loopDisplay(); 
     }, randomDelay);
 }
 
