@@ -173,12 +173,42 @@ app.post('/api/login-user', async (req, res) => {
         });
     } catch (e) { res.status(500).json({ success: false }); }
 });
-// Get User Profile
+// Get User Profile - VERSI STABIL
 app.get('/api/user/:username', async (req, res) => {
-    if(req.params.username === 'Manzzy (Owner)') return res.json({ username: 'Manzzy (Owner)', balance: 999999999, role: 'admin' });
-    
-    const user = await User.findOne({ username: req.params.username });
-    res.json(user || {});
+    try {
+        // 1. Pastikan DB Terkoneksi
+        await connectDB(); 
+
+        // 2. Handle Owner Bypass
+        if(req.params.username === 'Manzzy (Owner)' || req.params.username === 'man') {
+            return res.json({ 
+                success: true,
+                username: req.params.username, 
+                balance: 999999999, 
+                role: 'admin' 
+            });
+        }
+        
+        // 3. Cari di Database
+        const user = await User.findOne({ username: req.params.username });
+        
+        if (!user) {
+            // Jangan kirim objek kosong, kirim status 404 biar script tahu user gak ada
+            return res.status(404).json({ success: false, msg: "User tidak ditemukan" });
+        }
+
+        // 4. Kirim data yang konsisten
+        res.json({
+            success: true,
+            username: user.username,
+            balance: user.balance || 0,
+            role: user.role || 'member'
+        });
+
+    } catch (e) {
+        console.error("Error API User:", e);
+        res.status(500).json({ success: false, msg: "Server Error" });
+    }
 });
 
 // Change Password
