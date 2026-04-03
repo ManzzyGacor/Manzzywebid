@@ -222,9 +222,16 @@
 
         // 2. Handle Login Manual
 async function handleLogin(e) {
-    e.preventDefault();
+    e.preventDefault(); // Mencegah reload halaman otomatis
+    
     const user = document.getElementById('loginUser').value;
     const pass = document.getElementById('loginPass').value;
+    const btn = document.getElementById('loginBtn');
+
+    // Animasi Loading
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Memverifikasi...';
+    btn.disabled = true;
 
     try {
         const res = await fetch('/api/login-user', {
@@ -232,24 +239,31 @@ async function handleLogin(e) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: user, password: pass })
         });
+
         const data = await res.json();
 
         if (data.success) {
-            // --- BAGIAN PALING PENTING: SIMPAN KE BROWSER ---
+            // --- SIMPAN SESSION AGAR TIDAK JADI GUEST ---
             localStorage.setItem('user_session', data.username);
             localStorage.setItem('user_role', data.role);
             localStorage.setItem('manzzyUser', data.username); // Backup key
+
+            // Animasi Berhasil
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Berhasil!';
+            btn.className = "w-full bg-green-600 text-white font-bold py-3 rounded-xl transition";
             
-            // Berikan efek transisi sebelum pindah halaman
-            document.body.style.opacity = '0';
             setTimeout(() => {
                 window.location.href = 'index.html';
-            }, 500);
+            }, 800);
         } else {
-            alert("❌ " + (data.msg || "Login Gagal"));
+            alert("❌ Gagal: " + (data.msg || "Username atau Password salah!"));
+            btn.innerHTML = originalText;
+            btn.disabled = false;
         }
-    } catch (e) {
-        alert("❌ Error koneksi ke server.");
+    } catch (err) {
+        alert("❌ Error: Tidak dapat terhubung ke server.");
+        btn.innerHTML = originalText;
+        btn.disabled = false;
     }
 }
         // 3. Handle Register Manual
