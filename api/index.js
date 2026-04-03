@@ -3,10 +3,12 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const app = express();
 
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 // Konfigurasi Middleware
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
-const path = require('path');
+
 // Melayani file statis dari folder 'public' yang ada di luar folder 'api'
 app.use(express.static(path.join(__dirname, '../public')));
 
@@ -72,10 +74,7 @@ const TopUpTx = mongoose.models.TopUpTx || mongoose.model('TopUpTx', new mongoos
 // Ini menangani route: /api/user/generate-apikey & /api/v1/profile
 try {
     const apiKeyModule = require('./apikey'); 
-    app.use('/api', async (req, res, next) => {
-        await connectDB(); // Pastikan DB connect sebelum masuk router
-        next();
-    }, apiKeyModule.router);
+    app.use('/api', apiKeyModule.router);
 } catch (e) {
     console.error("Warning: apikey.js belum dibuat/error.");
 }
@@ -118,7 +117,6 @@ app.post('/api/admin-login', (req, res) => {
 
 // Google Login
 app.post('/api/auth/google', async (req, res) => {
-    await connectDB();
     const { token } = req.body;
     try {
         const verify = await (await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`)).json();
@@ -138,7 +136,6 @@ app.post('/api/auth/google', async (req, res) => {
 
 // Login User Biasa
 app.post('/api/login-user', async (req, res) => {
-    await connectDB();
     const { username, password } = req.body;
     const user = await User.findOne({ username, password });
     if (!user) return res.status(400).json({ success: false, message: "Username/Password Salah" });
@@ -147,26 +144,27 @@ app.post('/api/login-user', async (req, res) => {
 
 // Register User
 app.post('/api/register-user', async (req, res) => {
-    await connectDB();
     const { username, password } = req.body;
     const exist = await User.findOne({ username });
     if (exist) return res.status(400).json({ success: false, message: "Username sudah dipakai" });
-    await new User({ username, password }).save();
+    
+    // Logika otomatis Admin jika username adalah 'man'
+    const role = username.toLowerCase() === 'man' ? 'admin' : 'member';
+    await new User({ username, password, role }).save();
+    
     res.json({ success: true });
 });
 
-// Get User Profile (Include API Key for Frontend)
+// Get User Profile
 app.get('/api/user/:username', async (req, res) => {
     if(req.params.username === 'Manzzy (Owner)') return res.json({ username: 'Manzzy (Owner)', balance: 999999999, role: 'admin' });
     
-    await connectDB();
     const user = await User.findOne({ username: req.params.username });
     res.json(user || {});
 });
 
 // Change Password
 app.post('/api/user/change-password', async (req, res) => {
-    await connectDB();
     const { username, newPassword } = req.body;
     
     if (!newPassword || newPassword.length < 6) return res.status(400).json({ success: false, msg: "Min 6 karakter" });
@@ -184,35 +182,32 @@ app.post('/api/user/change-password', async (req, res) => {
 // ==========================================
 
 // Products CRUD
-app.get('/api/products', async (req, res) => { await connectDB(); res.json(await Product.find()); });
-app.post('/api/products', async (req, res) => { await connectDB(); await new Product(req.body).save(); res.json({ success: true }); });
-app.put('/api/products/:id', async (req, res) => { await connectDB(); await Product.findByIdAndUpdate(req.params.id, req.body); res.json({ success: true }); });
-app.delete('/api/products/:id', async (req, res) => { await connectDB(); await Product.findByIdAndDelete(req.params.id); res.json({ success: true }); });
+app.get('/api/products', async (req, res) => { res.json(await Product.find()); });
+app.post('/api/products', async (req, res) => { await new Product(req.body).save(); res.json({ success: true }); });
+app.put('/api/products/:id', async (req, res) => { await Product.findByIdAndUpdate(req.params.id, req.body); res.json({ success: true }); });
+app.delete('/api/products/:id', async (req, res) => { await Product.findByIdAndDelete(req.params.id); res.json({ success: true }); });
 
 // Categories CRUD
-app.get('/api/categories', async (req, res) => { await connectDB(); res.json(await Category.find()); });
-app.post('/api/categories', async (req, res) => { await connectDB(); await new Category(req.body).save(); res.json({ success: true }); });
-app.delete('/api/categories/:id', async (req, res) => { await connectDB(); await Category.findByIdAndDelete(req.params.id); res.json({ success: true }); });
+app.get('/api/categories', async (req, res) => { res.json(await Category.find()); });
+app.post('/api/categories', async (req, res) => { await new Category(req.body).save(); res.json({ success: true }); });
+app.delete('/api/categories/:id', async (req, res) => { await Category.findByIdAndDelete(req.params.id); res.json({ success: true }); });
 
 // Vouchers
 app.post('/api/check-voucher', async (req, res) => {
-    await connectDB();
     const v = await Voucher.findOne({ code: req.body.code });
     if(v) res.json({ success: true, percent: v.percent }); else res.json({ success: false });
 });
 
-// 2. UPDATE ROUTE ADMIN TOPUPS (Cari route '/api/admin/topups' yang lama, GANTI dengan ini)
+// Update Route Admin Topups
 app.get('/api/admin/topups', async (req, res) => { 
-    await connectDB(); 
-    // Ambil dari TopUpTx (Otomatis), bukan TopUp (Manual)
     const data = await TopUpTx.find().sort({ createdAt: -1 }).limit(50);
     res.json(data); 
 });
 
 // Order System (Produk Digital Manual)
 app.post('/api/order', async (req, res) => {
-    await connectDB();
     const { username, productId, formData, voucherCode } = req.body;
+   
     
     const user = await User.findOne({ username });
     const prod = await Product.findById(productId);
@@ -240,7 +235,6 @@ app.post('/api/order', async (req, res) => {
 
 // History Logic
 app.get('/api/history/:username', async (req, res) => {
-    await connectDB();
     const txs = await Transaction.find({ username: req.params.username }).sort({ createdAt: -1 }).limit(20);
     res.json(txs.map(t => ({ 
         date: t.createdAt, 
@@ -251,27 +245,36 @@ app.get('/api/history/:username', async (req, res) => {
     })));
 });
 
-
-
 // D. MOUNT H2H MODULE (Baru)
 try {
     const h2hRouter = require('./h2h'); 
-    app.use('/api', h2hRouter); // Ini akan mengaktifkan /api/products/rumahotp dari file h2h.js
+    app.use('/api', h2hRouter); 
     console.log("✅ H2H Module Loaded");
 } catch (e) {
     console.error("Warning: h2h.js error/missing", e);
 }
 
-
 // Admin System / Status
-app.get('/api/system/status', (req, res) => res.json({ vpsActive: true, vpsStartTime: new Date(Date.now()-36000000), botActive: true, botStartTime: new Date(Date.now()-18000000) }));
-app.post('/api/testimonials', async (req, res) => { await connectDB(); await new Testimonial(req.body).save(); res.json({ success: true }); });
-app.get('/api/testimonials', async (req, res) => { await connectDB(); res.json(await Testimonial.find().sort({ createdAt: -1 }).limit(10)); });
+app.get('/api/system/status', (req, res) => res.json({ 
+    vpsActive: true, 
+    vpsStartTime: new Date(Date.now()-36000000), 
+    botActive: true, 
+    botStartTime: new Date(Date.now()-18000000) 
+}));
+
+app.post('/api/testimonials', async (req, res) => { 
+    await new Testimonial(req.body).save(); 
+    res.json({ success: true }); 
+});
+
+app.get('/api/testimonials', async (req, res) => { 
+    res.json(await Testimonial.find().sort({ createdAt: -1 }).limit(10)); 
+});
+
 // ==========================================
 // 6. PUBLIC DATA (RECENT ACTIVITY)
 // ==========================================
 
-// Helper Sensor Username (Manzzy -> Man***)
 function censorUser(str) {
     if(!str) return "Member";
     if(str.length <= 3) return str + "*";
@@ -280,21 +283,16 @@ function censorUser(str) {
 
 app.get('/api/public/recent-activities', async (req, res) => {
     try {
-        await connectDB();
-
-        // 1. Ambil 5 Topup Sukses Terakhir
         const topups = await TopUpTx.find({ status: 'success' })
             .sort({ createdAt: -1 })
             .limit(5)
             .lean();
 
-        // 2. Ambil 5 Order Produk/Nokos Sukses Terakhir
         const orders = await Transaction.find({ status: 'success' })
             .sort({ createdAt: -1 })
             .limit(5)
             .lean();
 
-        // 3. Gabungkan Data
         let activities = [];
 
         topups.forEach(t => {
@@ -308,24 +306,20 @@ app.get('/api/public/recent-activities', async (req, res) => {
 
         orders.forEach(o => {
             activities.push({
-                type: 'buy', // Bisa 'buy' (produk) atau 'nokos'
+                type: 'buy',
                 user: censorUser(o.username),
-                // Jika nama produk panjang, potong dikit
                 desc: o.productName.length > 20 ? o.productName.substring(0, 20) + '...' : o.productName,
                 time: o.createdAt
             });
         });
 
-        // 4. Urutkan dari yang paling baru
         activities.sort((a, b) => new Date(b.time) - new Date(a.time));
-
         res.json(activities);
     } catch (e) {
         console.error("Recent Activity Error:", e);
-        res.json([]); // Kembalikan array kosong jika error
+        res.json([]); 
     }
 });
-
 // ==========================================
 // [BARU] ADMIN USER MANAGEMENT ROUTES
 // ==========================================
@@ -333,7 +327,6 @@ app.get('/api/public/recent-activities', async (req, res) => {
 // 1. Ambil Semua User (Untuk Admin Panel)
 app.get('/api/admin/users', async (req, res) => {
     try {
-        await connectDB();
         // Ambil semua user, urutkan dari saldo terbanyak
         const users = await User.find({}, 'username balance role').sort({ balance: -1 });
         res.json(users);
@@ -347,7 +340,6 @@ app.post('/api/admin/user/balance', async (req, res) => {
     const { username, action, amount } = req.body; // action: 'add' atau 'sub'
     
     try {
-        await connectDB();
         const user = await User.findOne({ username });
         if (!user) return res.status(404).json({ success: false, msg: "User tidak ditemukan" });
 
@@ -384,8 +376,7 @@ app.post('/api/admin/user/balance', async (req, res) => {
 // 1. AMBIL SEMUA ORDER (Manual Produk)
 app.get('/api/admin/orders', async (req, res) => {
     try {
-        await connectDB();
-        // Ambil 100 transaksi terakhir dari schema Transaction
+        // Ambil 100 transaksi terakhir
         const orders = await Transaction.find().sort({ createdAt: -1 }).limit(100);
         res.json(orders);
     } catch (e) {
@@ -397,7 +388,6 @@ app.get('/api/admin/orders', async (req, res) => {
 // 2. KELOLA VOUCHER (List, Create, Delete)
 app.get('/api/admin/vouchers', async (req, res) => {
     try {
-        await connectDB();
         const vouchers = await Voucher.find().sort({ createdAt: -1 });
         res.json(vouchers);
     } catch (e) { res.status(500).json([]); }
@@ -405,8 +395,6 @@ app.get('/api/admin/vouchers', async (req, res) => {
 
 app.post('/api/admin/voucher', async (req, res) => {
     try {
-        await connectDB();
-        // Validasi duplikat
         const exist = await Voucher.findOne({ code: req.body.code });
         if(exist) return res.status(400).json({ success: false, msg: "Kode sudah ada" });
         
@@ -417,7 +405,6 @@ app.post('/api/admin/voucher', async (req, res) => {
 
 app.delete('/api/admin/voucher/:id', async (req, res) => {
     try {
-        await connectDB();
         await Voucher.findByIdAndDelete(req.params.id);
         res.json({ success: true });
     } catch (e) { res.status(500).json({ success: false }); }
@@ -426,7 +413,6 @@ app.delete('/api/admin/voucher/:id', async (req, res) => {
 // 3. KELOLA BOT AKTIF (Active Services)
 app.get('/api/admin/all-services', async (req, res) => {
     try {
-        await connectDB();
         const services = await ActiveService.find().sort({ expiredDate: 1 });
         res.json(services);
     } catch (e) { res.status(500).json([]); }
@@ -434,7 +420,6 @@ app.get('/api/admin/all-services', async (req, res) => {
 
 app.post('/api/admin/services', async (req, res) => {
     try {
-        await connectDB();
         const { username, productName, targetNumber, serverIp, days } = req.body;
         const expiredDate = new Date(Date.now() + (parseInt(days) * 24 * 60 * 60 * 1000));
         
@@ -448,20 +433,15 @@ app.post('/api/admin/services', async (req, res) => {
 
 app.delete('/api/admin/services/:id', async (req, res) => {
     try {
-        await connectDB();
         await ActiveService.findByIdAndDelete(req.params.id);
         res.json({ success: true });
     } catch (e) { res.status(500).json({ success: false }); }
 });
-
 // ==========================================
 // FITUR GACHA SALDO
 // ==========================================
 app.post('/api/gacha/play', async (req, res) => {
     try {
-        // Menggunakan fungsi connectDB bawaan index.js
-        await connectDB(); 
-        
         const { username } = req.body;
         const cost = 1000;
 
@@ -470,7 +450,7 @@ app.post('/api/gacha/play', async (req, res) => {
             return res.status(400).json({ success: false, msg: "Sesi tidak valid, silakan login ulang." });
         }
 
-        // 1. Cari User di Database (Menggunakan UserSchema bawaan index.js)
+        // 1. Cari User di Database
         const user = await User.findOne({ username });
         if (!user) {
             return res.status(404).json({ success: false, msg: "User tidak ditemukan di database." });
@@ -484,7 +464,7 @@ app.post('/api/gacha/play', async (req, res) => {
         // 3. Potong saldo untuk biaya main
         user.balance -= cost;
 
-        // 4. Logika Probabilitas (Diacak murni oleh Server backend)
+        // 4. Logika Probabilitas
         const chance = Math.random() * 100;
         let prize = {};
 
@@ -504,7 +484,7 @@ app.post('/api/gacha/play', async (req, res) => {
         // 6. Simpan perubahan saldo ke MongoDB
         await user.save(); 
 
-        // 7. Kembalikan hasil ke frontend (gacha.html)
+        // 7. Kembalikan hasil ke frontend
         res.json({ success: true, prize, newBalance: user.balance });
 
     } catch (error) {
@@ -512,39 +492,37 @@ app.post('/api/gacha/play', async (req, res) => {
         res.status(500).json({ success: false, msg: "Terjadi kesalahan server saat memproses Gacha." });
     }
 });
-
 // ==========================================
-// FITUR APP PREMIUM (DB & API)
+// SCHEMA DEFINITIONS (APP PREMIUM)
 // ==========================================
 
-// 1. Schema Config (Harga, Deskripsi, & Foto per App)
 const AppPremiumConfigSchema = new mongoose.Schema({
     appName: { type: String, required: true, unique: true },
     price: { type: Number, default: 0 },
     description: { type: String, default: '' },
-    imageUrl: { type: String, default: '' } // Field untuk link foto
+    imageUrl: { type: String, default: '' }
 });
 const AppPremiumConfig = mongoose.models.AppPremiumConfig || mongoose.model('AppPremiumConfig', AppPremiumConfigSchema);
 
-// 2. Schema Stock (Akun & Password)
 const AppPremiumStockSchema = new mongoose.Schema({
     appName: { type: String, required: true },
     email: { type: String, required: true },
     password: { type: String, required: true },
     instructions: { type: String, default: '' },
-    status: { type: String, default: 'available' }, // 'available' atau 'sold'
+    status: { type: String, default: 'available' },
     buyer: { type: String, default: null },
     purchasedAt: { type: Date, default: null }
 });
 const AppPremiumStock = mongoose.models.AppPremiumStock || mongoose.model('AppPremiumStock', AppPremiumStockSchema);
 
 
+// ==========================================
 // --- API UNTUK USER (FRONTEND) ---
+// ==========================================
 
 // Get List App & Sisa Stock
 app.get('/api/app-premium/list', async (req, res) => {
     try {
-        await connectDB();
         const configs = await AppPremiumConfig.find();
         const apps = [];
         
@@ -565,9 +543,7 @@ app.get('/api/app-premium/list', async (req, res) => {
 // Proses Pembelian
 app.post('/api/app-premium/buy', async (req, res) => {
     try {
-        await connectDB();
         const { username, appName } = req.body;
-
         if (!username) return res.status(401).json({ success: false, msg: "Sesi tidak valid, login ulang." });
 
         const user = await User.findOne({ username });
@@ -576,87 +552,83 @@ app.post('/api/app-premium/buy', async (req, res) => {
         if (!user || !config) return res.status(400).json({ success: false, msg: "Data produk tidak valid." });
         if (user.balance < config.price) return res.status(400).json({ success: false, msg: "Saldo tidak mencukupi." });
 
-        // Cari 1 stock yang masih 'available'
         const stock = await AppPremiumStock.findOne({ appName, status: 'available' });
         if (!stock) return res.status(400).json({ success: false, msg: "Maaf, stock aplikasi ini habis!" });
 
-        // Potong Saldo
         user.balance -= config.price;
         await user.save();
 
-        // Update Stock jadi 'sold'
         stock.status = 'sold';
         stock.buyer = username;
         stock.purchasedAt = new Date();
         await stock.save();
 
-        // (Opsional) Jika Anda pakai Schema Transaction global, buka komentar ini:
-        // await new Transaction({ invoiceId: 'APP-'+Date.now(), username, productName: `Akun ${appName}`, amount: config.price, status: 'success', type: 'OUT' }).save();
-
         res.json({ success: true, newBalance: user.balance, account: stock });
-    } catch (e) { res.status(500).json({ success: false, msg: "Terjadi kesalahan server saat proses pembelian." }); }
+    } catch (e) { res.status(500).json({ success: false, msg: "Terjadi kesalahan server." }); }
 });
 
 // Riwayat Pembelian User
 app.get('/api/app-premium/history/:username', async (req, res) => {
     try {
-        await connectDB();
         const history = await AppPremiumStock.find({ buyer: req.params.username, status: 'sold' }).sort({ purchasedAt: -1 });
         res.json({ success: true, data: history });
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
 
-// --- API UNTUK ADMIN PANGKAS ---
+// ==========================================
+// --- API UNTUK ADMIN ---
+// ==========================================
 
-// Ambil semua daftar config untuk tabel admin
+// Ambil semua daftar config
 app.get('/api/admin/app-premium/configs', async (req, res) => {
     try {
-        await connectDB();
         const configs = await AppPremiumConfig.find();
         res.json({ success: true, data: configs });
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// Update / Simpan Config (Harga, Deskripsi, Foto)
+// Update / Simpan Config
 app.post('/api/admin/app-premium/config', async (req, res) => {
     try {
-        await connectDB();
         const { appName, price, description, imageUrl } = req.body;
         await AppPremiumConfig.findOneAndUpdate(
             { appName: appName.toLowerCase() }, 
             { price, description, imageUrl }, 
-            { upsert: true, new: true } // Upsert berarti: Kalau belum ada dibikin baru, kalau sudah ada diedit
+            { upsert: true, new: true }
         );
         res.json({ success: true });
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// Tambah Stock (Suntik Akun Baru)
+// Tambah Stock
 app.post('/api/admin/app-premium/stock', async (req, res) => {
     try {
-        await connectDB();
         const { appName, email, password, instructions } = req.body;
         await new AppPremiumStock({ appName: appName.toLowerCase(), email, password, instructions, status: 'available' }).save();
         res.json({ success: true });
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// Hapus Produk & Semua Stok Akun Terkait
+// Hapus Produk & Stok
 app.delete('/api/admin/app-premium/:appName', async (req, res) => {
     try {
-        await connectDB();
         const { appName } = req.params;
-        await AppPremiumConfig.findOneAndDelete({ appName: appName.toLowerCase() }); // Hapus di konfigurasi/katalog
-        await AppPremiumStock.deleteMany({ appName: appName.toLowerCase() }); // Hapus semua akun terkait (walaupun yang udah laku, atau bisa difilter statusnya)
-        res.json({ success: true, msg: "Produk & Seluruh stok akunnya berhasil dihapus!" });
+        await AppPremiumConfig.findOneAndDelete({ appName: appName.toLowerCase() });
+        await AppPremiumStock.deleteMany({ appName: appName.toLowerCase() });
+        res.json({ success: true, msg: "Produk & Seluruh stok berhasil dihapus!" });
     } catch (e) { res.status(500).json({ success: false }); }
 });
 //dashboard buat saldo cek
 app.use('/api', require('./dashboard'));
-module.exports = app;
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
+connectDB().then(() => {
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+        console.log(`✅ MongoDB Connected & Server running on port ${PORT}`);
+    });
+}).catch(err => {
+    console.error("❌ Gagal menyalakan server karena error DB:", err);
 });
+
+module.exports = app;
