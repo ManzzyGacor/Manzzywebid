@@ -7,349 +7,169 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-
     <style>
         body { 
-            /* BACKGROUND BARU: Gradient Mewah (CSS Only) */
             background-color: #000000;
             background-image: 
-                radial-gradient(circle at 50% 0%, #2e1065 0%, transparent 60%), /* Glow Ungu Atas */
-                radial-gradient(circle at 100% 100%, #1e1b4b 0%, transparent 40%); /* Glow Biru Gelap Bawah */
+                radial-gradient(circle at 50% 0%, #2e1065 0%, transparent 60%),
+                radial-gradient(circle at 100% 100%, #1e1b4b 0%, transparent 40%);
             background-attachment: fixed;
             color: white; 
             font-family: 'Inter', sans-serif; 
-            overflow: hidden; 
             min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-
-        /* Glassmorphism Premium */
         .glass-card-premium { 
-            background: rgba(10, 10, 10, 0.6); /* Lebih gelap biar kontras */
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 0 40px rgba(139, 92, 246, 0.1); /* Glow Ungu Halus di Pinggir Card */
-        }
-
-        /* Input Smooth */
-        .input-smooth {
-            transition: all 0.3s ease;
+            background: rgba(10, 10, 10, 0.6);
+            backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(0, 0, 0, 0.4);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
-        .input-smooth:focus {
-            border-color: #a855f7;
-            box-shadow: 0 0 15px rgba(168, 85, 247, 0.2);
-            background: rgba(0, 0, 0, 0.8);
-        }
-
-        /* Button Gradient */
-        .btn-gradient {
-            background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%);
+        .input-focus {
             transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
         }
-        .btn-gradient::after {
-            content: '';
-            position: absolute;
-            top: 0; left: -100%;
-            width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: 0.5s;
+        .input-focus:focus {
+            border-color: #8b5cf6;
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
         }
-        .btn-gradient:hover::after { left: 100%; }
-        .btn-gradient:hover {
-            box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
-            transform: translateY(-2px);
-        }
-        .btn-gradient:active { transform: translateY(0); }
-
-        /* Animasi Tab */
-        .tab-btn { transition: all 0.3s ease; position: relative; letter-spacing: 1px; }
-        .tab-btn.active { color: white; }
-        .tab-btn.active::after {
-            content: ''; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); 
-            width: 40px; height: 3px;
-            background: #a855f7; border-radius: 10px; box-shadow: 0 0 10px #a855f7;
-        }
-        .tab-btn:not(.active) { color: #52525b; }
-        .tab-btn:not(.active):hover { color: #a1a1aa; }
-
-        /* Form Transition */
-        .form-section { transition: all 0.4s ease; }
-        .hidden-section { display: none; opacity: 0; transform: translateX(20px); }
-        .visible-section { display: block; opacity: 1; transform: translateX(0); animation: fadeIn 0.4s ease forwards; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes slideUpFade { from { opacity: 0; transform: translateY(40px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        .animate-enter { animation: slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
     </style>
 </head>
-<body class="flex items-center justify-center p-4 relative">
-    
-    <div class="fixed top-20 left-10 w-32 h-32 bg-purple-600/10 rounded-full blur-3xl animate-pulse"></div>
-    <div class="fixed bottom-20 right-10 w-40 h-40 bg-blue-600/10 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
+<body>
 
-    <div class="relative z-10 w-full max-w-[400px] animate-enter opacity-0">
-        <div class="text-center mb-8">
-            <h1 class="text-4xl font-black tracking-widest text-white drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]">
-                MANZZY<span class="text-purple-500">ID</span>
-            </h1>
-            <p class="text-gray-400 text-xs mt-2 font-mono tracking-widest uppercase">Premium • Fast • Secure</p>
-        </div>
-
-        <div class="glass-card-premium p-8 rounded-[2rem]">
-            
-            <div class="flex justify-center gap-12 mb-8 border-b border-white/5 pb-2">
-                <button onclick="switchTab('login')" id="tab-login" class="tab-btn active text-xs font-bold uppercase pb-2">
-                    Masuk
-                </button>
-                <button onclick="switchTab('register')" id="tab-register" class="tab-btn text-xs font-bold uppercase pb-2">
-                    Daftar
-                </button>
-            </div>
-
-            <div id="form-login" class="form-section visible-section">
-                <form onsubmit="handleLogin(event)" class="space-y-5">
-                    <div class="space-y-1.5">
-                        <label class="text-[10px] text-gray-500 font-bold uppercase ml-1 tracking-wider">Username</label>
-                        <div class="relative">
-                            <i class="fa-solid fa-user absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
-                            <input type="text" id="login-username" class="input-smooth w-full rounded-xl py-3.5 pl-10 pr-4 text-white placeholder-gray-600 outline-none text-sm font-medium" placeholder="Username kamu" required>
-                        </div>
-                    </div>
-                    <div class="space-y-1.5">
-                        <label class="text-[10px] text-gray-500 font-bold uppercase ml-1 tracking-wider">Password</label>
-                        <div class="relative">
-                            <i class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
-                            <input type="password" id="login-password" class="input-smooth w-full rounded-xl py-3.5 pl-10 pr-4 text-white placeholder-gray-600 outline-none text-sm font-medium" placeholder="••••••••" required>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <a href="#" class="text-[10px] text-purple-400 hover:text-purple-300 transition hover:underline">Lupa password?</a>
-                    </div>
-                    <button type="submit" id="btn-login" class="btn-gradient w-full text-white font-bold py-3.5 rounded-xl text-sm tracking-wider shadow-lg">
-                        MASUK SEKARANG
-                    </button>
-                </form>
-            </div>
-
-            <div id="form-register" class="form-section hidden-section">
-                <form onsubmit="handleRegister(event)" class="space-y-5">
-                    <div class="bg-purple-500/10 border border-purple-500/20 p-3 rounded-lg flex items-center gap-3 mb-2">
-                        <i class="fa-solid fa-crown text-purple-400 text-sm"></i>
-                        <p class="text-[10px] text-purple-200 leading-tight">Daftar sekarang untuk akses fitur Bot & Nokos Premium.</p>
-                    </div>
-                    <div class="space-y-1.5">
-                        <label class="text-[10px] text-gray-500 font-bold uppercase ml-1 tracking-wider">Username Baru</label>
-                        <div class="relative">
-                            <i class="fa-solid fa-user-plus absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
-                            <input type="text" id="reg-username" class="input-smooth w-full rounded-xl py-3.5 pl-10 pr-4 text-white placeholder-gray-600 outline-none text-sm font-medium" placeholder="Tanpa spasi" required>
-                        </div>
-                    </div>
-                    <div class="space-y-1.5">
-                        <label class="text-[10px] text-gray-500 font-bold uppercase ml-1 tracking-wider">Password</label>
-                        <div class="relative">
-                            <i class="fa-solid fa-key absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
-                            <input type="password" id="reg-password" class="input-smooth w-full rounded-xl py-3.5 pl-10 pr-4 text-white placeholder-gray-600 outline-none text-sm font-medium" placeholder="Min. 6 karakter" required>
-                        </div>
-                    </div>
-                    <button type="submit" id="btn-register" class="btn-gradient w-full text-white font-bold py-3.5 rounded-xl text-sm tracking-wider shadow-lg">
-                        BUAT AKUN
-                    </button>
-                </form>
-            </div>
-
-            <div class="flex items-center gap-4 my-6">
-                <div class="h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent flex-1"></div>
-                <span class="text-[9px] text-gray-600 uppercase tracking-widest font-bold">Atau Akses Cepat</span>
-                <div class="h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent flex-1"></div>
-            </div>
-
-            <div class="google-btn-container transform transition hover:scale-[1.02] active:scale-95 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] rounded-full">
-                <div id="g_id_onload"
-                     data-client_id="240358304560-nmjjv87mpl2p6fhrn65p8mr9p6o9t5l5.apps.googleusercontent.com"
-                     data-callback="handleGoogleLogin"
-                     data-auto_prompt="false">
+    <div class="w-full max-w-md px-6">
+        <div class="glass-card-premium rounded-3xl p-8 text-center">
+            <div class="mb-6">
+                <div class="w-16 h-16 bg-gradient-to-tr from-purple-600 to-blue-600 rounded-2xl mx-auto flex items-center justify-center shadow-lg mb-4 transform rotate-3">
+                    <i class="fa-solid fa-bolt-lightning text-2xl text-white"></i>
                 </div>
-                <div class="g_id_signin"
-                     data-type="standard"
-                     data-size="large"
-                     data-theme="filled_black"
-                     data-text="continue_with"
-                     data-shape="pill"
-                     data-logo_alignment="center"
-                     data-width="100%">
-                </div>
+                <h2 class="text-2xl font-black tracking-tighter">MANZZY <span class="text-purple-500">ID</span></h2>
+                <p id="auth-subtitle" class="text-gray-400 text-xs mt-2 uppercase tracking-widest font-bold">Login / Registrasi Otomatis</p>
             </div>
 
-            <div class="mt-8 text-center">
-                <a href="/" class="inline-flex items-center gap-2 text-gray-500 text-[10px] hover:text-white transition group py-2 px-4 rounded-full hover:bg-white/5 font-mono">
-                    <i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition"></i> BACK TO HOME
-                </a>
+            <form id="authForm" onsubmit="handleAuth(event)" class="space-y-4 text-left">
+                <div>
+                    <label class="text-[10px] uppercase tracking-widest text-gray-500 font-bold ml-1">Username</label>
+                    <div class="relative mt-1">
+                        <i class="fa-solid fa-user absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+                        <input type="text" id="username" required placeholder="Gunakan nama simpel" 
+                            class="input-focus w-full bg-white/5 border border-white/10 rounded-xl px-11 py-3.5 outline-none text-sm">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[10px] uppercase tracking-widest text-gray-500 font-bold ml-1">Password</label>
+                    <div class="relative mt-1">
+                        <i class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+                        <input type="password" id="password" required placeholder="Minimal 4 karakter" 
+                            class="input-focus w-full bg-white/5 border border-white/10 rounded-xl px-11 py-3.5 outline-none text-sm">
+                    </div>
+                </div>
+
+                <button type="submit" id="btn-auth" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-purple-500/20 active:scale-95 flex items-center justify-center gap-2 mt-2">
+                    <span id="btn-text">MASUK / DAFTAR</span>
+                    <i class="fa-solid fa-right-to-bracket text-xs"></i>
+                </button>
+            </form>
+
+            <div class="mt-8 pt-6 border-t border-white/5 space-y-3">
+                <p class="text-gray-500 text-[10px] leading-relaxed">
+                    Sistem akan mendeteksi otomatis. Jika username belum terdaftar, akun akan langsung dibuatkan.
+                </p>
+                <button onclick="window.location.href='index.html'" class="text-gray-500 text-[10px] hover:text-white transition uppercase tracking-tighter">
+                    <i class="fa-solid fa-house mr-1"></i> Kembali ke Beranda
+                </button>
             </div>
         </div>
     </div>
 
     <script>
-        // 1. Logic Switch Tab
-        function switchTab(tab) {
-            const formLogin = document.getElementById('form-login');
-            const formReg = document.getElementById('form-register');
-            const tabLogin = document.getElementById('tab-login');
-            const tabReg = document.getElementById('tab-register');
-
-            if (tab === 'login') {
-                formLogin.classList.remove('hidden-section');
-                formLogin.classList.add('visible-section');
-                formReg.classList.remove('visible-section');
-                formReg.classList.add('hidden-section');
-                
-                tabLogin.classList.add('active');
-                tabReg.classList.remove('active');
-            } else {
-                formLogin.classList.remove('visible-section');
-                formLogin.classList.add('hidden-section');
-                formReg.classList.remove('hidden-section');
-                formReg.classList.add('visible-section');
-                
-                tabLogin.classList.remove('active');
-                tabReg.classList.add('active');
-            }
-        }
-
-// 2. Handle Login Manual
-async function handleLogin(e) {
-    e.preventDefault(); // Mencegah reload halaman
-    
-    // Pastikan ID ini sesuai dengan yang ada di tag <button>
-    const btn = document.getElementById('loginBtn'); 
-    const originalText = btn.innerText;
-    
-    // UI Feedback
-    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> CEK DATA...';
-    btn.disabled = true;
-    btn.classList.add('opacity-70');
-
-    // Ambil input - pastikan ID 'loginUser' dan 'loginPass' ada di tag <input>
-    const u = document.getElementById('loginUser').value;
-    const p = document.getElementById('loginPass').value;
-
-    try {
-        const res = await fetch('/api/login-user', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: u, password: p })
-        });
-        
-        const data = await res.json();
-
-        if (data.success) {
-            // SIMPAN SESSION - Ini yang bikin produk muncul di index
-            localStorage.setItem('user_session', data.username);
-            localStorage.setItem('user_role', data.role);
-            localStorage.setItem('manzzyUser', data.username);
-
-            // Animasi Keluar Mewah
-            document.body.style.transform = 'scale(1.05)';
-            document.body.style.opacity = '0';
-            document.body.style.transition = 'all 0.5s ease';
-            
-            // Redirect ke index.html
-            setTimeout(() => window.location.href = 'index.html', 500);
-        } else {
-            // Tampilkan pesan error dari server (Plain text login)
-            alert(data.msg || "Login Gagal. Cek username/password.");
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-            btn.classList.remove('opacity-70');
-        }
-    } catch (err) { 
-        alert("Gagal terhubung ke server. Pastikan VPS jalan.");
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-        btn.classList.remove('opacity-70');
-    }
-}
-        // 3. Handle Register Manual
-        async function handleRegister(e) {
+        async function handleAuth(e) {
             e.preventDefault();
-            const btn = document.getElementById('btn-register');
-            const originalText = btn.innerText;
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> DAFTAR...';
+            
+            const btn = document.getElementById('btn-auth');
+            const btnText = document.getElementById('btn-text');
+            const u = document.getElementById('username').value.trim();
+            const p = document.getElementById('password').value;
+
+            if(u.length < 3 || p.length < 3) {
+                return alert("Username & Password minimal 3 karakter!");
+            }
+
+            // UI Loading
+            btnText.innerText = 'MEMPROSES...';
             btn.disabled = true;
             btn.classList.add('opacity-70');
 
-            const u = document.getElementById('reg-username').value;
-            const p = document.getElementById('reg-password').value;
-
             try {
-                const res = await fetch('/api/register-user', {
+                // 1. COBA LOGIN DULU
+                const loginRes = await fetch('/api/login-user', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username: u, password: p })
                 });
-                const data = await res.json();
+                
+                const loginData = await loginRes.json();
 
-                if (data.success) {
-                    alert("✅ Akun Berhasil Dibuat! Silakan Login.");
-                    
-                    // Auto fill & Switch
-                    document.getElementById('login-username').value = u;
-                    document.getElementById('reg-username').value = '';
-                    document.getElementById('reg-password').value = '';
-                    switchTab('login');
-                    
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                    btn.classList.remove('opacity-70');
+                if (loginData.success) {
+                    saveAndRedirect(loginData);
                 } else {
-                    alert("❌ Gagal: " + (data.message || "Username sudah terpakai."));
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                    btn.classList.remove('opacity-70');
+                    // 2. JIKA GAGAL KARENA USER TIDAK ADA, COBA DAFTAR OTOMATIS
+                    if (loginData.msg.includes("tidak ditemukan") || loginData.msg.includes("Salah")) {
+                        // Cek apakah user mau daftar (opsional, di sini kita buat otomatis)
+                        const regRes = await fetch('/api/register-user', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ username: u, password: p })
+                        });
+                        const regData = await regRes.json();
+
+                        if (regData.success) {
+                            // Login ulang setelah daftar berhasil
+                            const finalLogin = await fetch('/api/login-user', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ username: u, password: p })
+                            });
+                            const finalData = await finalLogin.json();
+                            saveAndRedirect(finalData);
+                        } else {
+                            alert("❌ " + regData.msg);
+                            resetBtn();
+                        }
+                    } else {
+                        alert("❌ " + loginData.msg);
+                        resetBtn();
+                    }
                 }
-            } catch (err) { 
-                alert("Gagal terhubung ke server.");
-                btn.innerHTML = originalText;
+            } catch (err) {
+                alert("❌ Error: Gagal terhubung ke VPS.");
+                resetBtn();
+            }
+
+            function resetBtn() {
+                btnText.innerText = 'MASUK / DAFTAR';
                 btn.disabled = false;
                 btn.classList.remove('opacity-70');
             }
-        }
 
-        // 4. Handle Google
-        async function handleGoogleLogin(response) {
-            const container = document.querySelector('.google-btn-container');
-            container.style.opacity = '0.5';
-            container.style.pointerEvents = 'none';
-            
-            try {
-                const res = await fetch('/api/auth/google', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token: response.credential })
-                });
-                const data = await res.json();
+            function saveAndRedirect(data) {
+                // SIMPAN SESSION KE BROWSER
+                localStorage.setItem('user_session', data.username);
+                localStorage.setItem('user_role', data.role);
+                localStorage.setItem('manzzyUser', data.username);
 
-                if (data.success) {
-                    localStorage.setItem('user_session', data.username);
-                    localStorage.setItem('manzzyUser', data.username);
-                    
-                    document.body.style.transform = 'scale(1.05)';
-                    document.body.style.opacity = '0';
-                    document.body.style.transition = 'all 0.5s ease';
-                    setTimeout(() => window.location.href = '/', 500);
-                } else {
-                    alert("❌ Gagal Google: " + data.msg);
-                    container.style.opacity = '1';
-                    container.style.pointerEvents = 'auto';
-                }
-            } catch (e) {
-                alert("❌ Error Server.");
-                container.style.opacity = '1';
-                container.style.pointerEvents = 'auto';
+                btnText.innerText = 'BERHASIL!';
+                btn.classList.replace('bg-purple-600', 'bg-green-600');
+                
+                document.body.style.transition = 'all 0.5s ease';
+                document.body.style.opacity = '0';
+                
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 600);
             }
         }
     </script>
