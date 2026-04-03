@@ -183,24 +183,29 @@ app.post('/api/login-user', async (req, res) => {
 // ====================================
 app.get('/api/user/:username', async (req, res) => {
     try {
-        // CEK APAKAH DB TERKONEKSI
-        if (mongoose.connection.readyState !== 1) {
-            return res.status(503).json({ success: false, msg: "Database belum siap" });
-        }
-
+        // Bypass khusus Admin/Owner
         if(req.params.username === 'Manzzy (Owner)' || req.params.username === 'man') {
             return res.json({ success: true, username: req.params.username, balance: 999999999, role: 'admin' });
         }
         
+        await connectDB();
         const user = await User.findOne({ username: req.params.username });
-        if (!user) return res.status(404).json({ success: false, msg: "User tidak ditemukan" });
+        
+        if (!user) {
+            return res.status(404).json({ success: false, msg: "User tidak ditemukan" });
+        }
 
-        res.json({ success: true, username: user.username, balance: user.balance || 0, role: user.role || 'member' });
+        // Kirim data dengan format yang jelas
+        res.json({ 
+            success: true, 
+            username: user.username, 
+            balance: user.balance || 0, 
+            role: user.role || 'member' 
+        });
     } catch (e) {
         res.status(500).json({ success: false, msg: "Server Error" });
     }
 });
-
 // Change Password
 app.post('/api/user/change-password', async (req, res) => {
     const { username, newPassword } = req.body;
