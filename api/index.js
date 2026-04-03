@@ -136,59 +136,30 @@ app.post('/api/auth/google', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false, msg: e.message }); }
 });
 
-// [SINKRONKAN] Gunakan satu format Register
-app.post('/api/register-user', async (req, res) => {
-    try {
-        const { username, password } = req.body;
-        if (!username || !password) return res.status(400).json({ success: false, msg: 'Data tidak lengkap' });
-
-        const exist = await User.findOne({ username });
-        if (exist) return res.status(400).json({ success: false, msg: "Username sudah dipakai" });
-        
-        // Wajib Hash Password agar akun aman dan bisa dibaca Bcrypt saat login
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const role = username.toLowerCase() === 'man' ? 'admin' : 'member';
-        
-        await new User({ username, password: hashedPassword, role }).save();
-        res.json({ success: true, msg: "Registrasi Berhasil!" });
-    } catch (e) {
-        res.status(500).json({ success: false, msg: "Error Server" });
-    }
-});
-
-// [SINKRONKAN] Login dengan Bcrypt Compare agar akun lama bisa masuk
+// Login User Biasa
 app.post('/api/login-user', async (req, res) => {
-    try {
-        const { username, password } = req.body;
-        const user = await User.findOne({ username });
-        
-        if (!user) return res.status(400).json({ success: false, msg: "Username tidak ditemukan" });
-
-        // Bandingkan password input dengan hash di database
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ success: false, msg: "Password Salah" });
-
-        // Buat Token JWT agar session "nyangkut" di frontend
-        const token = jwt.sign(
-            { id: user._id, username: user.username, role: user.role },
-            JWT_SECRET,
-            { expiresIn: '1d' }
-        );
-
-        res.json({ 
-            success: true, 
-            token, 
-            username: user.username, 
-            balance: user.balance, 
-            role: user.role 
-        });
-    } catch (e) {
-        res.status(500).json({ success: false, msg: "Error Server" });
-    }
+    const { username, password } = req.body;
+    const user = await User.findOne({ username, password });
+    if (!user) return res.status(400).json({ success: false, message: "Username/Password Salah" });
+    res.json({ success: true, username: user.username, balance: user.balance, role: user.role });
 });
+
+// Register User
+app.post('/api/register-user', async (req, res) => {
+    const { username, password } = req.body;
+    const exist = await User.findOne({ username });
+    if (exist) return res.status(400).json({ success: false, message: "Username sudah dipakai" });
+    
+    // Logika otomatis Admin jika username adalah 'man'
+    const role = username.toLowerCase() === 'man' ? 'admin' : 'member';
+    await new User({ username, password, role }).save();
+    
+    res.json({ success: true });
+});
+
 // Get User Profile
 app.get('/api/user/:username', async (req, res) => {
-    if(req.params.username === 'man (Owner)') return res.json({ username: 'man (Owner)', balance: 999999999, role: 'admin' });
+    if(req.params.username === 'Manzzy (Owner)') return res.json({ username: 'Manzzy (Owner)', balance: 999999999, role: 'admin' });
     
     const user = await User.findOne({ username: req.params.username });
     res.json(user || {});
