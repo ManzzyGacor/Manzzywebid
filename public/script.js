@@ -14,13 +14,13 @@ window.addEventListener('load', () => {
 });
 
 async function initData() {
-    // Jalankan satu-satu biar kalau ada yang error, yang lain tetep jalan
-    checkUserLogin();     // Cek siapa yang login
-  
+    checkUserLogin();
     fetchTestimonials();
     updateServerStats();
-    startLiveNotif();
+    startLiveNotif(); 
+    setInterval(updateServerStats, 5000);
 }
+
 
 
 // ============================================
@@ -32,73 +32,50 @@ let userBalance = 0;
 const ADMIN_WA = "6285815196595";
 
 async function checkUserLogin() {
-    const userSession = localStorage.getItem('user_session');
-    const ctaBanner = document.getElementById('cta-banner');
-
+    // 1. JIKA BELUM LOGIN
     if (!userSession) {
-        console.log("Status: Guest");
-        if(ctaBanner) ctaBanner.style.display = 'block';
+        // Tampilkan Banner CTA jika belum login
+        const cta = document.getElementById('cta-banner');
+        if(cta) cta.style.display = 'block';
         return;
     }
 
+    // 2. JIKA SUDAH LOGIN
     try {
-        // Fetch data user untuk update saldo & role
         const res = await fetch(`/api/user/${userSession}`);
-        
-        // Cek jika API user tidak ditemukan
-        if (!res.ok) throw new Error("User tidak ditemukan di DB");
-        
         const data = await res.json();
         
         if (data.username) {
-            console.log("Status: Login sebagai " + data.username);
+            userBalance = data.balance || 0;
+            const formatted = `Rp ${userBalance.toLocaleString()}`;
             
             // Update Header Saldo
             const headerBal = document.getElementById('header-balance');
             if(headerBal) {
-                headerBal.innerHTML = `<i class="fa-solid fa-wallet text-green-400"></i> Rp ${data.balance.toLocaleString()}`;
+                headerBal.innerHTML = `<i class="fa-solid fa-wallet text-green-400 animate-pulse"></i><span class="text-sm text-white font-mono font-bold tracking-wide">${formatted}</span>`;
                 headerBal.classList.remove('hidden');
             }
             
-            // Sembunyikan Banner Login
-            if(ctaBanner) ctaBanner.style.display = 'none';
+            // Update Sidebar User Info
+            const sidebar = document.getElementById('user-status-sidebar');
+            if(sidebar) sidebar.innerHTML = `Hi, ${userSession}<br><span class="text-green-400 font-bold font-mono">${formatted}</span>`;
+            
+            // Buka Menu Member
+            document.getElementById('review-form-container')?.classList.remove('hidden');
             document.getElementById('login-prompt')?.classList.add('hidden');
-        }
-    } catch (e) {
-        console.error("Error Auth:", e.message);
-        // Jika error, biarkan produk tetap muncul (jangan di-return/stop)
-    }
-}
+            document.getElementById('menu-topup')?.classList.remove('hidden');
+            document.getElementById('menu-myservices')?.classList.remove('hidden');
+            document.getElementById('menu-history')?.classList.remove('hidden');
+            document.getElementById('menu-nokos')?.classList.remove('hidden');
+            
+            // Ubah Tombol Logout
+            document.getElementById('auth-menu').innerHTML = `<a href="login_user.html" onclick="doLogout()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:bg-white/5 transition"><i class="fa-solid fa-sign-out-alt text-red-500 w-6 text-center"></i><span class="font-medium">Logout</span></a>`;
 
-// Fungsi pembantu untuk Update UI agar kode tidak berantakan
-function updateLoginUI(username, balance) {
-    const formatted = `Rp ${balance.toLocaleString()}`;
-    
-    // Update Header Saldo
-    const headerBal = document.getElementById('header-balance');
-    if(headerBal) {
-        headerBal.innerHTML = `<i class="fa-solid fa-wallet text-green-400 animate-pulse"></i><span class="text-sm text-white font-mono font-bold tracking-wide">${formatted}</span>`;
-        headerBal.classList.remove('hidden');
-    }
-    
-    // Update Sidebar User Info
-    const sidebar = document.getElementById('user-status-sidebar');
-    if(sidebar) sidebar.innerHTML = `Hi, ${username}<br><span class="text-green-400 font-bold font-mono">${formatted}</span>`;
-    
-    // Buka Menu Member & Hilangkan Banner
-    document.getElementById('review-form-container')?.classList.remove('hidden');
-    document.getElementById('login-prompt')?.classList.add('hidden');
-    document.getElementById('menu-topup')?.classList.remove('hidden');
-    document.getElementById('menu-myservices')?.classList.remove('hidden');
-    document.getElementById('menu-history')?.classList.remove('hidden');
-    document.getElementById('menu-nokos')?.classList.remove('hidden');
-    document.getElementById('cta-banner') && (document.getElementById('cta-banner').style.display = 'none');
-    
-    // Ubah Tombol Logout
-    const authMenu = document.getElementById('auth-menu');
-    if(authMenu) {
-        authMenu.innerHTML = `<a href="#" onclick="doLogout()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:bg-white/5 transition"><i class="fa-solid fa-sign-out-alt text-red-500 w-6 text-center"></i><span class="font-medium">Logout</span></a>`;
-    }
+            // === [LOGIC PENTING] HILANGKAN BANNER CTA JIKA LOGIN ===
+            const ctaBanner = document.getElementById('cta-banner');
+            if(ctaBanner) ctaBanner.style.display = 'none';
+        }
+    } catch(e) {}
 }
 // ============================================
 // 3. UI HELPER (TOAST, SIDEBAR, MODAL)
