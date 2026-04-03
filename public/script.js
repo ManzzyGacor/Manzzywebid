@@ -13,19 +13,28 @@ window.addEventListener('load', () => {
     }, 1500);
 });
 
+// MODUL UTAMA: Jalankan semua tanpa saling tunggu
 async function initData() {
-    // Menjalankan semua fetch secara paralel (barengan)
-    // Ini jauh lebih cepat daripada dijalankan satu-satu
-    Promise.all([
-        checkUserLogin(),
-        fetchTestimonials(),
-        updateServerStats()
-    ]).then(() => {
-        startLiveNotif();
-    }).catch(err => console.error("Error loading data:", err));
+    console.log("Sistem Memulai Loading...");
+    
+    // Jangan pakai Promise.all dulu kalau sering error, jalankan satu-satu tapi aman
+    checkUserLogin(); 
+    
+    // Pastikan fungsi ini ada di script.js kamu, kalau namanya beda, sesuaikan!
+    if (typeof fetchProducts === "function") {
+        fetchProducts(); 
+    } else {
+        console.error("Fungsi fetchProducts tidak ditemukan!");
+    }
 
-    setInterval(updateServerStats, 10000); // Ubah ke 10 detik agar tidak terlalu sering membebani VPS
+    fetchTestimonials();
+    updateServerStats();
+    startLiveNotif();
+    
+    setInterval(updateServerStats, 15000);
 }
+
+
 
 // ============================================
 // 2. AUTHENTICATION
@@ -39,40 +48,38 @@ async function checkUserLogin() {
     const userSession = localStorage.getItem('user_session');
     const ctaBanner = document.getElementById('cta-banner');
 
-    // 1. JIKA BELUM LOGIN
     if (!userSession) {
+        console.log("Status: Guest");
         if(ctaBanner) ctaBanner.style.display = 'block';
         return;
     }
 
-    // 2. OPTIMASI: Tampilkan data dari Cache dulu supaya tidak nunggu (Instan)
-    const cachedBalance = localStorage.getItem('cached_balance');
-    if (cachedBalance) {
-        updateLoginUI(userSession, parseInt(cachedBalance));
-    }
-
-    // 3. JIKA SUDAH LOGIN (Ambil data terbaru dari server di background)
     try {
-        // Tambahkan timeout 5 detik supaya kalau server VPS lagi overload, web gak hang
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-        const res = await fetch(`/api/user/${userSession}`, { signal: controller.signal });
+        // Fetch data user untuk update saldo & role
+        const res = await fetch(`/api/user/${userSession}`);
+        
+        // Cek jika API user tidak ditemukan
+        if (!res.ok) throw new Error("User tidak ditemukan di DB");
+        
         const data = await res.json();
-        clearTimeout(timeoutId);
         
         if (data.username) {
-            // Update UI dengan data asli dari server
-            updateLoginUI(data.username, data.balance || 0);
+            console.log("Status: Login sebagai " + data.username);
             
-            // Simpan ke cache untuk kunjungan berikutnya
-            localStorage.setItem('cached_balance', data.balance || 0);
-        } else {
-            // Jika user tidak ditemukan di DB (mungkin dihapus), paksa logout
-            doLogout();
+            // Update Header Saldo
+            const headerBal = document.getElementById('header-balance');
+            if(headerBal) {
+                headerBal.innerHTML = `<i class="fa-solid fa-wallet text-green-400"></i> Rp ${data.balance.toLocaleString()}`;
+                headerBal.classList.remove('hidden');
+            }
+            
+            // Sembunyikan Banner Login
+            if(ctaBanner) ctaBanner.style.display = 'none';
+            document.getElementById('login-prompt')?.classList.add('hidden');
         }
-    } catch(e) {
-        console.log("Gagal sinkron server, menggunakan mode offline.");
+    } catch (e) {
+        console.error("Error Auth:", e.message);
+        // Jika error, biarkan produk tetap muncul (jangan di-return/stop)
     }
 }
 
