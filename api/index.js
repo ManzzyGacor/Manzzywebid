@@ -136,52 +136,43 @@ app.post('/api/auth/google', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false, msg: e.message }); }
 });
 
-// 1. RE-FIX REGISTER (Supaya Role Admin Otomatis & Password Aman)
+// ROUTE REGISTER (Tanpa Bcrypt)
 app.post('/api/register-user', async (req, res) => {
     try {
         const { username, password } = req.body;
         const exist = await User.findOne({ username });
         if (exist) return res.status(400).json({ success: false, msg: "Username sudah ada!" });
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-        // Otomatis jadi admin jika username 'man'
+        // Simpan password apa adanya (Plain Text)
         const role = username.toLowerCase() === 'man' ? 'admin' : 'member';
-
-        const newUser = new User({ username, password: hashedPassword, role, balance: 0 });
+        const newUser = new User({ username, password, role, balance: 0 });
+        
         await newUser.save();
         res.json({ success: true, msg: "Berhasil daftar!" });
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// 2. RE-FIX LOGIN (Wajib pakai Bcrypt Compare & Kirim Token)
+// ROUTE LOGIN (Pakai User.findOne Langsung)
 app.post('/api/login-user', async (req, res) => {
     try {
         const { username, password } = req.body;
-        const user = await User.findOne({ username });
+        
+        // Cari yang username DAN password-nya cocok persis
+        const user = await User.findOne({ username, password });
 
-        if (!user) return res.status(400).json({ success: false, msg: "User tidak ditemukan" });
+        if (!user) {
+            return res.status(400).json({ success: false, msg: "Username atau Password Salah!" });
+        }
 
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ success: false, msg: "Password salah!" });
-
-        // Buat Token
-        const token = jwt.sign(
-            { id: user._id, username: user.username, role: user.role },
-            process.env.JWT_SECRET || 'rahasia_nexus_galaxy',
-            { expiresIn: '1d' }
-        );
-
-        // KIRIM SEMUA DATA PENTING KE FRONTEND
+        // Kirim data lengkap ke frontend
         res.json({ 
             success: true, 
-            token: token, 
             username: user.username, 
             role: user.role, 
             balance: user.balance 
         });
     } catch (e) { res.status(500).json({ success: false }); }
 });
-
 // Get User Profile
 app.get('/api/user/:username', async (req, res) => {
     if(req.params.username === 'Manzzy (Owner)') return res.json({ username: 'Manzzy (Owner)', balance: 999999999, role: 'admin' });
