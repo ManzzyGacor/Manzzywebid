@@ -22,20 +22,24 @@ app.get('*', (req, res) => {
 // Helper Fetch (Untuk verifikasi token Google / External API)
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
-// ==========================================
-// 1. KONEKSI DATABASE
-// ==========================================
-let isConnected = false;
+// ====================================
+// 1. KONEKSI DATABASE (VERSI PERBAIKAN)
+// ====================================
 const connectDB = async () => {
-    if (isConnected) return;
     try { 
-        await mongoose.connect(process.env.MONGO_URI); 
-        isConnected = true; 
+        // Tambahkan timeout agar tidak menunggu selamanya
+        await mongoose.connect(process.env.MONGO_URI, {
+            serverSelectionTimeoutMS: 5000 
+        }); 
         console.log("✅ MongoDB Connected");
     } catch (err) { 
-        console.error("❌ DB Error:", err); 
+        console.error("❌ DB Error (Web tetap jalan tapi fitur DB mati):", err.message); 
     }
 };
+
+// Panggil koneksi SEKALI SAJA saat server mulai, jangan di dalam route!
+connectDB(); 
+
 
 
 // ==========================================
@@ -173,40 +177,26 @@ app.post('/api/login-user', async (req, res) => {
         });
     } catch (e) { res.status(500).json({ success: false }); }
 });
-// Get User Profile - VERSI STABIL
+
+// ====================================
+// FIX ROUTE PROFILE (Hapus await connectDB di sini)
+// ====================================
 app.get('/api/user/:username', async (req, res) => {
     try {
-        // 1. Pastikan DB Terkoneksi
-        await connectDB(); 
+        // CEK APAKAH DB TERKONEKSI
+        if (mongoose.connection.readyState !== 1) {
+            return res.status(503).json({ success: false, msg: "Database belum siap" });
+        }
 
-        // 2. Handle Owner Bypass
         if(req.params.username === 'Manzzy (Owner)' || req.params.username === 'man') {
-            return res.json({ 
-                success: true,
-                username: req.params.username, 
-                balance: 999999999, 
-                role: 'admin' 
-            });
+            return res.json({ success: true, username: req.params.username, balance: 999999999, role: 'admin' });
         }
         
-        // 3. Cari di Database
         const user = await User.findOne({ username: req.params.username });
-        
-        if (!user) {
-            // Jangan kirim objek kosong, kirim status 404 biar script tahu user gak ada
-            return res.status(404).json({ success: false, msg: "User tidak ditemukan" });
-        }
+        if (!user) return res.status(404).json({ success: false, msg: "User tidak ditemukan" });
 
-        // 4. Kirim data yang konsisten
-        res.json({
-            success: true,
-            username: user.username,
-            balance: user.balance || 0,
-            role: user.role || 'member'
-        });
-
+        res.json({ success: true, username: user.username, balance: user.balance || 0, role: user.role || 'member' });
     } catch (e) {
-        console.error("Error API User:", e);
         res.status(500).json({ success: false, msg: "Server Error" });
     }
 });
@@ -670,12 +660,9 @@ app.delete('/api/admin/app-premium/:appName', async (req, res) => {
 //dashboard buat saldo cek
 app.use('/api', require('./dashboard'));
 
-connectDB().then(() => {
-    const PORT = 3000; 
-    app.listen(PORT, '0.0.0.0', () => {
-        console.log(`✅ Server Backend jalan di port ${PORT}`);
-    });
-}).catch(err => {
-    console.error("❌ Gagal DB:", err);
+const PORT = 3000; 
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`✅ Backend running on port ${PORT}`);
 });
+
 module.exports = app;
