@@ -13,27 +13,14 @@ window.addEventListener('load', () => {
     }, 1500);
 });
 
-// MODUL UTAMA: Jalankan semua tanpa saling tunggu
 async function initData() {
-    console.log("Sistem Memulai Loading...");
-    
-    // Jangan pakai Promise.all dulu kalau sering error, jalankan satu-satu tapi aman
-    checkUserLogin(); 
-    
-    // Pastikan fungsi ini ada di script.js kamu, kalau namanya beda, sesuaikan!
-    if (typeof fetchProducts === "function") {
-        fetchProducts(); 
-    } else {
-        console.error("Fungsi fetchProducts tidak ditemukan!");
-    }
-
+    // Jalankan satu-satu biar kalau ada yang error, yang lain tetep jalan
+    checkUserLogin();     // Cek siapa yang login
+  
     fetchTestimonials();
     updateServerStats();
     startLiveNotif();
-    
-    setInterval(updateServerStats, 15000);
 }
-
 
 
 // ============================================
