@@ -1,0 +1,22 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main  # Ganti ke 'master' jika itu branch utama kamu
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/Manzzywebid
+            git pull origin main
+            npm install
+            pm2 restart manzzy-api
