@@ -136,25 +136,50 @@ app.post('/api/auth/google', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false, msg: e.message }); }
 });
 
-// Login User Biasa
-app.post('/api/login-user', async (req, res) => {
-    const { username, password } = req.body;
-    const user = await User.findOne({ username, password });
-    if (!user) return res.status(400).json({ success: false, message: "Username/Password Salah" });
-    res.json({ success: true, username: user.username, balance: user.balance, role: user.role });
+// 1. RE-FIX REGISTER (Supaya Role Admin Otomatis & Password Aman)
+app.post('/api/register-user', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        const exist = await User.findOne({ username });
+        if (exist) return res.status(400).json({ success: false, msg: "Username sudah ada!" });
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        // Otomatis jadi admin jika username 'man'
+        const role = username.toLowerCase() === 'man' ? 'admin' : 'member';
+
+        const newUser = new User({ username, password: hashedPassword, role, balance: 0 });
+        await newUser.save();
+        res.json({ success: true, msg: "Berhasil daftar!" });
+    } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// Register User
-app.post('/api/register-user', async (req, res) => {
-    const { username, password } = req.body;
-    const exist = await User.findOne({ username });
-    if (exist) return res.status(400).json({ success: false, message: "Username sudah dipakai" });
-    
-    // Logika otomatis Admin jika username adalah 'man'
-    const role = username.toLowerCase() === 'man' ? 'admin' : 'member';
-    await new User({ username, password, role }).save();
-    
-    res.json({ success: true });
+// 2. RE-FIX LOGIN (Wajib pakai Bcrypt Compare & Kirim Token)
+app.post('/api/login-user', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        const user = await User.findOne({ username });
+
+        if (!user) return res.status(400).json({ success: false, msg: "User tidak ditemukan" });
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) return res.status(400).json({ success: false, msg: "Password salah!" });
+
+        // Buat Token
+        const token = jwt.sign(
+            { id: user._id, username: user.username, role: user.role },
+            process.env.JWT_SECRET || 'rahasia_nexus_galaxy',
+            { expiresIn: '1d' }
+        );
+
+        // KIRIM SEMUA DATA PENTING KE FRONTEND
+        res.json({ 
+            success: true, 
+            token: token, 
+            username: user.username, 
+            role: user.role, 
+            balance: user.balance 
+        });
+    } catch (e) { res.status(500).json({ success: false }); }
 });
 
 // Get User Profile
