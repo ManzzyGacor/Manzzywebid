@@ -671,12 +671,11 @@ app.delete('/api/admin/app-premium/:appName', async (req, res) => {
 app.use('/api', require('./dashboard'));
 
 connectDB().then(() => {
-    const PORT = process.env.PORT || 2428;
-    app.listen(PORT, () => {
-        console.log(`✅ MongoDB Connected & Server running on port ${PORT}`);
+    const PORT = 3000; 
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`✅ Server Backend jalan di port ${PORT}`);
     });
 }).catch(err => {
-    console.error("❌ Gagal menyalakan server karena error DB:", err);
+    console.error("❌ Gagal DB:", err);
 });
-
 module.exports = app;
