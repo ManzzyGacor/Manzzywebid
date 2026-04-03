@@ -1,10 +1,12 @@
-let checkInterval = null;
-let currentOrderId = null;
+// Gunakan window agar tidak bentrok "Already Declared" jika file dimuat ulang
+window.checkInterval = window.checkInterval || null;
+window.currentOrderId = window.currentOrderId || null;
 
 // 1. REQUEST TOP UP
 async function requestTopUp(e) {
     e.preventDefault();
     
+    // Gunakan getItem langsung agar tidak bentrok dengan variabel di script.js
     const userSession = localStorage.getItem('user_session');
     if (!userSession) return showToast("Login dulu!", "error");
 
@@ -39,7 +41,7 @@ async function requestTopUp(e) {
 
 // 2. TAMPILKAN QRIS
 function showQrInterface(data) {
-    currentOrderId = data.orderId;
+    window.currentOrderId = data.orderId;
 
     document.getElementById('topup-form-area').classList.add('hidden');
     document.getElementById('topup-qr-area').classList.remove('hidden');
@@ -58,15 +60,15 @@ function showQrInterface(data) {
     });
 
     // Mulai Cek Status Otomatis (Polling)
-    if (checkInterval) clearInterval(checkInterval);
-    checkInterval = setInterval(checkPaymentStatus, 3000); // Cek tiap 3 detik
+    if (window.checkInterval) clearInterval(window.checkInterval);
+    window.checkInterval = setInterval(checkPaymentStatus, 3000); // Cek tiap 3 detik
 }
 
 // 3. CEK STATUS
 async function checkPaymentStatus() {
-    if (!currentOrderId) return;
+    if (!window.currentOrderId) return;
     try {
-        const res = await fetch(`/api/topup/check/${currentOrderId}`);
+        const res = await fetch(`/api/topup/check/${window.currentOrderId}`);
         const data = await res.json();
         if (data.success && data.status === 'success') {
             finishTopUp();
@@ -75,7 +77,7 @@ async function checkPaymentStatus() {
 }
 
 function finishTopUp() {
-    clearInterval(checkInterval);
+    if (window.checkInterval) clearInterval(window.checkInterval);
     document.getElementById('topup-qr-area').classList.add('hidden');
     document.getElementById('topup-success-area').classList.remove('hidden');
     showToast("✅ Pembayaran Berhasil!", "success");
@@ -83,11 +85,10 @@ function finishTopUp() {
 }
 
 function resetTopUpView() {
-    if (checkInterval) clearInterval(checkInterval);
-    currentOrderId = null;
+    if (window.checkInterval) clearInterval(window.checkInterval);
+    window.currentOrderId = null;
     document.getElementById('topup-form-area').classList.remove('hidden');
     document.getElementById('topup-qr-area').classList.add('hidden');
     document.getElementById('topup-success-area').classList.add('hidden');
     document.getElementById('topupAmount').value = '';
 }
-
