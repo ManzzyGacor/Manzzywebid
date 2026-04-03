@@ -6,6 +6,7 @@ const bcrypt = require('bcryptjs');
 
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
+
 // Konfigurasi Middleware
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
@@ -22,26 +23,32 @@ app.get('*', (req, res) => {
 // Helper Fetch (Untuk verifikasi token Google / External API)
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
-// ====================================
-// 1. KONEKSI DATABASE (VERSI PERBAIKAN)
-// ====================================
+// ==========================================
+// KONEKSI DATABASE (VERSI ANTI-MACET)
+// ==========================================
 const connectDB = async () => {
-    try { 
-        // Tambahkan timeout agar tidak menunggu selamanya
+    try {
+        // Cek dulu, kalau sudah tersambung (state 1), jangan konek lagi
+        if (mongoose.connection.readyState === 1) return;
+
         await mongoose.connect(process.env.MONGO_URI, {
-            serverSelectionTimeoutMS: 5000 
-        }); 
+            serverSelectionTimeoutMS: 5000, // Jangan nunggu kelamaan kalau gagal
+            autoIndex: true,
+        });
         console.log("✅ MongoDB Connected");
-    } catch (err) { 
-        console.error("❌ DB Error (Web tetap jalan tapi fitur DB mati):", err.message); 
+    } catch (err) {
+        console.error("❌ DB Error:", err.message);
     }
 };
 
-// Panggil koneksi SEKALI SAJA saat server mulai, jangan di dalam route!
-connectDB(); 
+// Panggil di awal
+connectDB();
 
-
-
+// Tambahkan proteksi: Jika koneksi putus tengah jalan, dia otomatis nyambung
+mongoose.connection.on('disconnected', () => {
+    console.log('⚠️ MongoDB Disconnected. Reconnecting...');
+    connectDB();
+});
 // ==========================================
 // 2. SCHEMA DEFINITIONS (UPDATE: API KEY)
 // ==========================================
