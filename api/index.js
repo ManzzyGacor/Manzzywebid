@@ -671,7 +671,7 @@ app.delete('/api/admin/app-premium/:appName', async (req, res) => {
 app.use('/api', require('./dashboard'));
 
 connectDB().then(() => {
-    const PORT = process.env.PORT || 3000;
+    const PORT = process.env.PORT || 2428;
     app.listen(PORT, () => {
         console.log(`✅ MongoDB Connected & Server running on port ${PORT}`);
     });
