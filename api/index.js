@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const app = express();
+const bcrypt = require('bcryptjs');
 
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
@@ -36,6 +37,44 @@ const connectDB = async () => {
     }
 };
 
+//register user
+app.post('/api/register-user', async (req, res) => {
+    const { username, password } = req.body;
+    if (!username || !password) return res.status(400).json({ error: 'Data tidak lengkap' });
+
+    const existing = await User.findOne({ username });
+    if (existing) return res.status(400).json({ error: 'Username sudah dipakai' });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = new User({
+        username,
+        password: hashedPassword,
+        role: (username.toLowerCase() === 'man') ? 'admin' : 'member'
+    });
+
+    await newUser.save();
+    res.status(201).json({ message: 'Registrasi Berhasil!' });
+});
+
+//login user
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET || 'rahasia_nexus_galaxy';
+
+app.post('/api/login-user', async (req, res) => {
+    const { username, password } = req.body;
+    const user = await User.findOne({ username });
+    if (!user) return res.status(400).json({ error: 'User tidak ditemukan' });
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(400).json({ error: 'Password salah' });
+
+    const token = jwt.sign(
+        { id: user._id, username: user.username, role: user.role },
+        JWT_SECRET,
+        { expiresIn: '1d' }
+    );
+    res.json({ success: true, token, username: user.username, role: user.role });
+});
 // ==========================================
 // 2. SCHEMA DEFINITIONS (UPDATE: API KEY)
 // ==========================================
