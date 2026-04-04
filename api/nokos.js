@@ -127,19 +127,21 @@ let priceToPay = Number(String(rawPrice).replace(/[^0-9]/g, ''));
             user.balance = currentBalance - priceToPay; 
             await user.save();
 
-            const newTx = new NokosTx({
-                invoiceId: 'INV' + Date.now(),
-                username: username,
-                orderId: response.data.data.order_id,
-                serviceName: serviceName,
-                countryName: countryName,
-                phoneNumber: response.data.data.phone_number,
-                price: priceToPay,
-                status: 'waiting',
-                expiresAt: new Date(Date.now() + 15 * 60000)
-            });
-            await newTx.save();
-            
+            // Ganti bagian simpan transaksi di dalam router.post('/buy')
+const newTx = new NokosTx({
+    invoiceId: 'INV' + Date.now(),
+    username: username,
+    orderId: response.data.data.order_id,
+    serviceName: serviceName,
+    countryName: countryName,
+    phoneNumber: response.data.data.phone_number,
+    price: priceToPay,
+    status: 'waiting',
+    // SET KE 20 MENIT (Batal Otomatis)
+    expiresAt: new Date(Date.now() + 20 * 60000) 
+});
+await newTx.save();
+
             res.json({ success: true, data: newTx });
         } else {
             res.json({ success: false, msg: response.data.msg || "Gagal ambil nomor" });
@@ -195,6 +197,43 @@ router.get('/status/:invoiceId', async (req, res) => {
     } catch (e) { res.json({ success: false }); }
 });
 
+router.post('/cancel', async (req, res) => {
+    try {
+        await connectDB();
+        const { orderId, username } = req.body;
+        
+        const tx = await NokosTx.findOne({ orderId, username, status: 'waiting' });
+        if (!tx) return res.json({ success: false, msg: "Transaksi tidak ditemukan atau sudah selesai." });
+
+        // LOGIKA 3 MENIT: Cek selisih waktu sekarang dengan waktu dibuat
+        const diffInMinutes = (Date.now() - new Date(tx.createdAt).getTime()) / 60000;
+        
+        if (diffInMinutes < 3) {
+            return res.json({ 
+                success: false, 
+                msg: `Tunggu ${Math.ceil(3 - diffInMinutes)} menit lagi untuk membatalkan.` 
+            });
+        }
+
+        // Tembak API Batal ke RumahOTP
+        const response = await axios.get(`https://www.rumahotp.io/api/v2/orders/cancel?order_id=${orderId}`, {
+            headers: { 'x-apikey': RUMAHOTP_API_KEY }
+        });
+
+        if (response.data.success) {
+            // Update status & Refund saldo
+            tx.status = 'cancelled';
+            await tx.save();
+            await User.findOneAndUpdate({ username }, { $inc: { balance: tx.price } });
+            
+            res.json({ success: true, msg: "Berhasil dibatalkan, saldo dikembalikan." });
+        } else {
+            res.json({ success: false, msg: response.data.msg || "Gagal batal di provider." });
+        }
+    } catch (e) {
+        res.json({ success: false, msg: "Error server saat membatalkan." });
+    }
+});
 // History per User
 router.get('/history/:username', async (req, res) => {
     try {
