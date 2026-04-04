@@ -78,38 +78,59 @@ router.get('/countries', async (req, res) => {
     }
 });
 
-// [PENTING] Beli Nokos (v2)
+// [STEP 3] PESAN NOMOR / ORDER (v2 - FIX Sesuai Dokumentasi)
 router.post('/buy', async (req, res) => {
     try {
         await connectDB();
+        // Ambil data dari payload frontend
         const { username, numberId, providerId, operatorId, serviceName, countryName, userPrice } = req.body;
 
         const user = await User.findOne({ username });
-        if (!user || user.balance < userPrice) return res.json({ success: false, msg: "Saldo tidak cukup" });
+        if (!user || user.balance < userPrice) {
+            return res.json({ success: false, msg: "Saldo tidak cukup!" });
+        }
 
-        const response = await axios.get(`https://www.rumahotp.io/api/v2/orders?number_id=${numberId}&provider_id=${providerId}&operator_id=${operatorId}`, {
-            headers: { 'x-apikey': RUMAHOTP_API_KEY, 'Accept': 'application/json' }
+        // Tembak API v2 RumahOTP (Wajib 3 ID ini)
+        // URL: .../api/v2/orders?number_id=...&provider_id=...&operator_id=...
+        const url = `https://www.rumahotp.io/api/v2/orders?number_id=${numberId}&provider_id=${providerId}&operator_id=${operatorId}`;
+        
+        const response = await axios.get(url, {
+            headers: { 
+                'x-apikey': RUMAHOTP_API_KEY, 
+                'Accept': 'application/json' 
+            }
         });
 
-        if (response.data.success) {
+        const result = response.data;
+
+        if (result.success) {
+            // 1. Potong Saldo
             user.balance -= userPrice;
             await user.save();
 
+            // 2. Simpan ke database kita (Pakai order_id dari respon v2)
             const newTx = new NokosTx({
                 invoiceId: 'INV' + Date.now(),
                 username: username,
-                orderId: response.data.data.order_id,
-                serviceName, countryName,
-                phoneNumber: response.data.data.phone_number,
+                orderId: result.data.order_id, // RO...
+                serviceName: serviceName,
+                countryName: countryName,
+                phoneNumber: result.data.phone_number,
                 price: userPrice,
-                expiresAt: new Date(Date.now() + 15 * 60000)
+                status: 'waiting',
+                expiresAt: new Date(Date.now() + 15 * 60000) // 15 Menit
             });
             await newTx.save();
+
             res.json({ success: true, data: newTx });
         } else {
-            res.json({ success: false, msg: response.data.msg || "Gagal ambil nomor" });
+            // Jika gagal (stok habis/provider error)
+            res.json({ success: false, msg: result.msg || "Gagal ambil nomor dari provider." });
         }
-    } catch (e) { res.json({ success: false, msg: "Server Error" }); }
+    } catch (e) {
+        console.error("Order Error:", e.message);
+        res.status(500).json({ success: false, msg: "Terjadi kesalahan pada server." });
+    }
 });
 
 // [STEP 2.5] DAFTAR OPERATOR (v2)
