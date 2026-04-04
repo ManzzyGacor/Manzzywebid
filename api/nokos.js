@@ -124,23 +124,25 @@ let priceToPay = Number(String(rawPrice).replace(/[^0-9]/g, ''));
 
         if (response.data.success) {
             // 4. POTONG SALDO (Gunakan rumus yang aman dari NaN)
-            user.balance = currentBalance - priceToPay; 
-            await user.save();
+// Di dalam router.post('/buy')
+if (response.data.success) {
+    user.balance -= priceToPay;
+    await user.save();
 
-            // Ganti bagian simpan transaksi di dalam router.post('/buy')
-const newTx = new NokosTx({
-    invoiceId: 'INV' + Date.now(),
-    username: username,
-    orderId: response.data.data.order_id,
-    serviceName: serviceName,
-    countryName: countryName,
-    phoneNumber: response.data.data.phone_number,
-    price: priceToPay,
-    status: 'waiting',
-    // SET KE 20 MENIT (Batal Otomatis)
-    expiresAt: new Date(Date.now() + 20 * 60000) 
-});
-await newTx.save();
+    const newTx = new NokosTx({
+        invoiceId: 'INV' + Date.now(),
+        username: username,
+        orderId: response.data.data.order_id,
+        serviceName: serviceName,
+        countryName: countryName, // Dari payload frontend
+        phoneNumber: response.data.data.phone_number,
+        price: priceToPay,        // Dari payload frontend
+        status: 'waiting',
+        expiresAt: new Date(Date.now() + 20 * 60000) // SET 20 MENIT
+    });
+    await newTx.save();
+    res.json({ success: true, data: newTx });
+}
 
             res.json({ success: true, data: newTx });
         } else {
