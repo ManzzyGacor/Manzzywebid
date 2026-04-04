@@ -1,4 +1,4 @@
-// Gunakan window agar tidak bentrok "Already Declared" jika file dimuat ulang
+// Gunakan window agar tidak bentrok jika file dimuat ulang
 window.checkInterval = window.checkInterval || null;
 window.currentOrderId = window.currentOrderId || null;
 
@@ -6,7 +6,6 @@ window.currentOrderId = window.currentOrderId || null;
 async function requestTopUp(e) {
     e.preventDefault();
     
-    // Gunakan getItem langsung agar tidak bentrok dengan variabel di script.js
     const userSession = localStorage.getItem('user_session');
     if (!userSession) return showToast("Login dulu!", "error");
 
@@ -15,7 +14,7 @@ async function requestTopUp(e) {
 
     const btn = document.getElementById('btn-topup-process');
     const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Loading...';
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Memproses...';
     btn.disabled = true;
 
     try {
@@ -24,15 +23,17 @@ async function requestTopUp(e) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: userSession, amount: amount })
         });
-        const data = await res.json();
+        const result = await res.json();
 
-        if (data.success) {
-            showQrInterface(data.data);
+        // FIX: Server mengirim { success: true, data: { orderId, qrString, amount } }
+        if (result.success && result.data) {
+            showQrInterface(result.data);
         } else {
-            showToast(data.msg || "Gagal membuat transaksi.", "error");
+            showToast(result.msg || "Gagal membuat transaksi.", "error");
         }
     } catch (e) {
-        showToast("Error koneksi.", "error");
+        console.error("Topup Error:", e);
+        showToast("Gagal terhubung ke server.", "error");
     } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
@@ -42,38 +43,46 @@ async function requestTopUp(e) {
 // 2. TAMPILKAN QRIS
 function showQrInterface(data) {
     window.currentOrderId = data.orderId;
-
+    
     document.getElementById('topup-form-area').classList.add('hidden');
     document.getElementById('topup-qr-area').classList.remove('hidden');
+    
+    // Update Info Pembayaran
+    document.getElementById('qr-amount-display').innerText = `Rp ${data.amount.toLocaleString()}`;
+    document.getElementById('qr-order-id').innerText = data.orderId;
 
-    document.getElementById('qris-amount').innerText = `Rp ${data.total.toLocaleString()}`;
-    document.getElementById('qris-id').innerText = data.orderId;
-
-    // Generate QR Code
-    const qrContainer = document.getElementById('qris-image');
-    qrContainer.innerHTML = ""; 
+    // Gambar QR Code
+    const qrContainer = document.getElementById("qrcode");
+    qrContainer.innerHTML = ""; // Bersihkan QR lama
+    
     new QRCode(qrContainer, {
-        text: data.qrString,
-        width: 200, height: 200,
-        colorDark : "#000000", colorLight : "#ffffff",
+        text: data.qrString, // String NMID dari RumahOTP
+        width: 200,
+        height: 200,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
         correctLevel : QRCode.CorrectLevel.H
     });
 
-    // Mulai Cek Status Otomatis (Polling)
+    // Mulai Cek Status Otomatis (Polling) tiap 5 detik
     if (window.checkInterval) clearInterval(window.checkInterval);
-    window.checkInterval = setInterval(checkPaymentStatus, 3000); // Cek tiap 3 detik
+    window.checkInterval = setInterval(checkPaymentStatus, 5000);
 }
 
-// 3. CEK STATUS
+// 3. CEK STATUS PEMBAYARAN
 async function checkPaymentStatus() {
     if (!window.currentOrderId) return;
     try {
         const res = await fetch(`/api/topup/check/${window.currentOrderId}`);
-        const data = await res.json();
-        if (data.success && data.status === 'success') {
+        const result = await res.json();
+        
+        // FIX: Cek status success dari backend
+        if (result.success && result.status === 'success') {
             finishTopUp();
         }
-    } catch (e) {}
+    } catch (e) {
+        console.error("Polling Error:", e);
+    }
 }
 
 function finishTopUp() {
@@ -81,7 +90,9 @@ function finishTopUp() {
     document.getElementById('topup-qr-area').classList.add('hidden');
     document.getElementById('topup-success-area').classList.remove('hidden');
     showToast("✅ Pembayaran Berhasil!", "success");
-    if (typeof checkUserLogin === "function") checkUserLogin(); // Update saldo di header
+    
+    // Update saldo di header tanpa refresh
+    if (typeof checkUserLogin === "function") checkUserLogin(); 
 }
 
 function resetTopUpView() {

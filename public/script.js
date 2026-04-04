@@ -461,46 +461,45 @@ function filterApps() {
 async function selectApp(id, name, icon) {
     nokosData.selectedApp = { id, name, icon };
     
-    // Update Header
+    // Update UI Header
     document.getElementById('header-app-name').innerText = name;
     document.getElementById('header-app-icon').src = icon;
     
-    // Slide Animation
+    // Animasi Slide
     document.getElementById('sheet-view-apps').classList.add('-translate-x-full');
     document.getElementById('sheet-view-countries').classList.remove('translate-x-full');
     
-    // Load Data
+    // Loading State
     const list = document.getElementById('list-countries');
     list.innerHTML = '<div class="text-center py-10"><i class="fa-solid fa-circle-notch fa-spin text-purple-500"></i> Memuat Data...</div>';
     
     try {
-        const res = await fetch(`/api/nokos/countries?service_id=${id}`);
+        // Panggil API (Kunci serviceId harus sama dengan req.query di nokos.js)
+        const res = await fetch(`/api/nokos/countries?serviceId=${id}`);
         const data = await res.json();
         
-        if(data.success || data.status) { // Handle response format
+        if(data.success && data.data) { 
             nokosData.countries = data.data;
             renderCountries(nokosData.countries);
         } else {
-            list.innerHTML = '<div class="text-center text-gray-500 py-10">Gagal memuat negara.</div>';
+            list.innerHTML = '<div class="text-center text-gray-500 py-10">Gagal memuat negara atau stok kosong.</div>';
         }
     } catch(e) { 
-        list.innerHTML = '<div class="text-center text-red-500 py-10">Error koneksi.</div>';
+        list.innerHTML = '<div class="text-center text-red-500 py-10">Error koneksi server.</div>';
     }
-}
-
-function backToApps() {
-    document.getElementById('sheet-view-apps').classList.remove('-translate-x-full');
-    document.getElementById('sheet-view-countries').classList.add('translate-x-full');
-    document.getElementById('searchCountryInput').value = '';
 }
 
 function renderCountries(countries) {
     const list = document.getElementById('list-countries');
-    if(!countries || countries.length === 0) { list.innerHTML = '<div class="text-center text-gray-500 py-10">Tidak ada data.</div>'; return; }
+    if(!countries || countries.length === 0) { 
+        list.innerHTML = '<div class="text-center text-gray-500 py-10">Tidak ada negara tersedia.</div>'; 
+        return; 
+    }
     
     list.innerHTML = countries.map(c => {
-        // Ambil harga termurah untuk display
-        const cheapest = c.pricelist && c.pricelist.length > 0 ? c.pricelist.sort((a,b) => a.price - b.price)[0] : null;
+        // Ambil pricelist pertama. Karena di nokos.js sudah dihitung margin,
+        // kita langsung ambil 'price' atau 'price_format' yang dikirim server.
+        const cheapest = c.pricelist && c.pricelist.length > 0 ? c.pricelist[0] : null;
         const startPrice = cheapest ? cheapest.price_format : '-';
         
         return `
@@ -525,29 +524,16 @@ function renderCountries(countries) {
     }).join('');
 }
 
-function toggleCountryAccordion(el) {
-    const p = el.parentElement;
-    const b = p.querySelector('.accordion-body');
-    const i = p.querySelector('.accordion-icon');
-    
-    // Tutup yang lain (opsional)
-    document.querySelectorAll('.accordion-body').forEach(box => { if(box!==b) box.classList.add('hidden'); });
-    document.querySelectorAll('.accordion-icon').forEach(icon => { if(icon!==i) icon.classList.remove('rotate-180'); });
-    
-    b.classList.toggle('hidden');
-    i.classList.toggle('rotate-180');
-}
-
 function renderServerList(servers, countryId, countryName) {
-    if(!servers || servers.length === 0) return '<div class="text-center text-xs text-red-500">Stok habis.</div>';
+    if(!servers || servers.length === 0) return '<div class="text-center text-[10px] text-red-500 py-2">Stok habis.</div>';
     
     return servers.map(s => `
-        <div class="flex justify-between items-center p-3 rounded-xl bg-[#1f1f23] border border-gray-800 hover:border-gray-700">
+        <div class="flex justify-between items-center p-3 rounded-xl bg-[#1f1f23] border border-gray-800">
             <div class="flex items-center gap-3">
                 <div class="text-[10px] font-mono text-blue-400 bg-blue-900/20 px-1.5 py-0.5 rounded">ID:${s.provider_id}</div>
                 <div>
                     <div class="text-xs font-bold text-white">Server ${s.server_id || 'Fast'}</div>
-                    <div class="text-[10px] text-gray-500">Stok: ${s.stock}</div>
+                    <div class="text-[10px] text-gray-400">Stok: ${s.stock}</div>
                 </div>
             </div>
             <div class="flex items-center gap-3">
