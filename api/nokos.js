@@ -112,6 +112,16 @@ router.post('/buy', async (req, res) => {
     } catch (e) { res.json({ success: false, msg: "Server Error" }); }
 });
 
+// [STEP 2.5] DAFTAR OPERATOR (v2)
+router.get('/operators', async (req, res) => {
+    try {
+        const { country, provider_id } = req.query;
+        const response = await axios.get(`https://www.rumahotp.io/api/v2/operators?country=${country}&provider_id=${provider_id}`, {
+            headers: { 'x-apikey': RUMAHOTP_API_KEY, 'Accept': 'application/json' }
+        });
+        res.json(response.data);
+    } catch (e) { res.json({ success: false }); }
+});
 // [PENTING] Cek Status untuk script.js (v1)
 router.get('/status/:invoiceId', async (req, res) => {
     try {
