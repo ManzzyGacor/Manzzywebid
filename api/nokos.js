@@ -79,22 +79,33 @@ router.get('/countries', async (req, res) => {
 });
 
 // [STEP 3] PESAN NOMOR / ORDER (v2 - FIX Sesuai Dokumentasi)
+// [STEP 3] PESAN NOMOR / ORDER (v2 - FIX Tipe Data Number)
 router.post('/buy', async (req, res) => {
     try {
         await connectDB();
         const { username, numberId, providerId, operatorId, serviceName, countryName, userPrice } = req.body;
 
         const user = await User.findOne({ username });
-        if (!user || user.balance < userPrice) return res.json({ success: false, msg: "Saldo tidak cukup" });
+        if (!user || user.balance < userPrice) {
+            return res.json({ success: false, msg: "Saldo tidak cukup!" });
+        }
 
-        // --- FIX LOGIC: RumahOTP v2 butuh Operator ID Angka ---
-        // Jika dari frontend kirim 'any', kita ubah jadi 1 (ID standar untuk ANY)
-        const opIdFinal = (operatorId === 'any' || !operatorId) ? 1 : operatorId;
+        // --- FIX: PAKSA JADI NUMBER ---
+        // Kita gunakan Number() untuk memastikan tipe datanya sesuai dokumentasi
+        const finalNumberId = Number(numberId);
+        const finalProviderId = Number(providerId);
+        const finalOperatorId = (operatorId === 'any' || !operatorId) ? 1 : Number(operatorId);
 
-        const url = `https://www.rumahotp.io/api/v2/orders?number_id=${numberId}&provider_id=${providerId}&operator_id=${opIdFinal}`;
+        // Debugging: Muncul di terminal VPS kamu buat cek apakah angkanya bener
+        console.log(`[ORDER] Mengirim ke RumahOTP: number_id=${finalNumberId}, provider_id=${finalProviderId}, operator_id=${finalOperatorId}`);
+
+        const url = `https://www.rumahotp.io/api/v2/orders?number_id=${finalNumberId}&provider_id=${finalProviderId}&operator_id=${finalOperatorId}`;
         
         const response = await axios.get(url, {
-            headers: { 'x-apikey': RUMAHOTP_API_KEY, 'Accept': 'application/json' }
+            headers: { 
+                'x-apikey': RUMAHOTP_API_KEY, 
+                'Accept': 'application/json' 
+            }
         });
 
         const result = response.data;
@@ -107,24 +118,26 @@ router.post('/buy', async (req, res) => {
                 invoiceId: 'INV' + Date.now(),
                 username: username,
                 orderId: result.data.order_id,
-                serviceName, countryName,
+                serviceName: serviceName,
+                countryName: countryName,
                 phoneNumber: result.data.phone_number,
                 price: userPrice,
                 status: 'waiting',
                 expiresAt: new Date(Date.now() + 15 * 60000)
             });
             await newTx.save();
+
             res.json({ success: true, data: newTx });
         } else {
-            // Kita kirim pesan asli dari RumahOTP biar kamu tau masalahnya apa
-            res.json({ success: false, msg: result.msg || "Stok habis atau Provider error" });
+            // Jika sukses:false dari RumahOTP, kirim pesan error aslinya
+            res.json({ success: false, msg: result.msg || "Stok habis/Provider error" });
         }
     } catch (e) {
-        console.error("Order Error:", e.response?.data || e.message);
-        res.json({ success: false, msg: "Gangguan koneksi ke Provider" });
+        // Cek log jika ada error teknis
+        console.error("Detail Error RumahOTP:", e.response?.data || e.message);
+        res.status(500).json({ success: false, msg: "Gagal memproses ke provider" });
     }
 });
-
 // [STEP 2.5] DAFTAR OPERATOR (v2)
 router.get('/operators', async (req, res) => {
     try {
