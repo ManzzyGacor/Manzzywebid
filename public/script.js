@@ -514,25 +514,32 @@ function renderCountries(countries) {
 }
 
 function renderServerList(servers, countryId, countryName) {
-    if(!servers || servers.length === 0) return '<div class="text-center text-xs text-red-500">Stok habis.</div>';
+    if(!servers || servers.length === 0) return '<div class="text-center text-[10px] text-red-500 py-2">Stok habis.</div>';
     
-    return servers.map(s => `
-        <div class="flex justify-between items-center p-3 ...">
+    return servers.map(s => {
+        // Pastikan kita ambil price dan provider_id dengan benar dari objek 's'
+        const itemPrice = s.price;
+        const pId = s.provider_id;
+        const sId = s.server_id || 'Fast';
+
+        return `
+        <div class="flex justify-between items-center p-3 rounded-xl bg-[#1f1f23] border border-gray-800">
             <div class="flex items-center gap-3">
-                <div class="text-[10px] font-mono text-blue-400">ID:${s.provider_id}</div>
+                <div class="text-[10px] font-mono text-blue-400 bg-blue-900/20 px-1.5 py-0.5 rounded">ID:${pId}</div>
                 <div>
-                    <div class="text-xs font-bold text-white">Server ${s.server_id}</div>
+                    <div class="text-xs font-bold text-white">Server ${sId}</div>
+                    <div class="text-[10px] text-gray-400">Stok: ${s.stock}</div>
                 </div>
             </div>
             <div class="flex items-center gap-3">
                 <span class="text-sm font-bold text-white">${s.price_format}</span>
-                <button onclick="openOperatorSelection('${countryId}', '${countryName}', '${s.price}', '${s.provider_id}', '${s.server_id}')" 
-                    class="bg-blue-600 ...">
+                <button onclick="openOperatorSelection(${Number(countryId)}, '${countryName}', ${Number(itemPrice)}, ${Number(pId)}, '${sId}')" 
+                    class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition shadow-lg shadow-blue-900/30">
                     Order
                 </button>
             </div>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 }
 
 function filterCountries() {
@@ -543,7 +550,7 @@ function filterCountries() {
 
 // --- SELECT OPERATOR & FIX BUTTON STUCK ---
 async function openOperatorSelection(countryId, countryName, price, providerId, serverName) {
-    // FIX: Paksa semua ID dan Price menjadi tipe Number agar tidak NaN di backend
+    // Simpan ke Global Object dengan konversi Number sekali lagi untuk keamanan
     nokosData.tempServer = { 
         numberId: Number(countryId), 
         countryName: countryName, 
@@ -551,48 +558,34 @@ async function openOperatorSelection(countryId, countryName, price, providerId, 
         providerId: Number(providerId) 
     };
     
-    // Debugging di Console Browser (Tekan F12 untuk cek ini jalan atau tidak)
-    console.log("Data Tersimpan di Frontend:", nokosData.tempServer);
+    console.log("DEBUG FRONTEND - Data Tersimpan:", nokosData.tempServer);
 
-    // Update UI Info
     const infoEl = document.getElementById('op-server-info');
-    if(infoEl) infoEl.innerText = `${countryName} • Server ${serverName || 'Fast'} (ID: ${providerId})`;
+    if(infoEl) infoEl.innerText = `${countryName} • Server ${serverName} (ID: ${providerId})`;
     
+    // Tampilkan Sheet
     const sheetOp = document.getElementById('sheet-operator');
-    const listOp = document.getElementById('list-operators');
-    
-    // Reset & Tampilkan Sheet
-    sheetOp.classList.remove('hidden', 'translate-y-full');
+    sheetOp.classList.remove('hidden');
     sheetOp.style.display = 'block';
     
-    listOp.innerHTML = '<div class="text-xs text-gray-500 p-4"><i class="fa-solid fa-circle-notch fa-spin text-blue-500"></i> Memuat operator...</div>';
-    
+    const listOp = document.getElementById('list-operators');
+    listOp.innerHTML = '<div class="text-xs text-gray-500 p-4">Memuat operator...</div>';
+
     try {
-        const cNameEnc = encodeURIComponent(countryName);
-        // Pastikan provider_id dikirim sebagai angka murni
-        const res = await fetch(`/api/nokos/operators?country=${cNameEnc}&provider_id=${Number(providerId)}`);
+        // Gunakan parameter yang sudah pasti angka
+        const res = await fetch(`/api/nokos/operators?country=${encodeURIComponent(countryName)}&provider_id=${nokosData.tempServer.providerId}`);
         const data = await res.json();
         
-        let html = `
-        <div onclick="selectOperatorAndCheckout('any', 'Acak / Any')" 
-             class="min-w-[80px] h-24 bg-[#25252a] border border-gray-700 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-green-500 hover:bg-[#2a2a30] transition snap-start flex-none">
-            <div class="w-8 h-8 rounded-full bg-gray-700 text-white flex items-center justify-center font-bold text-xs">?</div>
-            <span class="text-[10px] font-bold text-white">ANY</span>
-        </div>`;
-        
-        if(data.success && data.data && data.data.length > 0) {
+        let html = `<div onclick="selectOperatorAndCheckout('any', 'Acak')" class="..."><span class="text-white">ANY</span></div>`;
+        if(data.success && data.data) {
             html += data.data.map(op => `
-            <div onclick="selectOperatorAndCheckout('${op.id}', '${op.name}')" 
-                 class="min-w-[80px] h-24 bg-[#25252a] border border-gray-700 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-green-500 hover:bg-[#2a2a30] transition snap-start px-2 text-center flex-none">
-                <img src="${op.image}" onerror="this.style.display='none'" class="w-6 h-6 object-contain">
-                <span class="text-[9px] font-bold text-gray-300 leading-tight line-clamp-2">${op.name}</span>
-            </div>`).join('');
+                <div onclick="selectOperatorAndCheckout(${Number(op.id)}, '${op.name}')" class="...">
+                    <img src="${op.image}" class="w-6 h-6">
+                    <span class="text-gray-300">${op.name}</span>
+                </div>`).join('');
         }
         listOp.innerHTML = html;
-    } catch(e) { 
-        console.error("Error Load Operator:", e);
-        listOp.innerHTML = '<div class="text-xs text-red-500 p-4">Gagal memuat daftar operator.</div>'; 
-    }
+    } catch(e) { listOp.innerHTML = '<div class="text-xs text-red-500">Gagal load.</div>'; }
 }
 
 function closeOperatorSheet() {
