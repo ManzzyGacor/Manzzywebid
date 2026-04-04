@@ -83,73 +83,49 @@ router.post('/buy', async (req, res) => {
     try {
         await connectDB();
         
-        // 1. Ambil data & Paksa ke Tipe Number yang benar
+        // Ambil data dengan fleksibilitas nama (Support underscore)
         const username = req.body.username;
         const serviceName = req.body.service_name || req.body.serviceName;
-        const countryName = req.body.country_name || req.body.countryName || req.body.country;
-        
-let rawPrice = req.body.userPrice || req.body.user_price || req.body.price;
+        const countryName = req.body.country_name || req.body.countryName;
+        const priceToPay = Number(req.body.user_price || req.body.userPrice || req.body.price);
 
-let priceToPay = Number(String(rawPrice).replace(/[^0-9]/g, '')); 
+        const finalNumberId = Number(req.body.number_id || req.body.numberId);
+        const finalProviderId = Number(req.body.provider_id || req.body.providerId);
+        const finalOperatorId = (req.body.operator_id === 'any' || !req.body.operator_id) ? 1 : Number(req.body.operator_id);
 
-        const rawNumberId = req.body.number_id || req.body.numberId;
-        const rawProviderId = req.body.provider_id || req.body.providerId;
-        const rawOperatorId = req.body.operator_id || req.body.operatorId;
-
-        const finalNumberId = Number(rawNumberId);
-        const finalProviderId = Number(rawProviderId);
-        const finalOperatorId = (rawOperatorId === 'any' || !rawOperatorId) ? 1 : Number(rawOperatorId);
-
-        // 2. VALIDASI KRUSIAL (Mencegah NaN masuk ke Database)
-        if (isNaN(priceToPay) || isNaN(finalNumberId) || isNaN(finalProviderId)) {
-            console.error("🚫 STOP! Ada data NaN:", { priceToPay, finalNumberId, finalProviderId });
-            return res.json({ success: false, msg: "Kesalahan pada sistem server." });
+        if (isNaN(priceToPay) || isNaN(finalNumberId) || priceToPay <= 0) {
+            return res.json({ success: false, msg: "Data pesanan rusak (NaN)." });
         }
 
         const user = await User.findOne({ username });
-        if (!user) return res.json({ success: false, msg: "User tidak ditemukan." });
-        
-        // Pastikan saldo user juga angka
-        const currentBalance = Number(user.balance) || 0;
+        if (!user || user.balance < priceToPay) return res.json({ success: false, msg: "Saldo tidak cukup!" });
 
-        if (currentBalance < priceToPay) {
-            return res.json({ success: false, msg: "Saldo tidak cukup!" });
-        }
-
-        // 3. Tembak ke RumahOTP v2
+        // Tembak RumahOTP
         const url = `https://www.rumahotp.io/api/v2/orders?number_id=${finalNumberId}&provider_id=${finalProviderId}&operator_id=${finalOperatorId}`;
-        const response = await axios.get(url, {
-            headers: { 'x-apikey': RUMAHOTP_API_KEY, 'Accept': 'application/json' }
-        });
+        const response = await axios.get(url, { headers: { 'x-apikey': RUMAHOTP_API_KEY } });
 
         if (response.data.success) {
-            // 4. POTONG SALDO (Gunakan rumus yang aman dari NaN)
-// Di dalam router.post('/buy')
-if (response.data.success) {
-    user.balance -= priceToPay;
-    await user.save();
+            user.balance -= priceToPay;
+            await user.save();
 
-    const newTx = new NokosTx({
-        invoiceId: 'INV' + Date.now(),
-        username: username,
-        orderId: response.data.data.order_id,
-        serviceName: serviceName,
-        countryName: countryName, // Dari payload frontend
-        phoneNumber: response.data.data.phone_number,
-        price: priceToPay,        // Dari payload frontend
-        status: 'waiting',
-        expiresAt: new Date(Date.now() + 20 * 60000) // SET 20 MENIT
-    });
-    await newTx.save();
-    res.json({ success: true, data: newTx });
-}
-
+            const newTx = new NokosTx({
+                invoiceId: 'INV' + Date.now(),
+                username,
+                orderId: response.data.data.order_id,
+                serviceName,
+                countryName,
+                phoneNumber: response.data.data.phone_number,
+                price: priceToPay,
+                status: 'waiting',
+                expiresAt: new Date(Date.now() + 20 * 60000) // 20 Menit Batal Otomatis
+            });
+            await newTx.save();
+            res.json({ success: true, data: newTx });
         } else {
-            res.json({ success: false, msg: response.data.msg || "Gagal ambil nomor" });
+            res.json({ success: false, msg: response.data.msg });
         }
     } catch (e) {
-        console.error("Order Error:", e.message);
-        res.json({ success: false, msg: "Terjadi kesalahan sistem." });
+        res.json({ success: false, msg: "Kesalahan sistem provider." });
     }
 });
 // [STEP 2.5] DAFTAR OPERATOR (v2)
