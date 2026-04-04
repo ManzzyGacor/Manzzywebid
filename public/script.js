@@ -462,70 +462,6 @@ function filterApps() {
     renderApps(f);
     document.getElementById('section-popular-apps').style.display = k ? 'none' : 'block';
 }
-
-// --- SELECT COUNTRY ---
-// --- 1. SELECT APP & RENDER NEGARA ---
-async function selectApp(id, name, icon) {
-    nokosData.selectedApp = { id, name, icon };
-    
-    // Update UI Header
-    document.getElementById('header-app-name').innerText = name;
-    document.getElementById('header-app-icon').src = icon;
-    
-    // Animasi Slide
-    document.getElementById('sheet-view-apps').classList.add('-translate-x-full');
-    document.getElementById('sheet-view-countries').classList.remove('translate-x-full');
-    
-    const list = document.getElementById('list-countries');
-    list.innerHTML = '<div class="text-center py-10"><i class="fa-solid fa-circle-notch fa-spin text-purple-500"></i> Memuat Data...</div>';
-    
-    try {
-        const res = await fetch(`/api/nokos/countries?service_id=${id}`);
-        const data = await res.json();
-        
-        if(data.success && data.data) { 
-            nokosData.countries = data.data;
-            renderCountries(nokosData.countries);
-        } else {
-            list.innerHTML = '<div class="text-center text-gray-500 py-10">Stok sedang kosong.</div>';
-        }
-    } catch(e) {
-        list.innerHTML = '<div class="text-center text-red-500 py-10">Error koneksi server.</div>';
-    }
-}
-
-function renderCountries(countries) {
-    const list = document.getElementById('list-countries');
-    if(!countries || countries.length === 0) { 
-        list.innerHTML = '<div class="text-center text-gray-500 py-10">Tidak ada data.</div>'; 
-        return; 
-    }
-    
-    list.innerHTML = countries.map(c => {
-        const cheapest = c.pricelist && c.pricelist.length > 0 ? c.pricelist.sort((a,b) => a.price - b.price)[0] : null;
-        const startPrice = cheapest ? cheapest.price_format : '-';
-        
-        return `
-        <div class="border border-gray-800 rounded-2xl bg-[#1c1c1f] overflow-hidden transition-all duration-300 country-item">
-            <div onclick="toggleCountryAccordion(this)" class="p-4 flex items-center justify-between cursor-pointer hover:bg-[#25252a]">
-                <div class="flex items-center gap-3">
-                    <img src="${c.img}" class="w-8 h-6 rounded object-cover shadow-sm">
-                    <span class="text-sm font-bold text-white">${c.name}</span>
-                </div>
-                <div class="flex items-center gap-3">
-                    <div class="text-right">
-                        <div class="text-[10px] text-gray-500">Mulai</div>
-                        <div class="text-xs font-bold text-gray-300">${startPrice}</div>
-                    </div>
-                    <i class="fa-solid fa-chevron-down text-gray-600 transition-transform duration-300 accordion-icon"></i>
-                </div>
-            </div>
-            <div class="accordion-body hidden bg-[#141416] border-t border-gray-800 p-3 space-y-2">
-                ${renderServerList(c.pricelist, c.number_id, c.name)}
-            </div>
-        </div>`;
-    }).join('');
-}
 function toggleCountryAccordion(el) {
     const p = el.parentElement;
     const b = p.querySelector('.accordion-body');
@@ -538,32 +474,65 @@ function toggleCountryAccordion(el) {
     b.classList.toggle('hidden');
     i.classList.toggle('rotate-180');
 }
-
-function renderServerList(servers, countryId, countryName) {
-    if(!servers || servers.length === 0) return '<div class="text-center text-xs text-red-500 py-2">Stok habis.</div>';
+// --- SELECT COUNTRY ---
+// --- 1. SELECT APP & RENDER NEGARA ---
+async function selectApp(id, name, icon) {
+    nokosData.selectedApp = { id, name, icon };
+    document.getElementById('header-app-name').innerText = name;
+    document.getElementById('header-app-icon').src = icon;
     
-    return servers.map(s => {
-        const itemPrice = s.price;
-        const pId = s.provider_id;
-        const sId = s.server_id || 'Fast';
+    document.getElementById('sheet-view-apps').classList.add('-translate-x-full');
+    document.getElementById('sheet-view-countries').classList.remove('translate-x-full');
+    
+    const list = document.getElementById('list-countries');
+    list.innerHTML = '<div class="text-center py-10"><i class="fa-solid fa-circle-notch fa-spin text-purple-500"></i> Memuat...</div>';
+    
+    try {
+        const res = await fetch(`/api/nokos/countries?service_id=${id}`);
+        const data = await res.json();
+        if(data.success && data.data) { 
+            nokosData.countries = data.data;
+            renderCountries(nokosData.countries);
+        } else {
+            list.innerHTML = '<div class="text-center text-gray-500 py-10">Stok kosong.</div>';
+        }
+    } catch(e) { list.innerHTML = 'Error koneksi.'; }
+}
 
+function renderCountries(countries) {
+    const list = document.getElementById('list-countries');
+    list.innerHTML = countries.map(c => {
+        const cheapest = c.pricelist && c.pricelist.length > 0 ? c.pricelist.sort((a,b) => a.price - b.price)[0] : null;
         return `
-        <div class="flex justify-between items-center p-3 rounded-xl bg-[#1f1f23] border border-gray-800 mb-2">
-            <div class="flex items-center gap-3">
-                <div class="text-[10px] font-mono text-blue-400 bg-blue-900/20 px-1.5 py-0.5 rounded">ID:${pId}</div>
-                <div>
-                    <div class="text-xs font-bold text-white">Server ${sId}</div>
+        <div class="border border-gray-800 rounded-2xl bg-[#1c1c1f] overflow-hidden mb-3">
+            <div onclick="toggleCountryAccordion(this)" class="p-4 flex items-center justify-between cursor-pointer hover:bg-[#25252a]">
+                <div class="flex items-center gap-3">
+                    <img src="${c.img}" class="w-8 h-6 rounded object-cover">
+                    <span class="text-sm font-bold text-white">${c.name}</span>
                 </div>
+                <i class="fa-solid fa-chevron-down text-gray-600 transition-transform duration-300 accordion-icon"></i>
             </div>
-            <div class="flex items-center gap-3">
-                <span class="text-sm font-bold text-white">${s.price_format}</span>
-                <button onclick="openOperatorSelection('${countryId}', '${countryName}', ${itemPrice}, ${pId}, '${sId}')" 
-                    class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition shadow-lg">
-                    Order
-                </button>
+            <div class="accordion-body hidden bg-[#141416] border-t border-gray-800 p-3">
+                ${renderServerList(c.pricelist, c.number_id, c.name)}
             </div>
         </div>`;
     }).join('');
+}
+
+function renderServerList(servers, countryId, countryName) {
+    if(!servers || servers.length === 0) return '<div class="text-red-500 text-xs text-center py-2">Stok habis.</div>';
+    return servers.map(s => `
+        <div class="flex justify-between items-center p-3 rounded-xl bg-[#1f1f23] border border-gray-800 mb-2">
+            <div>
+                <div class="text-xs font-bold text-white">Server ${s.server_id || 'Fast'}</div>
+                <div class="text-[10px] text-gray-500 font-mono">ID:${s.provider_id}</div>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-sm font-bold text-white">${s.price_format}</span>
+                <button onclick="openOperatorSelection('${countryId}', '${countryName}', ${s.price}, ${s.provider_id}, '${s.server_id || 'Fast'}')" 
+                    class="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold px-4 py-2 rounded-lg transition shadow-lg">Order</button>
+            </div>
+        </div>`).join('');
 }
 
 async function openOperatorSelection(countryId, countryName, price, providerId, serverName) {
@@ -645,6 +614,10 @@ async function selectOperatorAndCheckout(opId, opName) {
     } catch (e) { showToast("Error koneksi.", "error"); }
     finally { setTimeout(() => { isTransactionProcessing = false; }, 3000); }
 }
+function closeOperatorSheet() {
+    const s = document.getElementById('sheet-operator');
+    if(s) { s.classList.add('translate-y-full'); setTimeout(() => s.classList.add('hidden'), 300); }
+}
 // --- HISTORY NOKOS ---
 async function fetchNokosHistory() {
     if(!userSession) return;
@@ -693,10 +666,7 @@ async function fetchNokosHistory() {
         }).join('');
     } catch(e) {}
 }
-function closeOperatorSheet() {
-    const s = document.getElementById('sheet-operator');
-    if(s) { s.classList.add('translate-y-full'); setTimeout(() => s.classList.add('hidden'), 300); }
-}
+
 // --- COPY TEXT ---
 function copyText(text, label) {
     if (!text) return;
