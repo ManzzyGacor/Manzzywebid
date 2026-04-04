@@ -26,87 +26,89 @@ function switchView(viewId) {
 }
 
 // login regster
-let isLoginMode = true;
-
-function toggleAuthMode() {
-    isLoginMode = !isLoginMode;
-    const title = document.getElementById('auth-title');
-    const subtitle = document.getElementById('auth-subtitle');
-    const btnPrimary = document.getElementById('btn-auth-primary');
-    const btnToggle = document.getElementById('btn-auth-toggle');
-
-    if (isLoginMode) {
-        title.innerText = "MASUK KE AKUN";
-        subtitle.innerText = "Silakan masuk untuk mulai transaksi.";
-        btnPrimary.innerText = "MASUK SEKARANG";
-        btnToggle.innerText = "Belum punya akun? Daftar";
-    } else {
-        title.innerText = "DAFTAR AKUN";
-        subtitle.innerText = "Buat akun baru Manzzy ID kamu.";
-        btnPrimary.innerText = "DAFTAR SEKARANG";
-        btnToggle.innerText = "Sudah punya akun? Login";
-    }
-}
-
 async function handleAuthSubmit() {
     const u = document.getElementById('auth-username').value;
     const p = document.getElementById('auth-password').value;
-    const endpoint = isLoginMode ? '/api/auth/login' : '/api/auth/register';
+    
+    // Validasi simpel biar gak kosong
+    if (!u || !p) {
+        return alert("Username dan Password wajib diisi!");
+    }
 
+    // PINTU UTAMA: Kita pake satu endpoint /api/auth/submit
+    // isLoginMode ? 'login' : 'register' bakal nentuin status di server
     try {
-        const res = await fetch(endpoint, {
+        const res = await fetch('/api/auth/submit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: u, password: p })
+            body: JSON.stringify({ 
+                username: u, 
+                password: p, 
+                type: isLoginMode ? 'login' : 'register' 
+            })
         });
+        
         const data = await res.json();
 
         if (data.success) {
             if (isLoginMode) {
                 alert("Login Berhasil!");
-                location.reload(); // Reload buat aktifin session & ambil data 'me'
+                // Sesi otomatis tersimpan di cookie browser
+                location.reload(); 
             } else {
                 alert("Pendaftaran Sukses! Silakan Login.");
-                toggleAuthMode();
+                toggleAuthMode(); // Balikin tampilan ke mode Login
             }
         } else {
+            // Munculin pesan error dari server (misal: 'Password salah' atau 'User sudah ada')
             alert(data.msg || "Terjadi kesalahan.");
         }
     } catch (err) {
-        alert("Gagal terhubung ke server.");
+        console.error(err);
+        alert("Gagal terhubung ke server. Pastikan Node.js jalan!");
     }
 }
 
 window.addEventListener('load', async () => {
-    // Update Branding Nama Web dulu
+    // 1. Jalankan Branding (Biar nama web muncul)
     await updateWebBranding();
 
-    const res = await fetch('/api/auth/me');
-    const data = await res.json();
+    try {
+        // 2. Tanya ke Server: "Gue siapa?"
+        const res = await fetch('/api/auth/me');
+        const data = await res.json();
 
-    if (data.login) {
-        // Jika sudah login, tampilkan Home & Footer
-        switchView('home');
-        document.getElementById('main-footer').classList.remove('hidden');
-        
-        // Isi data profil
-        document.getElementById('nokos-username').innerText = data.user.username;
-        document.getElementById('user-balance').innerText = "Rp " + data.user.balance.toLocaleString();
-        document.querySelectorAll('.web-user-display').forEach(el => el.innerText = data.user.username);
-    } else {
-        // Jika belum login, paksa ke halaman Auth & sembunyikan footer
+        if (data.login) {
+            // JIKA LOGIN SUKSES: Timpa tampilan Guest pake data asli
+            document.getElementById('nokos-username').innerText = data.user.username;
+            document.getElementById('user-balance').innerText = "Rp " + data.user.balance.toLocaleString();
+            
+            // Tampilkan menu utama
+            switchView('home');
+            document.querySelector('footer').classList.remove('hidden');
+        } else {
+            // JIKA BELUM LOGIN: Paksa ke halaman Auth
+            switchView('auth');
+            document.querySelector('footer').classList.add('hidden');
+            
+            // Pastikan tampilan header tetap Guest
+            document.getElementById('nokos-username').innerText = "Guest Account";
+            document.getElementById('user-balance').innerText = "Rp 0";
+        }
+    } catch (e) {
+        // Jika server mati, jangan tampilin data palsu
         switchView('auth');
-        document.getElementById('main-footer').classList.add('hidden');
+        console.log("Koneksi ke API Gagal");
     }
 
-    // Hilangkan Loader
+    // 3. Matikan Loader
     setTimeout(() => {
         const loader = document.getElementById('loader');
         if(loader) {
             loader.style.opacity = '0';
             setTimeout(() => loader.style.display = 'none', 700);
         }
-    }, 1500);
+    }, 1000);
 });
 // ADMIN KONTROL
 // Fungsi Update Nama Web secara Dinamis
