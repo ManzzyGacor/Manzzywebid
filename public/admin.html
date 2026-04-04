@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Control - Manzzy ID</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Space Grotesk', sans-serif; background-color: #050505; color: #e0e0e0; }
+        .galaxy-card { background: linear-gradient(145deg, #111114, #09090b); border: 1px solid rgba(139, 92, 246, 0.1); }
+        input { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 10px 15px; color: white; outline: none; }
+        input:focus { border-color: #8b5cf6; }
+        button { transition: all 0.3s ease; }
+        button:active { scale: 0.95; }
+    </style>
+</head>
+<body class="p-5 pb-20">
+
+    <div class="max-w-2xl mx-auto space-y-8">
+        <div class="flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-purple-500"><i class="fa-solid fa-user-gear mr-2"></i>Admin Panel</h1>
+            <a href="index.html" class="text-xs bg-white/5 px-4 py-2 rounded-xl border border-white/10">Back to Web</a>
+        </div>
+
+        <div class="galaxy-card p-6 rounded-[32px] space-y-5">
+            <h2 class="text-sm font-bold uppercase tracking-widest text-gray-400">Konfigurasi Website</h2>
+            <div class="grid gap-4">
+                <div class="flex flex-col">
+                    <label class="text-[10px] uppercase mb-2 ml-1">Nama Website</label>
+                    <input type="text" id="set-web-name" placeholder="Contoh: MANZZY ID">
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] uppercase mb-2 ml-1">Profit Keuntungan (%)</label>
+                    <input type="number" id="set-profit" placeholder="Contoh: 10">
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] uppercase mb-2 ml-1">RumahOTP API Key</label>
+                    <input type="password" id="set-apikey" placeholder="Masukkan API Key v2">
+                </div>
+                <button onclick="saveSettings()" class="bg-purple-600 py-3 rounded-xl font-bold text-sm shadow-lg shadow-purple-900/20">SIMPAN PERUBAHAN</button>
+            </div>
+        </div>
+
+        <div class="galaxy-card p-6 rounded-[32px] space-y-5">
+            <h2 class="text-sm font-bold uppercase tracking-widest text-gray-400">Manajemen User</h2>
+            <div class="flex gap-2">
+                <input type="text" id="search-username" placeholder="Cari username..." class="flex-1">
+                <button onclick="searchUser()" class="bg-white/10 px-6 rounded-xl"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </div>
+
+            <div id="user-result" class="hidden border-t border-white/5 pt-5 space-y-4">
+                <div class="flex justify-between items-center bg-white/5 p-4 rounded-2xl">
+                    <div>
+                        <div class="text-lg font-bold text-white" id="res-name">-</div>
+                        <div class="text-xs text-purple-400" id="res-role">-</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-[10px] text-gray-500 uppercase">Saldo Sekarang</div>
+                        <div class="text-lg font-bold text-green-500" id="res-balance">Rp 0</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="flex flex-col">
+                        <label class="text-[10px] mb-2 uppercase ml-1">Tambah/Kurang Saldo</label>
+                        <input type="number" id="amount-change" placeholder="Contoh: 5000 atau -5000">
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="updateBalance()" class="w-full bg-green-600 py-3 rounded-xl font-bold text-xs">EKSEKUSI SALDO</button>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="userAction('make_admin')" class="flex-1 bg-blue-600/20 border border-blue-500/30 text-blue-400 py-3 rounded-xl font-bold text-[10px] uppercase tracking-wider">Jadikan Admin</button>
+                    <button onclick="userAction('delete')" class="flex-1 bg-red-600/20 border border-red-500/30 text-red-400 py-3 rounded-xl font-bold text-[10px] uppercase tracking-wider">Hapus Akun</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let targetUserId = null;
+
+        async function saveSettings() {
+            const data = {
+                web_name: document.getElementById('set-web-name').value,
+                profit_percent: document.getElementById('set-profit').value,
+                rumahotp_key: document.getElementById('set-apikey').value
+            };
+            const res = await fetch('/api/admin/settings/update', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            if((await res.json()).success) alert("Setting disimpan!");
+        }
+
+        async function searchUser() {
+            const user = document.getElementById('search-username').value;
+            const res = await fetch(`/api/admin/users/search?username=${user}`);
+            const data = await res.json();
+            if(data.success) {
+                targetUserId = data.user._id;
+                document.getElementById('user-result').classList.remove('hidden');
+                document.getElementById('res-name').innerText = data.user.username;
+                document.getElementById('res-role').innerText = data.user.role.toUpperCase();
+                document.getElementById('res-balance').innerText = "Rp " + data.user.balance.toLocaleString();
+            } else {
+                alert("User tidak ditemukan!");
+            }
+        }
+
+        async function updateBalance() {
+            const amount = document.getElementById('amount-change').value;
+            await fetch('/api/admin/users/balance', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ userId: targetUserId, amount: parseInt(amount) })
+            });
+            alert("Saldo diperbarui!");
+            searchUser(); // refresh data
+        }
+
+        async function userAction(action) {
+            if(!confirm("Yakin ingin melakukan tindakan ini?")) return;
+            await fetch('/api/admin/users/action', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ userId: targetUserId, action: action })
+            });
+            alert("Berhasil!");
+            location.reload();
+        }
+
+        // Load current settings on open
+        window.onload = async () => {
+            const res = await fetch('/api/admin/settings');
+            const data = await res.json();
+            document.getElementById('set-web-name').value = data.web_name || "";
+            document.getElementById('set-profit').value = data.profit_percent || 0;
+            document.getElementById('set-apikey').value = data.rumahotp_key || "";
+        };
+    </script>
+</body>
+</html>
