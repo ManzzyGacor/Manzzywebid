@@ -90,16 +90,17 @@ router.post('/buy', async (req, res) => {
             return res.json({ success: false, msg: "Saldo tidak cukup!" });
         }
 
-        // Tembak API v2 RumahOTP (Wajib 3 ID ini)
-        // URL: .../api/v2/orders?number_id=...&provider_id=...&operator_id=...
-        const url = `https://www.rumahotp.io/api/v2/orders?number_id=${numberId}&provider_id=${providerId}&operator_id=${operatorId}`;
-        
-        const response = await axios.get(url, {
-            headers: { 
-                'x-apikey': RUMAHOTP_API_KEY, 
-                'Accept': 'application/json' 
-            }
-        });
+        const response = await axios.get('https://www.rumahotp.io/api/v2/orders', {
+    params: {
+        number_id: numberId,
+        provider_id: providerId,
+        operator_id: (operatorId === 'any') ? 1 : operatorId
+    },
+    headers: { 
+        'x-apikey': RUMAHOTP_API_KEY, 
+        'Accept': 'application/json' 
+    }
+});
 
         const result = response.data;
 
