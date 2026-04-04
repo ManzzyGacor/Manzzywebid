@@ -555,34 +555,31 @@ function filterCountries() {
 
 // --- SELECT OPERATOR & FIX BUTTON STUCK ---
 async function openOperatorSelection(countryId, countryName, price, providerId, serverName) {
-    nokosData.tempServer = { countryId, countryName, price, providerId };
+    // Simpan data ke objek global agar bisa diakses saat Checkout
+    nokosData.tempServer = { 
+        numberId: countryId, // Kita samakan namanya dengan backend
+        countryName: countryName, 
+        price: price, 
+        providerId: providerId 
+    };
     
-    document.getElementById('op-server-info').innerText = `${countryName} • Server ${serverName || 'X'} (ID: ${providerId})`;
+    document.getElementById('op-server-info').innerText = `${countryName} • Server ${serverName || 'Fast'} (ID: ${providerId})`;
     const sheetOp = document.getElementById('sheet-operator');
     const listOp = document.getElementById('list-operators');
     
-    clearTimeout(opSheetTimer); // Stop closing process if any
-
-    // Reset State
+    // UI Animation
     sheetOp.classList.remove('hidden');
     sheetOp.style.display = 'block';
-    
-    // Force Reflow
     void sheetOp.offsetWidth;
+    requestAnimationFrame(() => { sheetOp.classList.remove('translate-y-full'); });
     
-    requestAnimationFrame(() => {
-        sheetOp.classList.remove('translate-y-full');
-    });
-    
-    listOp.innerHTML = '<div class="text-xs text-gray-500 p-2">Memuat operator...</div>';
+    listOp.innerHTML = '<div class="text-xs text-gray-500 p-2"><i class="fa-solid fa-circle-notch fa-spin"></i> Memuat operator...</div>';
     
     try {
         const cNameEnc = encodeURIComponent(countryName);
+        // Pastikan route ini sudah kamu tambah di nokos.js (Langkah 1 di atas)
         const res = await fetch(`/api/nokos/operators?country=${cNameEnc}&provider_id=${providerId}`);
         const data = await res.json();
-        
-        let ops = [];
-        if(data.status || data.success) ops = data.data;
         
         let html = `
         <div onclick="selectOperatorAndCheckout('any', 'Acak / Any')" 
@@ -591,20 +588,20 @@ async function openOperatorSelection(countryId, countryName, price, providerId, 
             <span class="text-[10px] font-bold text-white">ANY</span>
         </div>`;
         
-        if(ops.length > 0) {
-            html += ops.map(op => `
+        if(data.success && data.data.length > 0) {
+            html += data.data.map(op => `
             <div onclick="selectOperatorAndCheckout('${op.id}', '${op.name}')" 
-                 class="min-w-[80px] h-24 bg-[#25252a] border border-gray-700 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-green-500 hover:bg-[#2a2a30] transition snap-start relative overflow-hidden px-2 text-center flex-none">
+                 class="min-w-[80px] h-24 bg-[#25252a] border border-gray-700 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-green-500 hover:bg-[#2a2a30] transition snap-start px-2 text-center flex-none">
                 <img src="${op.image}" onerror="this.style.display='none'" class="w-6 h-6 object-contain">
                 <span class="text-[9px] font-bold text-gray-300 leading-tight line-clamp-2">${op.name}</span>
             </div>`).join('');
         }
-        
         listOp.innerHTML = html;
     } catch(e) { 
-        listOp.innerHTML = '<div class="text-xs text-red-500">Gagal load operator.</div>'; 
+        listOp.innerHTML = '<div class="text-xs text-red-500 p-2">Gagal load operator.</div>'; 
     }
 }
+
 
 function closeOperatorSheet() {
     const sheetOp = document.getElementById('sheet-operator');
@@ -621,29 +618,29 @@ function closeOperatorSheet() {
 let isTransactionProcessing = false;
 
 async function selectOperatorAndCheckout(opId, opName) {
-    // 1. CEK STATUS: Jika sedang proses, tolak klik baru (Anti-Spam)
     if (isTransactionProcessing) return;
 
-    // Konfirmasi User
-    if(!confirm(`Beli ${nokosData.selectedApp.name} (${nokosData.tempServer.countryName})?\nHarga: Rp ${parseInt(nokosData.tempServer.price).toLocaleString()}`)) return;
-    
-    // 2. KUNCI SISTEM (Lock)
-    isTransactionProcessing = true;
+    // Ambil data dari objek global yang diisi di fungsi sebelumnya
+    const server = nokosData.tempServer;
+    const app = nokosData.selectedApp;
 
-    // Tutup UI agar rapi
+    if(!confirm(`Beli ${app.name} (${server.countryName})?\nHarga: Rp ${parseInt(server.price).toLocaleString()}`)) return;
+    
+    isTransactionProcessing = true;
     closeOperatorSheet();
     closeNokosSheet();
-    
-    showToast("Memproses pesanan... Mohon tunggu.", "info");
+    showToast("Memproses pesanan...", "info");
     
     try {
+        // PAYLOAD DISESUAIKAN DENGAN BACKEND (nokos.js)
         const payload = {
-            username: userSession,
-            service_id: nokosData.selectedApp.id,
-            service_name: nokosData.selectedApp.name,
-            number_id: nokosData.tempServer.countryId,
-            provider_id: nokosData.tempServer.providerId,
-            operator_id: opId
+            username: localStorage.getItem('user_session'),
+            numberId: server.numberId,
+            providerId: server.providerId,
+            operatorId: opId,
+            serviceName: app.name,
+            countryName: server.countryName,
+            userPrice: parseInt(server.price)
         };
         
         const res = await fetch('/api/nokos/buy', { 
@@ -654,23 +651,16 @@ async function selectOperatorAndCheckout(opId, opName) {
         const d = await res.json();
         
         if(d.success) {
-            showToast("✅ Order Berhasil!", "success");
-            checkUserLogin();
-            fetchNokosHistory();
+            showToast("✅ Order Berhasil! Silakan cek menu history.", "success");
+            if (typeof checkUserLogin === "function") checkUserLogin();
+            if (typeof fetchNokosHistory === "function") fetchNokosHistory();
         } else {
-            // Tampilkan pesan error spesifik
-            let msg = d.msg || "Gagal memproses pesanan.";
-            if (msg.includes("spam")) msg = "Sabar! Jangan spam klik.";
-            showToast(msg, "error");
+            showToast(d.msg || "Gagal memproses pesanan.", "error");
         }
     } catch(e) { 
         showToast("Gagal terhubung ke server.", "error"); 
     } finally {
-        // 3. BUKA KUNCI (Unlock) SETELAH 3 DETIK
-        // Kita kasih delay 3 detik extra biar user napas dulu (Cooldown)
-        setTimeout(() => {
-            isTransactionProcessing = false;
-        }, 3000);
+        setTimeout(() => { isTransactionProcessing = false; }, 3000);
     }
 }
 // --- HISTORY NOKOS ---
