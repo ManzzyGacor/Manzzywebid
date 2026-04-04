@@ -555,30 +555,34 @@ function filterCountries() {
 
 // --- SELECT OPERATOR & FIX BUTTON STUCK ---
 async function openOperatorSelection(countryId, countryName, price, providerId, serverName) {
-    // Simpan data ke objek global agar bisa diakses saat Checkout
+    // FIX: Paksa semua ID dan Price menjadi tipe Number agar tidak NaN di backend
     nokosData.tempServer = { 
-        numberId: countryId, // Kita samakan namanya dengan backend
+        numberId: Number(countryId), 
         countryName: countryName, 
-        price: price, 
-        providerId: providerId 
+        price: Number(price), 
+        providerId: Number(providerId) 
     };
     
-    document.getElementById('op-server-info').innerText = `${countryName} • Server ${serverName || 'Fast'} (ID: ${providerId})`;
+    // Debugging di Console Browser (Tekan F12 untuk cek ini jalan atau tidak)
+    console.log("Data Tersimpan di Frontend:", nokosData.tempServer);
+
+    // Update UI Info
+    const infoEl = document.getElementById('op-server-info');
+    if(infoEl) infoEl.innerText = `${countryName} • Server ${serverName || 'Fast'} (ID: ${providerId})`;
+    
     const sheetOp = document.getElementById('sheet-operator');
     const listOp = document.getElementById('list-operators');
     
-    // UI Animation
-    sheetOp.classList.remove('hidden');
+    // Reset & Tampilkan Sheet
+    sheetOp.classList.remove('hidden', 'translate-y-full');
     sheetOp.style.display = 'block';
-    void sheetOp.offsetWidth;
-    requestAnimationFrame(() => { sheetOp.classList.remove('translate-y-full'); });
     
-    listOp.innerHTML = '<div class="text-xs text-gray-500 p-2"><i class="fa-solid fa-circle-notch fa-spin"></i> Memuat operator...</div>';
+    listOp.innerHTML = '<div class="text-xs text-gray-500 p-4"><i class="fa-solid fa-circle-notch fa-spin text-blue-500"></i> Memuat operator...</div>';
     
     try {
         const cNameEnc = encodeURIComponent(countryName);
-        // Pastikan route ini sudah kamu tambah di nokos.js (Langkah 1 di atas)
-        const res = await fetch(`/api/nokos/operators?country=${cNameEnc}&provider_id=${providerId}`);
+        // Pastikan provider_id dikirim sebagai angka murni
+        const res = await fetch(`/api/nokos/operators?country=${cNameEnc}&provider_id=${Number(providerId)}`);
         const data = await res.json();
         
         let html = `
@@ -588,7 +592,7 @@ async function openOperatorSelection(countryId, countryName, price, providerId, 
             <span class="text-[10px] font-bold text-white">ANY</span>
         </div>`;
         
-        if(data.success && data.data.length > 0) {
+        if(data.success && data.data && data.data.length > 0) {
             html += data.data.map(op => `
             <div onclick="selectOperatorAndCheckout('${op.id}', '${op.name}')" 
                  class="min-w-[80px] h-24 bg-[#25252a] border border-gray-700 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-green-500 hover:bg-[#2a2a30] transition snap-start px-2 text-center flex-none">
@@ -598,10 +602,10 @@ async function openOperatorSelection(countryId, countryName, price, providerId, 
         }
         listOp.innerHTML = html;
     } catch(e) { 
-        listOp.innerHTML = '<div class="text-xs text-red-500 p-2">Gagal load operator.</div>'; 
+        console.error("Error Load Operator:", e);
+        listOp.innerHTML = '<div class="text-xs text-red-500 p-4">Gagal memuat daftar operator.</div>'; 
     }
 }
-
 
 function closeOperatorSheet() {
     const sheetOp = document.getElementById('sheet-operator');
