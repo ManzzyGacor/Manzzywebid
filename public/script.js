@@ -624,9 +624,17 @@ let isTransactionProcessing = false;
 async function selectOperatorAndCheckout(opId, opName) {
     if (isTransactionProcessing) return;
 
-    // Ambil data dari objek global yang diisi di fungsi sebelumnya
+    // 1. Ambil data dari objek global
+    // Pastikan variabel 'nokosData' sudah dideklarasikan di baris paling atas script.js
     const server = nokosData.tempServer;
     const app = nokosData.selectedApp;
+
+    // PROTEKSI: Cek apakah data server benar-benar ada
+    if (!server || !server.numberId || !server.providerId) {
+        console.error("Data server tidak ditemukan!", server);
+        showToast("Error: Sesi pemilihan kadaluarsa, silakan pilih ulang negara.", "error");
+        return;
+    }
 
     if(!confirm(`Beli ${app.name} (${server.countryName})?\nHarga: Rp ${parseInt(server.price).toLocaleString()}`)) return;
     
@@ -636,32 +644,37 @@ async function selectOperatorAndCheckout(opId, opName) {
     showToast("Memproses pesanan...", "info");
     
     try {
-        // PAYLOAD DISESUAIKAN DENGAN BACKEND (nokos.js)
+        // 2. Susun Payload dengan konversi paksa ke Number di sini
         const payload = {
             username: localStorage.getItem('user_session'),
-            numberId: server.numberId,
-            providerId: server.providerId,
-            operatorId: opId,
+            numberId: Number(server.numberId),
+            providerId: Number(server.providerId),
+            operatorId: opId === 'any' ? 1 : Number(opId),
             serviceName: app.name,
             countryName: server.countryName,
-            userPrice: parseInt(server.price)
+            userPrice: Number(server.price)
         };
         
+        // Debugging Browser: Cek di Console (F12) apakah masih ada NaN
+        console.log("Payload dikirim:", payload);
+
         const res = await fetch('/api/nokos/buy', { 
-            method:'POST', 
-            headers:{'Content-Type':'application/json'}, 
-            body:JSON.stringify(payload)
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify(payload)
         });
+        
         const d = await res.json();
         
-        if(d.success) {
-            showToast("✅ Order Berhasil! Silakan cek menu history.", "success");
+        if (d.success) {
+            showToast("✅ Order Berhasil! Nomor Anda sedang diproses.", "success");
             if (typeof checkUserLogin === "function") checkUserLogin();
             if (typeof fetchNokosHistory === "function") fetchNokosHistory();
         } else {
             showToast(d.msg || "Gagal memproses pesanan.", "error");
         }
-    } catch(e) { 
+    } catch (e) { 
+        console.error("Fetch Error:", e);
         showToast("Gagal terhubung ke server.", "error"); 
     } finally {
         setTimeout(() => { isTransactionProcessing = false; }, 3000);
