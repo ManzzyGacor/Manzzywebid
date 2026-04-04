@@ -526,6 +526,18 @@ function renderCountries(countries) {
         </div>`;
     }).join('');
 }
+function toggleCountryAccordion(el) {
+    const p = el.parentElement;
+    const b = p.querySelector('.accordion-body');
+    const i = p.querySelector('.accordion-icon');
+    
+    // Tutup yang lain (opsional)
+    document.querySelectorAll('.accordion-body').forEach(box => { if(box!==b) box.classList.add('hidden'); });
+    document.querySelectorAll('.accordion-icon').forEach(icon => { if(icon!==i) icon.classList.remove('rotate-180'); });
+    
+    b.classList.toggle('hidden');
+    i.classList.toggle('rotate-180');
+}
 
 function renderServerList(servers, countryId, countryName) {
     if(!servers || servers.length === 0) return '<div class="text-center text-xs text-red-500 py-2">Stok habis.</div>';
