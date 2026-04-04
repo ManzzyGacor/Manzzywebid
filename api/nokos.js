@@ -88,9 +88,9 @@ router.post('/buy', async (req, res) => {
         const serviceName = req.body.service_name || req.body.serviceName;
         const countryName = req.body.country_name || req.body.countryName || req.body.country;
         
-        // Ambil harga dan pastikan jadi angka murni
-        const rawPrice = req.body.userPrice || req.body.user_price || req.body.price;
-        const priceToPay = Number(rawPrice);
+let rawPrice = req.body.userPrice || req.body.user_price || req.body.price;
+
+let priceToPay = Number(String(rawPrice).replace(/[^0-9]/g, '')); 
 
         const rawNumberId = req.body.number_id || req.body.numberId;
         const rawProviderId = req.body.provider_id || req.body.providerId;
@@ -103,7 +103,7 @@ router.post('/buy', async (req, res) => {
         // 2. VALIDASI KRUSIAL (Mencegah NaN masuk ke Database)
         if (isNaN(priceToPay) || isNaN(finalNumberId) || isNaN(finalProviderId)) {
             console.error("🚫 STOP! Ada data NaN:", { priceToPay, finalNumberId, finalProviderId });
-            return res.json({ success: false, msg: "Data transaksi tidak valid (NaN)." });
+            return res.json({ success: false, msg: "Kesalahan pada sistem server." });
         }
 
         const user = await User.findOne({ username });
