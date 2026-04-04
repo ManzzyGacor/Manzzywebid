@@ -83,41 +83,48 @@ router.post('/buy', async (req, res) => {
     try {
         await connectDB();
         
-        // Ambil data dari body (kita terima dua versi: underscore & camelCase)
+        // 1. Ambil data & Paksa ke Tipe Number yang benar
         const username = req.body.username;
         const serviceName = req.body.service_name || req.body.serviceName;
         const countryName = req.body.country_name || req.body.countryName || req.body.country;
-        const userPrice = req.body.user_price || req.body.userPrice || req.body.price;
+        
+        // Ambil harga dan pastikan jadi angka murni
+        const rawPrice = req.body.userPrice || req.body.user_price || req.body.price;
+        const priceToPay = Number(rawPrice);
 
-        // FIX KRUSIAL: Ambil ID baik yang pakai underscore maupun tidak
         const rawNumberId = req.body.number_id || req.body.numberId;
         const rawProviderId = req.body.provider_id || req.body.providerId;
         const rawOperatorId = req.body.operator_id || req.body.operatorId;
 
-        // Paksa jadi Angka
         const finalNumberId = Number(rawNumberId);
         const finalProviderId = Number(rawProviderId);
         const finalOperatorId = (rawOperatorId === 'any' || !rawOperatorId) ? 1 : Number(rawOperatorId);
 
-        // Cek lagi apakah masih NaN
-        if (isNaN(finalNumberId) || isNaN(finalProviderId)) {
-            console.error("DATA TETAP NaN! Isi Body:", req.body);
-            return res.json({ success: false, msg: "Data ID tidak valid (NaN)." });
+        // 2. VALIDASI KRUSIAL (Mencegah NaN masuk ke Database)
+        if (isNaN(priceToPay) || isNaN(finalNumberId) || isNaN(finalProviderId)) {
+            console.error("🚫 STOP! Ada data NaN:", { priceToPay, finalNumberId, finalProviderId });
+            return res.json({ success: false, msg: "Data transaksi tidak valid (NaN)." });
         }
 
         const user = await User.findOne({ username });
-        if (!user || user.balance < userPrice) {
+        if (!user) return res.json({ success: false, msg: "User tidak ditemukan." });
+        
+        // Pastikan saldo user juga angka
+        const currentBalance = Number(user.balance) || 0;
+
+        if (currentBalance < priceToPay) {
             return res.json({ success: false, msg: "Saldo tidak cukup!" });
         }
 
-        // Tembak ke RumahOTP v2
+        // 3. Tembak ke RumahOTP v2
         const url = `https://www.rumahotp.io/api/v2/orders?number_id=${finalNumberId}&provider_id=${finalProviderId}&operator_id=${finalOperatorId}`;
         const response = await axios.get(url, {
             headers: { 'x-apikey': RUMAHOTP_API_KEY, 'Accept': 'application/json' }
         });
 
         if (response.data.success) {
-            user.balance -= userPrice;
+            // 4. POTONG SALDO (Gunakan rumus yang aman dari NaN)
+            user.balance = currentBalance - priceToPay; 
             await user.save();
 
             const newTx = new NokosTx({
@@ -127,21 +134,21 @@ router.post('/buy', async (req, res) => {
                 serviceName: serviceName,
                 countryName: countryName,
                 phoneNumber: response.data.data.phone_number,
-                price: userPrice,
+                price: priceToPay,
                 status: 'waiting',
                 expiresAt: new Date(Date.now() + 15 * 60000)
             });
             await newTx.save();
+            
             res.json({ success: true, data: newTx });
         } else {
             res.json({ success: false, msg: response.data.msg || "Gagal ambil nomor" });
         }
     } catch (e) {
         console.error("Order Error:", e.message);
-        res.json({ success: false, msg: "Gangguan koneksi provider" });
+        res.json({ success: false, msg: "Terjadi kesalahan sistem." });
     }
 });
-
 // [STEP 2.5] DAFTAR OPERATOR (v2)
 router.get('/operators', async (req, res) => {
     try {
