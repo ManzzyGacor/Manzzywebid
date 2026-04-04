@@ -528,13 +528,18 @@ function renderCountries(countries) {
     }).join('');
 }
 
+// --- RENDER LIST SERVER (SINKRON) ---
 function renderServerList(servers, countryId, countryName) {
-    if(!servers || servers.length === 0) return '<div class="text-center text-xs text-red-500">Stok habis.</div>';
+    if(!servers || servers.length === 0) return '<div class="text-center text-xs text-red-500 py-2">Stok habis.</div>';
     
-    return servers.map(s => `
-        <div class="flex justify-between items-center p-3 rounded-xl bg-[#1f1f23] border border-gray-800">
+    return servers.map(s => {
+        const itemPrice = s.price;
+        const pId = s.provider_id;
+        // PENTING: Gunakan kutip satu (') untuk membungkus countryName agar tidak undefined
+        return `
+        <div class="flex justify-between items-center p-3 rounded-xl bg-[#1f1f23] border border-gray-800 mb-2">
             <div class="flex items-center gap-3">
-                <div class="text-[10px] font-mono text-blue-400 bg-blue-900/20 px-1.5 py-0.5 rounded">ID:${s.provider_id}</div>
+                <div class="text-[10px] font-mono text-blue-400 bg-blue-900/20 px-1.5 py-0.5 rounded">ID:${pId}</div>
                 <div>
                     <div class="text-xs font-bold text-white">Server ${s.server_id || 'Fast'}</div>
                     <div class="text-[10px] text-gray-500">Stok: ${s.stock}</div>
@@ -542,14 +547,16 @@ function renderServerList(servers, countryId, countryName) {
             </div>
             <div class="flex items-center gap-3">
                 <span class="text-sm font-bold text-white">${s.price_format}</span>
-                <button onclick="openOperatorSelection('${countryId}', '${countryName}', ${s.price}, '${s.provider_id}', '${s.server_id || 'Fast'}')" 
-                    class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition shadow-lg shadow-blue-900/30">
+                <button onclick="openOperatorSelection('${countryId}', '${countryName}', ${itemPrice}, ${pId}, '${s.server_id || 'Fast'}')" 
+                    class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition shadow-lg">
                     Order
                 </button>
             </div>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 }
+
+
 
 function filterCountries() {
     const k = document.getElementById('searchCountryInput').value.toLowerCase();
@@ -558,31 +565,25 @@ function filterCountries() {
 }
 
 // --- SELECT OPERATOR & FIX BUTTON STUCK ---
+// --- SIMPAN DATA KE TAS GLOBAL ---
 async function openOperatorSelection(countryId, countryName, price, providerId, serverName) {
-    // Simpan ke Global Object
+    // Gunakan 'tempServer' sebagai satu-satunya tas penyimpan
     nokosData.tempServer = { 
-        numberId: countryId, 
-        countryName: countryName, 
+        number_id: countryId, 
+        country_name: countryName, 
         price: Number(price), 
-        providerId: providerId 
+        provider_id: providerId 
     };
     
-    console.log("Data Tersimpan:", nokosData.tempServer);
-
-    const infoEl = document.getElementById('op-server-info');
-    if(infoEl) infoEl.innerText = `${countryName} • Server ${serverName}`;
-    
+    document.getElementById('op-server-info').innerText = `${countryName} • Server ${serverName}`;
     const sheetOp = document.getElementById('sheet-operator');
-    if(sheetOp) {
-        sheetOp.classList.remove('hidden');
-        sheetOp.style.display = 'block';
-    }
+    sheetOp.classList.remove('hidden');
+    sheetOp.style.display = 'block';
     
-    // Panggil fungsi load operator kamu di sini
-    if (typeof loadOperators === 'function') {
-        loadOperators(countryName, providerId);
-    }
+    // Load Operators (Sesuai fungsi kamu sebelumnya)
+    loadOperators(countryName, providerId); 
 }
+
     try {
         // Gunakan parameter yang sudah pasti angka
         const res = await fetch(`/api/nokos/operators?country=${encodeURIComponent(countryName)}&provider_id=${nokosData.tempServer.providerId}`);
@@ -614,32 +615,35 @@ function closeOperatorSheet() {
 // Variable Global untuk mencegah spam klik
 let isTransactionProcessing = false;
 
+// --- PROSES BELI (ANTI-NAN & ANTI-UNDEFINED) ---
 async function selectOperatorAndCheckout(opId, opName) {
     if (isTransactionProcessing) return;
 
-    const server = nokosData.tempServer;
+    const data = nokosData.tempServer;
     const app = nokosData.selectedApp;
 
-    // Cek data sebelum lanjut
-    if (!server || !server.countryName) {
-        showToast("Gagal: Data tidak lengkap, silakan pilih ulang.", "error");
+    // Proteksi data kosong
+    if (!data || !data.country_name || data.price <= 0) {
+        showToast("Gagal: Data tidak lengkap, pilih ulang negara.", "error");
         return;
     }
 
-    if(!confirm(`Beli ${app.name} (${server.countryName})?\nHarga: Rp ${Number(server.price).toLocaleString()}`)) return;
+    if(!confirm(`Beli ${app.name} (${data.country_name})?\nHarga: Rp ${data.price.toLocaleString()}`)) return;
     
     isTransactionProcessing = true;
+    closeOperatorSheet();
+    closeNokosSheet();
     showToast("Memproses pesanan...", "info");
     
     try {
         const payload = {
             username: localStorage.getItem('user_session'),
-            numberId: server.numberId,
-            providerId: server.providerId,
-            operatorId: opId,
-            serviceName: app.name,
-            countryName: server.countryName,
-            userPrice: server.price
+            service_name: app.name,
+            number_id: data.number_id,
+            provider_id: data.provider_id,
+            operator_id: opId === 'any' ? 1 : opId,
+            country_name: data.country_name,
+            user_price: data.price
         };
         
         const res = await fetch('/api/nokos/buy', { 
@@ -651,15 +655,15 @@ async function selectOperatorAndCheckout(opId, opName) {
         const d = await res.json();
         if (d.success) {
             showToast("✅ Order Berhasil!", "success");
-            checkUserLogin(); // Update Saldo
-            fetchNokosHistory(); // Update History
+            checkUserLogin(); 
+            fetchNokosHistory();
         } else {
             showToast(d.msg || "Gagal memproses.", "error");
         }
     } catch (e) { 
         showToast("Gagal terhubung ke server.", "error"); 
     } finally {
-        isTransactionProcessing = false;
+        setTimeout(() => { isTransactionProcessing = false; }, 3000);
     }
 }
 // --- HISTORY NOKOS ---
