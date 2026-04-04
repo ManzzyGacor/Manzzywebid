@@ -643,7 +643,7 @@ async function selectOperatorAndCheckout(opId, opName) {
             providerId: Number(server.providerId),
             operatorId: opId === 'any' ? 1 : Number(opId),
             serviceName: app.name,
-            countryName: server.countryName,
+            countryName: s.countryName,
             userPrice: Number(server.price)
         };
         
