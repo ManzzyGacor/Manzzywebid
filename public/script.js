@@ -474,17 +474,17 @@ async function selectApp(id, name, icon) {
     list.innerHTML = '<div class="text-center py-10"><i class="fa-solid fa-circle-notch fa-spin text-purple-500"></i> Memuat Data...</div>';
     
     try {
-        // Panggil API (Kunci serviceId harus sama dengan req.query di nokos.js)
-        const res = await fetch(`/api/nokos/countries?serviceId=${id}`);
+        // Gunakan 'service_id' agar pasti cocok dengan standar RumahOTP & fleksibilitas backend kita
+        const res = await fetch(`/api/nokos/countries?service_id=${id}`);
         const data = await res.json();
         
         if(data.success && data.data) { 
             nokosData.countries = data.data;
             renderCountries(nokosData.countries);
         } else {
-            list.innerHTML = '<div class="text-center text-gray-500 py-10">Gagal memuat negara atau stok kosong.</div>';
+            document.getElementById('list-countries').innerHTML = '<div class="text-center text-gray-500 py-10">Stok sedang kosong untuk aplikasi ini.</div>';
         }
-    } catch(e) { 
+    } catch(e) {
         list.innerHTML = '<div class="text-center text-red-500 py-10">Error koneksi server.</div>';
     }
 }
