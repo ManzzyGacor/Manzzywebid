@@ -523,21 +523,22 @@ function renderServerList(servers, countryId, countryName) {
     if(!servers || servers.length === 0) return '<div class="text-center text-[10px] text-red-500 py-2">Stok habis.</div>';
     
     return servers.map(s => {
-        // Ambil harga murni (angka)
-        const purePrice = Number(s.price);
+        const itemPrice = s.price;
+        const pId = s.provider_id;
+        const sId = s.server_id || 'Fast';
 
         return `
         <div class="flex justify-between items-center p-3 rounded-xl bg-[#1f1f23] border border-gray-800">
             <div class="flex items-center gap-3">
-                <div class="text-[10px] font-mono text-blue-400 bg-blue-900/20 px-1.5 py-0.5 rounded">ID:${s.provider_id}</div>
+                <div class="text-[10px] font-mono text-blue-400 bg-blue-900/20 px-1.5 py-0.5 rounded">ID:${pId}</div>
                 <div>
-                    <div class="text-xs font-bold text-white">Server ${s.server_id || 'Fast'}</div>
+                    <div class="text-xs font-bold text-white">Server ${sId}</div>
                 </div>
             </div>
             <div class="flex items-center gap-3">
                 <span class="text-sm font-bold text-white">${s.price_format}</span>
-                <button onclick="openOperatorSelection(${countryId}, '${countryName}', ${purePrice}, ${s.provider_id}, '${s.server_id || 'Fast'}')" 
-                    class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition">
+                <button onclick="openOperatorSelection('${countryId}', '${countryName}', ${itemPrice}, ${pId}, '${sId}')" 
+                    class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition shadow-lg shadow-blue-900/30">
                     Order
                 </button>
             </div>
@@ -553,25 +554,25 @@ function filterCountries() {
 
 // --- SELECT OPERATOR & FIX BUTTON STUCK ---
 async function openOperatorSelection(countryId, countryName, price, providerId, serverName) {
-    // Simpan ke nokosData.tempServer (Ini adalah 'Tas' penyimpan data sementara)
+    // Simpan ke data global agar tidak undefined saat checkout
     nokosData.tempServer = { 
-    numberId: countryId, 
-    countryName: countryName, 
-    price: price, 
-    providerId: providerId 
-};
+        numberId: countryId, 
+        countryName: countryName, 
+        price: price, 
+        providerId: providerId 
+    };
     
-    // Cek di Console Browser (F12) apakah datanya muncul atau NaN/Undefined
-    console.log("Data Siap Beli:", nokosData.tempServer);
-
-    document.getElementById('op-server-info').innerText = `${countryName} • Server ${serverName} (ID: ${providerId})`;
+    const infoEl = document.getElementById('op-server-info');
+    if(infoEl) infoEl.innerText = `${countryName} • Server ${serverName} (ID: ${providerId})`;
     
-    // Tampilkan Sheet Operator
     const sheetOp = document.getElementById('sheet-operator');
-    sheetOp.classList.remove('hidden');
-    sheetOp.style.display = 'block';
+    if(sheetOp) {
+        sheetOp.classList.remove('hidden');
+        sheetOp.style.display = 'block';
+    }
     
-    // ... sisa kode fetch operator kamu ...
+    // Load Daftar Operator
+    loadOperators(countryName, providerId);
 }
     try {
         // Gunakan parameter yang sudah pasti angka
@@ -607,40 +608,31 @@ let isTransactionProcessing = false;
 async function selectOperatorAndCheckout(opId, opName) {
     if (isTransactionProcessing) return;
 
-    // 1. Ambil data dari objek global
     const server = nokosData.tempServer;
     const app = nokosData.selectedApp;
 
-    // 2. PROTEKSI KETAT: Cek apakah variabel 'server' ada isinya
-    if (!server || !server.numberId || !server.countryName || !server.price) {
-        console.error("Data server tidak lengkap!", server);
-        showToast("Gagal: Sesi pemilihan kadaluarsa, silakan pilih ulang negara.", "error");
+    // Cek data sebelum lanjut
+    if (!server || !server.countryName) {
+        showToast("Gagal: Data tidak lengkap, silakan pilih ulang.", "error");
         return;
     }
 
-    // Konfirmasi Beli
-    const confirmMsg = `Beli ${app.name} (${server.countryName})?\nHarga: Rp ${Number(server.price).toLocaleString()}`;
-    if(!confirm(confirmMsg)) return;
+    if(!confirm(`Beli ${app.name} (${server.countryName})?\nHarga: Rp ${Number(server.price).toLocaleString()}`)) return;
     
     isTransactionProcessing = true;
-    closeOperatorSheet();
-    closeNokosSheet();
     showToast("Memproses pesanan...", "info");
     
     try {
-        // 3. Susun Payload (Gunakan variabel 'server' secara konsisten)
         const payload = {
             username: localStorage.getItem('user_session'),
-            numberId: Number(server.numberId),
-            providerId: Number(server.providerId),
-            operatorId: opId === 'any' ? 1 : Number(opId),
+            numberId: server.numberId,
+            providerId: server.providerId,
+            operatorId: opId,
             serviceName: app.name,
-            countryName: server.countryName, // FIX: Pakai 'server', bukan 's'
-            userPrice: Number(server.price)  // FIX: Pakai 'server', bukan 's'
+            countryName: server.countryName,
+            userPrice: server.price
         };
         
-        console.log("Payload dikirim ke backend:", payload);
-
         const res = await fetch('/api/nokos/buy', { 
             method: 'POST', 
             headers: { 'Content-Type': 'application/json' }, 
@@ -648,19 +640,17 @@ async function selectOperatorAndCheckout(opId, opName) {
         });
         
         const d = await res.json();
-        
         if (d.success) {
-            showToast("✅ Order Berhasil! Silakan cek menu Riwayat.", "success");
-            if (typeof checkUserLogin === "function") checkUserLogin();
-            if (typeof fetchNokosHistory === "function") fetchNokosHistory();
+            showToast("✅ Order Berhasil!", "success");
+            checkUserLogin(); // Update Saldo
+            fetchNokosHistory(); // Update History
         } else {
-            showToast(d.msg || "Gagal memproses pesanan.", "error");
+            showToast(d.msg || "Gagal memproses.", "error");
         }
     } catch (e) { 
-        console.error("Fetch Error:", e);
         showToast("Gagal terhubung ke server.", "error"); 
     } finally {
-        setTimeout(() => { isTransactionProcessing = false; }, 3000);
+        isTransactionProcessing = false;
     }
 }
 // --- HISTORY NOKOS ---
