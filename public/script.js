@@ -971,115 +971,116 @@ document.addEventListener('click', function(e) {
 // ============================================
 // 9. LIVE SOCIAL PROOF (REAL DATA DARI DATABASE)
 // ============================================
-let liveQueue = []; // Antrean notifikasi
-let isFetching = false;
 
+let liveQueue = [];     // Penampung data dari server
+let queueIndex = 0;     // Penunjuk giliran data
+
+// 1. Ambil Data Real dari Server Backend
 async function fetchRealActivities() {
-    if (isFetching) return;
-    isFetching = true;
-    
     try {
-        // Ambil data aktivitas terbaru dari server
         const res = await fetch('/api/public/recent-activities');
         const data = await res.json();
         
-        if (Array.isArray(data) && data.length > 0) {
-            // Masukkan data ke antrean, tapi jangan duplikat
-            // Kita simpan maksimal 20 data terakhir di memory browser
+        if (data && data.length > 0) {
             liveQueue = data;
+            // Reset index jika data berubah drastis
+            if (queueIndex >= liveQueue.length) queueIndex = 0;
         }
     } catch (e) {
-        console.error("Gagal mengambil notifikasi live");
-    } finally {
-        isFetching = false;
+        console.log("Menunggu data live...");
     }
-}
-
-// 1. Inisialisasi Elemen Notifikasi (Jalankan sekali saja)
-function setupNotifElement() {
-    if(document.getElementById('live-notification')) return;
-    
-    const div = document.createElement('div');
-    div.id = 'live-notification';
-    // Gunakan transition-all untuk animasi slide & fade yang smooth
-    div.className = "fixed bottom-5 left-5 z-50 flex flex-col gap-2 pointer-events-none transition-all duration-700 transform translate-y-20 opacity-0";
-    div.innerHTML = `
-        <div id="notif-card" class="glass-card p-3 rounded-xl border-l-4 flex items-center gap-3 w-72 shadow-2xl bg-black/90 backdrop-blur-md border-white/10">
-            <div id="notif-icon-bg" class="w-10 h-10 rounded-full flex items-center justify-center shrink-0">
-                <i id="notif-icon" class="fa-solid"></i>
-            </div>
-            <div>
-                <h4 id="notif-title" class="text-xs font-bold text-white mb-0.5">Aktivitas</h4>
-                <p id="notif-desc" class="text-[10px] text-gray-300 leading-tight line-clamp-2">Memuat...</p>
-                <p id="notif-time" class="text-[9px] text-gray-500 mt-1 font-mono">Baru saja</p>
-            </div>
-        </div>`;
-    document.body.appendChild(div);
 }
 
 // 2. Tampilkan Notifikasi (Satu per satu)
 function showLiveNotification() {
+    // Kalau belum ada data transaksi, jangan muncul dulu
     if (liveQueue.length === 0) return;
 
-    setupNotifElement(); // Pastikan elemen ada
-
+    // Ambil data antrian
     const item = liveQueue[queueIndex];
-    const container = document.getElementById('live-notification');
-    const card = document.getElementById('notif-card');
-    const iconBg = document.getElementById('notif-icon-bg');
-    const icon = document.getElementById('notif-icon');
-    const title = document.getElementById('notif-title');
+    
+    // Buat elemen HTML jika belum ada
+    if(!document.getElementById('live-notification')) {
+        const div = document.createElement('div');
+        div.id = 'live-notification';
+        div.className = "fixed bottom-5 left-5 z-50 flex flex-col gap-2 pointer-events-none transition-all duration-500 transform translate-y-20 opacity-0";
+        div.innerHTML = `
+            <div class="glass-card p-3 rounded-xl border-l-4 flex items-center gap-3 w-72 shadow-2xl bg-black/90 backdrop-blur-md border-white/10">
+                <div id="notif-icon-bg" class="w-10 h-10 rounded-full flex items-center justify-center shrink-0">
+                    <i id="notif-icon"></i>
+                </div>
+                <div>
+                    <h4 id="notif-title" class="text-xs font-bold text-white mb-0.5">Title</h4>
+                    <p id="notif-desc" class="text-[10px] text-gray-300 leading-tight line-clamp-2">Desc</p>
+                    <p id="notif-time" class="text-[9px] text-gray-500 mt-1 font-mono">Baru saja</p>
+                </div>
+            </div>`;
+        document.body.appendChild(div);
+    }
 
-    // Update Konten
+    const container = document.getElementById('live-notification');
+    const cardEl = container.querySelector('.glass-card');
+    const iconBg = document.getElementById('notif-icon-bg');
+    const iconEl = document.getElementById('notif-icon');
+    
+    // Isi Konten dengan Data Asli
     document.getElementById('notif-desc').innerText = `${item.user} • ${item.desc}`;
     document.getElementById('notif-time').innerText = timeAgo(item.time);
 
-    // Reset dan Set Style berdasarkan Tipe
+    // Ganti Style Sesuai Tipe (Beli / Topup)
     if (item.type === 'topup') {
-        title.innerText = "Deposit Masuk";
-        card.style.borderLeftColor = "#22c55e"; // green-500
+        document.getElementById('notif-title').innerText = "Deposit Masuk";
+        cardEl.className = "glass-card p-3 rounded-xl border-l-4 border-l-green-500 flex items-center gap-3 w-72 shadow-2xl bg-black/90 backdrop-blur-md border-white/10";
         iconBg.className = "w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 shrink-0";
-        icon.className = "fa-solid fa-wallet";
+        iconEl.className = "fa-solid fa-wallet";
     } else {
-        title.innerText = "Pembelian Sukses";
-        card.style.borderLeftColor = "#a855f7"; // purple-500
+        document.getElementById('notif-title').innerText = "Pembelian Sukses";
+        cardEl.className = "glass-card p-3 rounded-xl border-l-4 border-l-purple-500 flex items-center gap-3 w-72 shadow-2xl bg-black/90 backdrop-blur-md border-white/10";
         iconBg.className = "w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 shrink-0";
-        icon.className = "fa-solid fa-cart-shopping";
+        iconEl.className = "fa-solid fa-cart-shopping";
     }
 
-    // Tampilkan
+    // Animasi Masuk (Slide Up)
     container.classList.remove('translate-y-20', 'opacity-0');
     
-    // Sembunyikan setelah 5 detik
+    // Animasi Keluar (Slide Down) setelah 4 detik
     setTimeout(() => { 
         container.classList.add('translate-y-20', 'opacity-0'); 
-    }, 5000);
+    }, 4000);
 
-    // Maju ke antrean berikutnya
+    // Pindah ke data berikutnya (Looping)
     queueIndex = (queueIndex + 1) % liveQueue.length;
 }
 
-// 3. Start Loop
-function startLiveNotif() {
-    setupNotifElement(); // Buat elemen di awal
-    fetchRealActivities(); // Ambil data
-    
-    // Tarik data baru tiap 1 menit saja (biar VPS gak overheat)
-    setInterval(fetchRealActivities, 60000);
+// Helper Waktu (biar terlihat real: "2 menit lalu")
+function timeAgo(dateString) {
+    const seconds = Math.floor((new Date() - new Date(dateString)) / 1000);
+    if (seconds < 60) return "Baru saja";
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} menit lalu`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} jam lalu`;
+    return "Kemarin";
+}
 
-    // Mulai siklus muncul
+// 3. Jalankan Loop Notifikasi
+function startLiveNotif() {
+    fetchRealActivities(); // Tarik data pertama kali
+    
+    // Update data dari server tiap 30 detik (biar transaksi baru masuk antrian)
+    setInterval(fetchRealActivities, 30000);
+
+    // Loop Tampilan (Muncul random tiap 8-15 detik)
     loopDisplay();
 }
 
 function loopDisplay() {
-    // Delay random biar gak kaku (8 - 15 detik)
+    // Delay random antara 8 sampai 15 detik biar gak spamming
     const randomDelay = Math.floor(Math.random() * (15000 - 8000 + 1) + 8000);
     setTimeout(() => {
         showLiveNotification();
-        loopDisplay(); 
+        loopDisplay(); // Panggil diri sendiri terus menerus
     }, randomDelay);
 }
 
-// Jalankan sistem
 initData();
-// Pastikan TIDAK ADA kurung kurawal '}' di bawah baris ini
