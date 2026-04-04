@@ -32,51 +32,64 @@ let userBalance = 0;
 const ADMIN_WA = "6285815196595";
 
 async function checkUserLogin() {
-    // 1. JIKA BELUM LOGIN
-    if (!userSession) {
-        // Tampilkan Banner CTA jika belum login
+    // Ambil session terbaru di dalam fungsi
+    const currentUser = localStorage.getItem('user_session');
+
+    // 1. JIKA GUEST
+    if (!currentUser) {
+        if(document.getElementById('login-btn')) document.getElementById('login-btn').style.display = 'block';
+        if(document.getElementById('register-btn')) document.getElementById('register-btn').style.display = 'block';
+        
+        const profile = document.getElementById('user-profile');
+        if(profile) { profile.classList.add('hidden'); profile.classList.remove('flex'); }
+        
         const cta = document.getElementById('cta-banner');
         if(cta) cta.style.display = 'block';
         return;
     }
 
-    // 2. JIKA SUDAH LOGIN
+    // 2. JIKA LOGIN
     try {
-        const res = await fetch(`/api/user/${userSession}`);
+        const res = await fetch(`/api/user/${currentUser}`);
         const data = await res.json();
         
-        if (data.username) {
-            userBalance = data.balance || 0;
-            const formatted = `Rp ${userBalance.toLocaleString()}`;
+        if (data.success) {
+            const formatted = `Rp ${data.balance.toLocaleString()}`;
             
-            // Update Header Saldo
-            const headerBal = document.getElementById('header-balance');
-            if(headerBal) {
-                headerBal.innerHTML = `<i class="fa-solid fa-wallet text-green-400 animate-pulse"></i><span class="text-sm text-white font-mono font-bold tracking-wide">${formatted}</span>`;
-                headerBal.classList.remove('hidden');
+            // Update Profile Box di Navbar (ID: user-profile)
+            const profile = document.getElementById('user-profile');
+            if(profile) {
+                profile.classList.remove('hidden');
+                profile.classList.add('flex');
+                // Cari span di dalam profile untuk nama
+                const nameDisplay = profile.querySelector('span.font-bold');
+                if(nameDisplay) nameDisplay.innerText = data.username;
             }
-            
-            // Update Sidebar User Info
-            const sidebar = document.getElementById('user-status-sidebar');
-            if(sidebar) sidebar.innerHTML = `Hi, ${userSession}<br><span class="text-green-400 font-bold font-mono">${formatted}</span>`;
-            
-            // Buka Menu Member
-            document.getElementById('review-form-container')?.classList.remove('hidden');
-            document.getElementById('login-prompt')?.classList.add('hidden');
-            document.getElementById('menu-topup')?.classList.remove('hidden');
-            document.getElementById('menu-myservices')?.classList.remove('hidden');
-            document.getElementById('menu-history')?.classList.remove('hidden');
-            document.getElementById('menu-nokos')?.classList.remove('hidden');
-            
-            // Ubah Tombol Logout
-            document.getElementById('auth-menu').innerHTML = `<a href="login_user.html" onclick="doLogout()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:bg-white/5 transition"><i class="fa-solid fa-sign-out-alt text-red-500 w-6 text-center"></i><span class="font-medium">Logout</span></a>`;
 
-            // === [LOGIC PENTING] HILANGKAN BANNER CTA JIKA LOGIN ===
-            const ctaBanner = document.getElementById('cta-banner');
-            if(ctaBanner) ctaBanner.style.display = 'none';
+            // Update Saldo (Pastikan ada ID ini di HTML)
+            const balanceDisplay = document.getElementById('user-balance-display');
+            if(balanceDisplay) balanceDisplay.innerText = formatted;
+
+            // Sembunyikan Tombol Login
+            if(document.getElementById('login-btn')) document.getElementById('login-btn').style.display = 'none';
+            if(document.getElementById('register-btn')) document.getElementById('register-btn').style.display = 'none';
+            
+            // Munculkan Menu Member
+            const menus = ['menu-topup', 'menu-myservices', 'menu-history', 'menu-nokos', 'review-form-container'];
+            menus.forEach(id => document.getElementById(id)?.classList.remove('hidden'));
+
+            // Sembunyikan CTA
+            const cta = document.getElementById('cta-banner');
+            if(cta) cta.style.display = 'none';
         }
-    } catch(e) {}
+    } catch (e) { console.error("Session Error", e); }
 }
+
+// Fungsi Logout global
+window.logout = function() {
+    localStorage.removeItem('user_session');
+    location.reload();
+};
 // ============================================
 // 3. UI HELPER (TOAST, SIDEBAR, MODAL)
 // ============================================
