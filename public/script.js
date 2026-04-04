@@ -523,22 +523,23 @@ function renderServerList(servers, countryId, countryName) {
     if(!servers || servers.length === 0) return '<div class="text-center text-[10px] text-red-500 py-2">Stok habis.</div>';
     
     return servers.map(s => {
-        const itemPrice = s.price;
-        const pId = s.provider_id;
+        const itemPrice = s.price || 0;
+        const pId = s.provider_id || 0;
         const sId = s.server_id || 'Fast';
 
         return `
-        <div class="flex justify-between items-center p-3 rounded-xl bg-[#1f1f23] border border-gray-800">
+        <div class="flex justify-between items-center p-3 rounded-xl bg-[#1f1f23] border border-gray-800 mb-2">
             <div class="flex items-center gap-3">
                 <div class="text-[10px] font-mono text-blue-400 bg-blue-900/20 px-1.5 py-0.5 rounded">ID:${pId}</div>
                 <div>
                     <div class="text-xs font-bold text-white">Server ${sId}</div>
+                    <div class="text-[10px] text-gray-400">Stok: ${s.stock}</div>
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                <span class="text-sm font-bold text-white">${s.price_format}</span>
+                <span class="text-sm font-bold text-white">${s.price_format || 'Rp ' + itemPrice}</span>
                 <button onclick="openOperatorSelection('${countryId}', '${countryName}', ${itemPrice}, ${pId}, '${sId}')" 
-                    class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition shadow-lg shadow-blue-900/30">
+                    class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition">
                     Order
                 </button>
             </div>
@@ -554,16 +555,18 @@ function filterCountries() {
 
 // --- SELECT OPERATOR & FIX BUTTON STUCK ---
 async function openOperatorSelection(countryId, countryName, price, providerId, serverName) {
-    // Simpan ke data global agar tidak undefined saat checkout
+    // Simpan ke Global Object
     nokosData.tempServer = { 
         numberId: countryId, 
         countryName: countryName, 
-        price: price, 
+        price: Number(price), 
         providerId: providerId 
     };
     
+    console.log("Data Tersimpan:", nokosData.tempServer);
+
     const infoEl = document.getElementById('op-server-info');
-    if(infoEl) infoEl.innerText = `${countryName} • Server ${serverName} (ID: ${providerId})`;
+    if(infoEl) infoEl.innerText = `${countryName} • Server ${serverName}`;
     
     const sheetOp = document.getElementById('sheet-operator');
     if(sheetOp) {
@@ -571,8 +574,10 @@ async function openOperatorSelection(countryId, countryName, price, providerId, 
         sheetOp.style.display = 'block';
     }
     
-    // Load Daftar Operator
-    loadOperators(countryName, providerId);
+    // Panggil fungsi load operator kamu di sini
+    if (typeof loadOperators === 'function') {
+        loadOperators(countryName, providerId);
+    }
 }
     try {
         // Gunakan parameter yang sudah pasti angka
