@@ -82,58 +82,66 @@ router.get('/countries', async (req, res) => {
 router.post('/buy', async (req, res) => {
     try {
         await connectDB();
-        const { username, numberId, providerId, operatorId, serviceName, countryName, userPrice } = req.body;
+        
+        // Ambil data dari body (kita terima dua versi: underscore & camelCase)
+        const username = req.body.username;
+        const serviceName = req.body.service_name || req.body.serviceName;
+        const countryName = req.body.country_name || req.body.countryName || req.body.country;
+        const userPrice = req.body.user_price || req.body.userPrice || req.body.price;
 
-        // JARING PENGAMAN: Cek NaN
-        const finalNumberId = Number(numberId);
-        const finalProviderId = Number(providerId);
-        const finalOperatorId = (operatorId === 'any' || !operatorId) ? 1 : Number(operatorId);
+        // FIX KRUSIAL: Ambil ID baik yang pakai underscore maupun tidak
+        const rawNumberId = req.body.number_id || req.body.numberId;
+        const rawProviderId = req.body.provider_id || req.body.providerId;
+        const rawOperatorId = req.body.operator_id || req.body.operatorId;
 
+        // Paksa jadi Angka
+        const finalNumberId = Number(rawNumberId);
+        const finalProviderId = Number(rawProviderId);
+        const finalOperatorId = (rawOperatorId === 'any' || !rawOperatorId) ? 1 : Number(rawOperatorId);
+
+        // Cek lagi apakah masih NaN
         if (isNaN(finalNumberId) || isNaN(finalProviderId)) {
-            console.error("CRITICAL ERROR: Data ID yang diterima adalah NaN!", req.body);
-            return res.json({ success: false, msg: "Data pesanan tidak valid (NaN). Silakan pilih ulang nomor." });
+            console.error("DATA TETAP NaN! Isi Body:", req.body);
+            return res.json({ success: false, msg: "Data ID tidak valid (NaN)." });
         }
 
-        // Lanjut proses ke RumahOTP...
+        const user = await User.findOne({ username });
+        if (!user || user.balance < userPrice) {
+            return res.json({ success: false, msg: "Saldo tidak cukup!" });
+        }
+
+        // Tembak ke RumahOTP v2
         const url = `https://www.rumahotp.io/api/v2/orders?number_id=${finalNumberId}&provider_id=${finalProviderId}&operator_id=${finalOperatorId}`;
-       
         const response = await axios.get(url, {
-            headers: { 
-                'x-apikey': RUMAHOTP_API_KEY, 
-                'Accept': 'application/json' 
-            }
+            headers: { 'x-apikey': RUMAHOTP_API_KEY, 'Accept': 'application/json' }
         });
 
-        const result = response.data;
-
-        if (result.success) {
+        if (response.data.success) {
             user.balance -= userPrice;
             await user.save();
 
             const newTx = new NokosTx({
                 invoiceId: 'INV' + Date.now(),
                 username: username,
-                orderId: result.data.order_id,
+                orderId: response.data.data.order_id,
                 serviceName: serviceName,
                 countryName: countryName,
-                phoneNumber: result.data.phone_number,
+                phoneNumber: response.data.data.phone_number,
                 price: userPrice,
                 status: 'waiting',
                 expiresAt: new Date(Date.now() + 15 * 60000)
             });
             await newTx.save();
-
             res.json({ success: true, data: newTx });
         } else {
-            // Jika sukses:false dari RumahOTP, kirim pesan error aslinya
-            res.json({ success: false, msg: result.msg || "Stok habis/Provider error" });
+            res.json({ success: false, msg: response.data.msg || "Gagal ambil nomor" });
         }
     } catch (e) {
-        // Cek log jika ada error teknis
-        console.error("Detail Error RumahOTP:", e.response?.data || e.message);
-        res.status(500).json({ success: false, msg: "Gagal memproses ke provider" });
+        console.error("Order Error:", e.message);
+        res.json({ success: false, msg: "Gangguan koneksi provider" });
     }
 });
+
 // [STEP 2.5] DAFTAR OPERATOR (v2)
 router.get('/operators', async (req, res) => {
     try {
