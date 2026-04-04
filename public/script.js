@@ -300,14 +300,20 @@ async function processOrder(e) {
     finally { btn.innerHTML='Bayar Sekarang'; btn.disabled=false; }
 }
 
-// ============================================
+// ==================================
 // 6. NOKOS SYSTEM (FIXED BUTTON BUG & CLEANED)
-// ============================================
+// ==================================
 
-let nokosData = { apps: [], countries: [], selectedApp: null, tempServer: null };
+// Gunakan objek kosong {} sebagai default tempServer agar tidak error saat diakses pertama kali
+let nokosData = { 
+    apps: [], 
+    countries: [], 
+    selectedApp: {}, 
+    tempServer: {} 
+};
 let nokosInterval = null;
-let nokosSheetTimer = null; // [FIX] Timer untuk anti-conflict
-let opSheetTimer = null;    // [FIX] Timer untuk anti-conflict
+let nokosSheetTimer = null; 
+let opSheetTimer = null;
 
 async function initNokos() {
     if(userSession) {
@@ -517,10 +523,14 @@ function renderServerList(servers, countryId, countryName) {
     if(!servers || servers.length === 0) return '<div class="text-center text-[10px] text-red-500 py-2">Stok habis.</div>';
     
     return servers.map(s => {
-        // Pastikan kita ambil price dan provider_id dengan benar dari objek 's'
-        const itemPrice = s.price;
-        const pId = s.provider_id;
+        // 1. Ambil data asli (Fallback ke 0 jika data tidak ada)
+        const itemPrice = s.price || 0;
+        const pId = s.provider_id || 0;
+        const cId = countryId || 0;
         const sId = s.server_id || 'Fast';
+
+        // 2. Pastikan harganya ada, kalau 0 jangan biarkan order
+        if (itemPrice === 0 || pId === 0) return '';
 
         return `
         <div class="flex justify-between items-center p-3 rounded-xl bg-[#1f1f23] border border-gray-800">
@@ -532,8 +542,9 @@ function renderServerList(servers, countryId, countryName) {
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                <span class="text-sm font-bold text-white">${s.price_format}</span>
-                <button onclick="openOperatorSelection(${Number(countryId)}, '${countryName}', ${Number(itemPrice)}, ${Number(pId)}, '${sId}')" 
+                <span class="text-sm font-bold text-white">${s.price_format || 'Rp ' + itemPrice.toLocaleString()}</span>
+                
+                <button onclick="openOperatorSelection(${Number(cId)}, '${countryName}', ${Number(itemPrice)}, ${Number(pId)}, '${sId}')" 
                     class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition shadow-lg shadow-blue-900/30">
                     Order
                 </button>
