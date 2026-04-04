@@ -8,6 +8,7 @@ const axios = require('axios');
 const app = express();
 app.use(express.json());
 app.use(express.static('public'));
+app.use(express.urlencoded({ extended: true }));
 
 // 1. DATABASE MODELS (Langsung di sini)
 const User = mongoose.model('User', new mongoose.Schema({
@@ -54,12 +55,66 @@ app.post('/api/auth/login', async (req, res) => {
     } else { res.status(401).json({ success: false }); }
 });
 
-app.get('/api/auth/me', async (req, res) => {
-    if (!req.session.userId) return res.json({ login: false });
-    const user = await User.findById(req.session.userId);
-    res.json({ login: true, user });
+
+// ==========================================
+// 4. LOGIC LOGIN & REGISTER (JADI SATU)
+// ==========================================
+app.post('/api/auth/submit', async (req, res) => {
+    try {
+        const { username, password, type } = req.body; // type: 'login' atau 'register'
+
+        if (!username || !password) {
+            return res.json({ success: false, msg: "Isi semua data!" });
+        }
+
+        if (type === 'register') {
+            // Cek apakah user sudah ada
+            const existingUser = await User.findOne({ username });
+            if (existingUser) return res.json({ success: false, msg: "Username sudah terdaftar!" });
+
+            // Hash Password
+            const hashedPassword = await bcrypt.hash(password, 10);
+            
+            // Penentuan Role (Otomatis Admin kalau username 'man')
+            const role = (username.toLowerCase() === 'man') ? 'admin' : 'member';
+
+            const newUser = new User({
+                username,
+                password: hashedPassword,
+                role,
+                balance: 0
+            });
+
+            await newUser.save();
+            return res.json({ success: true, msg: "Registrasi Berhasil!" });
+
+        } else {
+            // Logic Login
+            const user = await User.findOne({ username });
+            if (!user) return res.json({ success: false, msg: "Username tidak ditemukan!" });
+
+            const isMatch = await bcrypt.compare(password, user.password);
+            if (!isMatch) return res.json({ success: false, msg: "Password salah!" });
+
+            // Simpan ke Session
+            req.session.userId = user._id;
+            req.session.role = user.role;
+
+            return res.json({ success: true, msg: "Login Berhasil!", user });
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, msg: "Terjadi kesalahan server" });
+    }
 });
 
+// Endpoint untuk cek sesi (digunakan di script.js window.onload)
+app.get('/api/auth/me', async (req, res) => {
+    if (!req.session.userId) return res.json({ login: false });
+    
+    const user = await User.findById(req.session.userId).select('-password');
+    res.json({ login: true, user });
+});
 // Nokos: Get Services & Countries
 app.get('/api/nokos/services', async (req, res) => {
     const resp = await axios.get(`${R_URL}/v2/services`, { headers });
