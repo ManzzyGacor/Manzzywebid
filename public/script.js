@@ -32,92 +32,50 @@ let userBalance = 0;
 const ADMIN_WA = "6285815196595";
 
 async function checkUserLogin() {
-    const currentUser = localStorage.getItem('user_session');
-
-    // 1. JIKA BELUM LOGIN (TAMPILAN GUEST)
-    if (!currentUser) {
+    // 1. JIKA BELUM LOGIN
+    if (!userSession) {
+        // Tampilkan Banner CTA jika belum login
         const cta = document.getElementById('cta-banner');
         if(cta) cta.style.display = 'block';
-
-        // Pastikan menu member tersembunyi
-        const menuIds = ['menu-topup', 'menu-myservices', 'menu-history', 'menu-nokos', 'review-form-container'];
-        menuIds.forEach(id => document.getElementById(id)?.classList.add('hidden'));
-        
-        // Sembunyikan profile di navbar (ID dari index.html kamu)
-        const profile = document.getElementById('user-profile');
-        if(profile) {
-            profile.classList.add('hidden');
-            profile.classList.remove('flex');
-        }
         return;
     }
 
     // 2. JIKA SUDAH LOGIN
     try {
-        const res = await fetch(`/api/user/${currentUser}`);
+        const res = await fetch(`/api/user/${userSession}`);
         const data = await res.json();
         
-        if (data.success || data.username) {
+        if (data.username) {
             userBalance = data.balance || 0;
             const formatted = `Rp ${userBalance.toLocaleString()}`;
             
-            // --- UPDATE TAMPILAN NAVBAR (Sesuai ID index.html kamu) ---
-            const profile = document.getElementById('user-profile');
-            if(profile) {
-                profile.classList.remove('hidden');
-                profile.classList.add('flex');
-                
-                // Update Nama (Selector pintar untuk span di dalam profile)
-                const nameDisplay = profile.querySelector('span.font-bold');
-                if(nameDisplay) nameDisplay.innerText = data.username;
+            // Update Header Saldo
+            const headerBal = document.getElementById('header-balance');
+            if(headerBal) {
+                headerBal.innerHTML = `<i class="fa-solid fa-wallet text-green-400 animate-pulse"></i><span class="text-sm text-white font-mono font-bold tracking-wide">${formatted}</span>`;
+                headerBal.classList.remove('hidden');
             }
-
-            // --- UPDATE SALDO (Tambahkan id="user-balance-display" di HTML-mu nanti) ---
-            const balanceEl = document.getElementById('user-balance-display');
-            if(balanceEl) balanceEl.innerText = formatted;
-
-            // --- BUKA MENU MEMBER (Sesuai kode bagus yang kamu kirim) ---
-            const menus = ['menu-topup', 'menu-myservices', 'menu-history', 'menu-nokos', 'review-form-container'];
-            menus.forEach(id => document.getElementById(id)?.classList.remove('hidden'));
             
-            document.getElementById('login-prompt')?.classList.add('hidden');
-            
-            // --- UPDATE SIDEBAR USER STATUS ---
+            // Update Sidebar User Info
             const sidebar = document.getElementById('user-status-sidebar');
-            if(sidebar) sidebar.innerHTML = `Hi, ${data.username}<br><span class="text-green-400 font-bold font-mono">${formatted}</span>`;
+            if(sidebar) sidebar.innerHTML = `Hi, ${userSession}<br><span class="text-green-400 font-bold font-mono">${formatted}</span>`;
+            
+            // Buka Menu Member
+            document.getElementById('review-form-container')?.classList.remove('hidden');
+            document.getElementById('login-prompt')?.classList.add('hidden');
+            document.getElementById('menu-topup')?.classList.remove('hidden');
+            document.getElementById('menu-myservices')?.classList.remove('hidden');
+            document.getElementById('menu-history')?.classList.remove('hidden');
+            document.getElementById('menu-nokos')?.classList.remove('hidden');
+            
+            // Ubah Tombol Logout
+            document.getElementById('auth-menu').innerHTML = `<a href="login_user.html" onclick="doLogout()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:bg-white/5 transition"><i class="fa-solid fa-sign-out-alt text-red-500 w-6 text-center"></i><span class="font-medium">Logout</span></a>`;
 
-            // --- UBAH TOMBOL AUTH JADI LOGOUT ---
-            const authMenu = document.getElementById('auth-menu');
-            if(authMenu) {
-                authMenu.innerHTML = `
-                    <a href="#" onclick="logout()" class="flex items-center gap-4 px-4 py-3 rounded-lg text-gray-400 hover:bg-white/5 transition">
-                        <i class="fa-solid fa-sign-out-alt text-red-500 w-6 text-center"></i>
-                        <span class="font-medium">Logout</span>
-                    </a>`;
-            }
-
-            // Sembunyikan tombol login/regis biasa jika ada ID-nya
-            if(document.getElementById('login-btn')) document.getElementById('login-btn').style.display = 'none';
-            if(document.getElementById('register-btn')) document.getElementById('register-btn').style.display = 'none';
-
-            // Sembunyikan Banner CTA
+            // === [LOGIC PENTING] HILANGKAN BANNER CTA JIKA LOGIN ===
             const ctaBanner = document.getElementById('cta-banner');
             if(ctaBanner) ctaBanner.style.display = 'none';
-
-        } else {
-            // Session tidak valid di database
-            localStorage.removeItem('user_session');
-            location.reload();
         }
-    } catch (e) {
-        console.error("Gagal sinkronisasi user:", e);
-    }
-}
-
-// Fungsi Logout
-function logout() {
-    localStorage.removeItem('user_session');
-    location.reload();
+    } catch(e) {}
 }
 // ============================================
 // 3. UI HELPER (TOAST, SIDEBAR, MODAL)
