@@ -44,12 +44,38 @@ router.get('/services', async (req, res) => {
 // Daftar Negara & Harga (v2)
 router.get('/countries', async (req, res) => {
     try {
-        const { serviceId } = req.query;
-        const response = await axios.get(`https://www.rumahotp.io/api/v2/countries?service_id=${serviceId}`, {
+        // Biar fleksibel, kita terima serviceId (camelCase) atau service_id (snake_case)
+        const sId = req.query.serviceId || req.query.service_id;
+        
+        if (!sId) return res.json({ success: false, msg: "Service ID diperlukan" });
+
+        const response = await axios.get(`https://www.rumahotp.io/api/v2/countries?service_id=${sId}`, {
             headers: { 'x-apikey': RUMAHOTP_API_KEY, 'Accept': 'application/json' }
         });
-        res.json(response.data);
-    } catch (e) { res.json({ success: false }); }
+        
+        // --- LOGIKA MARGIN OTOMATIS ---
+        const config = await NokosConfig.findOne();
+        const margin = config ? config.marginPercent : 15;
+
+        const fixedData = response.data.data.map(country => {
+            return {
+                ...country,
+                pricelist: country.pricelist.map(p => {
+                    const finalPrice = Math.ceil(p.price * (1 + margin / 100));
+                    return {
+                        ...p,
+                        price: finalPrice,
+                        price_format: `Rp ${finalPrice.toLocaleString()}`
+                    };
+                })
+            };
+        });
+
+        res.json({ success: true, data: fixedData });
+    } catch (e) { 
+        console.error(e);
+        res.json({ success: false }); 
+    }
 });
 
 // [PENTING] Beli Nokos (v2)
