@@ -491,33 +491,22 @@ async function selectApp(id, name, icon) {
 
 function renderCountries(countries) {
     const list = document.getElementById('list-countries');
-    if(!countries || countries.length === 0) { 
-        list.innerHTML = '<div class="text-center text-gray-500 py-10">Tidak ada negara tersedia.</div>'; 
-        return; 
-    }
+    if(!countries || countries.length === 0) { list.innerHTML = '...'; return; }
     
     list.innerHTML = countries.map(c => {
-        // Ambil pricelist pertama. Karena di nokos.js sudah dihitung margin,
-        // kita langsung ambil 'price' atau 'price_format' yang dikirim server.
         const cheapest = c.pricelist && c.pricelist.length > 0 ? c.pricelist[0] : null;
         const startPrice = cheapest ? cheapest.price_format : '-';
         
         return `
-        <div class="border border-gray-800 rounded-2xl bg-[#1c1c1f] overflow-hidden transition-all duration-300 country-item">
-            <div onclick="toggleCountryAccordion(this)" class="p-4 flex items-center justify-between cursor-pointer hover:bg-[#25252a]">
+        <div class="border border-gray-800 rounded-2xl bg-[#1c1c1f] overflow-hidden ...">
+            <div onclick="toggleCountryAccordion(this)" class="...">
                 <div class="flex items-center gap-3">
-                    <img src="${c.img}" class="w-8 h-6 rounded object-cover shadow-sm">
+                    <img src="${c.img}" class="w-8 h-6 rounded">
                     <span class="text-sm font-bold text-white">${c.name}</span>
                 </div>
-                <div class="flex items-center gap-3">
-                    <div class="text-right">
-                        <div class="text-[10px] text-gray-500">Mulai</div>
-                        <div class="text-xs font-bold text-gray-300">${startPrice}</div>
-                    </div>
-                    <i class="fa-solid fa-chevron-down text-gray-600 transition-transform duration-300 accordion-icon"></i>
-                </div>
+                ...
             </div>
-            <div class="accordion-body hidden bg-[#141416] border-t border-gray-800 p-3 space-y-2">
+            <div class="accordion-body hidden ...">
                 ${renderServerList(c.pricelist, c.number_id, c.name)}
             </div>
         </div>`;
@@ -525,21 +514,20 @@ function renderCountries(countries) {
 }
 
 function renderServerList(servers, countryId, countryName) {
-    if(!servers || servers.length === 0) return '<div class="text-center text-[10px] text-red-500 py-2">Stok habis.</div>';
+    if(!servers || servers.length === 0) return '<div class="text-center text-xs text-red-500">Stok habis.</div>';
     
     return servers.map(s => `
-        <div class="flex justify-between items-center p-3 rounded-xl bg-[#1f1f23] border border-gray-800">
+        <div class="flex justify-between items-center p-3 ...">
             <div class="flex items-center gap-3">
-                <div class="text-[10px] font-mono text-blue-400 bg-blue-900/20 px-1.5 py-0.5 rounded">ID:${s.provider_id}</div>
+                <div class="text-[10px] font-mono text-blue-400">ID:${s.provider_id}</div>
                 <div>
-                    <div class="text-xs font-bold text-white">Server ${s.server_id || 'Fast'}</div>
-                    <div class="text-[10px] text-gray-400">Stok: ${s.stock}</div>
+                    <div class="text-xs font-bold text-white">Server ${s.server_id}</div>
                 </div>
             </div>
             <div class="flex items-center gap-3">
                 <span class="text-sm font-bold text-white">${s.price_format}</span>
                 <button onclick="openOperatorSelection('${countryId}', '${countryName}', '${s.price}', '${s.provider_id}', '${s.server_id}')" 
-                    class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition shadow-lg shadow-blue-900/30">
+                    class="bg-blue-600 ...">
                     Order
                 </button>
             </div>
