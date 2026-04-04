@@ -82,25 +82,24 @@ router.get('/countries', async (req, res) => {
 router.post('/buy', async (req, res) => {
     try {
         await connectDB();
-        
-        // Ambil data dengan fleksibilitas nama (Support underscore)
         const username = req.body.username;
         const serviceName = req.body.service_name || req.body.serviceName;
         const countryName = req.body.country_name || req.body.countryName;
         const priceToPay = Number(req.body.user_price || req.body.userPrice || req.body.price);
 
-        const finalNumberId = Number(req.body.number_id || req.body.numberId);
-        const finalProviderId = Number(req.body.provider_id || req.body.providerId);
-        const finalOperatorId = (req.body.operator_id === 'any' || !req.body.operator_id) ? 1 : Number(req.body.operator_id);
+        const finalNumberId = req.body.number_id || req.body.numberId;
+        const finalProviderId = req.body.provider_id || req.body.providerId;
+        const finalOperatorId = (req.body.operator_id === 'any' || !req.body.operator_id) ? 1 : req.body.operator_id;
 
-        if (isNaN(priceToPay) || isNaN(finalNumberId) || priceToPay <= 0) {
-            return res.json({ success: false, msg: "Data pesanan rusak (NaN)." });
+        if (isNaN(priceToPay) || priceToPay <= 0) {
+            return res.json({ success: false, msg: "Data harga tidak valid." });
         }
 
         const user = await User.findOne({ username });
-        if (!user || user.balance < priceToPay) return res.json({ success: false, msg: "Saldo tidak cukup!" });
+        if (!user || user.balance < priceToPay) {
+            return res.json({ success: false, msg: "Saldo tidak cukup!" });
+        }
 
-        // Tembak RumahOTP
         const url = `https://www.rumahotp.io/api/v2/orders?number_id=${finalNumberId}&provider_id=${finalProviderId}&operator_id=${finalOperatorId}`;
         const response = await axios.get(url, { headers: { 'x-apikey': RUMAHOTP_API_KEY } });
 
@@ -109,7 +108,7 @@ router.post('/buy', async (req, res) => {
             await user.save();
 
             const newTx = new NokosTx({
-                invoiceId: 'INV' + Date.now(),
+                invoiceId: 'NOKOS' + Date.now(),
                 username,
                 orderId: response.data.data.order_id,
                 serviceName,
@@ -117,7 +116,7 @@ router.post('/buy', async (req, res) => {
                 phoneNumber: response.data.data.phone_number,
                 price: priceToPay,
                 status: 'waiting',
-                expiresAt: new Date(Date.now() + 20 * 60000) // 20 Menit Batal Otomatis
+                expiresAt: new Date(Date.now() + 20 * 60000)
             });
             await newTx.save();
             res.json({ success: true, data: newTx });
@@ -125,7 +124,7 @@ router.post('/buy', async (req, res) => {
             res.json({ success: false, msg: response.data.msg });
         }
     } catch (e) {
-        res.json({ success: false, msg: "Kesalahan sistem provider." });
+        res.json({ success: false, msg: "Kesalahan sistem server." });
     }
 });
 // [STEP 2.5] DAFTAR OPERATOR (v2)
