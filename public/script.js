@@ -616,11 +616,13 @@ let isTransactionProcessing = false;
 async function selectOperatorAndCheckout(opId, opName) {
     if (isTransactionProcessing) return;
 
-    // 1. Ambil data dari objek global
-    // Pastikan variabel 'nokosData' sudah dideklarasikan di baris paling atas script.js
+   
     const server = nokosData.tempServer;
     const app = nokosData.selectedApp;
-
+    
+if (!s.countryName || s.price <= 0) {
+        return showToast("Gagal: Data tidak lengkap, pilih ulang negara.", "error");
+    }
     // PROTEKSI: Cek apakah data server benar-benar ada
     if (!server || !server.numberId || !server.providerId) {
         console.error("Data server tidak ditemukan!", server);
@@ -644,7 +646,7 @@ async function selectOperatorAndCheckout(opId, opName) {
             operatorId: opId === 'any' ? 1 : Number(opId),
             serviceName: app.name,
             countryName: s.countryName,
-            userPrice: Number(server.price)
+            userPrice: s.price
         };
         
         // Debugging Browser: Cek di Console (F12) apakah masih ada NaN
