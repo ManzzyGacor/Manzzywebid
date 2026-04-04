@@ -3,14 +3,14 @@ const axios = require('axios');
 const router = express.Router();
 
 // Ganti dengan API Key RumahOTP Kamu
-const RUMAHOTP_API_KEY = "otp_bEiRJAgrGjhzWAvz"; 
+const RUMAHOTP_API_KEY = "rk-dev-TEjAEh29JdgEB6oItLoFdt4uoj34MEjM"; 
 
 // ROUTE: Ambil Saldo Provider (RumahOTP)
 router.get('/admin/provider-balance', async (req, res) => {
     try {
         const options = {
             method: 'GET',
-            url: 'https://www.rumahotp.com/api/v1/user/balance',
+            url: 'https://www.rumahotp.io/api/v1/user/balance',
             headers: {
                 'x-apikey': RUMAHOTP_API_KEY,
                 'Accept': 'application/json'
