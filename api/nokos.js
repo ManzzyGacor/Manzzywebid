@@ -144,7 +144,6 @@ if (response.data.success) {
     res.json({ success: true, data: newTx });
 }
 
-            res.json({ success: true, data: newTx });
         } else {
             res.json({ success: false, msg: response.data.msg || "Gagal ambil nomor" });
         }
