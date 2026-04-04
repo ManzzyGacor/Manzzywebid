@@ -82,55 +82,46 @@ router.get('/countries', async (req, res) => {
 router.post('/buy', async (req, res) => {
     try {
         await connectDB();
-        // Ambil data dari payload frontend
         const { username, numberId, providerId, operatorId, serviceName, countryName, userPrice } = req.body;
 
         const user = await User.findOne({ username });
-        if (!user || user.balance < userPrice) {
-            return res.json({ success: false, msg: "Saldo tidak cukup!" });
-        }
+        if (!user || user.balance < userPrice) return res.json({ success: false, msg: "Saldo tidak cukup" });
 
-        const response = await axios.get('https://www.rumahotp.io/api/v2/orders', {
-    params: {
-        number_id: numberId,
-        provider_id: providerId,
-        operator_id: (operatorId === 'any') ? 1 : operatorId
-    },
-    headers: { 
-        'x-apikey': RUMAHOTP_API_KEY, 
-        'Accept': 'application/json' 
-    }
-});
+        // --- FIX LOGIC: RumahOTP v2 butuh Operator ID Angka ---
+        // Jika dari frontend kirim 'any', kita ubah jadi 1 (ID standar untuk ANY)
+        const opIdFinal = (operatorId === 'any' || !operatorId) ? 1 : operatorId;
+
+        const url = `https://www.rumahotp.io/api/v2/orders?number_id=${numberId}&provider_id=${providerId}&operator_id=${opIdFinal}`;
+        
+        const response = await axios.get(url, {
+            headers: { 'x-apikey': RUMAHOTP_API_KEY, 'Accept': 'application/json' }
+        });
 
         const result = response.data;
 
         if (result.success) {
-            // 1. Potong Saldo
             user.balance -= userPrice;
             await user.save();
 
-            // 2. Simpan ke database kita (Pakai order_id dari respon v2)
             const newTx = new NokosTx({
                 invoiceId: 'INV' + Date.now(),
                 username: username,
-                orderId: result.data.order_id, // RO...
-                serviceName: serviceName,
-                countryName: countryName,
+                orderId: result.data.order_id,
+                serviceName, countryName,
                 phoneNumber: result.data.phone_number,
                 price: userPrice,
                 status: 'waiting',
-                expiresAt: new Date(Date.now() + 15 * 60000) // 15 Menit
+                expiresAt: new Date(Date.now() + 15 * 60000)
             });
             await newTx.save();
-
             res.json({ success: true, data: newTx });
         } else {
-            // Jika gagal (stok habis/provider error)
-            res.json({ success: false, msg: result.msg || "Gagal ambil nomor dari provider." });
+            // Kita kirim pesan asli dari RumahOTP biar kamu tau masalahnya apa
+            res.json({ success: false, msg: result.msg || "Stok habis atau Provider error" });
         }
     } catch (e) {
-        console.error("Order Error:", e.message);
-        res.status(500).json({ success: false, msg: "Terjadi kesalahan pada server." });
+        console.error("Order Error:", e.response?.data || e.message);
+        res.json({ success: false, msg: "Gangguan koneksi ke Provider" });
     }
 });
 
