@@ -523,29 +523,21 @@ function renderServerList(servers, countryId, countryName) {
     if(!servers || servers.length === 0) return '<div class="text-center text-[10px] text-red-500 py-2">Stok habis.</div>';
     
     return servers.map(s => {
-        // 1. Ambil data asli (Fallback ke 0 jika data tidak ada)
-        const itemPrice = s.price || 0;
-        const pId = s.provider_id || 0;
-        const cId = countryId || 0;
-        const sId = s.server_id || 'Fast';
-
-        // 2. Pastikan harganya ada, kalau 0 jangan biarkan order
-        if (itemPrice === 0 || pId === 0) return '';
+        // Ambil harga murni (angka)
+        const purePrice = Number(s.price);
 
         return `
         <div class="flex justify-between items-center p-3 rounded-xl bg-[#1f1f23] border border-gray-800">
             <div class="flex items-center gap-3">
-                <div class="text-[10px] font-mono text-blue-400 bg-blue-900/20 px-1.5 py-0.5 rounded">ID:${pId}</div>
+                <div class="text-[10px] font-mono text-blue-400 bg-blue-900/20 px-1.5 py-0.5 rounded">ID:${s.provider_id}</div>
                 <div>
-                    <div class="text-xs font-bold text-white">Server ${sId}</div>
-                    <div class="text-[10px] text-gray-400">Stok: ${s.stock}</div>
+                    <div class="text-xs font-bold text-white">Server ${s.server_id || 'Fast'}</div>
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                <span class="text-sm font-bold text-white">${s.price_format || 'Rp ' + itemPrice.toLocaleString()}</span>
-                
-                <button onclick="openOperatorSelection(${Number(cId)}, '${countryName}', ${Number(itemPrice)}, ${Number(pId)}, '${sId}')" 
-                    class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition shadow-lg shadow-blue-900/30">
+                <span class="text-sm font-bold text-white">${s.price_format}</span>
+                <button onclick="openOperatorSelection(${countryId}, '${countryName}', ${purePrice}, ${s.provider_id}, '${s.server_id || 'Fast'}')" 
+                    class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition">
                     Order
                 </button>
             </div>
@@ -561,27 +553,26 @@ function filterCountries() {
 
 // --- SELECT OPERATOR & FIX BUTTON STUCK ---
 async function openOperatorSelection(countryId, countryName, price, providerId, serverName) {
-    // Simpan ke Global Object dengan konversi Number sekali lagi untuk keamanan
+    // Simpan ke nokosData.tempServer (Ini adalah 'Tas' penyimpan data sementara)
     nokosData.tempServer = { 
-        numberId: Number(countryId), 
-        countryName: countryName, 
-        price: Number(price), 
-        providerId: Number(providerId) 
-    };
+    numberId: countryId, 
+    countryName: countryName, 
+    price: price, 
+    providerId: providerId 
+};
     
-    console.log("DEBUG FRONTEND - Data Tersimpan:", nokosData.tempServer);
+    // Cek di Console Browser (F12) apakah datanya muncul atau NaN/Undefined
+    console.log("Data Siap Beli:", nokosData.tempServer);
 
-    const infoEl = document.getElementById('op-server-info');
-    if(infoEl) infoEl.innerText = `${countryName} • Server ${serverName} (ID: ${providerId})`;
+    document.getElementById('op-server-info').innerText = `${countryName} • Server ${serverName} (ID: ${providerId})`;
     
-    // Tampilkan Sheet
+    // Tampilkan Sheet Operator
     const sheetOp = document.getElementById('sheet-operator');
     sheetOp.classList.remove('hidden');
     sheetOp.style.display = 'block';
     
-    const listOp = document.getElementById('list-operators');
-    listOp.innerHTML = '<div class="text-xs text-gray-500 p-4">Memuat operator...</div>';
-
+    // ... sisa kode fetch operator kamu ...
+}
     try {
         // Gunakan parameter yang sudah pasti angka
         const res = await fetch(`/api/nokos/operators?country=${encodeURIComponent(countryName)}&provider_id=${nokosData.tempServer.providerId}`);
@@ -616,21 +607,20 @@ let isTransactionProcessing = false;
 async function selectOperatorAndCheckout(opId, opName) {
     if (isTransactionProcessing) return;
 
-   
+    // 1. Ambil data dari objek global
     const server = nokosData.tempServer;
     const app = nokosData.selectedApp;
-    
-if (!s.countryName || s.price <= 0) {
-        return showToast("Gagal: Data tidak lengkap, pilih ulang negara.", "error");
-    }
-    // PROTEKSI: Cek apakah data server benar-benar ada
-    if (!server || !server.numberId || !server.providerId) {
-        console.error("Data server tidak ditemukan!", server);
-        showToast("Error: Sesi pemilihan kadaluarsa, silakan pilih ulang negara.", "error");
+
+    // 2. PROTEKSI KETAT: Cek apakah variabel 'server' ada isinya
+    if (!server || !server.numberId || !server.countryName || !server.price) {
+        console.error("Data server tidak lengkap!", server);
+        showToast("Gagal: Sesi pemilihan kadaluarsa, silakan pilih ulang negara.", "error");
         return;
     }
 
-    if(!confirm(`Beli ${app.name} (${server.countryName})?\nHarga: Rp ${parseInt(server.price).toLocaleString()}`)) return;
+    // Konfirmasi Beli
+    const confirmMsg = `Beli ${app.name} (${server.countryName})?\nHarga: Rp ${Number(server.price).toLocaleString()}`;
+    if(!confirm(confirmMsg)) return;
     
     isTransactionProcessing = true;
     closeOperatorSheet();
@@ -638,19 +628,18 @@ if (!s.countryName || s.price <= 0) {
     showToast("Memproses pesanan...", "info");
     
     try {
-        // 2. Susun Payload dengan konversi paksa ke Number di sini
+        // 3. Susun Payload (Gunakan variabel 'server' secara konsisten)
         const payload = {
             username: localStorage.getItem('user_session'),
             numberId: Number(server.numberId),
             providerId: Number(server.providerId),
             operatorId: opId === 'any' ? 1 : Number(opId),
             serviceName: app.name,
-            countryName: s.countryName,
-            userPrice: s.price
+            countryName: server.countryName, // FIX: Pakai 'server', bukan 's'
+            userPrice: Number(server.price)  // FIX: Pakai 'server', bukan 's'
         };
         
-        // Debugging Browser: Cek di Console (F12) apakah masih ada NaN
-        console.log("Payload dikirim:", payload);
+        console.log("Payload dikirim ke backend:", payload);
 
         const res = await fetch('/api/nokos/buy', { 
             method: 'POST', 
@@ -661,7 +650,7 @@ if (!s.countryName || s.price <= 0) {
         const d = await res.json();
         
         if (d.success) {
-            showToast("✅ Order Berhasil! Nomor Anda sedang diproses.", "success");
+            showToast("✅ Order Berhasil! Silakan cek menu Riwayat.", "success");
             if (typeof checkUserLogin === "function") checkUserLogin();
             if (typeof fetchNokosHistory === "function") fetchNokosHistory();
         } else {
