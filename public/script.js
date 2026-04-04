@@ -693,7 +693,10 @@ async function fetchNokosHistory() {
         }).join('');
     } catch(e) {}
 }
-
+function closeOperatorSheet() {
+    const s = document.getElementById('sheet-operator');
+    if(s) { s.classList.add('translate-y-full'); setTimeout(() => s.classList.add('hidden'), 300); }
+}
 // --- COPY TEXT ---
 function copyText(text, label) {
     if (!text) return;
