@@ -548,14 +548,13 @@ function renderServerList(servers, countryId, countryName) {
             <div class="flex items-center gap-3">
                 <span class="text-sm font-bold text-white">${s.price_format}</span>
                 <button onclick="openOperatorSelection('${countryId}', '${countryName}', ${itemPrice}, ${pId}, '${sId}')" 
-                    class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition shadow-lg shadow-blue-900/30">
+                    class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition shadow-lg">
                     Order
                 </button>
             </div>
         </div>`;
     }).join('');
 }
-
 function filterCountries() {
     const k = document.getElementById('searchCountryInput').value.toLowerCase();
     const f = nokosData.countries.filter(c => c.name.toLowerCase().includes(k));
