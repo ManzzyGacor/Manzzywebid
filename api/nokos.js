@@ -79,28 +79,24 @@ router.get('/countries', async (req, res) => {
 });
 
 // [STEP 3] PESAN NOMOR / ORDER (v2 - FIX Sesuai Dokumentasi)
-// [STEP 3] PESAN NOMOR / ORDER (v2 - FIX Tipe Data Number)
 router.post('/buy', async (req, res) => {
     try {
         await connectDB();
         const { username, numberId, providerId, operatorId, serviceName, countryName, userPrice } = req.body;
 
-        const user = await User.findOne({ username });
-        if (!user || user.balance < userPrice) {
-            return res.json({ success: false, msg: "Saldo tidak cukup!" });
-        }
-
-        // --- FIX: PAKSA JADI NUMBER ---
-        // Kita gunakan Number() untuk memastikan tipe datanya sesuai dokumentasi
+        // JARING PENGAMAN: Cek NaN
         const finalNumberId = Number(numberId);
         const finalProviderId = Number(providerId);
         const finalOperatorId = (operatorId === 'any' || !operatorId) ? 1 : Number(operatorId);
 
-        // Debugging: Muncul di terminal VPS kamu buat cek apakah angkanya bener
-        console.log(`[ORDER] Mengirim ke RumahOTP: number_id=${finalNumberId}, provider_id=${finalProviderId}, operator_id=${finalOperatorId}`);
+        if (isNaN(finalNumberId) || isNaN(finalProviderId)) {
+            console.error("CRITICAL ERROR: Data ID yang diterima adalah NaN!", req.body);
+            return res.json({ success: false, msg: "Data pesanan tidak valid (NaN). Silakan pilih ulang nomor." });
+        }
 
+        // Lanjut proses ke RumahOTP...
         const url = `https://www.rumahotp.io/api/v2/orders?number_id=${finalNumberId}&provider_id=${finalProviderId}&operator_id=${finalOperatorId}`;
-        
+       
         const response = await axios.get(url, {
             headers: { 
                 'x-apikey': RUMAHOTP_API_KEY, 
