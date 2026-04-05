@@ -1,28 +1,30 @@
 // ==========================================
-// 1. DATA STATE & CONFIG (FIXED)
+// 1. DATA STATE & CONFIG
 // ==========================================
 let currentOrderStep = 1;
-let selectedOperatorId = 1; // FIX: Kasih nilai default 1 (Any) biar gak error
+let selectedOperatorId = 1; // FIX: Kasih default 1 (Any Operator) agar tidak error
 let selectedOrder = {
     service_id: '',
     service_name: '',
     country_name: '',
-    provider_id: '',
+    provider_id: '', // Ini ID Negara dari RumahOTP
     server_id: '',
     price: 0
 };
-let activeOrders = [];
+let activeOrders = []; // List pesanan pending
 
 // ==========================================
-// 2. LOGIKA MODAL & NAVIGATION
+// 2. LOGIKA MODAL & STEP NAVIGATION
 // ==========================================
+
 async function openOrderModal() {
     const modal = document.getElementById('modal-order');
     const sheet = document.getElementById('order-sheet');
     modal.classList.remove('hidden');
     setTimeout(() => sheet.classList.remove('translate-y-full'), 10);
+    
     resetOrderSteps();
-    await loadServices();
+    await loadServices(); 
 }
 
 function closeOrderModal() {
@@ -52,9 +54,11 @@ function updateOrderHeader() {
 // 3. INTEGRASI API (STEP 1 - 4)
 // ==========================================
 
+// STEP 1: Load Apps
 async function loadServices() {
     const container = document.getElementById('list-apps-modal');
-    container.innerHTML = '<div class="col-span-3 text-center py-10 opacity-50 text-[10px]">Memuat...</div>';
+    container.innerHTML = '<div class="col-span-3 text-center py-10 opacity-50 text-[10px]">MEMUAT...</div>';
+    
     try {
         const res = await fetch('/api/nokos/services');
         const result = await res.json();
@@ -69,12 +73,15 @@ async function loadServices() {
     } catch (e) { container.innerHTML = 'Error API'; }
 }
 
+// STEP 2: Select App -> Load Countries
 async function selectService(sid, sname) {
-    selectedOrder.service_id = sid; // Menyimpan ID Layanan
+    selectedOrder.service_id = sid;
     selectedOrder.service_name = sname;
     nextOrderStep(2);
+
     const container = document.getElementById('list-countries-modal');
-    container.innerHTML = '<div class="text-center py-10 opacity-50 text-[10px]">Mencari Negara...</div>';
+    container.innerHTML = '<div class="text-center py-10 opacity-50 text-[10px]">MENCARI NEGARA...</div>';
+    
     try {
         const res = await fetch(`/api/nokos/countries?sid=${sid}`);
         const result = await res.json();
@@ -92,17 +99,19 @@ async function selectService(sid, sname) {
                 </div>
             `).join('');
         }
-    } catch (e) { container.innerHTML = 'Error'; }
+    } catch (e) { container.innerHTML = 'Error API'; }
 }
 
+// STEP 3: Select Country -> Load Servers
 function selectCountry(cname, pricelist) {
     selectedOrder.country_name = cname;
     nextOrderStep(3);
+
     const container = document.getElementById('list-servers-modal');
     container.innerHTML = pricelist.map(p => `
-        <div onclick="confirmStep('${p.server_id}', '${p.provider_id}', ${p.price_user || p.price})" class="galaxy-card p-4 rounded-2xl flex justify-between items-center cursor-pointer border-l-4 border-purple-500 mb-2">
+        <div onclick="confirmStep('${p.server_id}', '${p.provider_id}', ${p.price_user || p.price})" class="galaxy-card p-4 rounded-2xl flex justify-between items-center cursor-pointer border-l-4 border-purple-500 bg-purple-500/5 mb-2 transition">
             <div>
-                <div class="text-xs font-bold text-white">SERVER ${p.server_id}</div>
+                <div class="text-xs font-bold text-white uppercase">SERVER ${p.server_id}</div>
                 <div class="text-[9px] text-gray-500">Provider: ${p.provider_id}</div>
             </div>
             <div class="text-sm font-bold text-purple-400 font-mono">Rp ${(p.price_user || p.price).toLocaleString()}</div>
@@ -110,29 +119,32 @@ function selectCountry(cname, pricelist) {
     `).join('');
 }
 
+// STEP 4: Confirmation
 function confirmStep(serverId, providerId, price) {
     selectedOrder.server_id = serverId;
     selectedOrder.provider_id = providerId;
     selectedOrder.price = price;
+    
     document.getElementById('res-app').innerText = selectedOrder.service_name;
     document.getElementById('res-country').innerText = selectedOrder.country_name;
     document.getElementById('res-server').innerText = "SERVER " + serverId;
     document.getElementById('res-price').innerText = "Rp " + price.toLocaleString();
+    
     nextOrderStep(4);
 }
 
-// FINAL: Proses Beli (FIXED)
+// FINAL: PROSES BELI (FIXED)
 async function confirmPurchase() {
     const btn = document.getElementById('btn-final-buy');
     btn.disabled = true;
-    btn.innerHTML = 'MEMPROSES...';
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> MEMPROSES...';
 
     try {
         const res = await fetch('/api/nokos/order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                number_id: selectedOrder.service_id, // Kirim ID Layanan
+                number_id: selectedOrder.service_id, 
                 provider_id: selectedOrder.provider_id,
                 operator_id: selectedOperatorId, // Sekarang sudah ada nilainya (1)
                 price: selectedOrder.price,
@@ -143,21 +155,38 @@ async function confirmPurchase() {
         const result = await res.json();
 
         if (result.success) {
-            alert("Berhasil Beli!");
-            location.reload(); // Reload biar saldo & list keupdate
+            // Masukkan ke List Pending
+            const newOrder = {
+                order_id: result.data.order_id,
+                phone_number: result.data.phone_number,
+                service: selectedOrder.service_name,
+                country: selectedOrder.country_name,
+                status: 'received',
+                otp_code: null
+            };
+            
+            activeOrders.unshift(newOrder);
+            closeOrderModal();
+            switchView('order'); // Pindah ke tab order otomatis
+            renderPendingOrders(); 
+            startOtpPolling(newOrder.order_id);
+            startTimer(newOrder.order_id, 1200);
+
+            alert("Pesanan Berhasil!");
         } else {
             alert("Gagal: " + (result.msg || result.message));
             btn.disabled = false;
             btn.innerText = "BELI SEKARANG";
         }
     } catch (e) {
-        alert("Koneksi Error! Cek Server.");
+        alert("Koneksi Error! Cek Backend.");
         btn.disabled = false;
         btn.innerText = "BELI SEKARANG";
     }
 }
+
 // ==========================================
-// 4. PESANAN PENDING & POLLING
+// 4. PESANAN PENDING & POLLING (RE-RENDER)
 // ==========================================
 
 function renderPendingOrders() {
@@ -179,12 +208,12 @@ function renderPendingOrders() {
                 <button onclick="navigator.clipboard.writeText('${order.phone_number}')" class="bg-white/5 p-2 rounded-lg text-[10px]"><i class="fa-solid fa-copy"></i></button>
             </div>
             <div class="bg-white/5 rounded-xl p-3 text-center">
-                <span class="text-[8px] text-gray-500 block mb-1">KODE OTP</span>
+                <span class="text-[8px] text-gray-500 block mb-1 uppercase">Kode OTP</span>
                 <div class="text-xl font-bold text-white" id="otp-${order.order_id}">${order.otp_code || '---'}</div>
             </div>
             <div class="mt-3 flex justify-between items-center text-[9px]">
-                <div id="timer-${order.order_id}" class="text-gray-500 font-mono">20:00</div>
-                <button onclick="cancelOrder('${order.order_id}')" class="text-red-500 font-bold uppercase">Batalkan</button>
+                <div id="timer-${order.order_id}" class="text-gray-500 font-mono italic">20:00</div>
+                <button onclick="cancelOrder('${order.order_id}')" class="text-red-500 font-bold uppercase hover:underline">Batalkan</button>
             </div>
         </div>
     `).join('');
@@ -201,6 +230,7 @@ function startOtpPolling(orderId) {
                     order.otp_code = result.data.otp_code;
                     renderPendingOrders();
                     clearInterval(poll);
+                    alert("OTP Masuk untuk " + order.service);
                 }
             }
             if (!activeOrders.find(o => o.order_id === orderId)) clearInterval(poll);
@@ -223,9 +253,8 @@ function startTimer(orderId, duration) {
     }, 1000);
 }
 
-// Fungsi Batal
 async function cancelOrder(orderId) {
-    if (!confirm("Batalkan pesanan? Saldo akan kembali.")) return;
+    if (!confirm("Batalkan pesanan ini? Saldo akan dikembalikan.")) return;
     try {
         const res = await fetch('/api/nokos/cancel', {
             method: 'POST',
@@ -237,6 +266,8 @@ async function cancelOrder(orderId) {
             activeOrders = activeOrders.filter(o => o.order_id !== orderId);
             renderPendingOrders();
             location.reload(); 
+        } else {
+            alert(result.msg);
         }
     } catch (e) { alert("Error koneksi"); }
 }
