@@ -2,7 +2,7 @@
 // 1. DATA STATE & CONFIG
 // ==========================================
 let currentOrderStep = 1;
-let selectedOperatorId = 1; // Default Any
+let selectedOperatorId = 1; 
 let selectedOrder = {
     service_id: '',
     service_name: '',
@@ -10,8 +10,7 @@ let selectedOrder = {
     provider_id: '',
     server_id: '',
     price: 0,
-    number_id_from_pricelist: '', // INI YANG TADI UNDEFINED
-    pricelist_temp: [] 
+    number_id_from_pricelist: '' // Ini target kita
 };
 let activeOrders = []; 
 
@@ -97,7 +96,7 @@ async function selectService(sid, sname) {
         const result = await res.json();
         if (result.success) {
             container.innerHTML = result.data.map(c => `
-                <div onclick="selectCountry('${c.name}', ${JSON.stringify(c.pricelist).replace(/"/g, '&quot;')}, ${c.number_id})" class="galaxy-card p-4 rounded-2xl flex justify-between items-center cursor-pointer mb-3">
+                <div onclick="selectCountry('${c.name}', ${JSON.stringify(c.pricelist).replace(/"/g, '&quot;')}, '${c.number_id}')" class="galaxy-card p-4 rounded-2xl flex justify-between items-center cursor-pointer mb-3">
                     <div class="flex items-center gap-4">
                         <img src="${c.img}" class="w-6 h-4 object-cover rounded-sm">
                         <div>
@@ -114,7 +113,6 @@ async function selectService(sid, sname) {
 
 async function selectCountry(cname, pricelist, countryNumberId) {
     selectedOrder.country_name = cname;
-    selectedOrder.pricelist_temp = pricelist;
     nextOrderStep(3);
 
     const container = document.getElementById('list-servers-modal');
@@ -139,7 +137,7 @@ async function selectCountry(cname, pricelist, countryNumberId) {
 
         let serverHtml = `<div class="text-[9px] mb-2 text-gray-500 uppercase px-1">2. Pilih Server</div>` + 
             pricelist.map(p => `
-            <div onclick="confirmStep('${p.server_id}', '${p.provider_id}', ${p.price_user || p.price}, ${countryNumberId})" class="galaxy-card p-4 rounded-2xl mb-2 flex justify-between border-l-4 border-purple-500 cursor-pointer active:scale-95 transition">
+            <div onclick="confirmStep('${p.server_id}', '${p.provider_id}', ${p.price_user || p.price}, '${countryNumberId}')" class="galaxy-card p-4 rounded-2xl mb-2 flex justify-between border-l-4 border-purple-500 cursor-pointer active:scale-95 transition">
                 <div class="text-xs font-bold uppercase text-white">Server ${p.server_id}</div>
                 <div class="text-xs font-bold text-purple-400 font-mono">Rp ${(p.price_user || p.price).toLocaleString()}</div>
             </div>`).join('');
@@ -155,10 +153,11 @@ function setOp(id, el) {
 }
 
 function confirmStep(serverId, providerId, price, numid) {
+    // FIX: Pastikan numid masuk ke state
     selectedOrder.server_id = serverId;
     selectedOrder.provider_id = providerId;
     selectedOrder.price = price;
-    selectedOrder.number_id_from_pricelist = numid; // SEKARANG SUDAH TERISI
+    selectedOrder.number_id_from_pricelist = numid;
 
     document.getElementById('res-app').innerText = selectedOrder.service_name;
     document.getElementById('res-country').innerText = selectedOrder.country_name;
@@ -171,6 +170,12 @@ async function confirmPurchase() {
     const btn = document.getElementById('btn-final-buy');
     btn.disabled = true;
     btn.innerHTML = 'MEMPROSES...';
+
+    // LOG UNTUK DEBUG DI BROWSER (F12)
+    console.log("Data yang dikirim ke backend:", {
+        number_id: selectedOrder.number_id_from_pricelist,
+        provider_id: selectedOrder.provider_id
+    });
 
     try {
         const res = await fetch('/api/nokos/order', {
@@ -215,8 +220,9 @@ async function confirmPurchase() {
 
 function renderPendingOrders() {
     const container = document.getElementById('pending-orders-list');
-    if (!container || activeOrders.length === 0) {
-        if(container) container.innerHTML = '<div class="galaxy-card p-8 rounded-2xl text-center opacity-30 italic text-[10px]">Belum ada pesanan pending.</div>';
+    if (!container) return;
+    if (activeOrders.length === 0) {
+        container.innerHTML = '<div class="galaxy-card p-8 rounded-2xl text-center opacity-30 italic text-[10px]">Belum ada pesanan pending.</div>';
         return;
     }
     container.innerHTML = activeOrders.map(order => `
@@ -226,7 +232,7 @@ function renderPendingOrders() {
                     <div class="text-[10px] font-bold text-white uppercase">${order.service} • ${order.country}</div>
                     <div class="text-sm font-mono text-purple-400 mt-1">${order.phone_number}</div>
                 </div>
-                <button onclick="navigator.clipboard.writeText('${order.phone_number}')" class="bg-white/5 p-2 rounded-lg text-[10px]"><i class="fa-solid fa-copy"></i></button>
+                <button onclick="navigator.clipboard.writeText('${order.phone_number}')" class="bg-white/5 p-2 rounded-lg text-[10px] hover:bg-purple-600 transition"><i class="fa-solid fa-copy"></i></button>
             </div>
             <div class="bg-white/5 rounded-xl p-3 text-center">
                 <span class="text-[8px] text-gray-500 block mb-1 uppercase">Kode OTP</span>
