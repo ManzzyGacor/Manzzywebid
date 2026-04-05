@@ -199,31 +199,27 @@ app.get('/api/nokos/status/:orderId', async (req, res) => {
         const set = await Setting.findOne();
         const key = set?.rumahotp_key || process.env.RUMAHOTP_KEY;
         
-        // Panggil API Status RumahOTP
+        // Sesuai Docs: GET ke /v1/orders/get_status
         const resp = await axios.get(`${R_URL}/v1/orders/get_status?order_id=${req.params.orderId}`, {
             headers: { 'x-apikey': key, 'Accept': 'application/json' }
         });
 
-        // LOGIKA FILTER: Jangan cuma kirim success true
         if (resp.data.success) {
-            const data = resp.data.data;
-            
-            // Kirim data apa adanya, tapi kita pastikan otp_code benar-benar dipantau
+            const d = resp.data.data;
+            // Kirim FULL DATA ke frontend biar nokos.js gak bingung
             return res.json({
                 success: true,
                 data: {
-                    order_id: data.order_id,
-                    status: data.status, // received, completed, dll
-                    otp_code: data.otp_code || null, // Pastikan jadi null kalau kosong
-                    phone_number: data.phone_number
+                    order_id: d.order_id,
+                    status: d.status, // received, completed, canceled, dll
+                    phone_number: d.phone_number,
+                    otp_code: d.otp_code || null, // Ini kuncinya!
+                    otp_msg: d.otp_msg || null
                 }
             });
         }
-        
-        res.json({ success: false, msg: "Gagal ambil status" });
-
+        res.json({ success: false, msg: "Order tidak ditemukan" });
     } catch (e) {
-        console.error("Error Status Polling:", e.message);
         res.status(500).json({ success: false, msg: "Server Error" });
     }
 });
@@ -233,21 +229,28 @@ app.post('/api/nokos/cancel', async (req, res) => {
     try {
         const { order_id } = req.body;
         const set = await Setting.findOne();
-        const resp = await axios.get(`${R_URL}/v1/orders/set_status?order_id=${order_id}&status=cancel`, {
-            headers: { 'x-apikey': set.rumahotp_key, 'Accept': 'application/json' }
-        });
-        
-        if (resp.data.success) {
-            const order = await Order.findOne({ order_id });
-            if (order) {
-                await User.findByIdAndUpdate(order.userId, { $inc: { balance: order.price } });
-                await Order.findOneAndDelete({ order_id });
-            }
-            res.json({ success: true, msg: "Pesanan dibatalkan, saldo kembali" });
-        } else { res.json({ success: false, msg: "Gagal membatalkan di provider" }); }
-    } catch (e) { res.json({ success: false, msg: "Koneksi Error" }); }
-});
+        const key = set?.rumahotp_key || process.env.RUMAHOTP_KEY;
 
+        // Sesuai Docs: GET ke /v1/orders/set_status
+        const resp = await axios.get(`${R_URL}/v1/orders/set_status?order_id=${order_id}&status=cancel`, {
+            headers: { 'x-apikey': key, 'Accept': 'application/json' }
+        });
+
+        if (resp.data.success) {
+            // Refund Saldo ke User di Database kita
+            const orderDB = await Order.findOne({ order_id: order_id });
+            if (orderDB) {
+                await User.findByIdAndUpdate(orderDB.userId, { $inc: { balance: orderDB.price } });
+                await Order.findOneAndDelete({ order_id: order_id });
+            }
+            res.json({ success: true, msg: "Pesanan dibatalkan & saldo di-refund" });
+        } else {
+            res.json({ success: false, msg: resp.data.message || "Gagal batal di provider" });
+        }
+    } catch (e) {
+        res.status(500).json({ success: false, msg: "Koneksi Error" });
+    }
+});
 // =====================================
 // ADMIN KONTROL
 
