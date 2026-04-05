@@ -2,7 +2,8 @@
 // 1. DATA STATE & CONFIG
 // ==========================================
 let currentOrderStep = 1;
-let selectedOperatorId = 1; // FIX: Kasih default 1 (Any Operator) agar tidak error
+// TAMBAHKAN STATE BARU
+let selectedOperatorId = 1; 
 let selectedOrder = {
     service_id: '',
     service_name: '',
@@ -102,29 +103,116 @@ async function selectService(sid, sname) {
     } catch (e) { container.innerHTML = 'Error API'; }
 }
 
-// STEP 3: Select Country -> Load Servers
-function selectCountry(cname, pricelist) {
+
+
+// STEP 3: Pilih Country -> SEKARANG LOAD OPERATOR DULU (Bukan langsung Server)
+async function selectCountry(cname, pricelist) {
     selectedOrder.country_name = cname;
+    selectedOrder.pricelist_temp = pricelist; // Simpan sementara
     nextOrderStep(3);
 
     const container = document.getElementById('list-servers-modal');
-    container.innerHTML = pricelist.map(p => `
-        <div onclick="confirmStep('${p.server_id}', '${p.provider_id}', ${p.price_user || p.price})" class="galaxy-card p-4 rounded-2xl flex justify-between items-center cursor-pointer border-l-4 border-purple-500 bg-purple-500/5 mb-2 transition">
+    container.innerHTML = '<div class="text-center py-5 opacity-50 text-[10px]">MEMUAT OPERATOR...</div>';
+
+    try {
+        // Ambil list operator sesuai negara dan provider_id pertama
+        const pId = pricelist[0].provider_id;
+        const res = await fetch(`/api/nokos/operators?country=${cname}&provider_id=${pId}`);
+        const result = await res.json();
+
+        if (result.success) {
+            // Tampilkan list operator
+            container.innerHTML = `
+                <div class="text-[9px] font-bold text-gray-500 mb-2 px-1">PILIH OPERATOR:</div>
+                <div class="grid grid-cols-3 gap-2 mb-4">
+                    ${result.data.map(op => `
+                        <div onclick="setOperator(${op.id}, this)" class="op-card bg-white/5 border border-white/10 p-2 rounded-xl text-center cursor-pointer transition">
+                            <img src="${op.image}" class="w-6 h-6 mx-auto mb-1 rounded-full object-cover">
+                            <div class="text-[8px] font-bold uppercase">${op.name}</div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="text-[9px] font-bold text-gray-500 mb-2 px-1">PILIH SERVER:</div>
+                <div id="inner-server-list">
+                    ${renderServers(pricelist)}
+                </div>
+            `;
+        }
+    } catch (e) { 
+        container.innerHTML = renderServers(pricelist); // Fallback kalau operator gagal load
+    }
+}
+
+function setOperator(id, el) {
+    selectedOperatorId = id;
+    document.querySelectorAll('.op-card').forEach(c => c.classList.remove('border-purple-500', 'bg-purple-500/10'));
+    el.classList.add('border-purple-500', 'bg-purple-500/10');
+}
+
+function renderServers(pricelist) {
+    return pricelist.map(p => `
+        <div onclick="confirmStep('${p.server_id}', '${p.provider_id}', ${p.price_user || p.price})" class="galaxy-card p-4 rounded-2xl flex justify-between items-center cursor-pointer border-l-4 border-purple-500 mb-2">
             <div>
                 <div class="text-xs font-bold text-white uppercase">SERVER ${p.server_id}</div>
-                <div class="text-[9px] text-gray-500">Provider: ${p.provider_id}</div>
+                <div class="text-[9px] text-gray-500">Stok: ${p.stock}</div>
             </div>
             <div class="text-sm font-bold text-purple-400 font-mono">Rp ${(p.price_user || p.price).toLocaleString()}</div>
         </div>
     `).join('');
 }
 
-// STEP 4: Confirmation
+// UPDATE FUNGSI CONFIRM PURCHASE (BIAR GAK ERROR)
+async function confirmPurchase() {
+    const btn = document.getElementById('btn-final-buy');
+    btn.disabled = true;
+    btn.innerHTML = 'MEMPROSES...';
+
+    // FIX: Ambil number_id dari pricelist (TADI INI YANG KOSONG)
+    // number_id RumahOTP v2 itu ada di dalam pricelist negara
+    const dataToSend = {
+        number_id: selectedOrder.number_id_from_pricelist, // ID unik negara
+        provider_id: selectedOrder.provider_id,
+        operator_id: selectedOperatorId,
+        price: selectedOrder.price,
+        service_name: selectedOrder.service_name
+    };
+
+    console.log("Mengirim data ke backend:", dataToSend);
+
+    try {
+        const res = await fetch('/api/nokos/order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dataToSend)
+        });
+
+        const result = await res.json();
+
+        if (result.success) {
+            alert("Berhasil!");
+            location.reload();
+        } else {
+            alert(result.msg || "Gagal Membeli");
+            btn.disabled = false;
+            btn.innerText = "BELI SEKARANG";
+        }
+    } catch (e) {
+        alert("Koneksi Error! Cek terminal VPS lo.");
+        btn.disabled = false;
+        btn.innerText = "BELI SEKARANG";
+    }
+}
+
+// TAMBAHKAN INI DI confirmStep
 function confirmStep(serverId, providerId, price) {
     selectedOrder.server_id = serverId;
     selectedOrder.provider_id = providerId;
     selectedOrder.price = price;
     
+    // AMBIL number_id dari pricelist yang lagi aktif
+    const countryData = selectedOrder.pricelist_temp.find(p => p.provider_id == providerId);
+    selectedOrder.number_id_from_pricelist = countryData?.number_id || providerId;
+
     document.getElementById('res-app').innerText = selectedOrder.service_name;
     document.getElementById('res-country').innerText = selectedOrder.country_name;
     document.getElementById('res-server').innerText = "SERVER " + serverId;
