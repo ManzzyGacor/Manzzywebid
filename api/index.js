@@ -122,25 +122,46 @@ app.get('/api/nokos/countries', async (req, res) => {
         res.json({ success: true, data: dataWithProfit });
     } catch (e) { res.status(500).json({ success: false }); }
 });
-
+app.get('/api/nokos/operators', async (req, res) => {
+    try {
+        const { country, provider_id } = req.query;
+        const set = await Setting.findOne();
+        const resp = await axios.get(`${R_URL}/v2/operators?country=${country}&provider_id=${provider_id}`, {
+            headers: { 'x-apikey': set.rumahotp_key }
+        });
+        res.json(resp.data);
+    } catch (e) { res.json({ success: false }); }
+});
 // C. BELI NOMOR (Sesuai Dokumentasi GET /v2/orders)
+// GANTI ROUTE ORDER LO JADI INI
 app.post('/api/nokos/order', async (req, res) => {
-    if (!req.session.userId) return res.status(401).json({ success: false });
+    console.log("--- ADA REQUEST ORDER BARU ---");
+    console.log("Body:", req.body); // Liat di terminal data yang masuk apa aja
+
+    if (!req.session.userId) return res.status(401).json({ success: false, msg: "Auth fail" });
     
-    // number_id di sini adalah number_id dari pricelist negara
     const { number_id, provider_id, operator_id, price, service_name } = req.body;
 
     try {
         const user = await User.findById(req.session.userId);
         const set = await Setting.findOne();
+        const API_KEY = set?.rumahotp_key || process.env.RUMAHOTP_KEY;
 
         if (user.balance < price) return res.json({ success: false, msg: "Saldo Kurang" });
 
-        // SESUAI DOCS: GET ke /v2/orders
+        // LOG SEBELUM TEMBAK RUMAHOTP
+        console.log(`Mencoba Order ke RumahOTP: Number:${number_id}, Prov:${provider_id}, Op:${operator_id}`);
+
         const resp = await axios.get(`${R_URL}/v2/orders`, {
-            params: { number_id, provider_id, operator_id },
-            headers: { 'x-apikey': set.rumahotp_key, 'Accept': 'application/json' }
+            params: { 
+                number_id: number_id, 
+                provider_id: provider_id, 
+                operator_id: operator_id 
+            },
+            headers: { 'x-apikey': API_KEY, 'Accept': 'application/json' }
         });
+
+        console.log("Respon RumahOTP:", resp.data);
 
         if (resp.data.success) {
             user.balance -= price;
@@ -159,7 +180,17 @@ app.post('/api/nokos/order', async (req, res) => {
         } else {
             res.json({ success: false, msg: resp.data.message });
         }
-    } catch (e) { res.status(500).json({ success: false, msg: "Provider Error" }); }
+    } catch (e) {
+        // LOG ERROR DETAIL
+        console.error("!!! ERROR ORDER !!!");
+        if (e.response) {
+            console.error("Data Error:", e.response.data);
+            res.status(500).json({ success: false, msg: e.response.data.message || "Error dari Provider" });
+        } else {
+            console.error("Pesan Error:", e.message);
+            res.status(500).json({ success: false, msg: "Koneksi ke Provider Gagal" });
+        }
+    }
 });
 
 // D. CEK STATUS OTP (GET /v1/orders/get_status)
