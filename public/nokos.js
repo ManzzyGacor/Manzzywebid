@@ -2,15 +2,16 @@
 // 1. DATA STATE & CONFIG
 // ==========================================
 let currentOrderStep = 1;
-// TAMBAHKAN STATE BARU
-let selectedOperatorId = 1; 
+let selectedOperatorId = 1; // Default Any
 let selectedOrder = {
     service_id: '',
     service_name: '',
     country_name: '',
-    provider_id: '', // Ini ID Negara dari RumahOTP
+    provider_id: '',
     server_id: '',
-    price: 0
+    price: 0,
+    number_id_from_pricelist: '',
+    pricelist_temp: [] // Menampung sementara data pricelist negara terpilih
 };
 let activeOrders = []; // List pesanan pending
 
@@ -21,6 +22,8 @@ let activeOrders = []; // List pesanan pending
 async function openOrderModal() {
     const modal = document.getElementById('modal-order');
     const sheet = document.getElementById('order-sheet');
+    if (!modal || !sheet) return;
+
     modal.classList.remove('hidden');
     setTimeout(() => sheet.classList.remove('translate-y-full'), 10);
     
@@ -37,7 +40,8 @@ function closeOrderModal() {
 function nextOrderStep(step) {
     document.querySelectorAll('.order-step').forEach(s => s.classList.add('hidden'));
     currentOrderStep = step;
-    document.getElementById(`order-step-${step}`).classList.remove('hidden');
+    const target = document.getElementById(`order-step-${step}`);
+    if (target) target.classList.remove('hidden');
     updateOrderHeader();
 }
 
@@ -49,6 +53,18 @@ function resetOrderSteps() {
 function updateOrderHeader() {
     const titles = ["", "Pilih Aplikasi", "Pilih Negara", "Pilih Server", "Konfirmasi"];
     document.getElementById('modal-order-title').innerText = titles[currentOrderStep];
+    const btnBack = document.getElementById('btn-back-order');
+    if (btnBack) {
+        if (currentOrderStep > 1) btnBack.classList.remove('opacity-0', 'pointer-events-none');
+        else btnBack.classList.add('opacity-0', 'pointer-events-none');
+    }
+}
+
+function prevOrderStep() {
+    if (currentOrderStep > 1) {
+        currentOrderStep--;
+        nextOrderStep(currentOrderStep);
+    }
 }
 
 // ==========================================
@@ -103,125 +119,69 @@ async function selectService(sid, sname) {
     } catch (e) { container.innerHTML = 'Error API'; }
 }
 
-
-
-// STEP 3: Pilih Country -> SEKARANG LOAD OPERATOR DULU (Bukan langsung Server)
+// STEP 3: Select Country -> Load Operators & Servers
 async function selectCountry(cname, pricelist) {
     selectedOrder.country_name = cname;
-    selectedOrder.pricelist_temp = pricelist; // Simpan sementara
+    selectedOrder.pricelist_temp = pricelist; 
     nextOrderStep(3);
 
     const container = document.getElementById('list-servers-modal');
-    container.innerHTML = '<div class="text-center py-5 opacity-50 text-[10px]">MEMUAT OPERATOR...</div>';
+    container.innerHTML = '<div class="text-center p-5 opacity-50 text-[10px]">MEMUAT OPERATOR...</div>';
 
     try {
-        // Ambil list operator sesuai negara dan provider_id pertama
-        const pId = pricelist[0].provider_id;
-        const res = await fetch(`/api/nokos/operators?country=${cname}&provider_id=${pId}`);
+        // Ambil operator dari backend
+        const res = await fetch(`/api/nokos/operators?country=${cname}&provider_id=${pricelist[0].provider_id}`);
         const result = await res.json();
 
-        if (result.success) {
-            // Tampilkan list operator
-            container.innerHTML = `
-                <div class="text-[9px] font-bold text-gray-500 mb-2 px-1">PILIH OPERATOR:</div>
-                <div class="grid grid-cols-3 gap-2 mb-4">
-                    ${result.data.map(op => `
-                        <div onclick="setOperator(${op.id}, this)" class="op-card bg-white/5 border border-white/10 p-2 rounded-xl text-center cursor-pointer transition">
-                            <img src="${op.image}" class="w-6 h-6 mx-auto mb-1 rounded-full object-cover">
-                            <div class="text-[8px] font-bold uppercase">${op.name}</div>
-                        </div>
-                    `).join('')}
-                </div>
-                <div class="text-[9px] font-bold text-gray-500 mb-2 px-1">PILIH SERVER:</div>
-                <div id="inner-server-list">
-                    ${renderServers(pricelist)}
-                </div>
-            `;
+        let operatorHtml = `<div class="text-[9px] mb-2 text-gray-500 uppercase px-1">1. Pilih Operator</div>
+                            <div class="grid grid-cols-3 gap-2 mb-4">`;
+        
+        if(result.success) {
+            result.data.forEach(op => {
+                operatorHtml += `
+                    <div onclick="setOp(${op.id}, this)" class="op-item p-2 border border-white/10 rounded-xl text-center cursor-pointer transition">
+                        <img src="${op.image}" class="w-6 h-6 mx-auto mb-1 rounded-full object-cover">
+                        <div class="text-[8px] uppercase font-bold">${op.name}</div>
+                    </div>`;
+            });
         }
-    } catch (e) { 
-        container.innerHTML = renderServers(pricelist); // Fallback kalau operator gagal load
-    }
-}
+        operatorHtml += `</div>`;
 
-function setOperator(id, el) {
-    selectedOperatorId = id;
-    document.querySelectorAll('.op-card').forEach(c => c.classList.remove('border-purple-500', 'bg-purple-500/10'));
-    el.classList.add('border-purple-500', 'bg-purple-500/10');
-}
+        let serverHtml = `<div class="text-[9px] mb-2 text-gray-500 uppercase px-1">2. Pilih Server</div>` + 
+            pricelist.map(p => `
+            <div onclick="confirmStep('${p.server_id}', '${p.provider_id}', ${p.price_user || p.price}, ${p.number_id || pricelist[0].number_id})" class="galaxy-card p-4 rounded-2xl mb-2 flex justify-between border-l-4 border-purple-500 cursor-pointer active:scale-95 transition">
+                <div class="text-xs font-bold uppercase text-white">Server ${p.server_id}</div>
+                <div class="text-xs font-bold text-purple-400 font-mono">Rp ${(p.price_user || p.price).toLocaleString()}</div>
+            </div>`).join('');
 
-function renderServers(pricelist) {
-    return pricelist.map(p => `
-        <div onclick="confirmStep('${p.server_id}', '${p.provider_id}', ${p.price_user || p.price})" class="galaxy-card p-4 rounded-2xl flex justify-between items-center cursor-pointer border-l-4 border-purple-500 mb-2">
-            <div>
-                <div class="text-xs font-bold text-white uppercase">SERVER ${p.server_id}</div>
-                <div class="text-[9px] text-gray-500">Stok: ${p.stock}</div>
-            </div>
-            <div class="text-sm font-bold text-purple-400 font-mono">Rp ${(p.price_user || p.price).toLocaleString()}</div>
-        </div>
-    `).join('');
-}
-
-// UPDATE FUNGSI CONFIRM PURCHASE (BIAR GAK ERROR)
-async function confirmPurchase() {
-    const btn = document.getElementById('btn-final-buy');
-    btn.disabled = true;
-    btn.innerHTML = 'MEMPROSES...';
-
-    // FIX: Ambil number_id dari pricelist (TADI INI YANG KOSONG)
-    // number_id RumahOTP v2 itu ada di dalam pricelist negara
-    const dataToSend = {
-        number_id: selectedOrder.number_id_from_pricelist, // ID unik negara
-        provider_id: selectedOrder.provider_id,
-        operator_id: selectedOperatorId,
-        price: selectedOrder.price,
-        service_name: selectedOrder.service_name
-    };
-
-    console.log("Mengirim data ke backend:", dataToSend);
-
-    try {
-        const res = await fetch('/api/nokos/order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dataToSend)
-        });
-
-        const result = await res.json();
-
-        if (result.success) {
-            alert("Berhasil!");
-            location.reload();
-        } else {
-            alert(result.msg || "Gagal Membeli");
-            btn.disabled = false;
-            btn.innerText = "BELI SEKARANG";
-        }
+        container.innerHTML = operatorHtml + serverHtml;
     } catch (e) {
-        alert("Koneksi Error! Cek terminal VPS lo.");
-        btn.disabled = false;
-        btn.innerText = "BELI SEKARANG";
+        container.innerHTML = '<div class="text-center p-5 text-red-500">Gagal memuat operator.</div>';
     }
 }
 
-// TAMBAHKAN INI DI confirmStep
-function confirmStep(serverId, providerId, price) {
+function setOp(id, el) {
+    selectedOperatorId = id;
+    document.querySelectorAll('.op-item').forEach(i => i.classList.remove('bg-purple-600', 'border-purple-600', 'bg-purple-600/20'));
+    el.classList.add('bg-purple-600', 'border-purple-600', 'bg-purple-600/20');
+}
+
+// STEP 4: Persiapkan Konfirmasi
+function confirmStep(serverId, providerId, price, numid) {
     selectedOrder.server_id = serverId;
     selectedOrder.provider_id = providerId;
     selectedOrder.price = price;
-    
-    // AMBIL number_id dari pricelist yang lagi aktif
-    const countryData = selectedOrder.pricelist_temp.find(p => p.provider_id == providerId);
-    selectedOrder.number_id_from_pricelist = countryData?.number_id || providerId;
+    selectedOrder.number_id_from_pricelist = numid;
 
     document.getElementById('res-app').innerText = selectedOrder.service_name;
     document.getElementById('res-country').innerText = selectedOrder.country_name;
-    document.getElementById('res-server').innerText = "SERVER " + serverId;
+    document.getElementById('res-server').innerText = "Server " + serverId;
     document.getElementById('res-price').innerText = "Rp " + price.toLocaleString();
     
     nextOrderStep(4);
 }
 
-// FINAL: PROSES BELI (FIXED)
+// FINAL: PROSES BELI
 async function confirmPurchase() {
     const btn = document.getElementById('btn-final-buy');
     btn.disabled = true;
@@ -232,9 +192,9 @@ async function confirmPurchase() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                number_id: selectedOrder.service_id, 
+                number_id: selectedOrder.number_id_from_pricelist, 
                 provider_id: selectedOrder.provider_id,
-                operator_id: selectedOperatorId, // Sekarang sudah ada nilainya (1)
+                operator_id: selectedOperatorId,
                 price: selectedOrder.price,
                 service_name: selectedOrder.service_name
             })
@@ -243,7 +203,6 @@ async function confirmPurchase() {
         const result = await res.json();
 
         if (result.success) {
-            // Masukkan ke List Pending
             const newOrder = {
                 order_id: result.data.order_id,
                 phone_number: result.data.phone_number,
@@ -255,7 +214,7 @@ async function confirmPurchase() {
             
             activeOrders.unshift(newOrder);
             closeOrderModal();
-            switchView('order'); // Pindah ke tab order otomatis
+            switchView('order'); 
             renderPendingOrders(); 
             startOtpPolling(newOrder.order_id);
             startTimer(newOrder.order_id, 1200);
@@ -263,18 +222,17 @@ async function confirmPurchase() {
             alert("Pesanan Berhasil!");
         } else {
             alert("Gagal: " + (result.msg || result.message));
-            btn.disabled = false;
-            btn.innerText = "BELI SEKARANG";
         }
     } catch (e) {
         alert("Koneksi Error! Cek Backend.");
+    } finally {
         btn.disabled = false;
         btn.innerText = "BELI SEKARANG";
     }
 }
 
 // ==========================================
-// 4. PESANAN PENDING & POLLING (RE-RENDER)
+// 4. PESANAN PENDING & POLLING
 // ==========================================
 
 function renderPendingOrders() {
@@ -293,7 +251,7 @@ function renderPendingOrders() {
                     <div class="text-[10px] font-bold text-white uppercase">${order.service} • ${order.country}</div>
                     <div class="text-sm font-mono text-purple-400 mt-1">${order.phone_number}</div>
                 </div>
-                <button onclick="navigator.clipboard.writeText('${order.phone_number}')" class="bg-white/5 p-2 rounded-lg text-[10px]"><i class="fa-solid fa-copy"></i></button>
+                <button onclick="navigator.clipboard.writeText('${order.phone_number}')" class="bg-white/5 p-2 rounded-lg text-[10px] hover:bg-purple-600 transition"><i class="fa-solid fa-copy"></i></button>
             </div>
             <div class="bg-white/5 rounded-xl p-3 text-center">
                 <span class="text-[8px] text-gray-500 block mb-1 uppercase">Kode OTP</span>
@@ -322,7 +280,7 @@ function startOtpPolling(orderId) {
                 }
             }
             if (!activeOrders.find(o => o.order_id === orderId)) clearInterval(poll);
-        } catch (e) { }
+        } catch (e) { console.error("Poll Error"); }
     }, 5000);
 }
 
@@ -355,7 +313,11 @@ async function cancelOrder(orderId) {
             renderPendingOrders();
             location.reload(); 
         } else {
-            alert(result.msg);
+            alert(result.msg || "Gagal batal");
         }
     } catch (e) { alert("Error koneksi"); }
+}
+
+function copyText(txt) {
+    navigator.clipboard.writeText(txt);
 }
