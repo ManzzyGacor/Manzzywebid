@@ -123,32 +123,61 @@ app.get('/api/nokos/countries', async (req, res) => {
 
 // Order: Beli Nomor
 app.post('/api/nokos/order', async (req, res) => {
-    if (!req.session.userId) return res.status(401).send("Auth fail");
+    // 1. Cek Sesi
+    if (!req.session.userId) return res.status(401).json({ success: false, msg: "Auth fail" });
+    
     const { number_id, provider_id, operator_id, price, service_name } = req.body;
 
-    const user = await User.findById(req.session.userId);
-    if (user.balance < price) return res.json({ success: false, msg: "Saldo Kurang" });
-
     try {
-        const resp = await axios.get(`${R_URL}/v2/orders?number_id=${number_id}&provider_id=${provider_id}&operator_id=${operator_id}`, { headers });
-        if (resp.data.success) {
+        const user = await User.findById(req.session.userId);
+        const set = await Setting.findOne(); // Ambil API Key dari DB Settings
+
+        if (user.balance < price) {
+            return res.json({ success: false, msg: "Saldo tidak mencukupi!" });
+        }
+
+        // 2. SESUAIKAN DENGAN DOKUMENTASI LO (GET & /v2/orders)
+        // Parameter wajib ditempel di URL kalau pakai GET
+        const urlRumahOTP = `${R_URL}/v2/orders?number_id=${number_id}&provider_id=${provider_id}&operator_id=${operator_id}`;
+
+        const response = await axios.get(urlRumahOTP, {
+            headers: {
+                'x-apikey': set.rumahotp_key,
+                'Accept': 'application/json'
+            }
+        });
+
+        const result = response.data;
+
+        if (result.success) {
+            // 3. Potong Saldo & Simpan
             user.balance -= price;
             await user.save();
-            
+
+            // 4. Simpan ke Database Order lo
             const newOrder = new Order({
                 userId: user._id,
-                order_id: resp.data.data.order_id,
-                phone_number: resp.data.data.phone_number,
+                order_id: result.data.order_id,
+                phone_number: result.data.phone_number,
                 service: service_name,
                 price: price,
-                expired_at: resp.data.data.expired_at
+                status: 'received',
+                expired_at: result.data.expired_at
             });
             await newOrder.save();
-            res.json(resp.data);
-        } else { res.json(resp.data); }
-    } catch (e) { res.status(500).send("Error"); }
-});
 
+            // Kirim balik ke nokos.js
+            res.json({ success: true, data: result.data });
+        } else {
+            // Pesan gagal dari RumahOTP (Misal: Saldo pusat tipis)
+            res.json({ success: false, msg: result.message || "Gagal dari provider" });
+        }
+
+    } catch (e) {
+        console.error("Error Order:", e.response ? e.response.data : e.message);
+        res.status(500).json({ success: false, msg: "Koneksi ke Provider Gagal" });
+    }
+});
 // Status: Cek OTP
 app.get('/api/nokos/status/:oid', async (req, res) => {
     const resp = await axios.get(`${R_URL}/v1/orders/get_status?order_id=${req.params.oid}`, { headers });
