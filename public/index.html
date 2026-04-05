@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manzzy ID - Premium Nokos & OTP Virtual Platform</title>
-    <meta name="description" content="Manzzy ID menyediakan layanan nomor kosong (nokos) virtual untuk aktivasi OTP WhatsApp, Telegram, dan aplikasi lainnya dengan harga termurah, instan, dan anti-delay. Terhubung langsung ke RumahOTP.">
-    <meta name="keywords" content="nokos, otp virtual, rumahotp, manzzy id, jasa otp, nomor virtual indonesia, otp telegram, otp whatsapp">
+    <title>Manzzy ID - Premium OTP Virtual Platform</title>
+    <meta name="description" content="Manzzy ID menyediakan layanan nomor kosong (nokos) virtual untuk aktivasi OTP WhatsApp, Telegram, dan aplikasi lainnya dengan harga termurah, instan, dan anti-delay.">
+    <meta name="keywords" content="nokos, otp virtual, otp murah, nokos murah, manzzy id, jasa otp, nomor virtual indonesia, otp telegram, otp whatsapp">
     
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -63,6 +64,20 @@
     background: rgba(139, 92, 246, 0.1);
     box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
 }  
+
+
+    /* Custom warna SweetAlert biar masuk ke tema Galaxy lo */
+    .swal2-popup {
+        background: #0f172a !important; /* Warna dark galaxy */
+        border: 1px solid rgba(139, 92, 246, 0.3) !important;
+        border-radius: 24px !important;
+        color: #fff !important;
+    }
+    .swal2-styled.swal2-confirm {
+        background-color: #7c3aed !important; /* Purple */
+        border-radius: 12px !important;
+    }
+
     </style>
 </head>
 <body class="pb-32"> <div id="loader" class="fixed inset-0 bg-black z-[9999] flex flex-col items-center justify-center transition-opacity duration-700">
