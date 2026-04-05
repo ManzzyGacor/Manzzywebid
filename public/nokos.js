@@ -10,10 +10,10 @@ let selectedOrder = {
     provider_id: '',
     server_id: '',
     price: 0,
-    number_id_from_pricelist: '',
-    pricelist_temp: [] // Menampung sementara data pricelist negara terpilih
+    number_id_from_pricelist: '', // INI YANG TADI UNDEFINED
+    pricelist_temp: [] 
 };
-let activeOrders = []; // List pesanan pending
+let activeOrders = []; 
 
 // ==========================================
 // 2. LOGIKA MODAL & STEP NAVIGATION
@@ -23,10 +23,8 @@ async function openOrderModal() {
     const modal = document.getElementById('modal-order');
     const sheet = document.getElementById('order-sheet');
     if (!modal || !sheet) return;
-
     modal.classList.remove('hidden');
     setTimeout(() => sheet.classList.remove('translate-y-full'), 10);
-    
     resetOrderSteps();
     await loadServices(); 
 }
@@ -71,11 +69,9 @@ function prevOrderStep() {
 // 3. INTEGRASI API (STEP 1 - 4)
 // ==========================================
 
-// STEP 1: Load Apps
 async function loadServices() {
     const container = document.getElementById('list-apps-modal');
     container.innerHTML = '<div class="col-span-3 text-center py-10 opacity-50 text-[10px]">MEMUAT...</div>';
-    
     try {
         const res = await fetch('/api/nokos/services');
         const result = await res.json();
@@ -90,21 +86,18 @@ async function loadServices() {
     } catch (e) { container.innerHTML = 'Error API'; }
 }
 
-// STEP 2: Select App -> Load Countries
 async function selectService(sid, sname) {
     selectedOrder.service_id = sid;
     selectedOrder.service_name = sname;
     nextOrderStep(2);
-
     const container = document.getElementById('list-countries-modal');
     container.innerHTML = '<div class="text-center py-10 opacity-50 text-[10px]">MENCARI NEGARA...</div>';
-    
     try {
         const res = await fetch(`/api/nokos/countries?sid=${sid}`);
         const result = await res.json();
         if (result.success) {
             container.innerHTML = result.data.map(c => `
-                <div onclick="selectCountry('${c.name}', ${JSON.stringify(c.pricelist).replace(/"/g, '&quot;')})" class="galaxy-card p-4 rounded-2xl flex justify-between items-center cursor-pointer mb-3">
+                <div onclick="selectCountry('${c.name}', ${JSON.stringify(c.pricelist).replace(/"/g, '&quot;')}, ${c.number_id})" class="galaxy-card p-4 rounded-2xl flex justify-between items-center cursor-pointer mb-3">
                     <div class="flex items-center gap-4">
                         <img src="${c.img}" class="w-6 h-4 object-cover rounded-sm">
                         <div>
@@ -119,23 +112,20 @@ async function selectService(sid, sname) {
     } catch (e) { container.innerHTML = 'Error API'; }
 }
 
-// STEP 3: Select Country -> Load Operators & Servers
-async function selectCountry(cname, pricelist) {
+async function selectCountry(cname, pricelist, countryNumberId) {
     selectedOrder.country_name = cname;
-    selectedOrder.pricelist_temp = pricelist; 
+    selectedOrder.pricelist_temp = pricelist;
     nextOrderStep(3);
 
     const container = document.getElementById('list-servers-modal');
     container.innerHTML = '<div class="text-center p-5 opacity-50 text-[10px]">MEMUAT OPERATOR...</div>';
 
     try {
-        // Ambil operator dari backend
         const res = await fetch(`/api/nokos/operators?country=${cname}&provider_id=${pricelist[0].provider_id}`);
         const result = await res.json();
 
         let operatorHtml = `<div class="text-[9px] mb-2 text-gray-500 uppercase px-1">1. Pilih Operator</div>
                             <div class="grid grid-cols-3 gap-2 mb-4">`;
-        
         if(result.success) {
             result.data.forEach(op => {
                 operatorHtml += `
@@ -149,15 +139,13 @@ async function selectCountry(cname, pricelist) {
 
         let serverHtml = `<div class="text-[9px] mb-2 text-gray-500 uppercase px-1">2. Pilih Server</div>` + 
             pricelist.map(p => `
-            <div onclick="confirmStep('${p.server_id}', '${p.provider_id}', ${p.price_user || p.price}, ${p.number_id || pricelist[0].number_id})" class="galaxy-card p-4 rounded-2xl mb-2 flex justify-between border-l-4 border-purple-500 cursor-pointer active:scale-95 transition">
+            <div onclick="confirmStep('${p.server_id}', '${p.provider_id}', ${p.price_user || p.price}, ${countryNumberId})" class="galaxy-card p-4 rounded-2xl mb-2 flex justify-between border-l-4 border-purple-500 cursor-pointer active:scale-95 transition">
                 <div class="text-xs font-bold uppercase text-white">Server ${p.server_id}</div>
                 <div class="text-xs font-bold text-purple-400 font-mono">Rp ${(p.price_user || p.price).toLocaleString()}</div>
             </div>`).join('');
 
         container.innerHTML = operatorHtml + serverHtml;
-    } catch (e) {
-        container.innerHTML = '<div class="text-center p-5 text-red-500">Gagal memuat operator.</div>';
-    }
+    } catch (e) { container.innerHTML = 'Error Load Operator'; }
 }
 
 function setOp(id, el) {
@@ -166,26 +154,23 @@ function setOp(id, el) {
     el.classList.add('bg-purple-600', 'border-purple-600', 'bg-purple-600/20');
 }
 
-// STEP 4: Persiapkan Konfirmasi
 function confirmStep(serverId, providerId, price, numid) {
     selectedOrder.server_id = serverId;
     selectedOrder.provider_id = providerId;
     selectedOrder.price = price;
-    selectedOrder.number_id_from_pricelist = numid;
+    selectedOrder.number_id_from_pricelist = numid; // SEKARANG SUDAH TERISI
 
     document.getElementById('res-app').innerText = selectedOrder.service_name;
     document.getElementById('res-country').innerText = selectedOrder.country_name;
     document.getElementById('res-server').innerText = "Server " + serverId;
     document.getElementById('res-price').innerText = "Rp " + price.toLocaleString();
-    
     nextOrderStep(4);
 }
 
-// FINAL: PROSES BELI
 async function confirmPurchase() {
     const btn = document.getElementById('btn-final-buy');
     btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> MEMPROSES...';
+    btn.innerHTML = 'MEMPROSES...';
 
     try {
         const res = await fetch('/api/nokos/order', {
@@ -201,7 +186,6 @@ async function confirmPurchase() {
         });
 
         const result = await res.json();
-
         if (result.success) {
             const newOrder = {
                 order_id: result.data.order_id,
@@ -211,24 +195,18 @@ async function confirmPurchase() {
                 status: 'received',
                 otp_code: null
             };
-            
             activeOrders.unshift(newOrder);
             closeOrderModal();
             switchView('order'); 
             renderPendingOrders(); 
             startOtpPolling(newOrder.order_id);
             startTimer(newOrder.order_id, 1200);
-
             alert("Pesanan Berhasil!");
         } else {
             alert("Gagal: " + (result.msg || result.message));
         }
-    } catch (e) {
-        alert("Koneksi Error! Cek Backend.");
-    } finally {
-        btn.disabled = false;
-        btn.innerText = "BELI SEKARANG";
-    }
+    } catch (e) { alert("Koneksi Error!"); }
+    finally { btn.disabled = false; btn.innerText = "BELI SEKARANG"; }
 }
 
 // ==========================================
@@ -237,13 +215,10 @@ async function confirmPurchase() {
 
 function renderPendingOrders() {
     const container = document.getElementById('pending-orders-list');
-    if (!container) return;
-
-    if (activeOrders.length === 0) {
-        container.innerHTML = '<div class="galaxy-card p-8 rounded-2xl text-center opacity-30 italic text-[10px]">Belum ada pesanan pending.</div>';
+    if (!container || activeOrders.length === 0) {
+        if(container) container.innerHTML = '<div class="galaxy-card p-8 rounded-2xl text-center opacity-30 italic text-[10px]">Belum ada pesanan pending.</div>';
         return;
     }
-
     container.innerHTML = activeOrders.map(order => `
         <div class="galaxy-card p-4 rounded-2xl border-l-4 border-purple-500 mb-3">
             <div class="flex justify-between items-start mb-3">
@@ -251,15 +226,15 @@ function renderPendingOrders() {
                     <div class="text-[10px] font-bold text-white uppercase">${order.service} • ${order.country}</div>
                     <div class="text-sm font-mono text-purple-400 mt-1">${order.phone_number}</div>
                 </div>
-                <button onclick="navigator.clipboard.writeText('${order.phone_number}')" class="bg-white/5 p-2 rounded-lg text-[10px] hover:bg-purple-600 transition"><i class="fa-solid fa-copy"></i></button>
+                <button onclick="navigator.clipboard.writeText('${order.phone_number}')" class="bg-white/5 p-2 rounded-lg text-[10px]"><i class="fa-solid fa-copy"></i></button>
             </div>
             <div class="bg-white/5 rounded-xl p-3 text-center">
                 <span class="text-[8px] text-gray-500 block mb-1 uppercase">Kode OTP</span>
                 <div class="text-xl font-bold text-white" id="otp-${order.order_id}">${order.otp_code || '---'}</div>
             </div>
             <div class="mt-3 flex justify-between items-center text-[9px]">
-                <div id="timer-${order.order_id}" class="text-gray-500 font-mono italic">20:00</div>
-                <button onclick="cancelOrder('${order.order_id}')" class="text-red-500 font-bold uppercase hover:underline">Batalkan</button>
+                <div id="timer-${order.order_id}" class="text-gray-500 font-mono">20:00</div>
+                <button onclick="cancelOrder('${order.order_id}')" class="text-red-500 font-bold uppercase">Batalkan</button>
             </div>
         </div>
     `).join('');
@@ -276,31 +251,26 @@ function startOtpPolling(orderId) {
                     order.otp_code = result.data.otp_code;
                     renderPendingOrders();
                     clearInterval(poll);
-                    alert("OTP Masuk untuk " + order.service);
+                    alert("OTP Masuk!");
                 }
             }
             if (!activeOrders.find(o => o.order_id === orderId)) clearInterval(poll);
-        } catch (e) { console.error("Poll Error"); }
+        } catch (e) { }
     }, 5000);
 }
 
 function startTimer(orderId, duration) {
     let timer = duration;
     const interval = setInterval(() => {
-        let m = Math.floor(timer / 60);
-        let s = timer % 60;
+        let m = Math.floor(timer / 60); let s = timer % 60;
         const display = document.getElementById(`timer-${orderId}`);
         if (display) display.innerText = `${m}:${s < 10 ? '0'+s : s}`;
-        if (--timer < 0) {
-            clearInterval(interval);
-            activeOrders = activeOrders.filter(o => o.order_id !== orderId);
-            renderPendingOrders();
-        }
+        if (--timer < 0) { clearInterval(interval); activeOrders = activeOrders.filter(o => o.order_id !== orderId); renderPendingOrders(); }
     }, 1000);
 }
 
 async function cancelOrder(orderId) {
-    if (!confirm("Batalkan pesanan ini? Saldo akan dikembalikan.")) return;
+    if (!confirm("Batalkan pesanan ini?")) return;
     try {
         const res = await fetch('/api/nokos/cancel', {
             method: 'POST',
@@ -312,8 +282,6 @@ async function cancelOrder(orderId) {
             activeOrders = activeOrders.filter(o => o.order_id !== orderId);
             renderPendingOrders();
             location.reload(); 
-        } else {
-            alert(result.msg || "Gagal batal");
         }
     } catch (e) { alert("Error koneksi"); }
 }
