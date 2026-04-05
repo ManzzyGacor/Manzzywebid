@@ -205,12 +205,14 @@ async function confirmPurchase() {
 function renderPendingOrders() {
     const container = document.getElementById('pending-orders-list');
     if (!container) return;
+
     if (activeOrders.length === 0) {
         container.innerHTML = '<div class="galaxy-card p-8 rounded-2xl text-center opacity-30 italic text-[10px]">Belum ada pesanan pending.</div>';
         return;
     }
+
     container.innerHTML = activeOrders.map(order => `
-        <div class="galaxy-card p-4 rounded-2xl border-l-4 border-purple-500 mb-3">
+        <div class="galaxy-card p-4 rounded-2xl border-l-4 ${order.otp_code ? 'border-green-500' : 'border-purple-500'} mb-3">
             <div class="flex justify-between items-start mb-3">
                 <div>
                     <div class="text-[10px] font-bold text-white uppercase">${order.service} • ${order.country}</div>
@@ -218,13 +220,21 @@ function renderPendingOrders() {
                 </div>
                 <button onclick="navigator.clipboard.writeText('${order.phone_number}')" class="bg-white/5 p-2 rounded-lg text-[10px] hover:bg-purple-600 transition"><i class="fa-solid fa-copy"></i></button>
             </div>
-            <div class="bg-white/5 rounded-xl p-3 text-center">
-                <span class="text-[8px] text-gray-500 block mb-1 uppercase">Kode OTP</span>
-                <div class="text-xl font-bold text-white" id="otp-${order.order_id}">${order.otp_code || '---'}</div>
+            <div class="bg-white/5 rounded-xl p-3 text-center border ${order.otp_code ? 'border-green-500/50' : 'border-white/5'}">
+                <span class="text-[8px] text-gray-500 block mb-1 uppercase">${order.otp_code ? 'OTP DITERIMA' : 'Menunggu SMS'}</span>
+                <div class="text-xl font-bold ${order.otp_code ? 'text-green-400' : 'text-white'}" id="otp-${order.order_id}">
+                    ${order.otp_code ? order.otp_code : '<i class="fa-solid fa-spinner fa-spin text-sm opacity-20"></i>'}
+                </div>
             </div>
             <div class="mt-3 flex justify-between items-center text-[9px]">
-                <div id="timer-${order.order_id}" class="text-gray-500 font-mono">20:00</div>
-                <button onclick="cancelOrder('${order.order_id}')" class="text-red-500 font-bold uppercase">Batalkan</button>
+                <div id="timer-${order.order_id}" class="text-gray-500 font-mono">${order.status === 'completed' ? 'Selesai' : '20:00'}</div>
+                <div class="flex gap-2">
+                     ${order.otp_code ? `
+                        <button onclick="navigator.clipboard.writeText('${order.otp_code}')" class="text-green-500 font-bold uppercase hover:underline">Salin OTP</button>
+                     ` : `
+                        <button onclick="cancelOrder('${order.order_id}')" class="text-red-500 font-bold uppercase hover:underline">Batalkan</button>
+                     `}
+                </div>
             </div>
         </div>
     `).join('');
@@ -235,32 +245,50 @@ function startOtpPolling(orderId) {
         try {
             const res = await fetch(`/api/nokos/status/${orderId}`);
             const result = await res.json();
-            if (result.success && result.data.otp_code) {
+            
+            // FIX: Cek apakah otp_code beneran ada dan bukan string kosong/null
+            if (result.success && result.data.otp_code && result.data.otp_code !== "") {
                 const order = activeOrders.find(o => o.order_id === orderId);
-                if (order) {
+                if (order && !order.otp_code) { // Pastikan belum pernah dapet OTP
                     order.otp_code = result.data.otp_code;
+                    order.status = 'completed';
                     renderPendingOrders();
                     clearInterval(poll);
-                    alert("OTP Masuk!");
+                    alert("MANTAP! OTP " + order.service + " sudah masuk!");
                 }
             }
-            if (!activeOrders.find(o => o.order_id === orderId)) clearInterval(poll);
-        } catch (e) { }
-    }, 5000);
+            
+            // Berhenti kalau pesanan di-cancel/hilang dari list
+            const currentOrder = activeOrders.find(o => o.order_id === orderId);
+            if (!currentOrder) clearInterval(poll);
+
+        } catch (e) { console.error("Poll Error"); }
+    }, 5000); // Cek tiap 5 detik
 }
 
 function startTimer(orderId, duration) {
     let timer = duration;
     const interval = setInterval(() => {
+        const order = activeOrders.find(o => o.order_id === orderId);
+        if(!order || order.status === 'completed') {
+            clearInterval(interval);
+            return;
+        }
+
         let m = Math.floor(timer / 60); let s = timer % 60;
         const display = document.getElementById(`timer-${orderId}`);
         if (display) display.innerText = `${m}:${s < 10 ? '0'+s : s}`;
-        if (--timer < 0) { clearInterval(interval); activeOrders = activeOrders.filter(o => o.order_id !== orderId); renderPendingOrders(); }
+        
+        if (--timer < 0) { 
+            clearInterval(interval); 
+            activeOrders = activeOrders.filter(o => o.order_id !== orderId); 
+            renderPendingOrders(); 
+        }
     }, 1000);
 }
 
 async function cancelOrder(orderId) {
-    if (!confirm("Batalkan pesanan ini?")) return;
+    if (!confirm("Batalkan pesanan ini? Saldo akan dikembalikan.")) return;
     try {
         const res = await fetch('/api/nokos/cancel', {
             method: 'POST',
@@ -272,6 +300,8 @@ async function cancelOrder(orderId) {
             activeOrders = activeOrders.filter(o => o.order_id !== orderId);
             renderPendingOrders();
             location.reload(); 
+        } else {
+            alert(result.msg || "Gagal batal");
         }
     } catch (e) { alert("Error koneksi"); }
 }
