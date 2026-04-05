@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Manzzy ID</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Space Grotesk', sans-serif; background: #050505; color: white; }
+        .galaxy-card { background: linear-gradient(145deg, #111114, #09090b); border: 1px solid rgba(139, 92, 246, 0.1); }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen px-5">
+    <div class="max-w-md w-full">
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-bold tracking-tighter" id="auth-title">MASUK KE AKUN</h2>
+            <p class="text-xs text-gray-500 mt-2" id="auth-subtitle">Silakan masuk untuk mulai transaksi.</p>
+        </div>
+
+        <div class="galaxy-card p-8 rounded-[32px] space-y-5">
+            <input type="text" id="username" placeholder="Username" class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-5 text-sm outline-none focus:border-purple-500">
+            <input type="password" id="password" placeholder="Password" class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-5 text-sm outline-none focus:border-purple-500">
+            
+            <button onclick="submitAuth()" id="btn-primary" class="w-full bg-purple-600 hover:bg-purple-500 py-4 rounded-2xl font-bold transition shadow-lg shadow-purple-900/20">
+                MASUK SEKARANG
+            </button>
+
+            <div class="text-center">
+                <button onclick="toggleMode()" id="btn-toggle" class="text-[10px] text-purple-400 font-bold uppercase tracking-widest hover:underline">
+                    Belum punya akun? Daftar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isLogin = true;
+        function toggleMode() {
+            isLogin = !isLogin;
+            document.getElementById('auth-title').innerText = isLogin ? "MASUK KE AKUN" : "DAFTAR AKUN";
+            document.getElementById('btn-primary').innerText = isLogin ? "MASUK SEKARANG" : "DAFTAR SEKARANG";
+            document.getElementById('btn-toggle').innerText = isLogin ? "Belum punya akun? Daftar" : "Sudah punya akun? Login";
+        }
+
+        async function submitAuth() {
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            if(!u || !p) return alert("Isi semua data!");
+
+            const res = await fetch('/api/auth/submit', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ username: u, password: p, type: isLogin ? 'login' : 'register' })
+            });
+            const data = await res.json();
+            if(data.success) {
+                if(isLogin) {
+                    window.location.href = 'index.html'; // Pindah ke dashboard
+                } else {
+                    alert("Daftar Sukses! Silakan Login.");
+                    toggleMode();
+                }
+            } else {
+                alert(data.msg);
+            }
+        }
+    </script>
+</body>
+</html>

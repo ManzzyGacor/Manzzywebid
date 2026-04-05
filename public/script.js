@@ -70,45 +70,40 @@ async function handleAuthSubmit() {
 }
 
 window.addEventListener('load', async () => {
-    // 1. Jalankan Branding (Biar nama web muncul)
-    await updateWebBranding();
-
     try {
-        // 2. Tanya ke Server: "Gue siapa?"
         const res = await fetch('/api/auth/me');
         const data = await res.json();
 
         if (data.login) {
-            // JIKA LOGIN SUKSES: Timpa tampilan Guest pake data asli
+            // 1. Isi Data di Profile View
+            document.getElementById('profile-name').innerText = data.user.username;
+            document.getElementById('profile-balance').innerText = "Rp " + data.user.balance.toLocaleString();
+            
+            // 2. Set Huruf Inisial (Contoh: 'Manzzy' jadi 'M')
+            const initial = data.user.username.charAt(0).toUpperCase();
+            document.querySelectorAll('.user-initial').forEach(el => el.innerText = initial);
+
+            // 3. Set Badge Role (Admin/Member)
+            const badge = document.getElementById('profile-role-badge');
+            if (data.user.role === 'admin') {
+                badge.innerHTML = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-[9px] font-bold uppercase tracking-wider"><i class="fa-solid fa-crown text-[8px]"></i> ADMINISTRATOR</span>`;
+            } else {
+                badge.innerHTML = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[9px] font-bold uppercase tracking-wider"><i class="fa-solid fa-user text-[8px]"></i> MEMBER</span>`;
+            }
+
+            // 4. Isi Data di Header (Navigasi Atas)
             document.getElementById('nokos-username').innerText = data.user.username;
             document.getElementById('user-balance').innerText = "Rp " + data.user.balance.toLocaleString();
-            
-            // Tampilkan menu utama
+
+            // Masuk ke Home
             switchView('home');
-            document.querySelector('footer').classList.remove('hidden');
         } else {
-            // JIKA BELUM LOGIN: Paksa ke halaman Auth
-            switchView('auth');
-            document.querySelector('footer').classList.add('hidden');
-            
-            // Pastikan tampilan header tetap Guest
-            document.getElementById('nokos-username').innerText = "Guest Account";
-            document.getElementById('user-balance').innerText = "Rp 0";
+            // BELUM LOGIN? Langsung tendang ke auth.html
+            window.location.href = 'auth.html';
         }
     } catch (e) {
-        // Jika server mati, jangan tampilin data palsu
-        switchView('auth');
-        console.log("Koneksi ke API Gagal");
+        window.location.href = 'auth.html';
     }
-
-    // 3. Matikan Loader
-    setTimeout(() => {
-        const loader = document.getElementById('loader');
-        if(loader) {
-            loader.style.opacity = '0';
-            setTimeout(() => loader.style.display = 'none', 700);
-        }
-    }, 1000);
 });
 // ADMIN KONTROL
 // Fungsi Update Nama Web secara Dinamis
