@@ -158,9 +158,9 @@ async function confirmPurchase() {
     btn.disabled = true;
     btn.innerHTML = 'MEMPROSES...';
 
-    // Sekarang selectedOrder.number_id sudah pasti terisi dari Step 2
+// BAGIAN KRUSIAL: Pastikan semua data masuk ke JSON
     const payload = {
-        number_id: selectedOrder.number_id, 
+        number_id: selectedOrder.number_id, // Mengambil ID Negara yang disimpan di Step 2
         provider_id: selectedOrder.provider_id,
         operator_id: selectedOperatorId,
         price: selectedOrder.price,
