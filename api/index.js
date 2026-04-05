@@ -45,17 +45,6 @@ const headers = { 'x-apikey': R_KEY, 'Accept': 'application/json' };
 
 // --- ENDPOINTS ---
 
-// Auth: Login & Me
-app.post('/api/auth/login', async (req, res) => {
-    const { username, password } = req.body;
-    const user = await User.findOne({ username });
-    if (user && await bcrypt.compare(password, user.password)) {
-        req.session.userId = user._id;
-        res.json({ success: true, user });
-    } else { res.status(401).json({ success: false }); }
-});
-
-
 // ==========================================
 // 4. LOGIC LOGIN & REGISTER (JADI SATU)
 // ==========================================
@@ -110,10 +99,16 @@ app.post('/api/auth/submit', async (req, res) => {
 
 // Endpoint untuk cek sesi (digunakan di script.js window.onload)
 app.get('/api/auth/me', async (req, res) => {
-    if (!req.session.userId) return res.json({ login: false });
-    
-    const user = await User.findById(req.session.userId).select('-password');
-    res.json({ login: true, user });
+    if (!req.session.userId) {
+        return res.json({ login: false });
+    }
+    try {
+        const user = await User.findById(req.session.userId).select('-password');
+        if (!user) return res.json({ login: false });
+        res.json({ login: true, user });
+    } catch (err) {
+        res.json({ login: false });
+    }
 });
 // Nokos: Get Services & Countries
 app.get('/api/nokos/services', async (req, res) => {
