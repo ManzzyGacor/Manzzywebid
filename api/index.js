@@ -10,12 +10,20 @@ app.use(express.json());
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
 
-// 1. DATABASE MODELS (Langsung di sini)
+// ==========================================
+// 1. DATABASE MODELS
+// ==========================================
 const User = mongoose.model('User', new mongoose.Schema({
     username: { type: String, unique: true },
     password: { type: String },
     balance: { type: Number, default: 0 },
     role: { type: String, default: 'member' }
+}));
+
+const Setting = mongoose.model('Setting', new mongoose.Schema({
+    web_name: { type: String, default: 'Manzzy ID' },
+    rumahotp_key: String,
+    profit_percent: { type: Number, default: 10 }
 }));
 
 const Order = mongoose.model('Order', new mongoose.Schema({
@@ -31,226 +39,170 @@ const Order = mongoose.model('Order', new mongoose.Schema({
 
 mongoose.connect(process.env.MONGO_URI).then(() => console.log("Manzzy DB Ready"));
 
-// 2. SESSION
+// ==========================================
+// 2. SESSION & AUTH
+// ==========================================
 app.use(session({
-    secret: process.env.SESSION_SECRET,
+    secret: process.env.SESSION_SECRET || 'manzzy-secret',
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
+    cookie: { maxAge: 24 * 60 * 60 * 1000 }
 }));
 
-// 3. API RUMAHOTP CONFIG
-const R_URL = 'https://www.rumahotp.io/api';
-const R_KEY = process.env.RUMAHOTP_KEY;
-const headers = { 'x-apikey': R_KEY, 'Accept': 'application/json' };
+const isAdmin = (req, res, next) => {
+    if (req.session.userId && req.session.role === 'admin') next();
+    else res.status(403).json({ success: false, msg: "Akses ditolak" });
+};
 
-// --- ENDPOINTS ---
-
-// ==========================================
-// 4. LOGIC LOGIN & REGISTER (JADI SATU)
-// ==========================================
-app.post('/api/auth/submit', async (req, res) => {
-    try {
-        const { username, password, type } = req.body; // type: 'login' atau 'register'
-
-        if (!username || !password) {
-            return res.json({ success: false, msg: "Isi semua data!" });
-        }
-
-        if (type === 'register') {
-            // Cek apakah user sudah ada
-            const existingUser = await User.findOne({ username });
-            if (existingUser) return res.json({ success: false, msg: "Username sudah terdaftar!" });
-
-            // Hash Password
-            const hashedPassword = await bcrypt.hash(password, 10);
-            
-            // Penentuan Role (Otomatis Admin kalau username 'man')
-            const role = (username.toLowerCase() === 'man') ? 'admin' : 'member';
-
-            const newUser = new User({
-                username,
-                password: hashedPassword,
-                role,
-                balance: 0
-            });
-
-            await newUser.save();
-            return res.json({ success: true, msg: "Registrasi Berhasil!" });
-
-        } else {
-            // Logic Login
-            const user = await User.findOne({ username });
-            if (!user) return res.json({ success: false, msg: "Username tidak ditemukan!" });
-
-            const isMatch = await bcrypt.compare(password, user.password);
-            if (!isMatch) return res.json({ success: false, msg: "Password salah!" });
-
-            // Simpan ke Session
-            req.session.userId = user._id;
-            req.session.role = user.role;
-
-            return res.json({ success: true, msg: "Login Berhasil!", user });
-        }
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, msg: "Terjadi kesalahan server" });
-    }
-});
-
-// Endpoint untuk cek sesi (digunakan di script.js window.onload)
+// Cek Sesi User (Buat Profil)
 app.get('/api/auth/me', async (req, res) => {
-    if (!req.session.userId) {
-        return res.json({ login: false });
-    }
+    if (!req.session.userId) return res.json({ login: false });
     try {
         const user = await User.findById(req.session.userId).select('-password');
-        if (!user) return res.json({ login: false });
         res.json({ login: true, user });
-    } catch (err) {
-        res.json({ login: false });
-    }
+    } catch (err) { res.json({ login: false }); }
 });
-// Nokos: Get Services & Countries
+
+// Auth Submit (Login & Register)
+app.post('/api/auth/submit', async (req, res) => {
+    try {
+        const { username, password, type } = req.body;
+        if (type === 'register') {
+            const existing = await User.findOne({ username });
+            if (existing) return res.json({ success: false, msg: "Username sudah ada" });
+            const hash = await bcrypt.hash(password, 10);
+            const role = (username.toLowerCase() === 'man') ? 'admin' : 'member';
+            const newUser = new User({ username, password: hash, role, balance: 0 });
+            await newUser.save();
+            return res.json({ success: true });
+        } else {
+            const user = await User.findOne({ username });
+            if (!user || !(await bcrypt.compare(password, user.password))) {
+                return res.json({ success: false, msg: "Username/Password salah" });
+            }
+            req.session.userId = user._id;
+            req.session.role = user.role;
+            return res.json({ success: true });
+        }
+    } catch (err) { res.json({ success: false, msg: "Error Server" }); }
+});
+
+// ==========================================
+// 3. RUMAHOTP API ROUTES (SESUAI DOCS)
+// ==========================================
+const R_URL = 'https://www.rumahotp.io/api';
+
+// A. Tampilkan Layanan (Services)
 app.get('/api/nokos/services', async (req, res) => {
-    const resp = await axios.get(`${R_URL}/v2/services`, { headers });
-    res.json(resp.data);
+    try {
+        const set = await Setting.findOne();
+        const resp = await axios.get(`${R_URL}/v2/services`, {
+            headers: { 'x-apikey': set.rumahotp_key, 'Accept': 'application/json' }
+        });
+        res.json(resp.data);
+    } catch (e) { res.status(500).json({ success: false }); }
 });
 
+// B. Tampilkan Negara & Price (Countries)
 app.get('/api/nokos/countries', async (req, res) => {
-    const resp = await axios.get(`${R_URL}/v2/countries?service_id=${req.query.sid}`, { headers });
-    res.json(resp.data);
+    try {
+        const set = await Setting.findOne();
+        const resp = await axios.get(`${R_URL}/v2/countries?service_id=${req.query.sid}`, {
+            headers: { 'x-apikey': set.rumahotp_key, 'Accept': 'application/json' }
+        });
+        
+        // Logic Profit (Misal 10%)
+        const dataWithProfit = resp.data.data.map(item => {
+            item.pricelist = item.pricelist.map(p => {
+                p.price_user = Math.ceil(p.price + (p.price * (set.profit_percent / 100)));
+                return p;
+            });
+            return item;
+        });
+        res.json({ success: true, data: dataWithProfit });
+    } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// Order: Beli Nomor
+// C. BELI NOMOR (Sesuai Dokumentasi GET /v2/orders)
 app.post('/api/nokos/order', async (req, res) => {
-    // 1. Cek Sesi
-    if (!req.session.userId) return res.status(401).json({ success: false, msg: "Auth fail" });
+    if (!req.session.userId) return res.status(401).json({ success: false });
     
+    // number_id di sini adalah number_id dari pricelist negara
     const { number_id, provider_id, operator_id, price, service_name } = req.body;
 
     try {
         const user = await User.findById(req.session.userId);
-        const set = await Setting.findOne(); // Ambil API Key dari DB Settings
+        const set = await Setting.findOne();
 
-        if (user.balance < price) {
-            return res.json({ success: false, msg: "Saldo tidak mencukupi!" });
-        }
+        if (user.balance < price) return res.json({ success: false, msg: "Saldo Kurang" });
 
-        // 2. SESUAIKAN DENGAN DOKUMENTASI LO (GET & /v2/orders)
-        // Parameter wajib ditempel di URL kalau pakai GET
-        const urlRumahOTP = `${R_URL}/v2/orders?number_id=${number_id}&provider_id=${provider_id}&operator_id=${operator_id}`;
-
-        const response = await axios.get(urlRumahOTP, {
-            headers: {
-                'x-apikey': set.rumahotp_key,
-                'Accept': 'application/json'
-            }
+        // SESUAI DOCS: GET ke /v2/orders
+        const resp = await axios.get(`${R_URL}/v2/orders`, {
+            params: { number_id, provider_id, operator_id },
+            headers: { 'x-apikey': set.rumahotp_key, 'Accept': 'application/json' }
         });
 
-        const result = response.data;
-
-        if (result.success) {
-            // 3. Potong Saldo & Simpan
+        if (resp.data.success) {
             user.balance -= price;
             await user.save();
 
-            // 4. Simpan ke Database Order lo
             const newOrder = new Order({
                 userId: user._id,
-                order_id: result.data.order_id,
-                phone_number: result.data.phone_number,
+                order_id: resp.data.data.order_id,
+                phone_number: resp.data.data.phone_number,
                 service: service_name,
                 price: price,
-                status: 'received',
-                expired_at: result.data.expired_at
+                expired_at: resp.data.data.expired_at
             });
             await newOrder.save();
-
-            // Kirim balik ke nokos.js
-            res.json({ success: true, data: result.data });
+            res.json({ success: true, data: resp.data.data });
         } else {
-            // Pesan gagal dari RumahOTP (Misal: Saldo pusat tipis)
-            res.json({ success: false, msg: result.message || "Gagal dari provider" });
+            res.json({ success: false, msg: resp.data.message });
         }
-
-    } catch (e) {
-        console.error("Error Order:", e.response ? e.response.data : e.message);
-        res.status(500).json({ success: false, msg: "Koneksi ke Provider Gagal" });
-    }
-});
-// Status: Cek OTP
-app.get('/api/nokos/status/:oid', async (req, res) => {
-    const resp = await axios.get(`${R_URL}/v1/orders/get_status?order_id=${req.params.oid}`, { headers });
-    if (resp.data.success && resp.data.data.otp_code) {
-        await Order.findOneAndUpdate({ order_id: req.params.oid }, { otp_code: resp.data.data.otp_code, status: 'completed' });
-    }
-    res.json(resp.data);
+    } catch (e) { res.status(500).json({ success: false, msg: "Provider Error" }); }
 });
 
-// Endpoint Batalkan Pesanan & Refund Saldo
-app.post('/api/nokos/cancel', async (req, res) => {
-    if (!req.session.userId) return res.status(401).json({ success: false, msg: "Auth fail" });
-    
-    const { order_id } = req.body;
-    const order = await Order.findOne({ order_id: order_id, userId: req.session.userId });
-
-    if (!order) return res.json({ success: false, msg: "Pesanan tidak ditemukan" });
-    if (order.status !== 'received') return res.json({ success: false, msg: "Pesanan sudah selesai/batal" });
-
+// D. CEK STATUS OTP (GET /v1/orders/get_status)
+app.get('/api/nokos/status/:orderId', async (req, res) => {
     try {
-        // 1. Panggil API RumahOTP untuk batalkan
-        const resp = await axios.get(`${R_URL}/v1/orders/set_status?order_id=${order_id}&status=cancel`, { headers });
-
-        if (resp.data.success) {
-            // 2. Update Status di DB kita
-            order.status = 'canceled';
-            await order.save();
-
-            // 3. REFUND Saldo ke User
-            await User.findByIdAndUpdate(req.session.userId, { $inc: { balance: order.price } });
-
-            res.json({ success: true, msg: "Pesanan dibatalkan & Saldo dikembalikan!" });
-        } else {
-            res.json({ success: false, msg: "Gagal membatalkan di server pusat" });
-        }
-    } catch (e) {
-        res.status(500).json({ success: false, msg: "Koneksi Error" });
-    }
+        const set = await Setting.findOne();
+        const resp = await axios.get(`${R_URL}/v1/orders/get_status?order_id=${req.params.orderId}`, {
+            headers: { 'x-apikey': set.rumahotp_key, 'Accept': 'application/json' }
+        });
+        res.json(resp.data);
+    } catch (e) { res.json({ success: false }); }
 });
+
+// E. BATALKAN PESANAN (GET /v1/orders/set_status)
+app.post('/api/nokos/cancel', async (req, res) => {
+    try {
+        const { order_id } = req.body;
+        const set = await Setting.findOne();
+        const resp = await axios.get(`${R_URL}/v1/orders/set_status?order_id=${order_id}&status=cancel`, {
+            headers: { 'x-apikey': set.rumahotp_key, 'Accept': 'application/json' }
+        });
+        
+        if (resp.data.success) {
+            const order = await Order.findOne({ order_id });
+            if (order) {
+                await User.findByIdAndUpdate(order.userId, { $inc: { balance: order.price } });
+                await Order.findOneAndDelete({ order_id });
+            }
+            res.json({ success: true, msg: "Pesanan dibatalkan, saldo kembali" });
+        } else { res.json({ success: false, msg: "Gagal membatalkan di provider" }); }
+    } catch (e) { res.json({ success: false, msg: "Koneksi Error" }); }
+});
+
+// =====================================
 // ADMIN KONTROL
 // Tambahkan di dalam api/index.js (Satu file saja)
 
 // 1. MODEL SETTING (Untuk Admin Kontrol)
 const Setting = mongoose.model('Setting', new mongoose.Schema({
     web_name: { type: String, default: 'MANZZY ID' },
-    profit_percent: { type: Number, default: 10 }, // 10% profit
+    profit_percent: { type: Number, default: 20 }, // 10% profit
     rumahotp_key: { type: String, default: '' }
 }));
-
-// 2. LOGIC LOGIN & REGISTER (Jadi Satu)
-app.post('/api/auth/submit', async (req, res) => {
-    const { username, password, type } = req.body; // type: 'login' atau 'register'
-    
-    if (type === 'register') {
-        const check = await User.findOne({ username });
-        if (check) return res.json({ success: false, msg: "Username sudah ada!" });
-        
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const role = (username.toLowerCase() === 'man') ? 'admin' : 'member';
-        const newUser = new User({ username, password: hashedPassword, role });
-        await newUser.save();
-        return res.json({ success: true, msg: "Daftar Berhasil!" });
-    } else {
-        const user = await User.findOne({ username });
-        if (user && await bcrypt.compare(password, user.password)) {
-            req.session.userId = user._id;
-            req.session.role = user.role;
-            return res.json({ success: true, user });
-        }
-        res.json({ success: false, msg: "Login Gagal!" });
-    }
-});
-
 // 3. ADMIN MIDDLEWARE (Pagar Keamanan)
 const isAdmin = (req, res, next) => {
     if (req.session.role === 'admin') next();
@@ -292,18 +244,4 @@ app.post('/api/admin/users/action', isAdmin, async (req, res) => {
     res.json({ success: true });
 });
 
-// 5. HARGA OTOMATIS + PROFIT %
-app.get('/api/nokos/countries', async (req, res) => {
-    const set = await Setting.findOne();
-    const resp = await axios.get(`${R_URL}/v2/countries?service_id=${req.query.sid}`, { headers: { 'x-apikey': set.rumahotp_key } });
-    
-    // Tambahkan profit ke setiap item
-    const dataWithProfit = resp.data.data.map(item => {
-        const originalPrice = item.pricelist[0].price;
-        item.price_user = Math.ceil(originalPrice + (originalPrice * set.profit_percent / 100));
-        return item;
-    });
-    
-    res.json({ success: true, data: dataWithProfit });
-});
 app.listen(process.env.PORT || 3000);
