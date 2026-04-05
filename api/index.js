@@ -193,15 +193,39 @@ app.post('/api/nokos/order', async (req, res) => {
     }
 });
 
-// D. CEK STATUS OTP (GET /v1/orders/get_status)
+// GANTI BAGIAN STATUS DI index.js LO JADI INI
 app.get('/api/nokos/status/:orderId', async (req, res) => {
     try {
         const set = await Setting.findOne();
+        const key = set?.rumahotp_key || process.env.RUMAHOTP_KEY;
+        
+        // Panggil API Status RumahOTP
         const resp = await axios.get(`${R_URL}/v1/orders/get_status?order_id=${req.params.orderId}`, {
-            headers: { 'x-apikey': set.rumahotp_key, 'Accept': 'application/json' }
+            headers: { 'x-apikey': key, 'Accept': 'application/json' }
         });
-        res.json(resp.data);
-    } catch (e) { res.json({ success: false }); }
+
+        // LOGIKA FILTER: Jangan cuma kirim success true
+        if (resp.data.success) {
+            const data = resp.data.data;
+            
+            // Kirim data apa adanya, tapi kita pastikan otp_code benar-benar dipantau
+            return res.json({
+                success: true,
+                data: {
+                    order_id: data.order_id,
+                    status: data.status, // received, completed, dll
+                    otp_code: data.otp_code || null, // Pastikan jadi null kalau kosong
+                    phone_number: data.phone_number
+                }
+            });
+        }
+        
+        res.json({ success: false, msg: "Gagal ambil status" });
+
+    } catch (e) {
+        console.error("Error Status Polling:", e.message);
+        res.status(500).json({ success: false, msg: "Server Error" });
+    }
 });
 
 // E. BATALKAN PESANAN (GET /v1/orders/set_status)
