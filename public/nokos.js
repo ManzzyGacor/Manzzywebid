@@ -10,7 +10,7 @@ let selectedOrder = {
     provider_id: '',
     server_id: '',
     price: 0,
-    number_id_from_pricelist: '' // Ini target kita
+    number_id: '' // INI ADALAH number_id DARI LEVEL NEGARA
 };
 let activeOrders = []; 
 
@@ -50,18 +50,6 @@ function resetOrderSteps() {
 function updateOrderHeader() {
     const titles = ["", "Pilih Aplikasi", "Pilih Negara", "Pilih Server", "Konfirmasi"];
     document.getElementById('modal-order-title').innerText = titles[currentOrderStep];
-    const btnBack = document.getElementById('btn-back-order');
-    if (btnBack) {
-        if (currentOrderStep > 1) btnBack.classList.remove('opacity-0', 'pointer-events-none');
-        else btnBack.classList.add('opacity-0', 'pointer-events-none');
-    }
-}
-
-function prevOrderStep() {
-    if (currentOrderStep > 1) {
-        currentOrderStep--;
-        nextOrderStep(currentOrderStep);
-    }
 }
 
 // ==========================================
@@ -113,6 +101,7 @@ async function selectService(sid, sname) {
 
 async function selectCountry(cname, pricelist, countryNumberId) {
     selectedOrder.country_name = cname;
+    selectedOrder.number_id = countryNumberId; // Kunci number_id dari level negara
     nextOrderStep(3);
 
     const container = document.getElementById('list-servers-modal');
@@ -137,7 +126,7 @@ async function selectCountry(cname, pricelist, countryNumberId) {
 
         let serverHtml = `<div class="text-[9px] mb-2 text-gray-500 uppercase px-1">2. Pilih Server</div>` + 
             pricelist.map(p => `
-            <div onclick="confirmStep('${p.server_id}', '${p.provider_id}', ${p.price_user || p.price}, '${countryNumberId}')" class="galaxy-card p-4 rounded-2xl mb-2 flex justify-between border-l-4 border-purple-500 cursor-pointer active:scale-95 transition">
+            <div onclick="confirmStep('${p.server_id}', '${p.provider_id}', ${p.price_user || p.price})" class="galaxy-card p-4 rounded-2xl mb-2 flex justify-between border-l-4 border-purple-500 cursor-pointer active:scale-95 transition">
                 <div class="text-xs font-bold uppercase text-white">Server ${p.server_id}</div>
                 <div class="text-xs font-bold text-purple-400 font-mono">Rp ${(p.price_user || p.price).toLocaleString()}</div>
             </div>`).join('');
@@ -152,12 +141,10 @@ function setOp(id, el) {
     el.classList.add('bg-purple-600', 'border-purple-600', 'bg-purple-600/20');
 }
 
-function confirmStep(serverId, providerId, price, numid) {
-    // FIX: Pastikan numid masuk ke state
+function confirmStep(serverId, providerId, price) {
     selectedOrder.server_id = serverId;
     selectedOrder.provider_id = providerId;
     selectedOrder.price = price;
-    selectedOrder.number_id_from_pricelist = numid;
 
     document.getElementById('res-app').innerText = selectedOrder.service_name;
     document.getElementById('res-country').innerText = selectedOrder.country_name;
@@ -171,23 +158,20 @@ async function confirmPurchase() {
     btn.disabled = true;
     btn.innerHTML = 'MEMPROSES...';
 
-    // LOG UNTUK DEBUG DI BROWSER (F12)
-    console.log("Data yang dikirim ke backend:", {
-        number_id: selectedOrder.number_id_from_pricelist,
-        provider_id: selectedOrder.provider_id
-    });
+    // Sekarang selectedOrder.number_id sudah pasti terisi dari Step 2
+    const payload = {
+        number_id: selectedOrder.number_id, 
+        provider_id: selectedOrder.provider_id,
+        operator_id: selectedOperatorId,
+        price: selectedOrder.price,
+        service_name: selectedOrder.service_name
+    };
 
     try {
         const res = await fetch('/api/nokos/order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                number_id: selectedOrder.number_id_from_pricelist, 
-                provider_id: selectedOrder.provider_id,
-                operator_id: selectedOperatorId,
-                price: selectedOrder.price,
-                service_name: selectedOrder.service_name
-            })
+            body: JSON.stringify(payload)
         });
 
         const result = await res.json();
