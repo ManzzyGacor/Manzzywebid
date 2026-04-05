@@ -1,8 +1,8 @@
 // ==========================================
-// 1. DATA STATE & CONFIG
+// 1. DATA STATE & CONFIG (FIXED)
 // ==========================================
 let currentOrderStep = 1;
-let selectedOperatorId = 1; // Default: Any Operator
+let selectedOperatorId = 1; // FIX: Kasih nilai default 1 (Any) biar gak error
 let selectedOrder = {
     service_id: '',
     service_name: '',
@@ -11,22 +11,18 @@ let selectedOrder = {
     server_id: '',
     price: 0
 };
-let activeOrders = []; // List pesanan pending
+let activeOrders = [];
 
 // ==========================================
-// 2. LOGIKA MODAL & STEP NAVIGATION
+// 2. LOGIKA MODAL & NAVIGATION
 // ==========================================
-
 async function openOrderModal() {
     const modal = document.getElementById('modal-order');
     const sheet = document.getElementById('order-sheet');
-    if(!modal || !sheet) return;
-
     modal.classList.remove('hidden');
     setTimeout(() => sheet.classList.remove('translate-y-full'), 10);
-    
     resetOrderSteps();
-    await loadServices(); 
+    await loadServices();
 }
 
 function closeOrderModal() {
@@ -38,8 +34,7 @@ function closeOrderModal() {
 function nextOrderStep(step) {
     document.querySelectorAll('.order-step').forEach(s => s.classList.add('hidden'));
     currentOrderStep = step;
-    const targetStep = document.getElementById(`order-step-${step}`);
-    if(targetStep) targetStep.classList.remove('hidden');
+    document.getElementById(`order-step-${step}`).classList.remove('hidden');
     updateOrderHeader();
 }
 
@@ -51,9 +46,6 @@ function resetOrderSteps() {
 function updateOrderHeader() {
     const titles = ["", "Pilih Aplikasi", "Pilih Negara", "Pilih Server", "Konfirmasi"];
     document.getElementById('modal-order-title').innerText = titles[currentOrderStep];
-    const btnBack = document.getElementById('btn-back-order');
-    if (currentOrderStep > 1) btnBack.classList.remove('opacity-0', 'pointer-events-none');
-    else btnBack.classList.add('opacity-0', 'pointer-events-none');
 }
 
 // ==========================================
@@ -62,8 +54,7 @@ function updateOrderHeader() {
 
 async function loadServices() {
     const container = document.getElementById('list-apps-modal');
-    container.innerHTML = '<div class="col-span-3 text-center py-10 opacity-50 text-[10px] uppercase">Memuat Layanan...</div>';
-    
+    container.innerHTML = '<div class="col-span-3 text-center py-10 opacity-50 text-[10px]">Memuat...</div>';
     try {
         const res = await fetch('/api/nokos/services');
         const result = await res.json();
@@ -79,19 +70,17 @@ async function loadServices() {
 }
 
 async function selectService(sid, sname) {
-    selectedOrder.service_id = sid;
+    selectedOrder.service_id = sid; // Menyimpan ID Layanan
     selectedOrder.service_name = sname;
     nextOrderStep(2);
-
     const container = document.getElementById('list-countries-modal');
-    container.innerHTML = '<div class="text-center py-10 opacity-50 text-[10px] uppercase">Mencari Negara...</div>';
-    
+    container.innerHTML = '<div class="text-center py-10 opacity-50 text-[10px]">Mencari Negara...</div>';
     try {
         const res = await fetch(`/api/nokos/countries?sid=${sid}`);
         const result = await res.json();
         if (result.success) {
             container.innerHTML = result.data.map(c => `
-                <div onclick="selectCountry('${c.name}', ${JSON.stringify(c.pricelist).replace(/"/g, '&quot;')})" class="galaxy-card p-4 rounded-2xl flex justify-between items-center cursor-pointer hover:border-purple-500 transition mb-3">
+                <div onclick="selectCountry('${c.name}', ${JSON.stringify(c.pricelist).replace(/"/g, '&quot;')})" class="galaxy-card p-4 rounded-2xl flex justify-between items-center cursor-pointer mb-3">
                     <div class="flex items-center gap-4">
                         <img src="${c.img}" class="w-6 h-4 object-cover rounded-sm">
                         <div>
@@ -103,19 +92,18 @@ async function selectService(sid, sname) {
                 </div>
             `).join('');
         }
-    } catch (e) { container.innerHTML = 'Error API'; }
+    } catch (e) { container.innerHTML = 'Error'; }
 }
 
 function selectCountry(cname, pricelist) {
     selectedOrder.country_name = cname;
     nextOrderStep(3);
-
     const container = document.getElementById('list-servers-modal');
     container.innerHTML = pricelist.map(p => `
-        <div onclick="confirmStep('${p.server_id}', '${p.provider_id}', ${p.price_user || p.price})" class="galaxy-card p-4 rounded-2xl flex justify-between items-center cursor-pointer border-l-4 border-purple-500 bg-purple-500/5 transition mb-2">
+        <div onclick="confirmStep('${p.server_id}', '${p.provider_id}', ${p.price_user || p.price})" class="galaxy-card p-4 rounded-2xl flex justify-between items-center cursor-pointer border-l-4 border-purple-500 mb-2">
             <div>
-                <div class="text-xs font-bold text-white uppercase">SERVER ${p.server_id}</div>
-                <div class="text-[9px] text-gray-500">ID Provider: ${p.provider_id}</div>
+                <div class="text-xs font-bold text-white">SERVER ${p.server_id}</div>
+                <div class="text-[9px] text-gray-500">Provider: ${p.provider_id}</div>
             </div>
             <div class="text-sm font-bold text-purple-400 font-mono">Rp ${(p.price_user || p.price).toLocaleString()}</div>
         </div>
@@ -126,29 +114,27 @@ function confirmStep(serverId, providerId, price) {
     selectedOrder.server_id = serverId;
     selectedOrder.provider_id = providerId;
     selectedOrder.price = price;
-    
     document.getElementById('res-app').innerText = selectedOrder.service_name;
     document.getElementById('res-country').innerText = selectedOrder.country_name;
     document.getElementById('res-server').innerText = "SERVER " + serverId;
     document.getElementById('res-price').innerText = "Rp " + price.toLocaleString();
-    
     nextOrderStep(4);
 }
 
-// FINAL: Proses Beli
+// FINAL: Proses Beli (FIXED)
 async function confirmPurchase() {
     const btn = document.getElementById('btn-final-buy');
     btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> MEMPROSES...';
+    btn.innerHTML = 'MEMPROSES...';
 
     try {
         const res = await fetch('/api/nokos/order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                number_id: selectedOrder.service_id, 
+                number_id: selectedOrder.service_id, // Kirim ID Layanan
                 provider_id: selectedOrder.provider_id,
-                operator_id: selectedOperatorId,
+                operator_id: selectedOperatorId, // Sekarang sudah ada nilainya (1)
                 price: selectedOrder.price,
                 service_name: selectedOrder.service_name
             })
@@ -157,34 +143,19 @@ async function confirmPurchase() {
         const result = await res.json();
 
         if (result.success) {
-            const newOrder = {
-                order_id: result.data.order_id,
-                phone_number: result.data.phone_number,
-                service: selectedOrder.service_name,
-                country: selectedOrder.country_name,
-                status: 'received',
-                otp_code: null
-            };
-            
-            activeOrders.unshift(newOrder);
-            closeOrderModal();
-            switchView('order'); 
-            renderPendingOrders(); 
-            startOtpPolling(newOrder.order_id);
-            startTimer(newOrder.order_id, 1200);
-
-            alert("Pesanan Berhasil!");
+            alert("Berhasil Beli!");
+            location.reload(); // Reload biar saldo & list keupdate
         } else {
             alert("Gagal: " + (result.msg || result.message));
+            btn.disabled = false;
+            btn.innerText = "BELI SEKARANG";
         }
     } catch (e) {
-        alert("Koneksi Error!");
-    } finally {
+        alert("Koneksi Error! Cek Server.");
         btn.disabled = false;
         btn.innerText = "BELI SEKARANG";
     }
 }
-
 // ==========================================
 // 4. PESANAN PENDING & POLLING
 // ==========================================
