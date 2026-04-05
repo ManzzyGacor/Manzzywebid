@@ -1,3 +1,4 @@
+// awalan
 function switchView(viewId) {
     // 1. Sembunyikan SEMUA view tanpa terkecuali
     document.querySelectorAll('.spa-view').forEach(view => {
