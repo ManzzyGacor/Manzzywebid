@@ -226,14 +226,6 @@ app.post('/api/nokos/cancel', async (req, res) => {
 
 // =====================================
 // ADMIN KONTROL
-// Tambahkan di dalam api/index.js (Satu file saja)
-
-
-// 3. ADMIN MIDDLEWARE (Pagar Keamanan)
-const isAdmin = (req, res, next) => {
-    if (req.session.role === 'admin') next();
-    else res.status(403).json({ msg: "Akses Ditolak!" });
-};
 
 // 4. ENDPOINT KONTROL ADMIN
 // Ambil Semua Setting
