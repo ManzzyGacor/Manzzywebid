@@ -23,7 +23,7 @@ const User = mongoose.model('User', new mongoose.Schema({
 const Setting = mongoose.model('Setting', new mongoose.Schema({
     web_name: { type: String, default: 'Manzzy ID' },
     rumahotp_key: String,
-    profit_percent: { type: Number, default: 10 }
+    profit_percent: { type: Number, default: 20 }
 }));
 
 const Order = mongoose.model('Order', new mongoose.Schema({
@@ -228,12 +228,7 @@ app.post('/api/nokos/cancel', async (req, res) => {
 // ADMIN KONTROL
 // Tambahkan di dalam api/index.js (Satu file saja)
 
-// 1. MODEL SETTING (Untuk Admin Kontrol)
-const Setting = mongoose.model('Setting', new mongoose.Schema({
-    web_name: { type: String, default: 'MANZZY ID' },
-    profit_percent: { type: Number, default: 20 }, // 10% profit
-    rumahotp_key: { type: String, default: '' }
-}));
+
 // 3. ADMIN MIDDLEWARE (Pagar Keamanan)
 const isAdmin = (req, res, next) => {
     if (req.session.role === 'admin') next();
