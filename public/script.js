@@ -19,6 +19,14 @@ function switchView(viewId) {
         btn.classList.add('text-gray-600');
     });
 
+if (viewId === 'history') {
+        if (typeof loadOrderHistory === "function") {
+            loadOrderHistory();
+        } else {
+            console.error("Fungsi loadOrderHistory gak ketemu! Pastikan nokos.js udah keload.");
+        }
+    }
+    
     const activeNav = document.getElementById(`nav-${viewId}`);
     if (activeNav) {
         activeNav.classList.remove('text-gray-600');

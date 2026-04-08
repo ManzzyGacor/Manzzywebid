@@ -156,38 +156,65 @@ function confirmStep(serverId, providerId, price) {
 
 async function confirmPurchase() {
     const btn = document.getElementById('btn-final-buy');
-    btn.disabled = true; btn.innerHTML = 'MEMPROSES...';
+    btn.disabled = true; 
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> MEMPROSES...';
+    
     const payload = {
-        number_id: selectedOrder.number_id, provider_id: selectedOrder.provider_id,
-        operator_id: selectedOperatorId, price: selectedOrder.price, service_name: selectedOrder.service_name
+        number_id: selectedOrder.number_id, 
+        provider_id: selectedOrder.provider_id,
+        operator_id: selectedOperatorId, 
+        price: selectedOrder.price, 
+        service_name: selectedOrder.service_name
     };
+
     try {
         const res = await fetch('/api/nokos/order', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
+
         const result = await res.json();
+
         if (result.success) {
             const newOrder = {
-                order_id: result.data.order_id, phone_number: result.data.phone_number,
-                service: selectedOrder.service_name, country: selectedOrder.country_name,
-                status: 'received', otp_code: null
+                // KUNCI UTAMA: Ambil invoiceId dari hasil generate backend pro kita
+                order_id: result.invoiceId || result.data.order_id, 
+                phone_number: result.data.phone_number,
+                service: selectedOrder.service_name, 
+                country: selectedOrder.country_name,
+                status: 'received', 
+                otp_code: null
             };
+
             activeOrders.unshift(newOrder);
-            saveOrders(); // SIMPAN KE BROWSER
+            saveOrders(); // SIMPAN KE BROWSER BIAR GAK HILANG REFRESH
             closeOrderModal();
             switchView('order'); 
             renderPendingOrders(); 
+            
+            // Polling sekarang pake Invoice ID, database pasti nemu
             startOtpPolling(newOrder.order_id);
             startTimer(newOrder.order_id, 1200);
-            Swal.fire('Berhasil', 'Pesanan masuk, tunggu OTP.', 'success');
-        } else {
-            Swal.fire('Gagal', result.msg || "Error", 'error');
-        }
-    } catch (e) { Swal.fire('Error', 'Koneksi Gagal', 'error'); }
-    finally { btn.disabled = false; btn.innerText = "BELI SEKARANG"; }
-}
 
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: 'Pesanan masuk, silakan tunggu OTP di halaman order.',
+                background: '#0f172a',
+                color: '#fff',
+                confirmButtonColor: '#7c3aed'
+            });
+        } else {
+            Swal.fire('Gagal', result.msg || "Terjadi kesalahan", 'error');
+        }
+    } catch (e) { 
+        Swal.fire('Error', 'Koneksi Gagal ke Server', 'error'); 
+    } finally { 
+        btn.disabled = false; 
+        btn.innerText = "BELI SEKARANG"; 
+    }
+}
 // ==========================================
 // 4. PESANAN PENDING & POLLING (FIXED)
 // ==========================================
@@ -284,4 +311,53 @@ async function cancelOrder(orderId) {
 function copyText(txt) {
     navigator.clipboard.writeText(txt);
     Toast.fire({ icon: 'success', title: 'Teks Disalin!' });
+}
+
+// Fungsi untuk Load History dari Database
+async function loadOrderHistory() {
+    const container = document.getElementById('history-list-container');
+    if (!container) return;
+
+    container.innerHTML = '<div class="text-center py-10 opacity-50 text-[10px]">MEMUAT RIWAYAT...</div>';
+
+    try {
+        const res = await fetch('/api/nokos/history');
+        const result = await res.json();
+
+        if (result.success && result.data.length > 0) {
+            container.innerHTML = result.data.map(tx => {
+                // Tentukan warna badge status
+                let statusColor = 'text-yellow-500';
+                if (tx.status === 'success') statusColor = 'text-green-500';
+                if (tx.status === 'canceled') statusColor = 'text-red-500';
+
+                return `
+                <div class="galaxy-card p-4 rounded-2xl mb-3 border-l-2 ${tx.status === 'success' ? 'border-green-500' : 'border-white/10'}">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <div class="text-[9px] font-bold text-gray-500 uppercase">${tx.invoiceId} • ${new Date(tx.createdAt).toLocaleString('id-ID')}</div>
+                            <div class="text-sm font-bold text-white">${tx.serviceName} (${tx.country})</div>
+                        </div>
+                        <div class="text-[9px] font-bold uppercase ${statusColor}">${tx.status}</div>
+                    </div>
+                    
+                    <div class="flex justify-between items-center bg-white/5 p-2 rounded-xl mt-2">
+                        <div class="text-xs font-mono text-purple-400">${tx.phoneNumber}</div>
+                        <div class="text-xs font-bold text-white">${tx.smsCode || '---'}</div>
+                    </div>
+
+                    ${tx.status === 'success' && tx.smsCode ? `
+                    <button onclick="copyText('${tx.smsCode}')" class="w-full mt-3 py-2 bg-purple-600/20 hover:bg-purple-600 text-purple-400 hover:text-white text-[10px] font-bold rounded-lg transition uppercase tracking-widest">
+                        Salin Kode OTP
+                    </button>
+                    ` : ''}
+                </div>
+                `;
+            }).join('');
+        } else {
+            container.innerHTML = '<div class="text-center py-10 opacity-30 italic text-[10px]">Belum ada riwayat transaksi.</div>';
+        }
+    } catch (e) {
+        container.innerHTML = '<div class="text-center py-10 text-red-500 text-[10px]">Gagal mengambil data.</div>';
+    }
 }
