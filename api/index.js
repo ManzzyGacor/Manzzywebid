@@ -42,7 +42,22 @@ const NokosTx = mongoose.model('NokosTx', new mongoose.Schema({
 }));
 
 mongoose.connect(process.env.MONGO_URI).then(() => console.log("--- MANZZY SYSTEM READY ---"));
-
+// cek admin
+// Middleware untuk cek apakah user adalah Admin
+const isAdmin = async (req, res, next) => {
+    if (!req.session.userId) return res.status(401).json({ msg: "Login dulu bos!" });
+    
+    try {
+        const user = await User.findById(req.session.userId);
+        if (user && user.role === 'admin') {
+            next(); // Lanjut ke proses berikutnya
+        } else {
+            res.status(403).json({ msg: "Lu bukan admin, dilarang masuk!" });
+        }
+    } catch (e) {
+        res.status(500).json({ msg: "Error pengecekan admin" });
+    }
+};
 // ==========================================
 // 2. HELPER REQUEST (SESUAI LOGIKA LO)
 // ==========================================
