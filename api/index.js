@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
+const https = require('https');
 const axios = require('axios');
 
 const app = express();
@@ -11,244 +12,219 @@ app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
 
 // ==========================================
-// 1. DATABASE MODELS
+// 1. DATABASE MODELS (SINKRON DENGAN KODE LO)
 // ==========================================
 const User = mongoose.model('User', new mongoose.Schema({
-    username: { type: String, unique: true },
-    password: { type: String },
+    username: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
     balance: { type: Number, default: 0 },
     role: { type: String, default: 'member' }
 }));
 
-const Setting = mongoose.model('Setting', new mongoose.Schema({
-    web_name: { type: String, default: 'Manzzy ID' },
-    rumahotp_key: String,
-    profit_percent: { type: Number, default: 20 }
+const NokosConfig = mongoose.model('NokosConfig', new mongoose.Schema({
+    provider: { type: String, default: 'rumahotp' },
+    apiKey: String,
+    marginPercent: { type: Number, default: 20 }
 }));
 
-const Order = mongoose.model('Order', new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    order_id: String,
-    phone_number: String,
-    service: String,
-    price: Number,
-    status: { type: String, default: 'received' },
-    otp_code: { type: String, default: null },
-    expired_at: Number
+const NokosTx = mongoose.model('NokosTx', new mongoose.Schema({
+    invoiceId: String, 
+    username: String, 
+    refId: String, // order_id dari pusat
+    serviceName: String, 
+    country: String, 
+    phoneNumber: String,
+    price: Number, 
+    status: { type: String, default: 'waiting' }, 
+    smsCode: String, 
+    expiresAt: Date, 
+    createdAt: { type: Date, default: Date.now }
 }));
 
-mongoose.connect(process.env.MONGO_URI).then(() => console.log("Manzzy DB Ready"));
+mongoose.connect(process.env.MONGO_URI).then(() => console.log("--- MANZZY SYSTEM READY ---"));
 
 // ==========================================
-// 2. SESSION & AUTH
+// 2. HELPER REQUEST (SESUAI LOGIKA LO)
+// ==========================================
+async function callRumahOTP(endpoint, method = 'GET', data = null) {
+    const config = await NokosConfig.findOne();
+    if (!config || !config.apiKey) throw new Error("API Key belum disetting!");
+
+    let path = endpoint.startsWith('/') ? `/api${endpoint}` : 
+               endpoint.startsWith('v1/') ? `/api/${endpoint}` : `/api/v2/${endpoint}`;
+
+    const options = {
+        hostname: 'www.rumahotp.io',
+        path: path,
+        method: method,
+        headers: {
+            'x-apikey': config.apiKey,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    };
+
+    return new Promise((resolve, reject) => {
+        const req = https.request(options, (res) => {
+            let body = '';
+            res.on('data', (chunk) => body += chunk);
+            res.on('end', () => {
+                try { resolve(JSON.parse(body)); } 
+                catch (e) { reject(new Error("API Response Error")); }
+            });
+        });
+        req.on('error', (e) => reject(e));
+        if (data && method !== 'GET') req.write(JSON.stringify(data));
+        req.end();
+    });
+}
+
+// ==========================================
+// 3. AUTH & SESSION
 // ==========================================
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'manzzy-secret',
+    secret: 'manzzy-secret',
     resave: false,
-    saveUninitialized: false,
-    cookie: { maxAge: 24 * 60 * 60 * 1000 }
+    saveUninitialized: false
 }));
 
-const isAdmin = (req, res, next) => {
-    if (req.session.userId && req.session.role === 'admin') next();
-    else res.status(403).json({ success: false, msg: "Akses ditolak" });
-};
-
-// Cek Sesi User (Buat Profil)
 app.get('/api/auth/me', async (req, res) => {
     if (!req.session.userId) return res.json({ login: false });
-    try {
-        const user = await User.findById(req.session.userId).select('-password');
-        res.json({ login: true, user });
-    } catch (err) { res.json({ login: false }); }
-});
-
-// Auth Submit (Login & Register)
-app.post('/api/auth/submit', async (req, res) => {
-    try {
-        const { username, password, type } = req.body;
-        if (type === 'register') {
-            const existing = await User.findOne({ username });
-            if (existing) return res.json({ success: false, msg: "Username sudah ada" });
-            const hash = await bcrypt.hash(password, 10);
-            const role = (username.toLowerCase() === 'man') ? 'admin' : 'member';
-            const newUser = new User({ username, password: hash, role, balance: 0 });
-            await newUser.save();
-            return res.json({ success: true });
-        } else {
-            const user = await User.findOne({ username });
-            if (!user || !(await bcrypt.compare(password, user.password))) {
-                return res.json({ success: false, msg: "Username/Password salah" });
-            }
-            req.session.userId = user._id;
-            req.session.role = user.role;
-            return res.json({ success: true });
-        }
-    } catch (err) { res.json({ success: false, msg: "Error Server" }); }
+    const user = await User.findById(req.session.userId);
+    res.json({ login: true, user });
 });
 
 // ==========================================
-// 3. RUMAHOTP API ROUTES (SESUAI DOCS)
+// 4. NOKOS ROUTES (SINKRON DENGAN nokos.js)
 // ==========================================
-const R_URL = 'https://www.rumahotp.io/api';
 
-// A. Tampilkan Layanan (Services)
+// Get Services
 app.get('/api/nokos/services', async (req, res) => {
-    try {
-        const set = await Setting.findOne();
-        const resp = await axios.get(`${R_URL}/v2/services`, {
-            headers: { 'x-apikey': set.rumahotp_key, 'Accept': 'application/json' }
-        });
-        res.json(resp.data);
-    } catch (e) { res.status(500).json({ success: false }); }
+    try { const result = await callRumahOTP('services'); res.json({ success: true, data: result.data }); }
+    catch (e) { res.status(500).json({ success: false }); }
 });
 
-// B. Tampilkan Negara & Price (Countries)
+// Get Countries + Profit Otomatis
 app.get('/api/nokos/countries', async (req, res) => {
     try {
-        const set = await Setting.findOne();
-        const resp = await axios.get(`${R_URL}/v2/countries?service_id=${req.query.sid}`, {
-            headers: { 'x-apikey': set.rumahotp_key, 'Accept': 'application/json' }
-        });
-        
-        // Logic Profit (Misal 10%)
-        const dataWithProfit = resp.data.data.map(item => {
-            item.pricelist = item.pricelist.map(p => {
-                p.price_user = Math.ceil(p.price + (p.price * (set.profit_percent / 100)));
-                return p;
+        const config = await NokosConfig.findOne();
+        const result = await callRumahOTP(`countries?service_id=${req.query.sid}`);
+        if (result.success) {
+            const margin = config.marginPercent || 20;
+            result.data.forEach(c => {
+                c.pricelist.forEach(p => {
+                    p.price_user = Math.ceil(p.price + (p.price * margin / 100));
+                });
             });
-            return item;
-        });
-        res.json({ success: true, data: dataWithProfit });
-    } catch (e) { res.status(500).json({ success: false }); }
-});
-app.get('/api/nokos/operators', async (req, res) => {
-    try {
-        const { country, provider_id } = req.query;
-        const set = await Setting.findOne();
-        const resp = await axios.get(`${R_URL}/v2/operators?country=${country}&provider_id=${provider_id}`, {
-            headers: { 'x-apikey': set.rumahotp_key }
-        });
-        res.json(resp.data);
+        }
+        res.json(result);
     } catch (e) { res.json({ success: false }); }
 });
-// C. BELI NOMOR (Sesuai Dokumentasi GET /v2/orders)
-// GANTI ROUTE ORDER LO JADI INI
-app.post('/api/nokos/order', async (req, res) => {
-    console.log("--- ADA REQUEST ORDER BARU ---");
-    console.log("Body:", req.body); // Liat di terminal data yang masuk apa aja
 
-    if (!req.session.userId) return res.status(401).json({ success: false, msg: "Auth fail" });
+// Get Operators
+app.get('/api/nokos/operators', async (req, res) => {
+    try {
+        const result = await callRumahOTP(`operators?country=${req.query.country}&provider_id=${req.query.provider_id}`);
+        res.json(result);
+    } catch (e) { res.json({ success: false }); }
+});
+
+// BUY (LOGIKA TRANSACTIONAL)
+app.post('/api/nokos/order', async (req, res) => {
+    if (!req.session.userId) return res.json({ success: false, msg: "Login dulu!" });
     
     const { number_id, provider_id, operator_id, price, service_name } = req.body;
+    const user = await User.findById(req.session.userId);
+
+    if (user.balance < price) return res.json({ success: false, msg: "Saldo Kurang" });
 
     try {
-        const user = await User.findById(req.session.userId);
-        const set = await Setting.findOne();
-        const API_KEY = set?.rumahotp_key || process.env.RUMAHOTP_KEY;
-
-        if (user.balance < price) return res.json({ success: false, msg: "Saldo Kurang" });
-
-        // LOG SEBELUM TEMBAK RUMAHOTP
-        console.log(`Mencoba Order ke RumahOTP: Number:${number_id}, Prov:${provider_id}, Op:${operator_id}`);
-
-        const resp = await axios.get(`${R_URL}/v2/orders`, {
-            params: { 
-                number_id: number_id, 
-                provider_id: provider_id, 
-                operator_id: operator_id 
-            },
-            headers: { 'x-apikey': API_KEY, 'Accept': 'application/json' }
-        });
-
-        console.log("Respon RumahOTP:", resp.data);
-
-        if (resp.data.success) {
+        const result = await callRumahOTP(`orders?number_id=${number_id}&provider_id=${provider_id}&operator_id=${operator_id}`);
+        
+        if (result.success) {
             user.balance -= price;
             await user.save();
 
-            const newOrder = new Order({
-                userId: user._id,
-                order_id: resp.data.data.order_id,
-                phone_number: resp.data.data.phone_number,
-                service: service_name,
+            const inv = 'NOK-' + Date.now().toString().slice(-6);
+            const tx = new NokosTx({
+                invoiceId: inv,
+                username: user.username,
+                refId: result.data.order_id,
+                serviceName: service_name,
+                country: result.data.country,
+                phoneNumber: result.data.phone_number,
                 price: price,
-                expired_at: resp.data.data.expired_at
+                expiresAt: new Date(Date.now() + 20 * 60000) // Default 20 menit
             });
-            await newOrder.save();
-            res.json({ success: true, data: resp.data.data });
+            await tx.save();
+            res.json({ success: true, data: { order_id: inv, phone_number: result.data.phone_number } });
         } else {
-            res.json({ success: false, msg: resp.data.message });
+            res.json({ success: false, msg: result.message });
         }
-    } catch (e) {
-        // LOG ERROR DETAIL
-        console.error("!!! ERROR ORDER !!!");
-        if (e.response) {
-            console.error("Data Error:", e.response.data);
-            res.status(500).json({ success: false, msg: e.response.data.message || "Error dari Provider" });
-        } else {
-            console.error("Pesan Error:", e.message);
-            res.status(500).json({ success: false, msg: "Koneksi ke Provider Gagal" });
-        }
-    }
+    } catch (e) { res.json({ success: false, msg: "Gagal Order" }); }
 });
 
-// GANTI BAGIAN STATUS DI index.js LO JADI INI
-app.get('/api/nokos/status/:orderId', async (req, res) => {
-    try {
-        const set = await Setting.findOne();
-        const key = set?.rumahotp_key || process.env.RUMAHOTP_KEY;
-        
-        // Sesuai Docs: GET ke /v1/orders/get_status
-        const resp = await axios.get(`${R_URL}/v1/orders/get_status?order_id=${req.params.orderId}`, {
-            headers: { 'x-apikey': key, 'Accept': 'application/json' }
-        });
+// POLLING STATUS (DENGAN LOGIKA AUTO-REFUND & AUTO-SUCCESS LO)
+app.get('/api/nokos/status/:invoiceId', async (req, res) => {
+    const tx = await NokosTx.findOne({ invoiceId: req.params.invoiceId });
+    if (!tx) return res.json({ success: false });
 
-        if (resp.data.success) {
-            const d = resp.data.data;
-            // Kirim FULL DATA ke frontend biar nokos.js gak bingung
-            return res.json({
-                success: true,
-                data: {
-                    order_id: d.order_id,
-                    status: d.status, // received, completed, canceled, dll
-                    phone_number: d.phone_number,
-                    otp_code: d.otp_code || null, // Ini kuncinya!
-                    otp_msg: d.otp_msg || null
-                }
-            });
+    // Cek Expired
+    if (tx.status === 'waiting' && new Date() > tx.expiresAt) {
+        if (tx.smsCode && tx.smsCode.length > 2) {
+            tx.status = 'success'; await tx.save();
+            return res.json({ success: true, data: tx, msg: "Auto-Complete" });
+        } else {
+            tx.status = 'canceled'; await tx.save();
+            await User.findOneAndUpdate({ username: tx.username }, { $inc: { balance: tx.price } });
+            return res.json({ success: true, data: tx, msg: "Auto-Refund" });
         }
-        res.json({ success: false, msg: "Order tidak ditemukan" });
-    } catch (e) {
-        res.status(500).json({ success: false, msg: "Server Error" });
     }
-});
 
-// E. BATALKAN PESANAN (GET /v1/orders/set_status)
-app.post('/api/nokos/cancel', async (req, res) => {
     try {
-        const { order_id } = req.body;
-        const set = await Setting.findOne();
-        const key = set?.rumahotp_key || process.env.RUMAHOTP_KEY;
-
-        // Sesuai Docs: GET ke /v1/orders/set_status
-        const resp = await axios.get(`${R_URL}/v1/orders/set_status?order_id=${order_id}&status=cancel`, {
-            headers: { 'x-apikey': key, 'Accept': 'application/json' }
-        });
-
-        if (resp.data.success) {
-            // Refund Saldo ke User di Database kita
-            const orderDB = await Order.findOne({ order_id: order_id });
-            if (orderDB) {
-                await User.findByIdAndUpdate(orderDB.userId, { $inc: { balance: orderDB.price } });
-                await Order.findOneAndDelete({ order_id: order_id });
+        const result = await callRumahOTP(`/v1/orders/get_status?order_id=${tx.refId}`);
+        if (result.success) {
+            const d = result.data;
+            if (d.otp_code && d.otp_code !== '-' && d.otp_code !== tx.smsCode) {
+                tx.smsCode = d.otp_code; await tx.save();
             }
-            res.json({ success: true, msg: "Pesanan dibatalkan & saldo di-refund" });
-        } else {
-            res.json({ success: false, msg: resp.data.message || "Gagal batal di provider" });
+            if (d.status === 'completed') { tx.status = 'success'; await tx.save(); }
+            if (d.status === 'canceled') {
+                tx.status = 'canceled'; await tx.save();
+                await User.findOneAndUpdate({ username: tx.username }, { $inc: { balance: tx.price } });
+            }
         }
+        res.json({ success: true, data: tx });
+    } catch (e) { res.json({ success: false }); }
+});
+
+// ACTION (CANCEL/DONE)
+app.post('/api/nokos/cancel', async (req, res) => {
+    const tx = await NokosTx.findOne({ invoiceId: req.body.order_id });
+    if (!tx || tx.status !== 'waiting') return res.json({ success: false });
+
+    try {
+        const result = await callRumahOTP(`/v1/orders/set_status?order_id=${tx.refId}&status=cancel`);
+        if (result.success) {
+            tx.status = 'canceled'; await tx.save();
+            await User.findOneAndUpdate({ username: tx.username }, { $inc: { balance: tx.price } });
+            res.json({ success: true, msg: "Dibatalkan & Refund." });
+        } else { res.json({ success: false, msg: result.message }); }
+    } catch (e) { res.json({ success: false }); }
+});
+
+// Ambil Riwayat Transaksi Nokos User
+app.get('/api/nokos/history', async (req, res) => {
+    try {
+        if (!req.session.userId) return res.status(401).json({ success: false });
+        
+        const user = await User.findById(req.session.userId);
+        // Cari di koleksi NokosTx, urutkan dari yang terbaru (descending)
+        const history = await NokosTx.find({ username: user.username }).sort({ createdAt: -1 });
+        
+        res.json({ success: true, data: history });
     } catch (e) {
-        res.status(500).json({ success: false, msg: "Koneksi Error" });
+        res.status(500).json({ success: false, msg: "Gagal memuat riwayat" });
     }
 });
 // =====================================
@@ -289,4 +265,4 @@ app.post('/api/admin/users/action', isAdmin, async (req, res) => {
     res.json({ success: true });
 });
 
-app.listen(process.env.PORT || 3000);
+app.listen(3000, () => console.log("Server Manzzy ID Ready Port 3000"));
