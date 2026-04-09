@@ -11,7 +11,11 @@ app.use(express.json());
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
 
+// ==========================================
 // 1. DATABASE MODELS
+// ==========================================
+
+// Model User
 const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({
     username: { type: String, required: true, unique: true },
     password: { type: String, required: true },
@@ -19,11 +23,13 @@ const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema(
     role: { type: String, default: 'member' }
 }));
 
+// Model NokosConfig (Untuk Margin & API Key)
 const NokosConfig = mongoose.models.NokosConfig || mongoose.model('NokosConfig', new mongoose.Schema({
     apiKey: String,
     marginPercent: { type: Number, default: 20 }
 }));
 
+// Model NokosTx (Riwayat Transaksi)
 const NokosTx = mongoose.models.NokosTx || mongoose.model('NokosTx', new mongoose.Schema({
     invoiceId: String, username: String, refId: String,
     serviceName: String, country: String, phoneNumber: String,
@@ -31,9 +37,18 @@ const NokosTx = mongoose.models.NokosTx || mongoose.model('NokosTx', new mongoos
     smsCode: String, expiresAt: Date, createdAt: { type: Date, default: Date.now }
 }));
 
+// Model Setting (UNTUK ADMIN KONTROL - WAJIB ADA BIAR GAK ERROR)
+const Setting = mongoose.models.Setting || mongoose.model('Setting', new mongoose.Schema({
+    siteName: { type: String, default: 'Manzzy ID' },
+    rumahotp_key: String,
+    marginPercent: { type: Number, default: 20 }
+}));
+
 mongoose.connect(process.env.MONGO_URI).then(() => console.log("--- DATABASE CONNECTED ---"));
 
+// ==========================================
 // 2. SESSION CONFIG
+// ==========================================
 app.use(session({
     secret: 'manzzy-galaxy-secret',
     resave: false,
@@ -41,7 +56,9 @@ app.use(session({
     cookie: { maxAge: 24 * 60 * 60 * 1000 } // 24 Jam
 }));
 
+// ==========================================
 // 3. MIDDLEWARE
+// ==========================================
 const isAdmin = async (req, res, next) => {
     if (!req.session.userId) return res.status(401).json({ msg: "Akses ditolak!" });
     const user = await User.findById(req.session.userId);
@@ -49,7 +66,9 @@ const isAdmin = async (req, res, next) => {
     else res.status(403).json({ msg: "Khusus Admin!" });
 };
 
+// ==========================================
 // 4. HELPER RUMAH OTP
+// ==========================================
 async function callRumahOTP(endpoint, method = 'GET', data = null) {
     const config = await NokosConfig.findOne();
     if (!config || !config.apiKey) throw new Error("API Key belum disetting!");
@@ -79,15 +98,27 @@ app.post('/api/auth/submit', async (req, res) => {
     const { username, password, type } = req.body;
     try {
         if (type === 'register') {
+            // Cek apakah user sudah ada
+            const exist = await User.findOne({ username });
+            if (exist) return res.json({ success: false, msg: "Username sudah dipakai!" });
+
             const salt = await bcrypt.genSalt(10);
             const hashedPassword = await bcrypt.hash(password, salt);
+            
             // Cek jika username 'man' otomatis jadi admin
             const role = username.toLowerCase() === 'man' ? 'admin' : 'member';
-            const newUser = new User({ username, password: hashedPassword, role, balance: 0 });
+            
+            const newUser = new User({ 
+                username: username.toLowerCase(), 
+                password: hashedPassword, 
+                role, 
+                balance: 0 
+            });
             await newUser.save();
             return res.json({ success: true, msg: "Daftar berhasil!" });
         } else {
-            const user = await User.findOne({ username });
+            // Login logic
+            const user = await User.findOne({ username: username.toLowerCase() });
             if (user && await bcrypt.compare(password, user.password)) {
                 req.session.userId = user._id;
                 return res.json({ success: true, msg: "Login berhasil!" });
@@ -195,29 +226,18 @@ app.get('/api/nokos/history', async (req, res) => {
     res.json({ success: true, data: list });
 });
 
-// Admin Stats
-app.get('/api/nokos/admin/stats', isAdmin, async (req, res) => {
-    const txs = await NokosTx.find({ status: 'success' });
-    const config = await NokosConfig.findOne();
-    const margin = config ? config.marginPercent : 20;
-    let omset = 0; let profit = 0;
-    txs.forEach(tx => {
-        omset += tx.price;
-        const modal = tx.price / (1 + (margin / 100));
-        profit += (tx.price - modal);
-    });
-    res.json({ success: true, total: txs.length, omset: Math.floor(omset), profit: Math.floor(profit) });
-});
+
 
 // =====================================
 // ADMIN KONTROL
 
-// 4. ENDPOINT KONTROL ADMIN
-// Ambil Semua Setting
+// UPDATE: Ambil Semua Setting (Fixing Model Setting)
 app.get('/api/admin/settings', isAdmin, async (req, res) => {
-    const set = await Setting.findOne() || await Setting.create({});
+    let set = await Setting.findOne();
+    if (!set) set = await Setting.create({});
     res.json(set);
 });
+
 
 // Update Setting (Nama Web, Profit, API Key)
 app.post('/api/admin/settings/update', isAdmin, async (req, res) => {
