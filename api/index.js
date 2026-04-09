@@ -69,27 +69,47 @@ const isAdmin = async (req, res, next) => {
 // ==========================================
 // 4. HELPER RUMAH OTP
 // ==========================================
-async function callRumahOTP(endpoint, method = 'GET', data = null) {
+async function callRumahOTP(fullPath, method = 'GET', data = null) {
+    // Ambil Config (Pastiin Modelnya bener, sesuaikan kalo lo pake Setting atau NokosConfig)
     const config = await NokosConfig.findOne();
     if (!config || !config.apiKey) throw new Error("API Key belum disetting!");
-    let path = endpoint.startsWith('v1/') ? `/api/${endpoint}` : `/api/v2/${endpoint}`;
+
+    // Path sekarang cuma nambahin /api/ di depan parameter
+    // Contoh parameter fullPath nanti: 'v2/services' atau 'v1/orders/get_status'
+    const path = `/api/${fullPath}`;
+
     const options = {
         hostname: 'www.rumahotp.io',
-        path: path, method: method,
-        headers: { 'x-apikey': config.apiKey, 'Accept': 'application/json', 'Content-Type': 'application/json' }
+        path: path,
+        method: method,
+        headers: { 
+            'x-apikey': config.apiKey, 
+            'Accept': 'application/json', 
+            'Content-Type': 'application/json' 
+        }
     };
+
     return new Promise((resolve, reject) => {
         const req = https.request(options, (res) => {
             let body = '';
             res.on('data', (c) => body += c);
-            res.on('end', () => { try { resolve(JSON.parse(body)); } catch (e) { reject(e); } });
+            res.on('end', () => { 
+                try { 
+                    resolve(JSON.parse(body)); 
+                } catch (e) { 
+                    reject(new Error("Response dari RumahOTP bukan JSON/Error")); 
+                } 
+            });
         });
+
         req.on('error', (e) => reject(e));
-        if (data && method !== 'GET') req.write(JSON.stringify(data));
+        
+        if (data && method !== 'GET') {
+            req.write(JSON.stringify(data));
+        }
         req.end();
     });
 }
-
 // ==========================================
 // AUTH ROUTES (Sesuai auth.html lo)
 // ==========================================
@@ -139,84 +159,127 @@ app.get('/api/auth/me', async (req, res) => {
 // ==========================================
 
 app.get('/api/nokos/services', async (req, res) => {
-    try { const resData = await callRumahOTP('services'); res.json({ success: true, data: resData.data }); }
-    catch (e) { res.json({ success: false }); }
+    try {
+        const resData = await callRumahOTP('v2/services'); // Path v2
+        if (resData.success) {
+            // Mapping agar sesuai dengan yang diharapkan frontend
+            return res.json({ 
+                success: true, 
+                data: resData.data 
+            });
+        }
+        res.json({ success: false, msg: "Gagal ambil layanan" });
+    } catch (e) {
+        res.status(500).json({ success: false, msg: e.message });
+    }
 });
 
 app.get('/api/nokos/countries', async (req, res) => {
     try {
+        const { sid } = req.query; // service_id
+        const resData = await callRumahOTP(`v2/countries?service_id=${sid}`);
+        
         const config = await NokosConfig.findOne();
-        const resData = await callRumahOTP(`countries?service_id=${req.query.sid}`);
+        const margin = config ? config.marginPercent : 20;
+
         if (resData.success) {
-            const margin = config.marginPercent || 20;
             resData.data.forEach(c => {
-                c.pricelist.forEach(p => { p.price_user = Math.ceil(p.price + (p.price * margin / 100)); });
+                c.pricelist.forEach(p => {
+                    // Simpan harga asli untuk modal, tampilkan harga+margin ke user
+                    p.price_user = Math.ceil(p.price + (p.price * margin / 100));
+                });
             });
+            return res.json(resData);
         }
-        res.json(resData);
-    } catch (e) { res.json({ success: false }); }
+        res.json({ success: false });
+    } catch (e) {
+        res.status(500).json({ success: false });
+    }
 });
 
 app.post('/api/nokos/order', async (req, res) => {
     if (!req.session.userId) return res.json({ success: false, msg: "Session expired" });
+    
     const { number_id, provider_id, operator_id, price, service_name } = req.body;
-    try {
-        const user = await User.findById(req.session.userId);
-        if (user.balance < price) return res.json({ success: false, msg: "Saldo kurang" });
+    const user = await User.findById(req.session.userId);
 
-        const result = await callRumahOTP(`orders?number_id=${number_id}&provider_id=${provider_id}&operator_id=${operator_id}`);
+    try {
+        // Path v2 untuk beli nomor
+        const result = await callRumahOTP(`v2/orders?number_id=${number_id}&provider_id=${provider_id}&operator_id=${operator_id}`);
+        
         if (result.success) {
-            user.balance -= price; await user.save();
+            user.balance -= price; 
+            await user.save();
+
             const inv = 'NOK-' + Date.now().toString().slice(-6);
-            await new NokosTx({
-                invoiceId: inv, username: user.username, refId: result.data.order_id,
-                serviceName: service_name, country: result.data.country, phoneNumber: result.data.phone_number,
-                price: price, expiresAt: new Date(Date.now() + 20 * 60000)
-            }).save();
-            res.json({ success: true, invoiceId: inv, data: { phone_number: result.data.phone_number } });
-        } else { res.json({ success: false, msg: result.message }); }
-    } catch (e) { res.json({ success: false, msg: "Gagal Order" }); }
+            const tx = new NokosTx({
+                invoiceId: inv,
+                username: user.username,
+                refId: result.data.order_id, // RO000xxxx
+                serviceName: service_name,
+                country: result.data.country,
+                phoneNumber: result.data.phone_number,
+                price: price,
+                expiresAt: new Date(result.data.expired_at || (Date.now() + 20 * 60000))
+            });
+            await tx.save();
+
+            res.json({ success: true, invoiceId: inv, data: result.data });
+        } else {
+            res.json({ success: false, msg: result.message });
+        }
+    } catch (e) {
+        res.json({ success: false, msg: "Gagal Order" });
+    }
 });
 
 app.get('/api/nokos/status/:invoiceId', async (req, res) => {
-    const tx = await NokosTx.findOne({ invoiceId: req.params.invoiceId });
-    if (!tx) return res.json({ success: false });
-
-    // Auto-Expire & Auto-Refund Logic
-    if (tx.status === 'waiting' && new Date() > tx.expiresAt) {
-        if (tx.smsCode && tx.smsCode.length > 2) { tx.status = 'success'; await tx.save(); }
-        else {
-            tx.status = 'canceled'; await tx.save();
-            await User.findOneAndUpdate({ username: tx.username }, { $inc: { balance: tx.price } });
-        }
-    }
-
     try {
+        const tx = await NokosTx.findOne({ invoiceId: req.params.invoiceId });
+        if (!tx) return res.json({ success: false });
+
+        // Path v1 sesuai docs lo
         const result = await callRumahOTP(`v1/orders/get_status?order_id=${tx.refId}`);
+
         if (result.success) {
             const d = result.data;
-            if (d.otp_code && d.otp_code !== '-' && d.otp_code !== tx.smsCode) { tx.smsCode = d.otp_code; await tx.save(); }
-            if (d.status === 'completed') { tx.status = 'success'; await tx.save(); }
+            // status: received, completed, canceled, expiring
+            if (d.otp_code) tx.smsCode = d.otp_code;
+            if (d.status === 'completed') tx.status = 'success';
+            
             if (d.status === 'canceled' && tx.status !== 'canceled') {
-                tx.status = 'canceled'; await tx.save();
+                tx.status = 'canceled';
                 await User.findOneAndUpdate({ username: tx.username }, { $inc: { balance: tx.price } });
             }
+            await tx.save();
         }
         res.json({ success: true, data: tx });
-    } catch (e) { res.json({ success: false }); }
+    } catch (e) {
+        res.json({ success: false });
+    }
 });
 
-app.post('/api/nokos/cancel', async (req, res) => {
-    const tx = await NokosTx.findOne({ invoiceId: req.body.order_id });
-    if (!tx || tx.status !== 'waiting') return res.json({ success: false });
+app.post('/api/nokos/action', async (req, res) => {
+    const { order_id, status } = req.body; // order_id di sini adalah invoiceId kita
+    const tx = await NokosTx.findOne({ invoiceId: order_id });
+    
     try {
-        const result = await callRumahOTP(`v1/orders/set_status?order_id=${tx.refId}&status=cancel`);
+        // Path v1 dengan parameter status (cancel/resend/done)
+        const result = await callRumahOTP(`v1/orders/set_status?order_id=${tx.refId}&status=${status}`);
+        
         if (result.success) {
-            tx.status = 'canceled'; await tx.save();
-            await User.findOneAndUpdate({ username: tx.username }, { $inc: { balance: tx.price } });
-            res.json({ success: true });
-        } else { res.json({ success: false, msg: result.message }); }
-    } catch (e) { res.json({ success: false }); }
+            if (status === 'cancel') {
+                tx.status = 'canceled';
+                await User.findOneAndUpdate({ username: tx.username }, { $inc: { balance: tx.price } });
+            }
+            await tx.save();
+            res.json({ success: true, msg: "Status berhasil diupdate" });
+        } else {
+            res.json({ success: false, msg: result.message });
+        }
+    } catch (e) {
+        res.json({ success: false });
+    }
 });
 
 app.get('/api/nokos/history', async (req, res) => {
