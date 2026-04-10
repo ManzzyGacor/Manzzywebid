@@ -160,9 +160,10 @@ app.get('/api/auth/me', async (req, res) => {
 
 app.get('/api/nokos/services', async (req, res) => {
     try {
-        const resData = await callRumahOTP('v2/services'); // Path v2
-        if (resData.success) {
-            // Mapping agar sesuai dengan yang diharapkan frontend
+        // Gunakan path v2 karena data layanan ada di v2
+        const resData = await callRumahOTP('v2/services'); 
+        if (resData && resData.success) {
+            // Pastikan kita mengirim field yang tepat: data
             return res.json({ 
                 success: true, 
                 data: resData.data 
@@ -176,18 +177,21 @@ app.get('/api/nokos/services', async (req, res) => {
 
 app.get('/api/nokos/countries', async (req, res) => {
     try {
-        const { sid } = req.query; // service_id
+        const { sid } = req.query; // Ambil SID dari URL
         const resData = await callRumahOTP(`v2/countries?service_id=${sid}`);
         
+        // Ambil margin dari DB
         const config = await NokosConfig.findOne();
         const margin = config ? config.marginPercent : 20;
 
-        if (resData.success) {
+        if (resData.success && resData.data) {
             resData.data.forEach(c => {
-                c.pricelist.forEach(p => {
-                    // Simpan harga asli untuk modal, tampilkan harga+margin ke user
-                    p.price_user = Math.ceil(p.price + (p.price * margin / 100));
-                });
+                if (c.pricelist) {
+                    c.pricelist.forEach(p => {
+                        // Backend harus ngasih p.price_user biar Frontend gak bingung
+                        p.price_user = Math.ceil(p.price + (p.price * margin / 100));
+                    });
+                }
             });
             return res.json(resData);
         }
