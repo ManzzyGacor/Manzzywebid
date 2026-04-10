@@ -70,12 +70,11 @@ const isAdmin = async (req, res, next) => {
 // 4. HELPER RUMAH OTP
 // ==========================================
 async function callRumahOTP(fullPath, method = 'GET', data = null) {
-    // Ambil Config (Pastiin Modelnya bener, sesuaikan kalo lo pake Setting atau NokosConfig)
+    // Ambil API Key dari NokosConfig
     const config = await NokosConfig.findOne();
     if (!config || !config.apiKey) throw new Error("API Key belum disetting!");
 
-    // Path sekarang cuma nambahin /api/ di depan parameter
-    // Contoh parameter fullPath nanti: 'v2/services' atau 'v1/orders/get_status'
+    // Path sekarang fleksibel, lo tinggal tulis 'v2/services' di route-nya
     const path = `/api/${fullPath}`;
 
     const options = {
@@ -97,16 +96,12 @@ async function callRumahOTP(fullPath, method = 'GET', data = null) {
                 try { 
                     resolve(JSON.parse(body)); 
                 } catch (e) { 
-                    reject(new Error("Response dari RumahOTP bukan JSON/Error")); 
+                    reject(new Error("Gagal parsing JSON. Cek API Key lo!")); 
                 } 
             });
         });
-
         req.on('error', (e) => reject(e));
-        
-        if (data && method !== 'GET') {
-            req.write(JSON.stringify(data));
-        }
+        if (data && method !== 'GET') req.write(JSON.stringify(data));
         req.end();
     });
 }
@@ -160,16 +155,18 @@ app.get('/api/auth/me', async (req, res) => {
 
 app.get('/api/nokos/services', async (req, res) => {
     try {
-        // Gunakan path v2 karena data layanan ada di v2
+        // Tulis jalurnya lengkap sesuai docs lo: v2/services
         const resData = await callRumahOTP('v2/services'); 
+        
         if (resData && resData.success) {
-            // Pastikan kita mengirim field yang tepat: data
+            // Sesuai respon JSON lo: resData.data isinya array layanan
             return res.json({ 
                 success: true, 
                 data: resData.data 
             });
+        } else {
+            return res.json({ success: false, msg: "Gagal ambil layanan" });
         }
-        res.json({ success: false, msg: "Gagal ambil layanan" });
     } catch (e) {
         res.status(500).json({ success: false, msg: e.message });
     }
