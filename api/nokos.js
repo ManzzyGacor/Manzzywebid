@@ -217,62 +217,65 @@ router.post('/order', async (req, res) => {
 });
 
 // Cek Status (v1)
-// Cek Status OTP (v1) - Tulis Manual
+// Cek Status OTP (v1) - Tulis Manual (FIXED FOR FRONTEND)
 router.get('/status/:invoiceId', async (req, res) => {
     try {
         // 1. Cari transaksi di database kita
         const tx = await NokosTx.findOne({ invoiceId: req.params.invoiceId });
         if (!tx) return res.json({ success: false, msg: "Order tidak ditemukan" });
 
-        // 2. Logic Auto-Expired (Jika waktu habis di DB kita tapi status masih waiting)
+        // 2. Logic Auto-Expired
         if (tx.status === 'waiting' && new Date() > tx.expiresAt) {
-            // Jika sudah ada OTP masuk tapi belum diklik selesai, kita anggap sukses
             if (tx.smsCode && tx.smsCode.length > 2) {
                 tx.status = 'success';
                 await tx.save();
             } else {
-                // Jika murni tidak ada OTP, batalkan dan refund saldo
                 tx.status = 'canceled';
                 await tx.save();
                 await User.findOneAndUpdate({ username: tx.username }, { $inc: { balance: tx.price } });
-                return res.json({ success: true, data: tx, msg: "Waktu habis, saldo di-refund." });
+                const freshTx = await NokosTx.findById(tx._id);
+                return res.json({ success: true, data: freshTx, msg: "Waktu habis, saldo di-refund." });
             }
         }
 
-        // 3. Tembak ke RumahOTP v1 (Manual Prefix)
-        // Kita pakai refId (RO000xxx) buat nanya ke pusat
+        // 3. Tembak ke RumahOTP v1
         const result = await callRumahOTP(`v1/orders/get_status?order_id=${tx.refId}`);
 
         if (result && result.success) {
             const d = result.data;
+            let needsUpdate = false;
 
-            // A. Simpan Kode OTP kalau muncul
+            // A. Simpan Kode OTP
             if (d.otp_code && d.otp_code !== '-' && d.otp_code !== tx.smsCode) {
                 tx.smsCode = d.otp_code;
-                await tx.save();
+                needsUpdate = true;
             }
 
-            // B. Jika di pusat statusnya 'completed'
-            if (d.status === 'completed') {
+            // B. Jika completed
+            if (d.status === 'completed' && tx.status !== 'success') {
                 tx.status = 'success';
-                await tx.save();
+                needsUpdate = true;
             }
 
-            // C. Jika di pusat statusnya 'canceled' (Refund Saldo Otomatis)
+            // C. Jika canceled
             if (d.status === 'canceled' && tx.status !== 'canceled') {
                 tx.status = 'canceled';
-                await tx.save();
                 await User.findOneAndUpdate(
                     { username: tx.username }, 
                     { $inc: { balance: tx.price } }
                 );
+                needsUpdate = true;
             }
+
+            if (needsUpdate) await tx.save();
         }
 
-        // 4. Kirim data terbaru ke frontend buat di-render
+        // KUNCI PENYELESAIAN: Ambil data paling fresh dari DB sebelum kirim ke web
+        const finalData = await NokosTx.findById(tx._id).lean();
+
         res.json({ 
             success: true, 
-            data: tx 
+            data: finalData // Data ini dijamin sudah ada smsCode-nya
         });
 
     } catch (e) {
