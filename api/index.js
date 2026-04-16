@@ -66,7 +66,52 @@ const isAdmin = async (req, res, next) => {
     else res.status(403).json({ msg: "Khusus Admin!" });
 };
 
-// Panggil file nokos.js tadi
+
+// ==========================================
+// AUTH ROUTES (Sesuai auth.html lo)
+// ==========================================
+
+app.post('/api/auth/submit', async (req, res) => {
+    const { username, password, type } = req.body;
+    try {
+        if (type === 'register') {
+            // Cek apakah user sudah ada
+            const exist = await User.findOne({ username });
+            if (exist) return res.json({ success: false, msg: "Username sudah dipakai!" });
+
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(password, salt);
+            
+            // Cek jika username 'man' otomatis jadi admin
+            const role = username.toLowerCase() === 'man' ? 'admin' : 'member';
+            
+            const newUser = new User({ 
+                username: username.toLowerCase(), 
+                password: hashedPassword, 
+                role, 
+                balance: 0 
+            });
+            await newUser.save();
+            return res.json({ success: true, msg: "Daftar berhasil!" });
+        } else {
+            // Login logic
+            const user = await User.findOne({ username: username.toLowerCase() });
+            if (user && await bcrypt.compare(password, user.password)) {
+                req.session.userId = user._id;
+                return res.json({ success: true, msg: "Login berhasil!" });
+            }
+            res.json({ success: false, msg: "Username/Password salah!" });
+        }
+    } catch (e) { res.status(500).json({ success: false, msg: "Error: " + e.message }); }
+});
+
+app.get('/api/auth/me', async (req, res) => {
+    if (!req.session.userId) return res.json({ login: false });
+    const user = await User.findById(req.session.userId);
+    res.json({ login: true, user });
+});
+
+
 const nokosRouter = require('./nokos');
 
 // Gunakan prefix /api/nokos
