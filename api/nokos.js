@@ -80,18 +80,39 @@ router.get('/services', async (req, res) => {
 // Ambil Negara & Harga (v2)
 router.get('/countries', async (req, res) => {
     try {
-        const config = await NokosConfig.findOne();
-        const result = await callRumahOTP(`countries?service_id=${req.query.sid}`);
-        if (result.success && result.data) {
-            const margin = config.marginPercent || 20;
-            result.data.forEach(c => {
-                if(c.pricelist) c.pricelist.forEach(p => {
-                    p.price_user = Math.ceil(p.price + (p.price * margin / 100));
-                });
+        // 1. Ambil 'sid' sesuai kiriman dari nokos.js (Frontend)
+        const { sid } = req.query; 
+
+        if (!sid) return res.json({ success: false, msg: "Service ID tidak ditemukan" });
+
+        // 2. Ambil Setting untuk margin
+        const config = await Setting.findOne();
+        const margin = config ? config.marginPercent : 20;
+
+        // 3. Tembak ke RumahOTP v2/countries
+        // Pakai helper callRumahOTP yang lo punya
+        const resData = await callRumahOTP(`v2/countries?service_id=${sid}`);
+        
+        if (resData && resData.success) {
+            // 4. Mapping harganya biar Frontend lo bisa baca p.price_user
+            resData.data.forEach(country => {
+                if (country.pricelist) {
+                    country.pricelist.forEach(p => {
+                        // Itung harga jual = harga pusat + margin
+                        p.price_user = Math.ceil(p.price + (p.price * margin / 100));
+                        // Tambahin price_format biar keren di tampilan
+                        p.price_format = `Rp ${p.price_user.toLocaleString('id-ID')}`;
+                    });
+                }
             });
+            return res.json(resData);
+        } else {
+            return res.json({ success: false, msg: resData.message || "Gagal ambil negara" });
         }
-        res.json(result);
-    } catch (e) { res.status(500).json({ success: false }); }
+    } catch (e) {
+        console.error("ERROR COUNTRIES:", e.message);
+        res.status(500).json({ success: false, msg: e.message });
+    }
 });
 
 // Ambil Operator (v2)
