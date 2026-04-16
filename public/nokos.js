@@ -1,169 +1,363 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const https = require('https');
-const router = express.Router();
-
 // ==========================================
-// 1. MODELS (Mastiin gak bentrok sama index.js)
+// 1. DATA STATE & CONFIG (AUTO LOAD)
 // ==========================================
-const NokosConfig = mongoose.models.NokosConfig || mongoose.model('NokosConfig', new mongoose.Schema({
-    apiKey: String,
-    marginPercent: { type: Number, default: 20 }
-}));
+let currentOrderStep = 1;
+let selectedOperatorId = 1; 
+let selectedOrder = {
+    service_id: '', service_name: '', country_name: '',
+    provider_id: '', server_id: '', price: 0, number_id: ''
+};
 
-const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({
-    username: String,
-    balance: { type: Number, default: 0 }
-}));
+// Ambil data pesanan dari LocalStorage biar pas refresh GAK HILANG
+let activeOrders = JSON.parse(localStorage.getItem('manzzy_orders')) || []; 
 
-const NokosTx = mongoose.models.NokosTx || mongoose.model('NokosTx', new mongoose.Schema({
-    invoiceId: String, username: String, refId: String,
-    serviceName: String, country: String, phoneNumber: String,
-    price: Number, status: { type: String, default: 'waiting' }, 
-    smsCode: String, expiresAt: Date, createdAt: { type: Date, default: Date.now }
-}));
+const Toast = Swal.mixin({
+    toast: true, position: 'top-end', showConfirmButton: false,
+    timer: 3000, timerProgressBar: true, background: '#1e1b4b', color: '#fff'
+});
 
-// ==========================================
-// 2. HELPER REQUEST (SESUAI SPEK V1/V2 LO)
-// ==========================================
-async function callRumahOTP(endpoint, method = 'GET', data = null) {
-    const config = await NokosConfig.findOne();
-    if (!config || !config.apiKey) throw new Error("API Key belum disetting!");
-
-    // Path otomatis nambahin v2 kalo gak disebut v1
-    let path = endpoint.startsWith('v1/') ? `/api/${endpoint}` : `/api/v2/${endpoint}`;
-    
-    // Kalo endpoint cuma 'services', 'countries', dll dia masuk v2
-    if (!endpoint.includes('/')) path = `/api/v2/${endpoint}`;
-
-    const options = {
-        hostname: 'www.rumahotp.io',
-        path: path,
-        method: method,
-        headers: {
-            'x-apikey': config.apiKey,
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'User-Agent': 'Mozilla/5.0'
+// Jalankan polling ulang buat pesanan yang masih pending pas web dibuka
+window.onload = () => {
+    activeOrders.forEach(order => {
+        if (order.status !== 'completed') {
+            startOtpPolling(order.order_id);
+            // Hitung sisa waktu (asumsi 20 menit dari created_at jika ada)
+            startTimer(order.order_id, 1200); 
         }
-    };
-
-    return new Promise((resolve, reject) => {
-        const req = https.request(options, (res) => {
-            let body = '';
-            res.on('data', (chunk) => body += chunk);
-            res.on('end', () => {
-                try { resolve(JSON.parse(body)); } 
-                catch (e) { reject(new Error("Response API Error")); }
-            });
-        });
-        req.on('error', (e) => reject(e));
-        if (data && method !== 'GET') req.write(JSON.stringify(data));
-        req.end();
     });
+    renderPendingOrders();
+};
+
+// Fungsi simpan ke browser
+function saveOrders() {
+    localStorage.setItem('manzzy_orders', JSON.stringify(activeOrders));
 }
 
 // ==========================================
-// 3. ROUTES NOKOS
+// 2. LOGIKA MODAL & NAV
+// ==========================================
+async function openOrderModal() {
+    const modal = document.getElementById('modal-order');
+    const sheet = document.getElementById('order-sheet');
+    modal.classList.remove('hidden');
+    setTimeout(() => sheet.classList.remove('translate-y-full'), 10);
+    resetOrderSteps();
+    await loadServices(); 
+}
+
+function closeOrderModal() {
+    const sheet = document.getElementById('order-sheet');
+    sheet.classList.add('translate-y-full');
+    setTimeout(() => document.getElementById('modal-order').classList.add('hidden'), 500);
+}
+
+function nextOrderStep(step) {
+    document.querySelectorAll('.order-step').forEach(s => s.classList.add('hidden'));
+    currentOrderStep = step;
+    document.getElementById(`order-step-${step}`).classList.remove('hidden');
+    const titles = ["", "Pilih Aplikasi", "Pilih Negara", "Pilih Server", "Konfirmasi"];
+    document.getElementById('modal-order-title').innerText = titles[step];
+}
+
+function resetOrderSteps() {
+    currentOrderStep = 1;
+    nextOrderStep(1);
+}
+
+// ==========================================
+// 3. INTEGRASI API
 // ==========================================
 
-// Ambil Layanan (v2)
-router.get('/services', async (req, res) => {
+async function loadServices() {
+    const container = document.getElementById('list-apps-modal');
+    container.innerHTML = '<div class="col-span-3 text-center py-10 opacity-50 text-[10px]">MEMUAT...</div>';
     try {
-        const result = await callRumahOTP('services');
-        res.json(result);
-    } catch (e) { res.status(500).json({ success: false, msg: e.message }); }
-});
+        const res = await fetch('/api/nokos/services');
+        const result = await res.json();
+        if (result.success) {
+            container.innerHTML = result.data.map(app => `
+                <div onclick="selectService('${app.service_code}', '${app.service_name}')" class="galaxy-card p-4 rounded-2xl flex flex-col items-center gap-2 cursor-pointer transition active:scale-95">
+                    <img src="${app.service_img}" class="w-8 h-8 object-contain">
+                    <span class="text-[9px] font-bold uppercase text-center">${app.service_name}</span>
+                </div>
+            `).join('');
+        }
+    } catch (e) { container.innerHTML = 'Error API'; }
+}
 
-// Ambil Negara & Harga (v2)
-router.get('/countries', async (req, res) => {
+async function selectService(sid, sname) {
+    selectedOrder.service_id = sid;
+    selectedOrder.service_name = sname;
+    nextOrderStep(2);
+    const container = document.getElementById('list-countries-modal');
+    container.innerHTML = '<div class="text-center py-10 opacity-50 text-[10px]">MENCARI NEGARA...</div>';
     try {
-        const config = await NokosConfig.findOne();
-        const result = await callRumahOTP(`countries?service_id=${req.query.sid}`);
-        if (result.success && result.data) {
-            const margin = config.marginPercent || 20;
-            result.data.forEach(c => {
-                if(c.pricelist) c.pricelist.forEach(p => {
-                    p.price_user = Math.ceil(p.price + (p.price * margin / 100));
-                });
+        const res = await fetch(`/api/nokos/countries?sid=${sid}`);
+        const result = await res.json();
+        if (result.success) {
+            container.innerHTML = result.data.map(c => `
+                <div onclick="selectCountry('${c.name}', ${JSON.stringify(c.pricelist).replace(/"/g, '&quot;')}, '${c.number_id}')" class="galaxy-card p-4 rounded-2xl flex justify-between items-center cursor-pointer mb-3">
+                    <div class="flex items-center gap-4">
+                        <img src="${c.img}" class="w-6 h-4 object-cover rounded-sm">
+                        <div>
+                            <div class="text-sm font-bold text-white">${c.name}</div>
+                            <div class="text-[9px] text-gray-500">Stok: ${c.stock_total}</div>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-gray-700"></i>
+                </div>
+            `).join('');
+        }
+    } catch (e) { container.innerHTML = 'Error API'; }
+}
+
+async function selectCountry(cname, pricelist, countryNumberId) {
+    selectedOrder.country_name = cname;
+    selectedOrder.number_id = countryNumberId; 
+    nextOrderStep(3);
+    const container = document.getElementById('list-servers-modal');
+    container.innerHTML = '<div class="text-center p-5">MEMUAT...</div>';
+    try {
+        const res = await fetch(`/api/nokos/operators?country=${cname}&provider_id=${pricelist[0].provider_id}`);
+        const result = await res.json();
+        let opHtml = `<div class="grid grid-cols-3 gap-2 mb-4">`;
+        if(result.success) {
+            result.data.forEach(op => {
+                opHtml += `<div onclick="setOp(${op.id}, this)" class="op-item p-2 border border-white/10 rounded-xl text-center cursor-pointer transition">
+                    <img src="${op.image}" class="w-6 h-6 mx-auto mb-1 rounded-full object-cover"><div class="text-[8px] font-bold uppercase">${op.name}</div></div>`;
             });
         }
-        res.json(result);
-    } catch (e) { res.status(500).json({ success: false }); }
-});
+        opHtml += `</div>`;
+        let serverHtml = pricelist.map(p => `
+            <div onclick="confirmStep('${p.server_id}', '${p.provider_id}', ${p.price_user || p.price})" class="galaxy-card p-4 rounded-2xl mb-2 flex justify-between border-l-4 border-purple-500 cursor-pointer active:scale-95 transition">
+                <div class="text-xs font-bold uppercase text-white">Server ${p.server_id}</div>
+                <div class="text-xs font-bold text-purple-400 font-mono">Rp ${(p.price_user || p.price).toLocaleString()}</div>
+            </div>`).join('');
+        container.innerHTML = opHtml + serverHtml;
+    } catch (e) { container.innerHTML = 'Error'; }
+}
 
-// Ambil Operator (v2)
-router.get('/operators', async (req, res) => {
-    try {
-        const result = await callRumahOTP(`operators?country=${req.query.country}&provider_id=${req.query.provider_id}`);
-        res.json(result);
-    } catch (e) { res.status(500).json({ success: false }); }
-});
+function setOp(id, el) {
+    selectedOperatorId = id;
+    document.querySelectorAll('.op-item').forEach(i => i.classList.remove('bg-purple-600', 'border-purple-600'));
+    el.classList.add('bg-purple-600', 'border-purple-600');
+}
 
-// Beli Nomor (v2)
-router.post('/order', async (req, res) => {
-    if (!req.session.userId) return res.json({ success: false, msg: "Session habis" });
-    const { number_id, provider_id, operator_id, price, service_name } = req.body;
+function confirmStep(serverId, providerId, price) {
+    selectedOrder.server_id = serverId;
+    selectedOrder.provider_id = providerId;
+    selectedOrder.price = price;
+    document.getElementById('res-app').innerText = selectedOrder.service_name;
+    document.getElementById('res-country').innerText = selectedOrder.country_name;
+    document.getElementById('res-server').innerText = "Server " + serverId;
+    document.getElementById('res-price').innerText = "Rp " + price.toLocaleString();
+    nextOrderStep(4);
+}
+
+async function confirmPurchase() {
+    const btn = document.getElementById('btn-final-buy');
+    btn.disabled = true; 
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> MEMPROSES...';
     
+    const payload = {
+        number_id: selectedOrder.number_id, 
+        provider_id: selectedOrder.provider_id,
+        operator_id: selectedOperatorId, 
+        price: selectedOrder.price, 
+        service_name: selectedOrder.service_name
+    };
+
     try {
-        const user = await User.findById(req.session.userId);
-        if (user.balance < price) return res.json({ success: false, msg: "Saldo kurang" });
+        const res = await fetch('/api/nokos/order', {
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
 
-        const result = await callRumahOTP(`orders?number_id=${number_id}&provider_id=${provider_id}&operator_id=${operator_id}`);
-        
+        const result = await res.json();
+
         if (result.success) {
-            user.balance -= price; await user.save();
-            const inv = 'NOK-' + Date.now().toString().slice(-6);
-            await new NokosTx({
-                invoiceId: inv, username: user.username, refId: result.data.order_id,
-                serviceName: service_name, country: result.data.country, phoneNumber: result.data.phone_number,
-                price: price, expiresAt: new Date(Date.now() + 20 * 60000)
-            }).save();
-            res.json({ success: true, invoiceId: inv, data: result.data });
-        } else { res.json({ success: false, msg: result.message }); }
-    } catch (e) { res.json({ success: false, msg: "Error Sistem" }); }
-});
+            const newOrder = {
+                // KUNCI UTAMA: Ambil invoiceId dari hasil generate backend pro kita
+                order_id: result.invoiceId || result.data.order_id, 
+                phone_number: result.data.phone_number,
+                service: selectedOrder.service_name, 
+                country: selectedOrder.country_name,
+                status: 'received', 
+                otp_code: null
+            };
 
-// Cek Status (v1)
-router.get('/status/:invoiceId', async (req, res) => {
-    try {
-        const tx = await NokosTx.findOne({ invoiceId: req.params.invoiceId });
-        if (!tx) return res.json({ success: false });
+            activeOrders.unshift(newOrder);
+            saveOrders(); // SIMPAN KE BROWSER BIAR GAK HILANG REFRESH
+            closeOrderModal();
+            switchView('order'); 
+            renderPendingOrders(); 
+            
+            // Polling sekarang pake Invoice ID, database pasti nemu
+            startOtpPolling(newOrder.order_id);
+            startTimer(newOrder.order_id, 1200);
 
-        const result = await callRumahOTP(`v1/orders/get_status?order_id=${tx.refId}`);
-        if (result.success) {
-            const d = result.data;
-            if (d.otp_code) tx.smsCode = d.otp_code;
-            if (d.status === 'completed') tx.status = 'success';
-            if (d.status === 'canceled' && tx.status !== 'canceled') {
-                tx.status = 'canceled';
-                await User.findOneAndUpdate({ username: tx.username }, { $inc: { balance: tx.price } });
-            }
-            await tx.save();
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: 'Pesanan masuk, silakan tunggu OTP di halaman order.',
+                background: '#0f172a',
+                color: '#fff',
+                confirmButtonColor: '#7c3aed'
+            });
+        } else {
+            Swal.fire('Gagal', result.msg || "Terjadi kesalahan", 'error');
         }
-        res.json({ success: true, data: tx });
-    } catch (e) { res.json({ success: false }); }
-});
+    } catch (e) { 
+        Swal.fire('Error', 'Koneksi Gagal ke Server', 'error'); 
+    } finally { 
+        btn.disabled = false; 
+        btn.innerText = "BELI SEKARANG"; 
+    }
+}
+// ==========================================
+// 4. PESANAN PENDING & POLLING (FIXED)
+// ==========================================
 
-// Action (v1)
-router.post('/cancel', async (req, res) => {
-    const tx = await NokosTx.findOne({ invoiceId: req.body.order_id });
-    if (!tx || tx.status !== 'waiting') return res.json({ success: false });
+function renderPendingOrders() {
+    const container = document.getElementById('pending-orders-list');
+    if (!container) return;
+    if (activeOrders.length === 0) {
+        container.innerHTML = '<div class="galaxy-card p-8 rounded-2xl text-center opacity-30 italic text-[10px]">Belum ada pesanan pending.</div>';
+        return;
+    }
+    container.innerHTML = activeOrders.map(order => `
+        <div class="galaxy-card p-4 rounded-2xl border-l-4 ${order.otp_code ? 'border-green-500' : 'border-purple-500'} mb-3">
+            <div class="flex justify-between items-start mb-3">
+                <div>
+                    <div class="text-[10px] font-bold text-white uppercase">${order.service} • ${order.country}</div>
+                    <div class="text-sm font-mono text-purple-400 mt-1">${order.phone_number}</div>
+                </div>
+                <button onclick="copyText('${order.phone_number}')" class="bg-white/5 p-2 rounded-lg text-[10px]"><i class="fa-solid fa-copy"></i></button>
+            </div>
+            <div class="bg-white/5 rounded-xl p-3 text-center border ${order.otp_code ? 'border-green-500/50' : 'border-white/5'}">
+                <span class="text-[8px] text-gray-500 block mb-1 uppercase">${order.otp_code ? 'OTP DITERIMA' : 'MENUNGGU SMS'}</span>
+                <div class="text-xl font-bold ${order.otp_code ? 'text-green-400' : 'text-white'}" id="otp-${order.order_id}">
+                    ${order.otp_code ? order.otp_code : '<i class="fa-solid fa-spinner fa-spin text-sm opacity-20"></i>'}
+                </div>
+            </div>
+            <div class="mt-3 flex justify-between items-center text-[9px]">
+                <div id="timer-${order.order_id}" class="text-gray-500 font-mono">${order.status === 'completed' ? 'Selesai' : 'Waiting...'}</div>
+                <div class="flex gap-2">
+                    ${order.otp_code ? `<button onclick="copyText('${order.otp_code}')" class="text-green-500 font-bold uppercase">Salin OTP</button>` : `<button onclick="cancelOrder('${order.order_id}')" class="text-red-500 font-bold uppercase">Batalkan</button>`}
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function startOtpPolling(orderId) {
+    const poll = setInterval(async () => {
+        try {
+            const res = await fetch(`/api/nokos/status/${orderId}`);
+            const result = await res.json();
+            
+            // SENSITIF CHECK: Completed atau ada otp_code
+            if (result.success && (result.data.status === 'completed' || result.data.otp_code)) {
+                const order = activeOrders.find(o => o.order_id === orderId);
+                if (order && !order.otp_code) {
+                    order.otp_code = result.data.otp_code;
+                    order.status = 'completed';
+                    saveOrders(); // Update storage
+                    renderPendingOrders();
+                    clearInterval(poll);
+                    Swal.fire('OTP MASUK!', `Kode: ${order.otp_code}`, 'success');
+                }
+            }
+            // Hapus jika dibatalkan di provider
+            if (result.success && (result.data.status === 'canceled' || result.data.status === 'expired')) {
+                 activeOrders = activeOrders.filter(o => o.order_id !== orderId);
+                 saveOrders();
+                 renderPendingOrders();
+                 clearInterval(poll);
+            }
+        } catch (e) {}
+    }, 4000); // Cek tiap 4 detik (lebih cepat)
+}
+
+function startTimer(orderId, duration) {
+    let timer = duration;
+    const interval = setInterval(() => {
+        const order = activeOrders.find(o => o.order_id === orderId);
+        if(!order || order.status === 'completed') return clearInterval(interval);
+        let m = Math.floor(timer / 60); let s = timer % 60;
+        const display = document.getElementById(`timer-${orderId}`);
+        if (display) display.innerText = `${m}:${s < 10 ? '0'+s : s}`;
+        if (--timer < 0) { clearInterval(interval); activeOrders = activeOrders.filter(o => o.order_id !== orderId); saveOrders(); renderPendingOrders(); }
+    }, 1000);
+}
+
+async function cancelOrder(orderId) {
+    const conf = await Swal.fire({ title: 'Batalkan?', icon: 'warning', showCancelButton: true });
+    if (conf.isConfirmed) {
+        try {
+            const res = await fetch('/api/nokos/cancel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_id: orderId }) });
+            const data = await res.json();
+            if (data.success) {
+                activeOrders = activeOrders.filter(o => o.order_id !== orderId);
+                saveOrders();
+                renderPendingOrders();
+                location.reload();
+            }
+        } catch (e) {}
+    }
+}
+
+function copyText(txt) {
+    navigator.clipboard.writeText(txt);
+    Toast.fire({ icon: 'success', title: 'Teks Disalin!' });
+}
+
+// Fungsi untuk Load History dari Database
+async function loadOrderHistory() {
+    const container = document.getElementById('history-list-container');
+    if (!container) return;
+
+    container.innerHTML = '<div class="text-center py-10 opacity-50 text-[10px]">MEMUAT RIWAYAT...</div>';
+
     try {
-        const result = await callRumahOTP(`v1/orders/set_status?order_id=${tx.refId}&status=cancel`);
-        if (result.success) {
-            tx.status = 'canceled'; await tx.save();
-            await User.findOneAndUpdate({ username: tx.username }, { $inc: { balance: tx.price } });
-            res.json({ success: true });
-        } else { res.json({ success: false }); }
-    } catch (e) { res.json({ success: false }); }
-});
+        const res = await fetch('/api/nokos/history');
+        const result = await res.json();
 
-router.get('/history', async (req, res) => {
-    if(!req.session.userId) return res.json({success:false});
-    const user = await User.findById(req.session.userId);
-    const list = await NokosTx.find({ username: user.username }).sort({ createdAt: -1 });
-    res.json({ success: true, data: list });
-});
+        if (result.success && result.data.length > 0) {
+            container.innerHTML = result.data.map(tx => {
+                // Tentukan warna badge status
+                let statusColor = 'text-yellow-500';
+                if (tx.status === 'success') statusColor = 'text-green-500';
+                if (tx.status === 'canceled') statusColor = 'text-red-500';
 
-module.exports = router;
+                return `
+                <div class="galaxy-card p-4 rounded-2xl mb-3 border-l-2 ${tx.status === 'success' ? 'border-green-500' : 'border-white/10'}">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <div class="text-[9px] font-bold text-gray-500 uppercase">${tx.invoiceId} • ${new Date(tx.createdAt).toLocaleString('id-ID')}</div>
+                            <div class="text-sm font-bold text-white">${tx.serviceName} (${tx.country})</div>
+                        </div>
+                        <div class="text-[9px] font-bold uppercase ${statusColor}">${tx.status}</div>
+                    </div>
+                    
+                    <div class="flex justify-between items-center bg-white/5 p-2 rounded-xl mt-2">
+                        <div class="text-xs font-mono text-purple-400">${tx.phoneNumber}</div>
+                        <div class="text-xs font-bold text-white">${tx.smsCode || '---'}</div>
+                    </div>
+
+                    ${tx.status === 'success' && tx.smsCode ? `
+                    <button onclick="copyText('${tx.smsCode}')" class="w-full mt-3 py-2 bg-purple-600/20 hover:bg-purple-600 text-purple-400 hover:text-white text-[10px] font-bold rounded-lg transition uppercase tracking-widest">
+                        Salin Kode OTP
+                    </button>
+                    ` : ''}
+                </div>
+                `;
+            }).join('');
+        } else {
+            container.innerHTML = '<div class="text-center py-10 opacity-30 italic text-[10px]">Belum ada riwayat transaksi.</div>';
+        }
+    } catch (e) {
+        container.innerHTML = '<div class="text-center py-10 text-red-500 text-[10px]">Gagal mengambil data.</div>';
+    }
+}
