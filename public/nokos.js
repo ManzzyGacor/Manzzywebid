@@ -117,9 +117,11 @@ async function selectCountry(cname, pricelist, countryNumberId) {
     nextOrderStep(3);
     const container = document.getElementById('list-servers-modal');
     container.innerHTML = '<div class="text-center p-5">MEMUAT...</div>';
+    
     try {
         const res = await fetch(`/api/nokos/operators?country=${cname}&provider_id=${pricelist[0].provider_id}`);
         const result = await res.json();
+        
         let opHtml = `<div class="grid grid-cols-3 gap-2 mb-4">`;
         if(result.success) {
             result.data.forEach(op => {
@@ -128,13 +130,37 @@ async function selectCountry(cname, pricelist, countryNumberId) {
             });
         }
         opHtml += `</div>`;
-        let serverHtml = pricelist.map(p => `
-            <div onclick="confirmStep('${p.server_id}', '${p.provider_id}', ${p.price_user || p.price})" class="galaxy-card p-4 rounded-2xl mb-2 flex justify-between border-l-4 border-purple-500 cursor-pointer active:scale-95 transition">
-                <div class="text-xs font-bold uppercase text-white">Server ${p.server_id}</div>
-                <div class="text-xs font-bold text-purple-400 font-mono">Rp ${(p.price_user || p.price).toLocaleString()}</div>
-            </div>`).join('');
+
+        // --- BAGIAN VISUAL CORET HARGA ---
+        let serverHtml = pricelist.map(p => {
+            const hargaFinal = p.price_user || p.price;
+            
+            // Kita hitung harga "Normal" (asumsi margin 20%) untuk dicoret jika user adalah reseller
+            // Rumus: (Harga_Pusat + 20%)
+            // Karena p.price adalah harga modal dari pusat:
+            const hargaNormal = Math.ceil(p.price + (p.price * 20 / 100));
+            
+            // Cek apakah harga saat ini lebih murah dari harga normal (berarti diskon reseller aktif)
+            const isDiscounted = hargaFinal < hargaNormal;
+
+            return `
+            <div onclick="confirmStep('${p.server_id}', '${p.provider_id}', ${hargaFinal})" class="galaxy-card p-4 rounded-2xl mb-2 flex justify-between border-l-4 border-purple-500 cursor-pointer active:scale-95 transition">
+                <div>
+                    <div class="text-xs font-bold uppercase text-white">Server ${p.server_id}</div>
+                    ${isDiscounted ? `<div class="text-[8px] text-gray-500 line-through">Rp ${hargaNormal.toLocaleString()}</div>` : ''}
+                </div>
+                <div class="text-right">
+                    <div class="text-xs font-bold text-purple-400 font-mono">Rp ${hargaFinal.toLocaleString()}</div>
+                    ${isDiscounted ? `<div class="text-[7px] bg-green-500/20 text-green-400 px-1 rounded uppercase font-bold mt-1 inline-block">Hemat 12%</div>` : ''}
+                </div>
+            </div>`;
+        }).join('');
+        // ---------------------------------
+
         container.innerHTML = opHtml + serverHtml;
-    } catch (e) { container.innerHTML = 'Error'; }
+    } catch (e) { 
+        container.innerHTML = 'Error'; 
+    }
 }
 
 function setOp(id, el) {
@@ -419,5 +445,66 @@ async function loadOrderHistory() {
         }
     } catch (e) {
         container.innerHTML = '<div class="text-center py-10 text-red-500 text-[10px]">Gagal mengambil data.</div>';
+    }
+}
+
+// Fungsi untuk update tampilan Card Membership
+function updateMembershipUI(userData) {
+    const roleBadge = document.getElementById('user-role-badge');
+    const title = document.getElementById('membership-title');
+    const desc = document.getElementById('membership-desc');
+    const price = document.getElementById('membership-price');
+    const btn = document.getElementById('btn-upgrade');
+    const expiryInfo = document.getElementById('reseller-expiry-info');
+    const expiryDate = document.getElementById('expiry-date');
+    const statusLabel = document.getElementById('membership-status-label');
+
+    if (userData.role === 'reseller' || userData.role === 'admin') {
+        // Tampilan Jika Sudah Reseller
+        roleBadge.innerText = 'RESELLER PRO';
+        roleBadge.className = 'px-2 py-0.5 rounded-full text-[8px] font-bold tracking-widest uppercase bg-gradient-to-r from-amber-400 to-yellow-600 text-black shadow-lg shadow-yellow-500/20';
+        
+        title.innerText = 'Membership Aktif';
+        desc.innerText = 'Nikmati harga khusus Reseller pada setiap pembelian layanan Nokos.';
+        
+        statusLabel.innerText = 'Perpanjang Masa Aktif';
+        price.innerText = 'Rp 10.000';
+        btn.innerText = 'PERPANJANG';
+        btn.className = 'bg-purple-600 text-white text-[10px] font-bold px-4 py-2 rounded-xl active:scale-95 transition';
+
+        if (userData.resellerUntil) {
+            expiryInfo.classList.remove('hidden');
+            const date = new Date(userData.resellerUntil);
+            expiryDate.innerText = date.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+        }
+    } else {
+        // Tampilan Default (Member Biasa)
+        roleBadge.innerText = 'MEMBER BIASA';
+        roleBadge.className = 'px-2 py-0.5 rounded-full text-[8px] font-bold tracking-widest uppercase bg-gray-600 text-white';
+        expiryInfo.classList.add('hidden');
+    }
+}
+
+async function upgradeReseller() {
+    const result = await Swal.fire({
+        title: 'Upgrade Reseller?',
+        text: "Biaya Rp 10.000 untuk 30 hari. Dapatkan harga lebih murah 12%!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#7c3aed',
+        confirmButtonText: 'Ya, Upgrade!',
+        background: '#0c0c0e',
+        color: '#fff'
+    });
+
+    if (result.isConfirmed) {
+        const res = await fetch('/api/nokos/upgrade/reseller', { method: 'POST' });
+        const data = await res.json();
+        
+        if (data.success) {
+            Swal.fire('Sukses!', data.msg, 'success').then(() => location.reload());
+        } else {
+            Swal.fire('Gagal', data.msg, 'error');
+        }
     }
 }
