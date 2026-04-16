@@ -99,36 +99,7 @@
             <span class="font-bold text-white tracking-tighter text-lg">MANZZY<span class="text-purple-500">ID</span></span>
         </div>
         
-        <div id="membership-card" class="mb-6 overflow-hidden relative rounded-2xl p-5 border border-white/10 bg-gradient-to-br from-purple-900/40 to-black/60 shadow-2xl">
-    <div class="absolute -top-10 -right-10 w-32 h-32 bg-purple-500/20 blur-3xl rounded-full"></div>
-    
-    <div class="flex items-center justify-between relative z-10">
-        <div>
-            <div class="flex items-center gap-2 mb-1">
-                <span id="user-role-badge" class="px-2 py-0.5 rounded-full text-[8px] font-bold tracking-widest uppercase bg-gray-500 text-white">
-                    MEMBER BIASA
-                </span>
-            </div>
-            <h3 class="text-lg font-bold text-white tracking-tight" id="membership-title">Upgrade ke Reseller?</h3>
-            <p class="text-[10px] text-gray-400 max-w-[200px]" id="membership-desc">
-                Dapatkan harga Nokos lebih murah 12% dan akses prioritas selama 30 hari.
-            </p>
-        </div>
-        
-        <div class="text-right">
-            <div class="text-[9px] text-gray-500 mb-1" id="membership-status-label">Biaya Aktivasi</div>
-            <div class="text-xl font-mono font-bold text-purple-400 mb-2" id="membership-price">Rp 10.000</div>
-            <button onclick="upgradeReseller()" id="btn-upgrade" class="bg-white text-black text-[10px] font-bold px-4 py-2 rounded-xl active:scale-95 transition shadow-lg shadow-white/10">
-                AKTIFKAN SEKARANG
-            </button>
-        </div>
-    </div>
 
-    <div id="reseller-expiry-info" class="hidden mt-4 pt-3 border-t border-white/5 flex justify-between items-center">
-        <span class="text-[9px] text-gray-500 uppercase tracking-wider">Masa Aktif Hingga:</span>
-        <span id="expiry-date" class="text-[10px] font-mono text-purple-400 font-bold">--/--/----</span>
-    </div>
-</div>
         
         <div id="user-profile-nav" class="flex items-center gap-3 bg-white/5 border border-white/10 px-3 py-1.5 rounded-full cursor-pointer hover:bg-white/10 transition" onclick="switchView('profile')">
 <div class="text-right">
@@ -140,6 +111,7 @@
     </nav>
 
     <main class="mt-20 px-5 max-w-lg mx-auto">
+
 
         <section id="view-home" class="spa-view active space-y-8">
             
@@ -302,15 +274,33 @@
         </div>
     </div>
 
+    <div onclick="openUpgradeModal()" class="galaxy-card p-4 rounded-2xl flex items-center justify-between border-l-4 border-amber-500 cursor-pointer hover:bg-amber-500/5 transition group">
+        <div class="flex items-center gap-4">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-500 shadow-lg shadow-amber-900/20 group-hover:scale-110 transition">
+                <i class="fa-solid fa-crown text-sm"></i>
+            </div>
+            <div>
+                <div class="text-xs font-bold text-white uppercase tracking-tight">Upgrade Reseller Pro</div>
+                <div class="text-[9px] text-amber-500/70 font-medium">Dapatkan potongan harga 12% setiap layanan</div>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="text-[8px] font-bold text-amber-500 bg-amber-500/10 px-2 py-1 rounded-lg">PRO</span>
+            <i class="fa-solid fa-chevron-right text-[10px] text-gray-700 group-hover:translate-x-1 transition"></i>
+        </div>
+    </div>
+
     <div class="space-y-3">
         <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Menu Utama</h3>
-        <button class="w-full bg-white/5 hover:bg-white/10 p-4 rounded-2xl flex items-center justify-between transition border border-white/5 group">
+        
+        <button onclick="switchTab('order', document.querySelector('[onclick*=\'order\']'))" class="w-full bg-white/5 hover:bg-white/10 p-4 rounded-2xl flex items-center justify-between transition border border-white/5 group">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-lg bg-purple-600/10 flex items-center justify-center border border-purple-500/20 text-purple-400"><i class="fa-solid fa-money-bill-transfer text-sm"></i></div>
                 <span class="text-sm font-medium text-white/90">Top Up Saldo</span>
             </div>
             <i class="fa-solid fa-chevron-right text-[10px] text-gray-600 group-hover:text-purple-400 group-hover:translate-x-1 transition"></i>
         </button>
+
         <button class="w-full bg-white/5 hover:bg-white/10 p-4 rounded-2xl flex items-center justify-between transition border border-white/5 group">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-lg bg-purple-600/10 flex items-center justify-center border border-purple-500/20 text-purple-400"><i class="fa-solid fa-gear text-sm"></i></div>
@@ -320,7 +310,8 @@
         </button>
         
         <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest px-1 mt-6">Dukungan</h3>
-        <button onclick="window.open('https://wa.me/628xxx', '_blank')" class="w-full bg-white/5 hover:bg-white/10 p-4 rounded-2xl flex items-center justify-between transition border border-white/5 group">
+        
+        <button onclick="window.open('https://wa.me/6285815196595', '_blank')" class="w-full bg-white/5 hover:bg-white/10 p-4 rounded-2xl flex items-center justify-between transition border border-white/5 group">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center border border-white/10 text-gray-400"><i class="fa-brands fa-whatsapp text-sm"></i></div>
                 <span class="text-sm font-medium text-white/90">Hubungi CS WhatsApp</span>

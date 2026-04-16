@@ -485,26 +485,107 @@ function updateMembershipUI(userData) {
     }
 }
 
-async function upgradeReseller() {
-    const result = await Swal.fire({
-        title: 'Upgrade Reseller?',
-        text: "Biaya Rp 10.000 untuk 30 hari. Dapatkan harga lebih murah 12%!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#7c3aed',
-        confirmButtonText: 'Ya, Upgrade!',
+
+function openUpgradeModal() {
+    Swal.fire({
+        title: '',
+        html: `
+            <div class="text-left p-2">
+                <div class="relative overflow-hidden rounded-2xl p-6 mb-6 bg-gradient-to-br from-amber-600 to-amber-900 shadow-lg shadow-amber-900/20">
+                    <div class="absolute -top-5 -right-5 opacity-20 text-6xl rotate-12">
+                        <i class="fa-solid fa-crown"></i>
+                    </div>
+                    <span class="bg-white/20 text-white text-[8px] font-bold px-2 py-1 rounded-full uppercase tracking-widest">Reseller Tier</span>
+                    <h2 class="text-2xl font-bold text-white mt-2">Menjadi Reseller Pro</h2>
+                    <p class="text-[10px] text-amber-100/80 mt-1">Tingkatkan profitmu dengan harga layanan termurah.</p>
+                </div>
+
+                <div class="space-y-4 mb-8">
+                    <div class="flex items-start gap-4">
+                        <div class="w-6 h-6 rounded-lg bg-green-500/20 flex-shrink-0 flex items-center justify-center text-green-500 text-xs">
+                            <i class="fa-solid fa-check"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-white">Potongan Harga 12%</h4>
+                            <p class="text-[9px] text-gray-500">Otomatis mendapatkan margin reseller (8%) di setiap layanan.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-6 h-6 rounded-lg bg-blue-500/20 flex-shrink-0 flex items-center justify-center text-blue-500 text-xs">
+                            <i class="fa-solid fa-bolt"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-white">Prioritas Server</h4>
+                            <p class="text-[9px] text-gray-500">Akses lebih cepat dan stabil untuk pengambilan nomor OTP.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-6 h-6 rounded-lg bg-purple-500/20 flex-shrink-0 flex items-center justify-center text-purple-500 text-xs">
+                            <i class="fa-solid fa-gem"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-white">Masa Aktif 30 Hari</h4>
+                            <p class="text-[9px] text-gray-500">Dapat diperpanjang kapan saja dan masa aktif bersifat akumulatif.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white/5 border border-white/10 rounded-2xl p-4 flex justify-between items-center">
+                    <div>
+                        <span class="text-[8px] text-gray-500 block uppercase font-bold">Total Biaya</span>
+                        <span class="text-lg font-bold text-white font-mono">Rp 10.000</span>
+                    </div>
+                    <button onclick="processUpgrade()" class="bg-amber-500 hover:bg-amber-400 text-black font-bold text-[10px] px-6 py-3 rounded-xl transition active:scale-95 shadow-lg shadow-amber-500/20">
+                        AKTIFKAN SEKARANG
+                    </button>
+                </div>
+            </div>
+        `,
+        showConfirmButton: false,
+        showCloseButton: true,
+        background: '#0c0c0e',
+        color: '#fff',
+        width: '400px',
+        padding: '1rem',
+        customClass: {
+            popup: 'rounded-3xl border border-white/10'
+        }
+    });
+}
+
+// Fungsi eksekusi (panggil API yang sudah kita buat tadi)
+async function processUpgrade() {
+    Swal.fire({
+        title: 'Memproses...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading(),
         background: '#0c0c0e',
         color: '#fff'
     });
 
-    if (result.isConfirmed) {
+    try {
         const res = await fetch('/api/nokos/upgrade/reseller', { method: 'POST' });
         const data = await res.json();
         
         if (data.success) {
-            Swal.fire('Sukses!', data.msg, 'success').then(() => location.reload());
+            Swal.fire({
+                icon: 'success',
+                title: 'Selamat!',
+                text: data.msg,
+                background: '#0c0c0e',
+                color: '#fff',
+                confirmButtonColor: '#d97706'
+            }).then(() => location.reload());
         } else {
-            Swal.fire('Gagal', data.msg, 'error');
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal',
+                text: data.msg,
+                background: '#0c0c0e',
+                color: '#fff'
+            });
         }
+    } catch (e) {
+        Swal.fire('Error', 'Terjadi kesalahan sistem', 'error');
     }
 }
