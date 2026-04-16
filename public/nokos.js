@@ -222,12 +222,19 @@ async function confirmPurchase() {
 function renderPendingOrders() {
     const container = document.getElementById('pending-orders-list');
     if (!container) return;
+
     if (activeOrders.length === 0) {
         container.innerHTML = '<div class="galaxy-card p-8 rounded-2xl text-center opacity-30 italic text-[10px]">Belum ada pesanan pending.</div>';
         return;
     }
-    container.innerHTML = activeOrders.map(order => `
-        <div class="galaxy-card p-4 rounded-2xl border-l-4 ${order.otp_code ? 'border-green-500' : 'border-purple-500'} mb-3">
+
+    container.innerHTML = activeOrders.map(order => {
+        // Cek apakah OTP sudah ada (handle smsCode dari backend atau otp_code lokal)
+        const currentOtp = order.otp_code || order.smsCode;
+        const isWaiting = order.status === 'waiting' || order.status === 'received';
+
+        return `
+        <div class="galaxy-card p-4 rounded-2xl border-l-4 ${currentOtp ? 'border-green-500' : 'border-purple-500'} mb-3">
             <div class="flex justify-between items-start mb-3">
                 <div>
                     <div class="text-[10px] font-bold text-white uppercase">${order.service} • ${order.country}</div>
@@ -235,20 +242,37 @@ function renderPendingOrders() {
                 </div>
                 <button onclick="copyText('${order.phone_number}')" class="bg-white/5 p-2 rounded-lg text-[10px]"><i class="fa-solid fa-copy"></i></button>
             </div>
-            <div class="bg-white/5 rounded-xl p-3 text-center border ${order.otp_code ? 'border-green-500/50' : 'border-white/5'}">
-                <span class="text-[8px] text-gray-500 block mb-1 uppercase">${order.otp_code ? 'OTP DITERIMA' : 'MENUNGGU SMS'}</span>
-                <div class="text-xl font-bold ${order.otp_code ? 'text-green-400' : 'text-white'}" id="otp-${order.order_id}">
-                    ${order.otp_code ? order.otp_code : '<i class="fa-solid fa-spinner fa-spin text-sm opacity-20"></i>'}
+            
+            <div class="bg-white/5 rounded-xl p-3 text-center border ${currentOtp ? 'border-green-500/50' : 'border-white/5'}">
+                <span class="text-[8px] text-gray-500 block mb-1 uppercase">${currentOtp ? 'OTP DITERIMA' : 'MENUNGGU SMS'}</span>
+                <div class="text-xl font-bold ${currentOtp ? 'text-green-400' : 'text-white'}" id="otp-${order.order_id}">
+                    ${currentOtp ? currentOtp : '<i class="fa-solid fa-spinner fa-spin text-sm opacity-20"></i>'}
                 </div>
             </div>
+
             <div class="mt-3 flex justify-between items-center text-[9px]">
-                <div id="timer-${order.order_id}" class="text-gray-500 font-mono">${order.status === 'completed' ? 'Selesai' : 'Waiting...'}</div>
+                <div id="timer-${order.order_id}" class="text-gray-500 font-mono">
+                    ${order.status === 'success' ? 'Selesai' : (order.status === 'canceled' ? 'Dibatalkan' : '--:--')}
+                </div>
+                
                 <div class="flex gap-2">
-                    ${order.otp_code ? `<button onclick="copyText('${order.otp_code}')" class="text-green-500 font-bold uppercase">Salin OTP</button>` : `<button onclick="cancelOrder('${order.order_id}')" class="text-red-500 font-bold uppercase">Batalkan</button>`}
+                    ${currentOtp 
+                        ? `<button onclick="copyText('${currentOtp}')" class="text-green-500 font-bold uppercase">Salin OTP</button>` 
+                        : (isWaiting ? `<button onclick="cancelOrder('${order.order_id}')" class="text-red-500 font-bold uppercase">Batalkan</button>` : '')
+                    }
                 </div>
             </div>
         </div>
-    `).join('');
+    `}).join('');
+
+    // KUNCI UTAMA: Jalankan polling otomatis untuk semua order yang statusnya masih waiting
+    activeOrders.forEach(order => {
+        if (order.status === 'waiting' || order.status === 'received') {
+            // Kita panggil polling. Polling ini nanti yang bakal panggil startTimer 
+            // berdasarkan remainingSeconds dari database.
+            startOtpPolling(order.order_id);
+        }
+    });
 }
 
 function startOtpPolling(invoiceId) {
@@ -261,33 +285,38 @@ function startOtpPolling(invoiceId) {
 
             if (result.success && result.data) {
                 const order = result.data;
-                
-                // 1. Update UI (Render ulang daftar order yang sedang menunggu)
-                // Pastikan fungsi render lo bisa nangkep perubahan ini
-                updateOrderInList(order); 
 
-                // 2. Cek apakah Kode OTP sudah ada
-                if (order.smsCode && order.smsCode !== '-') {
-                    console.log("OTP Diterima:", order.smsCode);
-                    
-                    // Berhenti polling karena kode sudah dapat
-                    clearInterval(pollInterval);
-                    
-                    // Notifikasi suara atau alert (opsional)
-                    Swal.fire('OTP Masuk!', `Kode: ${order.smsCode}`, 'success');
-                    renderPendingOrders(); // Refresh tampilan daftar order
+                // 1. UPDATE KODE OTP DI UI
+                const otpElement = document.getElementById(`otp-${invoiceId}`);
+                if (otpElement && order.smsCode && order.smsCode !== '-') {
+                    otpElement.innerText = order.smsCode;
+                    otpElement.classList.add('text-green-400', 'font-bold');
+                    // Opsional: Berhenti polling kalau OTP sudah dapet biar hemat resource
+                    // clearInterval(pollInterval); 
                 }
 
-                // 3. Cek apakah status berubah jadi batal/sukses
+                // 2. UPDATE TIMER (HANYA JIKA BELUM JALAN)
+                // Kita cek apakah window[`interval_${invoiceId}`] sudah ada atau belum
+                if (order.remainingSeconds > 0 && order.status === 'waiting') {
+                    if (!window[`interval_${invoiceId}`]) { 
+                        startTimer(invoiceId, order.remainingSeconds);
+                    }
+                }
+
+                // 3. STOP JIKA SELESAI/BATAL
                 if (order.status === 'success' || order.status === 'canceled') {
                     clearInterval(pollInterval);
-                    renderPendingOrders();
+                    if(window[`interval_${invoiceId}`]) {
+                        clearInterval(window[`interval_${invoiceId}`]);
+                        window[`interval_${invoiceId}`] = null; // Reset pointer
+                    }
+                    renderPendingOrders(); 
                 }
             }
         } catch (e) {
             console.error("Polling error:", e);
         }
-    }, 5000); // Cek setiap 5 detik
+    }, 5000);
 }
 
 // Helper buat update data di array lokal biar UI langsung berubah
@@ -300,15 +329,26 @@ function updateOrderInList(updatedOrder) {
     }
 }
 
-function startTimer(orderId, duration) {
-    let timer = duration;
-    const interval = setInterval(() => {
-        const order = activeOrders.find(o => o.order_id === orderId);
-        if(!order || order.status === 'completed') return clearInterval(interval);
-        let m = Math.floor(timer / 60); let s = timer % 60;
-        const display = document.getElementById(`timer-${orderId}`);
-        if (display) display.innerText = `${m}:${s < 10 ? '0'+s : s}`;
-        if (--timer < 0) { clearInterval(interval); activeOrders = activeOrders.filter(o => o.order_id !== orderId); saveOrders(); renderPendingOrders(); }
+function startTimer(invoiceId, seconds) {
+    const timerElement = document.getElementById(`timer-${invoiceId}`);
+    if (!timerElement) return;
+
+    // Bersihkan interval lama jika ada biar gak tumpang tindih
+    if (window[`interval_${invoiceId}`]) clearInterval(window[`interval_${invoiceId}`]);
+
+    let timeLeft = seconds;
+
+    window[`interval_${invoiceId}`] = setInterval(() => {
+        if (timeLeft <= 0) {
+            clearInterval(window[`interval_${invoiceId}`]);
+            timerElement.innerText = "EXPIRED";
+            return;
+        }
+
+        timeLeft--;
+        const m = Math.floor(timeLeft / 60);
+        const s = timeLeft % 60;
+        timerElement.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
     }, 1000);
 }
 
