@@ -251,33 +251,53 @@ function renderPendingOrders() {
     `).join('');
 }
 
-function startOtpPolling(orderId) {
-    const poll = setInterval(async () => {
+function startOtpPolling(invoiceId) {
+    console.log("Memulai polling untuk:", invoiceId);
+    
+    const pollInterval = setInterval(async () => {
         try {
-            const res = await fetch(`/api/nokos/status/${orderId}`);
+            const res = await fetch(`/api/nokos/status/${invoiceId}`);
             const result = await res.json();
-            
-            // SENSITIF CHECK: Completed atau ada otp_code
-            if (result.success && (result.data.status === 'completed' || result.data.otp_code)) {
-                const order = activeOrders.find(o => o.order_id === orderId);
-                if (order && !order.otp_code) {
-                    order.otp_code = result.data.otp_code;
-                    order.status = 'completed';
-                    saveOrders(); // Update storage
+
+            if (result.success && result.data) {
+                const order = result.data;
+                
+                // 1. Update UI (Render ulang daftar order yang sedang menunggu)
+                // Pastikan fungsi render lo bisa nangkep perubahan ini
+                updateOrderInList(order); 
+
+                // 2. Cek apakah Kode OTP sudah ada
+                if (order.smsCode && order.smsCode !== '-') {
+                    console.log("OTP Diterima:", order.smsCode);
+                    
+                    // Berhenti polling karena kode sudah dapat
+                    clearInterval(pollInterval);
+                    
+                    // Notifikasi suara atau alert (opsional)
+                    Swal.fire('OTP Masuk!', `Kode: ${order.smsCode}`, 'success');
+                    renderPendingOrders(); // Refresh tampilan daftar order
+                }
+
+                // 3. Cek apakah status berubah jadi batal/sukses
+                if (order.status === 'success' || order.status === 'canceled') {
+                    clearInterval(pollInterval);
                     renderPendingOrders();
-                    clearInterval(poll);
-                    Swal.fire('OTP MASUK!', `Kode: ${order.otp_code}`, 'success');
                 }
             }
-            // Hapus jika dibatalkan di provider
-            if (result.success && (result.data.status === 'canceled' || result.data.status === 'expired')) {
-                 activeOrders = activeOrders.filter(o => o.order_id !== orderId);
-                 saveOrders();
-                 renderPendingOrders();
-                 clearInterval(poll);
-            }
-        } catch (e) {}
-    }, 4000); // Cek tiap 4 detik (lebih cepat)
+        } catch (e) {
+            console.error("Polling error:", e);
+        }
+    }, 5000); // Cek setiap 5 detik
+}
+
+// Helper buat update data di array lokal biar UI langsung berubah
+function updateOrderInList(updatedOrder) {
+    const idx = activeOrders.findIndex(o => o.order_id === updatedOrder.invoiceId);
+    if (idx !== -1) {
+        activeOrders[idx].otp_code = updatedOrder.smsCode;
+        activeOrders[idx].status = updatedOrder.status;
+        renderPendingOrders(); // Panggil fungsi render HTML lo
+    }
 }
 
 function startTimer(orderId, duration) {
