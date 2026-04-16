@@ -6,8 +6,9 @@ const router = express.Router();
 // ==========================================
 // 1. MODELS (Mastiin gak bentrok sama index.js)
 // ==========================================
-const NokosConfig = mongoose.models.NokosConfig || mongoose.model('NokosConfig', new mongoose.Schema({
-    apiKey: String,
+const Setting = mongoose.models.Setting || mongoose.model('Setting', new mongoose.Schema({
+    siteName: { type: String, default: 'Manzzy ID' },
+    rumahotp_key: String,
     marginPercent: { type: Number, default: 20 }
 }));
 
@@ -27,13 +28,15 @@ const NokosTx = mongoose.models.NokosTx || mongoose.model('NokosTx', new mongoos
 // 2. HELPER REQUEST (SESUAI SPEK V1/V2 LO)
 // ==========================================
 async function callRumahOTP(endpoint, method = 'GET', data = null) {
-    const config = await NokosConfig.findOne();
-    if (!config || !config.apiKey) throw new Error("API Key belum disetting!");
-
-    // Path otomatis nambahin v2 kalo gak disebut v1
-    let path = endpoint.startsWith('v1/') ? `/api/${endpoint}` : `/api/v2/${endpoint}`;
+    // Ambil data dari koleksi settings
+    const config = await Setting.findOne(); 
     
-    // Kalo endpoint cuma 'services', 'countries', dll dia masuk v2
+    // Cek apakah data setting ada dan key-nya sudah diisi
+    if (!config || !config.rumahotp_key) {
+        throw new Error("API Key RumahOTP belum disetting di Dashboard Admin!");
+    }
+
+    let path = endpoint.startsWith('v1/') ? `/api/${endpoint}` : `/api/v2/${endpoint}`;
     if (!endpoint.includes('/')) path = `/api/v2/${endpoint}`;
 
     const options = {
@@ -41,20 +44,19 @@ async function callRumahOTP(endpoint, method = 'GET', data = null) {
         path: path,
         method: method,
         headers: {
-            'x-apikey': config.apiKey,
+            'x-apikey': config.rumahotp_key, // Field disesuaikan dengan Dashboard lo
             'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'User-Agent': 'Mozilla/5.0'
+            'Content-Type': 'application/json'
         }
     };
 
     return new Promise((resolve, reject) => {
         const req = https.request(options, (res) => {
             let body = '';
-            res.on('data', (chunk) => body += chunk);
+            res.on('data', (c) => body += c);
             res.on('end', () => {
                 try { resolve(JSON.parse(body)); } 
-                catch (e) { reject(new Error("Response API Error")); }
+                catch (e) { reject(new Error("Response Error")); }
             });
         });
         req.on('error', (e) => reject(e));

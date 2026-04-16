@@ -23,11 +23,6 @@ const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema(
     role: { type: String, default: 'member' }
 }));
 
-// Model NokosConfig (Untuk Margin & API Key)
-const NokosConfig = mongoose.models.NokosConfig || mongoose.model('NokosConfig', new mongoose.Schema({
-    apiKey: String,
-    marginPercent: { type: Number, default: 20 }
-}));
 
 // Model NokosTx (Riwayat Transaksi)
 const NokosTx = mongoose.models.NokosTx || mongoose.model('NokosTx', new mongoose.Schema({
@@ -43,6 +38,7 @@ const Setting = mongoose.models.Setting || mongoose.model('Setting', new mongoos
     rumahotp_key: String,
     marginPercent: { type: Number, default: 20 }
 }));
+
 
 mongoose.connect(process.env.MONGO_URI).then(() => console.log("--- DATABASE CONNECTED ---"));
 
