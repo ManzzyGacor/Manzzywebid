@@ -217,69 +217,49 @@ router.post('/order', async (req, res) => {
 });
 
 // Cek Status (v1)
-// Cek Status OTP (v1) - Tulis Manual (FIXED FOR FRONTEND)
 router.get('/status/:invoiceId', async (req, res) => {
     try {
-        // 1. Cari transaksi di database kita
         const tx = await NokosTx.findOne({ invoiceId: req.params.invoiceId });
-        if (!tx) return res.json({ success: false, msg: "Order tidak ditemukan" });
+        if (!tx) return res.json({ success: false });
 
-        // 2. Logic Auto-Expired
-        if (tx.status === 'waiting' && new Date() > tx.expiresAt) {
-            if (tx.smsCode && tx.smsCode.length > 2) {
-                tx.status = 'success';
-                await tx.save();
-            } else {
-                tx.status = 'canceled';
-                await tx.save();
-                await User.findOneAndUpdate({ username: tx.username }, { $inc: { balance: tx.price } });
-                const freshTx = await NokosTx.findById(tx._id);
-                return res.json({ success: true, data: freshTx, msg: "Waktu habis, saldo di-refund." });
-            }
-        }
-
-        // 3. Tembak ke RumahOTP v1
+        // Tembak v1 sesuai respon yang lo kasih
         const result = await callRumahOTP(`v1/orders/get_status?order_id=${tx.refId}`);
 
         if (result && result.success) {
             const d = result.data;
             let needsUpdate = false;
 
-            // A. Simpan Kode OTP
-            if (d.otp_code && d.otp_code !== '-' && d.otp_code !== tx.smsCode) {
+            // 1. Ambil Kode OTP
+            if (d.otp_code && d.otp_code !== tx.smsCode) {
                 tx.smsCode = d.otp_code;
                 needsUpdate = true;
             }
 
-            // B. Jika completed
+            // 2. Handle Status (received, completed, canceled, expiring)
             if (d.status === 'completed' && tx.status !== 'success') {
                 tx.status = 'success';
                 needsUpdate = true;
             }
 
-            // C. Jika canceled
             if (d.status === 'canceled' && tx.status !== 'canceled') {
                 tx.status = 'canceled';
-                await User.findOneAndUpdate(
-                    { username: tx.username }, 
-                    { $inc: { balance: tx.price } }
-                );
+                await User.findOneAndUpdate({ username: tx.username }, { $inc: { balance: tx.price } });
                 needsUpdate = true;
             }
 
             if (needsUpdate) await tx.save();
         }
 
-        // KUNCI PENYELESAIAN: Ambil data paling fresh dari DB sebelum kirim ke web
-        const finalData = await NokosTx.findById(tx._id).lean();
-
+        // KUNCI SINKRON: Kirim expiresAt asli dari DB
         res.json({ 
             success: true, 
-            data: finalData // Data ini dijamin sudah ada smsCode-nya
+            data: {
+                ...tx._doc,
+                // Kirim sisa detik untuk timer
+                remainingSeconds: Math.floor((new Date(tx.expiresAt) - new Date()) / 1000)
+            }
         });
-
     } catch (e) {
-        console.error("ERROR STATUS POLLING:", e.message);
         res.json({ success: false });
     }
 });
