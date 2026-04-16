@@ -3,108 +3,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Control - Manzzy ID</title>
+    <title>Admin Command Center - Manzzy ID</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Space Grotesk', sans-serif; background-color: #050505; color: #e0e0e0; }
-        .galaxy-card { background: linear-gradient(145deg, #111114, #09090b); border: 1px solid rgba(139, 92, 246, 0.1); }
-        input { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 10px 15px; color: white; outline: none; }
-        input:focus { border-color: #8b5cf6; }
-        button { transition: all 0.3s ease; }
-        button:active { scale: 0.95; }
+        body { font-family: 'Space Grotesk', sans-serif; background-color: #050505; color: #e0e0e0; min-height: 100vh; }
+        .galaxy-card { background: linear-gradient(145deg, #111114, #09090b); border: 1px solid rgba(139, 92, 246, 0.1); transition: all 0.3s ease; }
+        .galaxy-card:hover { border-color: rgba(139, 92, 246, 0.3); box-shadow: 0 0 20px rgba(139, 92, 246, 0.05); }
+        input, select { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px 15px; color: white; outline: none; transition: 0.3s; width: 100%; }
+        input:focus { border-color: #8b5cf6; background: rgba(255,255,255,0.08); }
+        .stat-icon { width: 45px; h: 45px; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+        .btn-primary { background: #8b5cf6; color: white; padding: 12px 20px; border-radius: 12px; font-weight: bold; transition: 0.3s; }
+        .btn-primary:hover { background: #7c3aed; transform: translateY(-2px); }
     </style>
 </head>
-<body class="p-5 pb-20">
+<body class="p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tighter text-white">ADMIN COMMAND CENTER</h1>
+                <p class="text-gray-500 text-sm">Monitor dan kendalikan ekosistem Manzzy ID.</p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="location.reload()" class="bg-white/5 hover:bg-white/10 p-3 rounded-xl border border-white/10 transition">
+                    <i class="fa-solid fa-rotate"></i>
+                </button>
+                <a href="/" class="btn-primary flex items-center gap-2">
+                    <i class="fa-solid fa-house"></i> Dashboard User
+                </a>
+            </div>
+        </header>
 
-    <div class="max-w-2xl mx-auto space-y-8">
-        <div class="flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-purple-500"><i class="fa-solid fa-user-gear mr-2"></i>Admin Panel</h1>
-            <a href="index.html" class="text-xs bg-white/5 px-4 py-2 rounded-xl border border-white/10">Back to Web</a>
-        </div>
-
-        <div class="galaxy-card p-6 rounded-[32px] space-y-5">
-            <h2 class="text-sm font-bold uppercase tracking-widest text-gray-400">Konfigurasi Website</h2>
-            <div class="grid gap-4">
-                <div class="flex flex-col">
-                    <label class="text-[10px] uppercase mb-2 ml-1">Nama Website</label>
-                    <input type="text" id="set-web-name" placeholder="Contoh: MANZZY ID">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="galaxy-card p-5 rounded-2xl flex items-center gap-4">
+                <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+                <div>
+                    <span class="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Total User</span>
+                    <h2 class="text-xl font-bold" id="stat-total-users">0</h2>
                 </div>
-                <div class="flex flex-col">
-                    <label class="text-[10px] uppercase mb-2 ml-1">Profit Keuntungan (%)</label>
-                    <input type="number" id="set-profit" placeholder="Contoh: 10">
+            </div>
+            <div class="galaxy-card p-5 rounded-2xl flex items-center gap-4 border-l-4 border-l-green-500">
+                <div class="stat-icon bg-green-500/10 text-green-500"><i class="fa-solid fa-wallet"></i></div>
+                <div>
+                    <span class="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Saldo Beredar</span>
+                    <h2 class="text-xl font-bold" id="stat-total-balance">Rp 0</h2>
                 </div>
-                <div class="flex flex-col">
-                    <label class="text-[10px] uppercase mb-2 ml-1">RumahOTP API Key</label>
-                    <input type="password" id="set-apikey" placeholder="Masukkan API Key v2">
+            </div>
+            <div class="galaxy-card p-5 rounded-2xl flex items-center gap-4 border-l-4 border-l-amber-500">
+                <div class="stat-icon bg-amber-500/10 text-amber-500"><i class="fa-solid fa-crown"></i></div>
+                <div>
+                    <span class="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Reseller Aktif</span>
+                    <h2 class="text-xl font-bold" id="stat-total-resellers">0</h2>
                 </div>
-                <button onclick="saveSettings()" class="bg-purple-600 py-3 rounded-xl font-bold text-sm shadow-lg shadow-purple-900/20">SIMPAN PERUBAHAN</button>
+            </div>
+            <div class="galaxy-card p-5 rounded-2xl flex items-center gap-4 border-l-4 border-l-purple-500">
+                <div class="stat-icon bg-purple-500/10 text-purple-500"><i class="fa-solid fa-cart-shopping"></i></div>
+                <div>
+                    <span class="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Order Hari Ini</span>
+                    <h2 class="text-xl font-bold" id="stat-today-orders">0</h2>
+                </div>
             </div>
         </div>
 
-        <div class="galaxy-card p-6 rounded-[32px] space-y-5">
-            <h2 class="text-sm font-bold uppercase tracking-widest text-gray-400">Manajemen User</h2>
-            <div class="flex gap-2">
-                <input type="text" id="search-username" placeholder="Cari username..." class="flex-1">
-                <button onclick="searchUser()" class="bg-white/10 px-6 rounded-xl"><i class="fa-solid fa-magnifying-glass"></i></button>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 space-y-8">
+                <section class="galaxy-card p-6 rounded-3xl">
+                    <div class="flex items-center gap-3 mb-6">
+                        <i class="fa-solid fa-user-gear text-purple-500"></i>
+                        <h3 class="font-bold uppercase tracking-widest text-sm">Manajemen User</h3>
+                    </div>
+                    <div class="flex flex-col md:flex-row gap-3 mb-6">
+                        <input type="text" id="target-username" placeholder="Masukkan Username..." class="flex-1">
+                        <button onclick="searchUser()" class="btn-primary"><i class="fa-solid fa-magnifying-glass"></i></button>
+                    </div>
+
+                    <div id="user-info-box" class="hidden animate-in fade-in slide-in-from-top-4">
+                        <div class="p-5 rounded-2xl bg-white/5 border border-white/5 mb-6">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h4 class="text-2xl font-bold text-white" id="res-username">USERNAME</h4>
+                                    <p class="text-[10px] text-gray-500 font-mono uppercase" id="res-id">ID: -</p>
+                                </div>
+                                <span class="px-3 py-1 rounded-full bg-purple-500/20 text-purple-400 text-[10px] font-bold" id="res-role">MEMBER</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <span class="text-[9px] text-gray-500 uppercase block">Saldo Saat Ini</span>
+                                    <p class="text-xl font-bold text-green-500" id="res-balance">Rp 0</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-3">
+                                <label class="text-[10px] font-bold text-gray-500 uppercase">Aksi Saldo</label>
+                                <div class="flex gap-2">
+                                    <input type="number" id="amount-change" placeholder="Nominal...">
+                                    <button onclick="updateBalance()" class="bg-green-600 hover:bg-green-500 text-white px-4 rounded-xl font-bold transition">UPDATE</button>
+                                </div>
+                            </div>
+                            <div class="space-y-3 text-right">
+                                <label class="text-[10px] font-bold text-gray-500 uppercase block">Moderasi Akun</label>
+                                <div class="flex gap-2 justify-end">
+                                    <button onclick="userAction('ban')" class="bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white px-4 py-3 rounded-xl transition font-bold text-xs">BAN USER</button>
+                                    <button onclick="userAction('reset_password')" class="bg-amber-500/10 hover:bg-amber-500 text-amber-500 hover:text-white px-4 py-3 rounded-xl transition font-bold text-xs">RESET PASS</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="galaxy-card p-6 rounded-3xl">
+                    <div class="flex items-center gap-3 mb-6">
+                        <i class="fa-solid fa-chart-line text-blue-500"></i>
+                        <h3 class="font-bold uppercase tracking-widest text-sm">Analitik Penjualan (7 Hari)</h3>
+                    </div>
+                    <canvas id="salesChart" height="150"></canvas>
+                </section>
             </div>
 
-            <div id="user-result" class="hidden border-t border-white/5 pt-5 space-y-4">
-                <div class="flex justify-between items-center bg-white/5 p-4 rounded-2xl">
-                    <div>
-                        <div class="text-lg font-bold text-white" id="res-name">-</div>
-                        <div class="text-xs text-purple-400" id="res-role">-</div>
+            <div class="space-y-6">
+                <section class="galaxy-card p-6 rounded-3xl">
+                    <div class="flex items-center gap-3 mb-6">
+                        <i class="fa-solid fa-sliders text-amber-500"></i>
+                        <h3 class="font-bold uppercase tracking-widest text-sm">Konfigurasi API</h3>
                     </div>
-                    <div class="text-right">
-                        <div class="text-[10px] text-gray-500 uppercase">Saldo Sekarang</div>
-                        <div class="text-lg font-bold text-green-500" id="res-balance">Rp 0</div>
+                    <div class="space-y-4">
+                        <div class="group">
+                            <label class="text-[10px] font-bold text-gray-500 uppercase mb-2 block">Nama Website</label>
+                            <input type="text" id="set-web-name">
+                        </div>
+                        <div class="group">
+                            <label class="text-[10px] font-bold text-gray-500 uppercase mb-2 block">Margin Keuntungan (%)</label>
+                            <input type="number" id="set-profit">
+                        </div>
+                        <div class="group">
+                            <label class="text-[10px] font-bold text-gray-500 uppercase mb-2 block">RumahOTP API Key</label>
+                            <input type="password" id="set-apikey">
+                        </div>
+                        <div class="group">
+                            <label class="text-[10px] font-bold text-gray-500 uppercase mb-2 block">Harga Reseller (Upgrade)</label>
+                            <input type="number" id="set-reseller-price">
+                        </div>
+                        <button onclick="saveSettings()" class="w-full btn-primary mt-4 uppercase text-xs tracking-widest">Simpan Perubahan</button>
                     </div>
-                </div>
+                </section>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="flex flex-col">
-                        <label class="text-[10px] mb-2 uppercase ml-1">Tambah/Kurang Saldo</label>
-                        <input type="number" id="amount-change" placeholder="Contoh: 5000 atau -5000">
+                <section class="galaxy-card p-6 rounded-3xl">
+                    <div class="flex items-center gap-3 mb-4">
+                        <i class="fa-solid fa-bullhorn text-red-500"></i>
+                        <h3 class="font-bold uppercase tracking-widest text-sm">Broadcast Info</h3>
                     </div>
-                    <div class="flex items-end">
-                        <button onclick="updateBalance()" class="w-full bg-green-600 py-3 rounded-xl font-bold text-xs">EKSEKUSI SALDO</button>
-                    </div>
-                </div>
-
-                <div class="flex gap-3">
-                    <button onclick="userAction('make_admin')" class="flex-1 bg-blue-600/20 border border-blue-500/30 text-blue-400 py-3 rounded-xl font-bold text-[10px] uppercase tracking-wider">Jadikan Admin</button>
-                    <button onclick="userAction('delete')" class="flex-1 bg-red-600/20 border border-red-500/30 text-red-400 py-3 rounded-xl font-bold text-[10px] uppercase tracking-wider">Hapus Akun</button>
-                </div>
+                    <textarea class="w-full h-24 bg-white/5 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-purple-500" placeholder="Ketik pengumuman untuk semua user..."></textarea>
+                    <button class="w-full mt-3 bg-white/10 hover:bg-white/20 py-2 rounded-xl text-[10px] font-bold uppercase transition">Kirim Notifikasi</button>
+                </section>
             </div>
         </div>
     </div>
 
     <script>
-        let targetUserId = null;
+        let targetUserId = "";
 
-        async function saveSettings() {
-            const data = {
-                web_name: document.getElementById('set-web-name').value,
-                profit_percent: document.getElementById('set-profit').value,
-                rumahotp_key: document.getElementById('set-apikey').value
-            };
-            const res = await fetch('/api/admin/settings/update', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            });
-            if((await res.json()).success) alert("Setting disimpan!");
-        }
+        // Chart Initialization
+        const ctx = document.getElementById('salesChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
+                datasets: [{
+                    label: 'Order',
+                    data: [12, 19, 3, 5, 2, 3, 9],
+                    borderColor: '#8b5cf6',
+                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: { y: { display: false }, x: { grid: { display: false } } }
+            }
+        });
 
         async function searchUser() {
-            const user = document.getElementById('search-username').value;
-            const res = await fetch(`/api/admin/users/search?username=${user}`);
+            const username = document.getElementById('target-username').value;
+            const res = await fetch(`/api/admin/users/search?username=${username}`);
             const data = await res.json();
-            if(data.success) {
+            
+            if (data.success) {
                 targetUserId = data.user._id;
-                document.getElementById('user-result').classList.remove('hidden');
-                document.getElementById('res-name').innerText = data.user.username;
+                document.getElementById('user-info-box').classList.remove('hidden');
+                document.getElementById('res-username').innerText = data.user.username;
+                document.getElementById('res-id').innerText = "ID: " + data.user._id;
                 document.getElementById('res-role').innerText = data.user.role.toUpperCase();
                 document.getElementById('res-balance').innerText = "Rp " + data.user.balance.toLocaleString();
             } else {
@@ -120,27 +212,43 @@
                 body: JSON.stringify({ userId: targetUserId, amount: parseInt(amount) })
             });
             alert("Saldo diperbarui!");
-            searchUser(); // refresh data
+            searchUser(); 
         }
 
-        async function userAction(action) {
-            if(!confirm("Yakin ingin melakukan tindakan ini?")) return;
-            await fetch('/api/admin/users/action', {
+        async function saveSettings() {
+            const settings = {
+                siteName: document.getElementById('set-web-name').value,
+                marginPercent: document.getElementById('set-profit').value,
+                rumahotp_key: document.getElementById('set-apikey').value,
+                resellerPrice: document.getElementById('set-reseller-price').value
+            };
+            
+            await fetch('/api/admin/settings', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ userId: targetUserId, action: action })
+                body: JSON.stringify(settings)
             });
-            alert("Berhasil!");
-            location.reload();
+            alert("Pengaturan Berhasil Disimpan!");
         }
 
-        // Load current settings on open
+        // Fetch Stats on Load
         window.onload = async () => {
-            const res = await fetch('/api/admin/settings');
+            const res = await fetch('/api/admin/dashboard-stats');
             const data = await res.json();
-            document.getElementById('set-web-name').value = data.web_name || "";
-            document.getElementById('set-profit').value = data.profit_percent || 0;
-            document.getElementById('set-apikey').value = data.rumahotp_key || "";
+            if(data.success) {
+                document.getElementById('stat-total-users').innerText = data.totalUsers;
+                document.getElementById('stat-total-balance').innerText = "Rp " + data.totalBalance.toLocaleString();
+                document.getElementById('stat-total-resellers').innerText = data.totalResellers;
+                document.getElementById('stat-today-orders').innerText = data.todayOrders;
+            }
+            
+            // Load current settings
+            const resSet = await fetch('/api/admin/settings');
+            const set = await resSet.json();
+            document.getElementById('set-web-name').value = set.siteName || "";
+            document.getElementById('set-profit').value = set.marginPercent || 20;
+            document.getElementById('set-apikey').value = set.rumahotp_key || "";
+            document.getElementById('set-reseller-price').value = set.resellerPrice || 10000;
         };
     </script>
 </body>
