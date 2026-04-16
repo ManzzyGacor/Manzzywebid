@@ -152,4 +152,7 @@ app.post('/api/admin/users/action', isAdmin, async (req, res) => {
     res.json({ success: true });
 });
 
+const topupRouter = require('./topupapi');
+app.use('/api/topup', topupRouter);
+
 app.listen(3000, () => console.log("Server Manzzy ID Ready Port 3000"));
