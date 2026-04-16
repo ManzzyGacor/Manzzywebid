@@ -6,15 +6,22 @@ const router = express.Router();
 // ==========================================
 // 1. MODELS (Mastiin gak bentrok sama index.js)
 // ==========================================
+// Update Model User
+const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({
+    username: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    balance: { type: Number, default: 0 },
+    role: { type: String, default: 'member' }, // member, reseller, admin
+    resellerUntil: { type: Date, default: null } // Tanggal expired reseller
+}));
+
+// Update Model Setting (Biar harga upgrade bisa lo atur di Admin)
 const Setting = mongoose.models.Setting || mongoose.model('Setting', new mongoose.Schema({
     siteName: { type: String, default: 'Manzzy ID' },
     rumahotp_key: String,
-    marginPercent: { type: Number, default: 20 }
-}));
-
-const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({
-    username: String,
-    balance: { type: Number, default: 0 }
+    marginPercent: { type: Number, default: 20 },
+    resellerPrice: { type: Number, default: 10000 }, // Harga upgrade
+    resellerMargin: { type: Number, default: 8 }    // Margin khusus reseller (12% lebih murah dari 20%)
 }));
 
 const NokosTx = mongoose.models.NokosTx || mongoose.model('NokosTx', new mongoose.Schema({
@@ -80,35 +87,49 @@ router.get('/services', async (req, res) => {
 // Ambil Negara & Harga (v2)
 router.get('/countries', async (req, res) => {
     try {
-        // 1. Ambil 'sid' (sesuai kiriman dari frontend nokos.js lo)
-        const sid = req.query.sid; 
+        const sid = req.query.sid;
+        if (!sid) return res.json({ success: false, msg: "Service ID (sid) kosong!" });
+
+        // 1. Ambil Data User & Config Setting
+        const [user, set] = await Promise.all([
+            User.findById(req.session.userId),
+            Setting.findOne()
+        ]);
+
+        // 2. Tentukan Margin Default
+        let activeMargin = set ? set.marginPercent : 20; // Default 20%
+        let isResellerActive = false;
+
+        // 3. Cek Status Reseller (Apakah role reseller DAN belum expired?)
+        if (user && user.role === 'reseller' && user.resellerUntil && new Date() < user.resellerUntil) {
+            activeMargin = set.resellerMargin || 8; // Pakai margin reseller (lebih murah 12%)
+            isResellerActive = true;
+        } 
         
-        if (!sid) {
-            return res.json({ success: false, msg: "Service ID (sid) kosong!" });
+        // Tambahan: Admin juga dapet harga reseller
+        if (user && user.role === 'admin') {
+            activeMargin = set.resellerMargin || 8;
         }
 
-        // 2. Ambil margin dari koleksi Setting (Admin Kontrol)
-        const set = await Setting.findOne();
-        const margin = set ? set.marginPercent : 20;
-
-        // 3. Tembak ke v2/countries
-        // PENTING: Pakai parameter service_id sesuai dokumentasi RumahOTP lo
+        // 4. Tembak ke RumahOTP v2
         const resData = await callRumahOTP(`v2/countries?service_id=${sid}`);
 
         if (resData && resData.success) {
-            // 4. Hitung harga jual tiap negara & pricelist
             resData.data.forEach(c => {
                 if (c.pricelist) {
                     c.pricelist.forEach(p => {
-                        // Tambahkan field price_user (Harga + Margin)
-                        p.price_user = Math.ceil(p.price + (p.price * margin / 100));
-                        // Update format harganya biar cantik
+                        // Harga Modal (p.price) tetap kita simpan untuk hitung coret harga di frontend
+                        
+                        // Hitung Harga Jual User berdasarkan margin yang aktif
+                        p.price_user = Math.ceil(p.price + (p.price * activeMargin / 100));
                         p.price_format = `Rp${p.price_user.toLocaleString('id-ID')}`;
+                        
+                        // Kasih tanda ke frontend kalau ini sudah harga diskon
+                        p.is_reseller_price = isResellerActive;
                     });
                 }
             });
             
-            // Kirim balik ke frontend
             return res.json({
                 success: true,
                 data: resData.data
@@ -283,6 +304,43 @@ router.get('/history', async (req, res) => {
     const user = await User.findById(req.session.userId);
     const list = await NokosTx.find({ username: user.username }).sort({ createdAt: -1 });
     res.json({ success: true, data: list });
+});
+
+router.post('/upgrade/reseller', async (req, res) => {
+    if (!req.session.userId) return res.json({ success: false, msg: "Login dulu bos" });
+
+    try {
+        const user = await User.findById(req.session.userId);
+        const config = await Setting.findOne();
+        const price = config.resellerPrice || 10000;
+
+        if (user.balance < price) return res.json({ success: false, msg: "Saldo tidak cukup untuk upgrade" });
+
+        // Potong Saldo
+        user.balance -= price;
+
+        // Hitung masa aktif (Stacking)
+        let newExpired;
+        const now = new Date();
+        
+        if (user.resellerUntil && user.resellerUntil > now) {
+            // Kalau masih aktif, tambah 30 hari dari tanggal expired lama
+            newExpired = new Date(user.resellerUntil.getTime() + (30 * 24 * 60 * 60 * 1000));
+        } else {
+            // Kalau sudah mati/baru beli, tambah 30 hari dari sekarang
+            newExpired = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000));
+        }
+
+        user.resellerUntil = newExpired;
+        user.role = 'reseller'; // Set role jadi reseller
+        await user.save();
+
+        res.json({ 
+            success: true, 
+            msg: "Berhasil upgrade ke Reseller! Masa aktif s.d " + newExpired.toLocaleDateString('id-ID') 
+        });
+
+    } catch (e) { res.json({ success: false, msg: e.message }); }
 });
 
 module.exports = router;

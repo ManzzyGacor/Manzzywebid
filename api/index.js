@@ -16,11 +16,13 @@ app.use(express.urlencoded({ extended: true }));
 // ==========================================
 
 // Model User
+// Update Model User
 const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({
     username: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     balance: { type: Number, default: 0 },
-    role: { type: String, default: 'member' }
+    role: { type: String, default: 'member' }, // member, reseller, admin
+    resellerUntil: { type: Date, default: null } // Tanggal expired reseller
 }));
 
 
@@ -32,13 +34,14 @@ const NokosTx = mongoose.models.NokosTx || mongoose.model('NokosTx', new mongoos
     smsCode: String, expiresAt: Date, createdAt: { type: Date, default: Date.now }
 }));
 
-// Model Setting (UNTUK ADMIN KONTROL - WAJIB ADA BIAR GAK ERROR)
+// Update Model Setting (Biar harga upgrade bisa lo atur di Admin)
 const Setting = mongoose.models.Setting || mongoose.model('Setting', new mongoose.Schema({
     siteName: { type: String, default: 'Manzzy ID' },
     rumahotp_key: String,
-    marginPercent: { type: Number, default: 20 }
+    marginPercent: { type: Number, default: 20 },
+    resellerPrice: { type: Number, default: 11000 }, // Harga upgrade
+    resellerMargin: { type: Number, default: 8 }    // Margin khusus reseller (12% lebih murah dari 20%)
 }));
-
 
 mongoose.connect(process.env.MONGO_URI).then(() => console.log("--- DATABASE CONNECTED ---"));
 
