@@ -118,7 +118,7 @@ app.use('/api/nokos', nokosRouter);
 
 
 // =====================================
-const adminRouter = require('./api/adminapi'); // Sesuaikan path-nya
+const adminRouter = require('./adminapi'); // Sesuaikan path-nya
 app.use('/api/admin', adminRouter);
 
 const topupRouter = require('./topupapi');
