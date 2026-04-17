@@ -116,44 +116,46 @@ const nokosRouter = require('./nokos');
 // Gunakan prefix /api/nokos
 app.use('/api/nokos', nokosRouter);
 
+// Route Upgrade (api/nokos.js)
+router.post('/upgrade/reseller', async (req, res) => {
+    if (!req.session.userId) return res.json({ success: false, msg: "Login dulu bos" });
+
+    try {
+        const user = await User.findById(req.session.userId);
+        const config = await Setting.findOne();
+        const price = config.resellerPrice || 10000;
+
+        if (user.balance < price) return res.json({ success: false, msg: "Saldo tidak cukup" });
+
+        user.balance -= price;
+        user.role = 'reseller'; // Update role di DB
+
+        // Hitung Masa Aktif
+        let newExpired;
+        const now = new Date();
+        if (user.resellerUntil && user.resellerUntil > now) {
+            newExpired = new Date(user.resellerUntil.getTime() + (30 * 24 * 60 * 60 * 1000));
+        } else {
+            newExpired = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000));
+        }
+        user.resellerUntil = newExpired;
+
+        await user.save();
+
+        // KUNCI SINKRONISASI: Update data role di session
+        req.session.role = 'reseller'; 
+        
+        res.json({ 
+            success: true, 
+            msg: "Berhasil upgrade! Status: Reseller Pro",
+            role: 'reseller' 
+        });
+
+    } catch (e) { res.json({ success: false, msg: e.message }); }
+});
 // =====================================
-// ADMIN KONTROL
-
-// UPDATE: Ambil Semua Setting (Fixing Model Setting)
-app.get('/api/admin/settings', isAdmin, async (req, res) => {
-    let set = await Setting.findOne();
-    if (!set) set = await Setting.create({});
-    res.json(set);
-});
-
-
-// Update Setting (Nama Web, Profit, API Key)
-app.post('/api/admin/settings/update', isAdmin, async (req, res) => {
-    await Setting.updateOne({}, req.body);
-    res.json({ success: true });
-});
-
-// Cari User berdasarkan Username
-app.get('/api/admin/users/search', isAdmin, async (req, res) => {
-    const user = await User.findOne({ username: req.query.username });
-    if (!user) return res.json({ success: false });
-    res.json({ success: true, user });
-});
-
-// Edit Saldo (Tambah/Kurang)
-app.post('/api/admin/users/balance', isAdmin, async (req, res) => {
-    const { userId, amount } = req.body; // amount bisa + atau -
-    await User.findByIdAndUpdate(userId, { $inc: { balance: amount } });
-    res.json({ success: true });
-});
-
-// Jadikan Admin / Hapus User
-app.post('/api/admin/users/action', isAdmin, async (req, res) => {
-    const { userId, action } = req.body;
-    if (action === 'make_admin') await User.findByIdAndUpdate(userId, { role: 'admin' });
-    if (action === 'delete') await User.findByIdAndDelete(userId);
-    res.json({ success: true });
-});
+const adminRouter = require('./api/adminapi'); // Sesuaikan path-nya
+app.use('/api/admin', adminRouter);
 
 const topupRouter = require('./topupapi');
 app.use('/api/topup', topupRouter);
