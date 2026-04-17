@@ -589,3 +589,46 @@ async function processUpgrade() {
         Swal.fire('Error', 'Terjadi kesalahan sistem', 'error');
     }
 }
+
+// Tambahkan/Update fungsi ini di nokos.js
+async function loadUserProfile() {
+    try {
+        const res = await fetch('/api/user/profile'); // Buat route ini jika belum ada
+        const data = await res.json();
+        
+        if (data.success) {
+            const user = data.user;
+            
+            // 1. Update Saldo & Nama
+            document.getElementById('profile-name').innerText = user.username;
+            document.getElementById('profile-balance').innerText = `Rp ${user.balance.toLocaleString()}`;
+            
+            // 2. Update Role Badge di Profil
+            const badgeBox = document.getElementById('profile-role-badge');
+            if (user.role === 'reseller') {
+                badgeBox.innerHTML = `
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[9px] font-bold uppercase tracking-wider">
+                        <i class="fa-solid fa-crown text-[8px]"></i> RESELLER PRO
+                    </span>`;
+            } else if (user.role === 'admin') {
+                badgeBox.innerHTML = `
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-[9px] font-bold uppercase tracking-wider">
+                        <i class="fa-solid fa-shield text-[8px]"></i> ADMIN
+                    </span>`;
+            } else {
+                badgeBox.innerHTML = `
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-500/10 border border-white/5 text-gray-400 text-[9px] font-bold uppercase tracking-wider">
+                        <i class="fa-solid fa-user text-[8px]"></i> MEMBER
+                    </span>`;
+            }
+
+            // 3. Jalankan fungsi update UI khusus Reseller (Banner/Modal)
+            if (typeof updateMembershipUI === "function") {
+                updateMembershipUI(user);
+            }
+        }
+    } catch (e) { console.error("Gagal memuat profil"); }
+}
+
+// Jalankan saat web dibuka
+window.addEventListener('DOMContentLoaded', loadUserProfile);
