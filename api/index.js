@@ -116,43 +116,7 @@ const nokosRouter = require('./nokos');
 // Gunakan prefix /api/nokos
 app.use('/api/nokos', nokosRouter);
 
-// Route Upgrade (api/nokos.js)
-router.post('/upgrade/reseller', async (req, res) => {
-    if (!req.session.userId) return res.json({ success: false, msg: "Login dulu bos" });
 
-    try {
-        const user = await User.findById(req.session.userId);
-        const config = await Setting.findOne();
-        const price = config.resellerPrice || 10000;
-
-        if (user.balance < price) return res.json({ success: false, msg: "Saldo tidak cukup" });
-
-        user.balance -= price;
-        user.role = 'reseller'; // Update role di DB
-
-        // Hitung Masa Aktif
-        let newExpired;
-        const now = new Date();
-        if (user.resellerUntil && user.resellerUntil > now) {
-            newExpired = new Date(user.resellerUntil.getTime() + (30 * 24 * 60 * 60 * 1000));
-        } else {
-            newExpired = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000));
-        }
-        user.resellerUntil = newExpired;
-
-        await user.save();
-
-        // KUNCI SINKRONISASI: Update data role di session
-        req.session.role = 'reseller'; 
-        
-        res.json({ 
-            success: true, 
-            msg: "Berhasil upgrade! Status: Reseller Pro",
-            role: 'reseller' 
-        });
-
-    } catch (e) { res.json({ success: false, msg: e.message }); }
-});
 // =====================================
 const adminRouter = require('./api/adminapi'); // Sesuaikan path-nya
 app.use('/api/admin', adminRouter);

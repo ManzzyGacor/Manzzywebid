@@ -306,6 +306,7 @@ router.get('/history', async (req, res) => {
     res.json({ success: true, data: list });
 });
 
+// Route Upgrade (api/nokos.js)
 router.post('/upgrade/reseller', async (req, res) => {
     if (!req.session.userId) return res.json({ success: false, msg: "Login dulu bos" });
 
@@ -314,30 +315,30 @@ router.post('/upgrade/reseller', async (req, res) => {
         const config = await Setting.findOne();
         const price = config.resellerPrice || 10000;
 
-        if (user.balance < price) return res.json({ success: false, msg: "Saldo tidak cukup untuk upgrade" });
+        if (user.balance < price) return res.json({ success: false, msg: "Saldo tidak cukup" });
 
-        // Potong Saldo
         user.balance -= price;
+        user.role = 'reseller'; // Update role di DB
 
-        // Hitung masa aktif (Stacking)
+        // Hitung Masa Aktif
         let newExpired;
         const now = new Date();
-        
         if (user.resellerUntil && user.resellerUntil > now) {
-            // Kalau masih aktif, tambah 30 hari dari tanggal expired lama
             newExpired = new Date(user.resellerUntil.getTime() + (30 * 24 * 60 * 60 * 1000));
         } else {
-            // Kalau sudah mati/baru beli, tambah 30 hari dari sekarang
             newExpired = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000));
         }
-
         user.resellerUntil = newExpired;
-        user.role = 'reseller'; // Set role jadi reseller
+
         await user.save();
 
+        // KUNCI SINKRONISASI: Update data role di session
+        req.session.role = 'reseller'; 
+        
         res.json({ 
             success: true, 
-            msg: "Berhasil upgrade ke Reseller! Masa aktif s.d " + newExpired.toLocaleDateString('id-ID') 
+            msg: "Berhasil upgrade! Status: Reseller Pro",
+            role: 'reseller' 
         });
 
     } catch (e) { res.json({ success: false, msg: e.message }); }
