@@ -205,15 +205,24 @@
         }
 
         async function updateBalance() {
-            const amount = document.getElementById('amount-change').value;
-            await fetch('/api/admin/users/balance', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ userId: targetUserId, amount: parseInt(amount) })
-            });
-            alert("Saldo diperbarui!");
-            searchUser(); 
-        }
+    const amount = document.getElementById('amount-change').value;
+    if(!targetUserId) return alert("Cari user dulu!");
+    
+    const res = await fetch('/api/admin/users/balance', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ 
+            userId: targetUserId, 
+            amount: parseInt(amount) 
+        })
+    });
+    
+    const result = await res.json();
+    if(result.success) {
+        alert("Saldo Berhasil Diubah!");
+        searchUser(); // Refresh data user di layar
+    }
+}
 
         async function saveSettings() {
             const settings = {
