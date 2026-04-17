@@ -106,8 +106,23 @@ app.post('/api/auth/submit', async (req, res) => {
 
 app.get('/api/auth/me', async (req, res) => {
     if (!req.session.userId) return res.json({ login: false });
-    const user = await User.findById(req.session.userId);
-    res.json({ login: true, user });
+    
+    try {
+        const user = await User.findById(req.session.userId);
+        
+        if (user) {
+            // Auto-sinkronisasi: Jika role reseller tapi masa aktif sudah habis, turunkan jadi member
+            if (user.role === 'reseller' && user.resellerUntil && new Date() > user.resellerUntil) {
+                user.role = 'member';
+                await user.save();
+            }
+            res.json({ login: true, user });
+        } else {
+            res.json({ login: false });
+        }
+    } catch (e) {
+        res.json({ login: false });
+    }
 });
 
 

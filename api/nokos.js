@@ -313,14 +313,15 @@ router.post('/upgrade/reseller', async (req, res) => {
     try {
         const user = await User.findById(req.session.userId);
         const config = await Setting.findOne();
-        const price = config.resellerPrice || 10000;
+        const price = config ? (config.resellerPrice || 10000) : 10000;
 
         if (user.balance < price) return res.json({ success: false, msg: "Saldo tidak cukup" });
 
+        // Potong saldo & ubah role di DB
         user.balance -= price;
-        user.role = 'reseller'; // Update role di DB
+        user.role = 'reseller';
 
-        // Hitung Masa Aktif
+        // Hitung Masa Aktif (Stacking)
         let newExpired;
         const now = new Date();
         if (user.resellerUntil && user.resellerUntil > now) {
@@ -332,7 +333,7 @@ router.post('/upgrade/reseller', async (req, res) => {
 
         await user.save();
 
-        // KUNCI SINKRONISASI: Update data role di session
+        // KUNCI SINKRONISASI PAS UPGRADE: Update session saat itu juga
         req.session.role = 'reseller'; 
         
         res.json({ 
