@@ -287,16 +287,49 @@ router.get('/status/:invoiceId', async (req, res) => {
 
 // Action (v1)
 router.post('/cancel', async (req, res) => {
-    const tx = await NokosTx.findOne({ invoiceId: req.body.order_id });
-    if (!tx || tx.status !== 'waiting') return res.json({ success: false });
+    // Asumsi req.body nerima orderId atau refId
+    const { order_id } = req.body; 
+
     try {
-        const result = await callRumahOTP(`v1/orders/set_status?order_id=${tx.refId}&status=cancel`);
-        if (result.success) {
-            tx.status = 'canceled'; await tx.save();
-            await User.findOneAndUpdate({ username: tx.username }, { $inc: { balance: tx.price } });
-            res.json({ success: true });
-        } else { res.json({ success: false }); }
-    } catch (e) { res.json({ success: false }); }
+        // 1. Cari data transaksinya di database
+        // Sesuaikan 'refId' atau 'invoiceId' dengan field yang lo pake buat nyimpen ID order
+        const order = await NokosTx.findOne({ refId: order_id }); 
+
+        if (!order) return res.json({ success: false, msg: "Data pesanan tidak ditemukan" });
+
+        // ==========================================
+        // 2. KUNCI ANTI-EXPLOIT (PENTING BANGET)
+        // ==========================================
+        if (order.status === 'canceled' || order.status === 'success') {
+            return res.json({ 
+                success: false, 
+                msg: "Aksi ditolak! Pesanan ini sudah dibatalkan atau sudah selesai." 
+            });
+        }
+
+        // 3. Tembak API RumahOTP buat batalin (biasanya pakai v2/set_status?id=xxx&status=2)
+        const result = await callRumahOTP(`v2/set_status?id=${order.refId}&status=2`);
+
+        // Walaupun API pusat mungkin error, kita harus amanin DB lokal kita
+        if (result.success || result.data === 'success') {
+            // 4. Ubah status jadi canceled DULU
+            order.status = 'canceled';
+            await order.save();
+
+            // 5. Baru balikin saldo user (Refund)
+            await User.findOneAndUpdate(
+                { username: order.username },
+                { $inc: { balance: order.price } } // order.price adalah harga modal + margin yg dipotong pas beli
+            );
+
+            res.json({ success: true, msg: "Pesanan dibatalkan, saldo dikembalikan." });
+        } else {
+            res.json({ success: false, msg: "Gagal membatalkan di server pusat." });
+        }
+
+    } catch (e) {
+        res.json({ success: false, msg: e.message });
+    }
 });
 
 router.get('/history', async (req, res) => {
