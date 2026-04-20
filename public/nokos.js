@@ -379,18 +379,48 @@ function startTimer(invoiceId, seconds) {
 }
 
 async function cancelOrder(orderId) {
-    const conf = await Swal.fire({ title: 'Batalkan?', icon: 'warning', showCancelButton: true });
-    if (conf.isConfirmed) {
-        try {
-            const res = await fetch('/api/nokos/cancel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_id: orderId }) });
-            const data = await res.json();
-            if (data.success) {
-                activeOrders = activeOrders.filter(o => o.order_id !== orderId);
-                saveOrders();
-                renderPendingOrders();
-                location.reload();
-            }
-        } catch (e) {}
+    // Kasih loading biar user ga bisa klik berkali-kali
+    Swal.fire({
+        title: 'Membatalkan...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading(),
+        background: '#0c0c0e', color: '#fff'
+    });
+
+    try {
+        const res = await fetch('/api/nokos/cancel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order_id: orderId })
+        });
+        const result = await res.json();
+
+        if (result.success) {
+            // ==========================================
+            // 1. HAPUS DATA DARI ARRAY LOKAL
+            // ==========================================
+            activeOrders = activeOrders.filter(order => order.order_id !== orderId);
+            
+            // 2. SIMPAN ARRAY YANG BARU KE LOCALSTORAGE (Kalau lo pake localstorage)
+            localStorage.setItem('activeNokosOrders', JSON.stringify(activeOrders));
+
+            // 3. REFRESH TAMPILAN KARTU ORDER BIAR HILANG
+            renderPendingOrders();
+
+            // 4. UPDATE SALDO DI PROFIL KARENA HABIS DI-REFUND
+            if (typeof loadUserProfile === 'function') loadUserProfile();
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Dibatalkan',
+                text: 'Pesanan dibatalkan dan saldo telah dikembalikan.',
+                background: '#0c0c0e', color: '#fff'
+            });
+        } else {
+            Swal.fire('Gagal', result.msg, 'error');
+        }
+    } catch (e) {
+        Swal.fire('Error', 'Sistem sedang sibuk', 'error');
     }
 }
 
