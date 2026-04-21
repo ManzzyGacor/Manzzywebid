@@ -6,7 +6,66 @@ const bcrypt = require('bcryptjs');
 const https = require('https');
 const axios = require('axios');
 
+
 const app = express();
+
+// ==========================================
+// FITUR AUTO MAINTENANCE (23:00 - 01:00 WIB)
+// ==========================================
+app.use((req, res, next) => {
+    // Ambil jam server saat ini secara spesifik di zona waktu WIB (Jakarta)
+    // Biar gak error walaupun jam VPS lo pake zona waktu luar negeri
+    const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Jakarta',
+        hour: 'numeric',
+        hour12: false
+    });
+    const jamWIB = parseInt(formatter.format(new Date()), 10);
+
+    // Cek apakah jam menunjukkan pukul 23 atau 00
+    if (jamWIB === 23 || jamWIB === 0) {
+        
+        // Kalau request-nya dari fetch API di background (biar ga error json parsing)
+        if (req.path.startsWith('/api')) {
+            return res.json({ success: false, msg: "Sistem sedang maintenance rutin (23.00 - 01.00 WIB)." });
+        }
+        
+        // Kalau user buka web dari browser, tampilkan halaman maintenance keren
+        return res.status(503).send(`
+            <!DOCTYPE html>
+            <html lang="id">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Maintenance - Manzzy ID</title>
+                <script src="https://cdn.tailwindcss.com"></script>
+                <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+                <style>
+                    body { font-family: 'Space Grotesk', sans-serif; background: #050505; color: white; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+                    .galaxy-card { background: linear-gradient(145deg, #111114, #09090b); border: 1px solid rgba(139, 92, 246, 0.2); }
+                </style>
+            </head>
+            <body>
+                <div class="galaxy-card p-10 rounded-3xl text-center max-w-md w-full mx-4 shadow-2xl shadow-purple-900/20">
+                    <div class="w-16 h-16 bg-purple-500/20 text-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-6 text-3xl animate-pulse">
+                        <i class="fa-solid fa-screwdriver-wrench"></i> 🛠️
+                    </div>
+                    <h2 class="text-2xl font-bold mb-2 tracking-widest text-white">SERVER MAINTENANCE</h2>
+                    <p class="text-gray-400 text-sm mb-6 leading-relaxed">Sistem Manzzy ID sedang dalam perawatan rutin harian untuk menjaga performa server tetap maksimal.</p>
+                    <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                        <p class="text-xs text-gray-500 uppercase tracking-widest mb-1">Jadwal Maintenance:</p>
+                        <p class="text-lg font-mono text-purple-400 font-bold">23:00 - 01:00 WIB</p>
+                    </div>
+                    <p class="text-[10px] text-gray-600 mt-6">Silakan kembali lagi setelah jam 01:00 WIB.</p>
+                </div>
+            </body>
+            </html>
+        `);
+    }
+    
+    // Kalau bukan jam maintenance, izinkan user masuk ke web seperti biasa
+    next();
+});
 app.use(express.json());
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
@@ -48,11 +107,16 @@ mongoose.connect(process.env.MONGO_URI).then(() => console.log("--- DATABASE CON
 // ==========================================
 // 2. SESSION CONFIG
 // ==========================================
+app.set('trust proxy', 1); 
+
 app.use(session({
     secret: 'manzzy-galaxy-secret',
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 24 * 60 * 60 * 1000 } // 24 Jam
+    cookie: { 
+        maxAge: 24 * 60 * 60 * 1000, // 24 Jam
+        secure: false // Pastikan ini false dulu biar bisa jalan di HTTP & HTTPS
+    } 
 }));
 
 // ==========================================
