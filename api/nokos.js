@@ -287,39 +287,45 @@ router.get('/status/:invoiceId', async (req, res) => {
 
 // Action (v1)
 router.post('/cancel', async (req, res) => {
-    // Asumsi req.body nerima orderId atau refId
     const { order_id } = req.body; 
 
     try {
-        // 1. Cari data transaksinya di database
-        // Sesuaikan 'refId' atau 'invoiceId' dengan field yang lo pake buat nyimpen ID order
         const order = await NokosTx.findOne({ refId: order_id }); 
-
         if (!order) return res.json({ success: false, msg: "Data pesanan tidak ditemukan" });
 
-        // ==========================================
-        // 2. KUNCI ANTI-EXPLOIT (PENTING BANGET)
-        // ==========================================
+        // KUNCI ANTI-EXPLOIT 1: Cek Status
         if (order.status === 'canceled' || order.status === 'success') {
+            return res.json({ success: false, msg: "Aksi ditolak! Pesanan sudah dibatalkan/selesai." });
+        }
+
+        // ==========================================
+        // KUNCI ANTI-EXPLOIT 2: CEK WAKTU 3 MENIT
+        // ==========================================
+        const waktuPesan = new Date(order.createdAt).getTime();
+        const waktuSekarang = Date.now();
+        const selisihWaktuMs = waktuSekarang - waktuPesan;
+        const batasWaktuMs = 3 * 60 * 1000; // 3 Menit dalam millisecond
+
+        if (selisihWaktuMs < batasWaktuMs) {
+            const sisaDetik = Math.ceil((batasWaktuMs - selisihWaktuMs) / 1000);
             return res.json({ 
                 success: false, 
-                msg: "Aksi ditolak! Pesanan ini sudah dibatalkan atau sudah selesai." 
+                // Kita kirim kode khusus 'WAIT' biar frontend gampang ngebacanya
+                code: 'WAIT', 
+                msg: `Sabar bos! Nomor baru bisa dicancel setelah 3 menit. Tunggu ${sisaDetik} detik lagi.` 
             });
         }
 
-        // 3. Tembak API RumahOTP buat batalin (biasanya pakai v2/set_status?id=xxx&status=2)
+        // --- Lanjut proses cancel ke RumahOTP ---
         const result = await callRumahOTP(`v2/set_status?id=${order.refId}&status=2`);
 
-        // Walaupun API pusat mungkin error, kita harus amanin DB lokal kita
         if (result.success || result.data === 'success') {
-            // 4. Ubah status jadi canceled DULU
             order.status = 'canceled';
             await order.save();
 
-            // 5. Baru balikin saldo user (Refund)
             await User.findOneAndUpdate(
                 { username: order.username },
-                { $inc: { balance: order.price } } // order.price adalah harga modal + margin yg dipotong pas beli
+                { $inc: { balance: order.price } } 
             );
 
             res.json({ success: true, msg: "Pesanan dibatalkan, saldo dikembalikan." });
@@ -332,11 +338,61 @@ router.post('/cancel', async (req, res) => {
     }
 });
 
+// ==========================================
+// 1. ROUTE HISTORY (MUTASI SALDO GABUNGAN)
+// ==========================================
 router.get('/history', async (req, res) => {
-    if(!req.session.userId) return res.json({success:false});
-    const user = await User.findById(req.session.userId);
-    const list = await NokosTx.find({ username: user.username }).sort({ createdAt: -1 });
-    res.json({ success: true, data: list });
+    if(!req.session.userId) return res.json({success:false, msg: "Belum login"});
+    
+    try {
+        const user = await User.findById(req.session.userId);
+        const Deposit = mongoose.models.Deposit; // Panggil model Deposit untuk history Top Up
+
+        // Ambil 20 Riwayat Nokos
+        const nokosList = await NokosTx.find({ username: user.username })
+            .sort({ createdAt: -1 }).limit(20).lean();
+
+        // Ambil 20 Riwayat Top Up
+        let topupList = [];
+        if (Deposit) {
+            topupList = await Deposit.find({ username: user.username })
+                .sort({ createdAt: -1 }).limit(20).lean();
+        }
+
+        let mutasi = [];
+
+        // Mapping Nokos
+        nokosList.forEach(n => {
+            mutasi.push({
+                type: 'nokos',
+                title: `Beli ${n.serviceName || 'Layanan'}`,
+                desc: n.phoneNumber || 'Nomor dibatalkan/pending',
+                amount: n.price || 0,
+                status: n.status,
+                date: n.createdAt,
+                smsCode: n.smsCode // Kunci biar OTP bisa dicopy di frontend
+            });
+        });
+
+        // Mapping Top Up
+        topupList.forEach(t => {
+            mutasi.push({
+                type: 'topup',
+                title: 'Top Up Saldo QRIS',
+                desc: `Ref: ${t.depositId ? t.depositId.substring(0,8) : 'Manual'}...`,
+                amount: t.amount || 0,
+                status: t.status,
+                date: t.createdAt
+            });
+        });
+
+        // Urutkan dari yang terbaru & kirim
+        mutasi.sort((a, b) => new Date(b.date) - new Date(a.date));
+        res.json({ success: true, data: mutasi.slice(0, 30) });
+
+    } catch (e) {
+        res.json({ success: false, msg: e.message });
+    }
 });
 
 // Route Upgrade (api/nokos.js)
