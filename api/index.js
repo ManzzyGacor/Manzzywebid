@@ -13,8 +13,6 @@ const app = express();
 // FITUR AUTO MAINTENANCE (23:00 - 01:00 WIB)
 // ==========================================
 app.use((req, res, next) => {
-    // Ambil jam server saat ini secara spesifik di zona waktu WIB (Jakarta)
-    // Biar gak error walaupun jam VPS lo pake zona waktu luar negeri
     const formatter = new Intl.DateTimeFormat('en-US', {
         timeZone: 'Asia/Jakarta',
         hour: 'numeric',
@@ -22,15 +20,11 @@ app.use((req, res, next) => {
     });
     const jamWIB = parseInt(formatter.format(new Date()), 10);
 
-    // Cek apakah jam menunjukkan pukul 23 atau 00
     if (jamWIB === 23 || jamWIB === 0) {
-        
-        // Kalau request-nya dari fetch API di background (biar ga error json parsing)
         if (req.path.startsWith('/api')) {
             return res.json({ success: false, msg: "Sistem sedang maintenance rutin (23.00 - 01.00 WIB)." });
         }
         
-        // Kalau user buka web dari browser, tampilkan halaman maintenance keren
         return res.status(503).send(`
             <!DOCTYPE html>
             <html lang="id">
@@ -39,31 +33,117 @@ app.use((req, res, next) => {
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>Maintenance - Manzzy ID</title>
                 <script src="https://cdn.tailwindcss.com"></script>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
                 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
                 <style>
-                    body { font-family: 'Space Grotesk', sans-serif; background: #050505; color: white; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-                    .galaxy-card { background: linear-gradient(145deg, #111114, #09090b); border: 1px solid rgba(139, 92, 246, 0.2); }
+                    body { 
+                        font-family: 'Space Grotesk', sans-serif; 
+                        background: #050505; 
+                        overflow: hidden;
+                        display: flex; 
+                        align-items: center; 
+                        justify-content: center; 
+                        height: 100vh; 
+                        margin: 0; 
+                    }
+                    
+                    /* Animasi Background Galaxy */
+                    .bg-glow {
+                        position: absolute;
+                        width: 500px;
+                        height: 500px;
+                        background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, rgba(0,0,0,0) 70%);
+                        border-radius: 50%;
+                        filter: blur(80px);
+                        z-index: -1;
+                        animation: moveGlow 15s infinite alternate ease-in-out;
+                    }
+
+                    @keyframes moveGlow {
+                        0% { transform: translate(-20%, -20%); }
+                        100% { transform: translate(20%, 20%); }
+                    }
+
+                    /* Card Floating Effect */
+                    .galaxy-card { 
+                        background: rgba(15, 15, 20, 0.8);
+                        backdrop-filter: blur(12px);
+                        border: 1px solid rgba(139, 92, 246, 0.3); 
+                        box-shadow: 0 0 40px rgba(139, 92, 246, 0.1);
+                        animation: float 6s infinite ease-in-out;
+                    }
+
+                    @keyframes float {
+                        0%, 100% { transform: translateY(0px); }
+                        50% { transform: translateY(-20px); }
+                    }
+
+                    .gear-spin {
+                        animation: spin 4s infinite linear;
+                    }
+
+                    @keyframes spin {
+                        from { transform: rotate(0deg); }
+                        to { transform: rotate(360deg); }
+                    }
+
+                    .shimmer {
+                        position: relative;
+                        overflow: hidden;
+                    }
+                    .shimmer::after {
+                        content: '';
+                        position: absolute;
+                        top: -50%; left: -50%;
+                        width: 200%; height: 200%;
+                        background: linear-gradient(45deg, transparent, rgba(255,255,255,0.05), transparent);
+                        transform: rotate(45deg);
+                        animation: shimmer 3s infinite;
+                    }
+                    @keyframes shimmer {
+                        0% { transform: translateX(-100%) rotate(45deg); }
+                        100% { transform: translateX(100%) rotate(45deg); }
+                    }
                 </style>
             </head>
             <body>
-                <div class="galaxy-card p-10 rounded-3xl text-center max-w-md w-full mx-4 shadow-2xl shadow-purple-900/20">
-                    <div class="w-16 h-16 bg-purple-500/20 text-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-6 text-3xl animate-pulse">
-                        <i class="fa-solid fa-screwdriver-wrench"></i> 🛠️
+                <div class="bg-glow"></div>
+                
+                <div class="galaxy-card p-10 rounded-[40px] text-center max-w-md w-full mx-4 relative overflow-hidden">
+                    <div class="relative w-24 h-24 mx-auto mb-8">
+                        <div class="absolute inset-0 bg-purple-500/20 rounded-full animate-ping"></div>
+                        <div class="relative w-full h-full bg-purple-600/20 text-purple-500 rounded-3xl flex items-center justify-center text-4xl shadow-lg border border-purple-500/30">
+                            <i class="fa-solid fa-gears gear-spin"></i>
+                        </div>
                     </div>
-                    <h2 class="text-2xl font-bold mb-2 tracking-widest text-white">SERVER MAINTENANCE</h2>
-                    <p class="text-gray-400 text-sm mb-6 leading-relaxed">Sistem Manzzy ID sedang dalam perawatan rutin harian untuk menjaga performa server tetap maksimal.</p>
-                    <div class="bg-white/5 border border-white/10 rounded-xl p-4">
-                        <p class="text-xs text-gray-500 uppercase tracking-widest mb-1">Jadwal Maintenance:</p>
-                        <p class="text-lg font-mono text-purple-400 font-bold">23:00 - 01:00 WIB</p>
+
+                    <h2 class="text-3xl font-bold mb-3 tracking-tighter text-white">UPGRADING SYSTEM</h2>
+                    <p class="text-gray-400 text-sm mb-8 leading-relaxed px-4">
+                        Sistem <span class="text-purple-400 font-bold">Manzzy ID</span> sedang melakukan sinkronisasi data dan perawatan rutin untuk pengalaman transaksi yang lebih cepat.
+                    </p>
+
+                    <div class="shimmer bg-white/5 border border-white/10 rounded-2xl p-5 relative">
+                        <div class="flex flex-col items-center">
+                            <span class="text-[10px] text-gray-500 uppercase tracking-[0.3em] mb-2">Estimated Ready At</span>
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl font-mono text-white font-bold">23:00</span>
+                                <div class="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
+                                <span class="text-2xl font-mono text-white font-bold">01:00</span>
+                                <span class="text-xs text-purple-400 font-bold ml-1">WIB</span>
+                            </div>
+                        </div>
                     </div>
-                    <p class="text-[10px] text-gray-600 mt-6">Silakan kembali lagi setelah jam 01:00 WIB.</p>
+
+                    <div class="mt-10 flex items-center justify-center gap-2 text-gray-600">
+                        <div class="h-[1px] w-8 bg-gray-800"></div>
+                        <span class="text-[9px] font-bold uppercase tracking-widest">Server Stability Priority</span>
+                        <div class="h-[1px] w-8 bg-gray-800"></div>
+                    </div>
                 </div>
             </body>
             </html>
         `);
     }
-    
-    // Kalau bukan jam maintenance, izinkan user masuk ke web seperti biasa
     next();
 });
 app.use(express.json());
