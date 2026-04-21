@@ -379,7 +379,6 @@ function startTimer(invoiceId, seconds) {
 }
 
 async function cancelOrder(orderId) {
-    // Kasih loading biar user ga bisa klik berkali-kali
     Swal.fire({
         title: 'Membatalkan...',
         allowOutsideClick: false,
@@ -396,18 +395,11 @@ async function cancelOrder(orderId) {
         const result = await res.json();
 
         if (result.success) {
-            // ==========================================
-            // 1. HAPUS DATA DARI ARRAY LOKAL
-            // ==========================================
+            // Hapus data lokal & update UI
             activeOrders = activeOrders.filter(order => order.order_id !== orderId);
-            
-            // 2. SIMPAN ARRAY YANG BARU KE LOCALSTORAGE (Kalau lo pake localstorage)
             localStorage.setItem('activeNokosOrders', JSON.stringify(activeOrders));
-
-            // 3. REFRESH TAMPILAN KARTU ORDER BIAR HILANG
-            renderPendingOrders();
-
-            // 4. UPDATE SALDO DI PROFIL KARENA HABIS DI-REFUND
+            
+            if (typeof renderPendingOrders === 'function') renderPendingOrders();
             if (typeof loadUserProfile === 'function') loadUserProfile();
 
             Swal.fire({
@@ -417,7 +409,20 @@ async function cancelOrder(orderId) {
                 background: '#0c0c0e', color: '#fff'
             });
         } else {
-            Swal.fire('Gagal', result.msg, 'error');
+            // LOGIKA BARU: Tangkap kode 'WAIT' (Belum 3 Menit)
+            if (result.code === 'WAIT') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Belum Bisa Batal',
+                    text: result.msg,
+                    background: '#0c0c0e', color: '#fff',
+                    confirmButtonColor: '#d97706',
+                    confirmButtonText: 'Oke, Saya Tunggu'
+                });
+            } else {
+                // Error biasa
+                Swal.fire('Gagal', result.msg, 'error');
+            }
         }
     } catch (e) {
         Swal.fire('Error', 'Sistem sedang sibuk', 'error');
@@ -430,6 +435,9 @@ function copyText(txt) {
 }
 
 // Fungsi untuk Load History dari Database
+// ==========================================
+// 1. FUNGSI LOAD HISTORY (MUTASI SALDO UI)
+// ==========================================
 async function loadOrderHistory() {
     const container = document.getElementById('history-list-container');
     if (!container) return;
@@ -442,33 +450,63 @@ async function loadOrderHistory() {
 
         if (result.success && result.data.length > 0) {
             container.innerHTML = result.data.map(tx => {
-                // Tentukan warna badge status
                 let statusColor = 'text-yellow-500';
                 if (tx.status === 'success') statusColor = 'text-green-500';
-                if (tx.status === 'canceled') statusColor = 'text-red-500';
+                else if (tx.status === 'canceled' || tx.status === 'expired') statusColor = 'text-red-500';
 
-                return `
-                <div class="galaxy-card p-4 rounded-2xl mb-3 border-l-2 ${tx.status === 'success' ? 'border-green-500' : 'border-white/10'}">
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <div class="text-[9px] font-bold text-gray-500 uppercase">${tx.invoiceId} • ${new Date(tx.createdAt).toLocaleString('id-ID')}</div>
-                            <div class="text-sm font-bold text-white">${tx.serviceName} (${tx.country})</div>
+                const d = new Date(tx.date);
+                const dateStr = `${d.getDate()} ${d.toLocaleString('id-ID', {month:'short'})}, ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+
+                if (tx.type === 'topup') {
+                    // TAMPILAN TOP UP (UANG MASUK)
+                    return `
+                    <div class="galaxy-card p-4 rounded-2xl mb-3 border-l-2 border-green-500">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center text-green-500"><i class="fa-solid fa-arrow-down text-sm"></i></div>
+                                <div>
+                                    <div class="text-[9px] font-bold text-gray-500 uppercase">${dateStr}</div>
+                                    <div class="text-sm font-bold text-white">${tx.title}</div>
+                                </div>
+                            </div>
+                            <div class="text-[9px] font-bold uppercase ${statusColor}">${tx.status}</div>
                         </div>
-                        <div class="text-[9px] font-bold uppercase ${statusColor}">${tx.status}</div>
+                        <div class="flex justify-between items-center bg-white/5 p-2 rounded-xl mt-2">
+                            <div class="text-xs font-mono text-gray-400">${tx.desc}</div>
+                            <div class="text-xs font-bold text-green-400">+ Rp ${tx.amount.toLocaleString('id-ID')}</div>
+                        </div>
                     </div>
-                    
-                    <div class="flex justify-between items-center bg-white/5 p-2 rounded-xl mt-2">
-                        <div class="text-xs font-mono text-purple-400">${tx.phoneNumber}</div>
-                        <div class="text-xs font-bold text-white">${tx.smsCode || '---'}</div>
+                    `;
+                } else {
+                    // TAMPILAN NOKOS (UANG KELUAR)
+                    return `
+                    <div class="galaxy-card p-4 rounded-2xl mb-3 border-l-2 ${tx.status === 'success' ? 'border-purple-500' : 'border-white/10'}">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center text-red-500"><i class="fa-solid fa-arrow-up text-sm"></i></div>
+                                <div>
+                                    <div class="text-[9px] font-bold text-gray-500 uppercase">${dateStr}</div>
+                                    <div class="text-sm font-bold text-white">${tx.title}</div>
+                                </div>
+                            </div>
+                            <div class="text-[9px] font-bold uppercase ${statusColor}">${tx.status}</div>
+                        </div>
+                        <div class="flex justify-between items-center bg-white/5 p-2 rounded-xl mt-2">
+                            <div class="text-xs font-mono text-purple-400">${tx.desc}</div>
+                            <div class="text-xs font-bold text-red-400">- Rp ${tx.amount.toLocaleString('id-ID')}</div>
+                        </div>
+                        ${tx.status === 'success' && tx.smsCode ? `
+                        <div class="mt-3 text-center bg-green-500/10 border border-green-500/20 rounded-xl p-3">
+                            <span class="text-[9px] text-gray-400 uppercase tracking-widest block mb-1">KODE OTP:</span>
+                            <div class="text-xl font-bold text-white tracking-widest">${tx.smsCode}</div>
+                        </div>
+                        <button onclick="copyText('${tx.smsCode}')" class="w-full mt-2 py-3 bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold rounded-xl transition uppercase tracking-widest shadow-lg shadow-purple-900/40">
+                            Salin Kode OTP
+                        </button>
+                        ` : ''}
                     </div>
-
-                    ${tx.status === 'success' && tx.smsCode ? `
-                    <button onclick="copyText('${tx.smsCode}')" class="w-full mt-3 py-2 bg-purple-600/20 hover:bg-purple-600 text-purple-400 hover:text-white text-[10px] font-bold rounded-lg transition uppercase tracking-widest">
-                        Salin Kode OTP
-                    </button>
-                    ` : ''}
-                </div>
-                `;
+                    `;
+                }
             }).join('');
         } else {
             container.innerHTML = '<div class="text-center py-10 opacity-30 italic text-[10px]">Belum ada riwayat transaksi.</div>';
@@ -477,6 +515,7 @@ async function loadOrderHistory() {
         container.innerHTML = '<div class="text-center py-10 text-red-500 text-[10px]">Gagal mengambil data.</div>';
     }
 }
+
 
 // Fungsi untuk update tampilan Card Membership
 function updateMembershipUI(userData) {
