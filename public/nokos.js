@@ -664,35 +664,53 @@ async function loadUserProfile() {
         const res = await fetch('/api/auth/me');
         const data = await res.json();
         
-        const isAuthPage = window.location.pathname.includes('auth.html');
-
+        // LOGIKA AMAN: Cuma eksekusi kalau beneran sudah login
+        // Kalau belum login/data telat, dia DIAM, gak bakal nendang ke auth.html
         if (data.login && data.user) {
             const user = data.user;
             
-            // Update elemen UI jika ada
+            // 1. Update Username & Saldo (ID Baru)
             const elUser = document.getElementById('profile-username');
             const elBal = document.getElementById('profile-balance');
+            
             if (elUser) elUser.innerText = user.username;
             if (elBal) elBal.innerText = `Rp ${user.balance.toLocaleString('id-ID')}`;
+            
+            // 2. Update Role Badge (UI Baru)
+            const roleBadge = document.getElementById('user-role-badge');
+            const profileStatus = document.getElementById('profile-status');
+            
+            if (roleBadge) {
+                // Reset class dasar
+                roleBadge.className = "absolute -bottom-2 -right-2 px-3 py-1 text-[10px] font-bold rounded-full border-2 border-[#050505] uppercase tracking-tighter text-white";
+                
+                if (user.role === 'reseller') {
+                    roleBadge.innerText = 'RESELLER PRO';
+                    roleBadge.classList.add('bg-amber-500');
+                    if (profileStatus && user.resellerUntil) {
+                        const d = new Date(user.resellerUntil);
+                        profileStatus.innerText = d.toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' });
+                    }
+                } else if (user.role === 'admin') {
+                    roleBadge.innerText = 'ADMIN';
+                    roleBadge.classList.add('bg-red-500');
+                    if (profileStatus) profileStatus.innerText = 'SELAMANYA';
+                } else {
+                    roleBadge.innerText = 'MEMBER';
+                    roleBadge.classList.add('bg-purple-600');
+                    if (profileStatus) profileStatus.innerText = 'SELAMANYA';
+                }
+            }
 
-            // PENTING: Update Badge Role (Admin/Reseller/Member)
-            updateProfileUI(user);
-
-            // Kalau lagi di auth.html tapi ternyata udah login, pindah ke dashboard
-            if (isAuthPage) window.location.href = 'index.html';
-
-        } else {
-            // JIKA TIDAK LOGIN & TIDAK DI HALAMAN AUTH -> BARU TENDANG
-            if (!isAuthPage) {
-                console.warn("Sesi tidak ditemukan, mengalihkan ke login...");
-                window.location.href = 'auth.html';
+            // 3. Jalankan fungsi tambahan jika ada
+            if (typeof updateMembershipUI === "function") {
+                updateMembershipUI(user);
             }
         }
     } catch (e) {
-        console.error("Gagal muat profil:", e);
+        console.error("Gagal memuat profil:", e);
     }
 }
-
 // Fungsi tambahan buat ngerapiin UI Badge
 function updateProfileUI(user) {
     const badge = document.getElementById('user-role-badge');
