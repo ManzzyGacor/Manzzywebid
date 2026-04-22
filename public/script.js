@@ -78,42 +78,6 @@ async function handleAuthSubmit() {
     }
 }
 
-window.addEventListener('load', async () => {
-    try {
-        const res = await fetch('/api/auth/me');
-        const data = await res.json();
-
-        if (data.login) {
-            // 1. Isi Data di Profile View
-            document.getElementById('profile-name').innerText = data.user.username;
-            document.getElementById('profile-balance').innerText = "Rp " + data.user.balance.toLocaleString();
-            
-            // 2. Set Huruf Inisial (Contoh: 'Manzzy' jadi 'M')
-            const initial = data.user.username.charAt(0).toUpperCase();
-            document.querySelectorAll('.user-initial').forEach(el => el.innerText = initial);
-
-            // 3. Set Badge Role (Admin/Member)
-            const badge = document.getElementById('profile-role-badge');
-            if (data.user.role === 'admin') {
-                badge.innerHTML = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-[9px] font-bold uppercase tracking-wider"><i class="fa-solid fa-crown text-[8px]"></i> ADMINISTRATOR</span>`;
-            } else {
-                badge.innerHTML = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[9px] font-bold uppercase tracking-wider"><i class="fa-solid fa-user text-[8px]"></i> MEMBER</span>`;
-            }
-
-            // 4. Isi Data di Header (Navigasi Atas)
-            document.getElementById('nokos-username').innerText = data.user.username;
-            document.getElementById('user-balance').innerText = "Rp " + data.user.balance.toLocaleString();
-
-            // Masuk ke Home
-            switchView('home');
-        } else {
-            // BELUM LOGIN? Langsung tendang ke auth.html
-            window.location.href = 'auth.html';
-        }
-    } catch (e) {
-        window.location.href = 'auth.html';
-    }
-});
 // ADMIN KONTROL
 // Fungsi Update Nama Web secara Dinamis
 async function updateWebBranding() {
