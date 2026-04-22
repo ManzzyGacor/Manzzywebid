@@ -661,60 +661,66 @@ async function processUpgrade() {
 
 async function loadUserProfile() {
     try {
-        const res = await fetch('/api/auth/me'); // Ganti jalur ke /api/auth/me sesuai index.js lo
+        const res = await fetch('/api/auth/me');
         const data = await res.json();
         
+        // Cek apakah kita di halaman auth.html atau bukan
+        const isAuthPage = window.location.pathname.includes('auth.html');
+
         if (data.login && data.user) {
             const user = data.user;
             
-            // 1. Update Username & Saldo (Sesuai ID HTML baru)
-            const profileName = document.getElementById('profile-username');
-            const profileBalance = document.getElementById('profile-balance');
+            // 1. Update Username & Saldo (Pake Pengecekan Aman)
+            const elUsername = document.getElementById('profile-username');
+            const elBalance = document.getElementById('profile-balance');
             
-            if (profileName) profileName.innerText = user.username;
-            if (profileBalance) profileBalance.innerText = `Rp ${user.balance.toLocaleString('id-ID')}`;
+            if (elUsername) elUsername.innerText = user.username;
+            if (elBalance) elBalance.innerText = `Rp ${user.balance.toLocaleString('id-ID')}`;
             
-            // 2. Update Role Badge & Masa Aktif di Profil
+            // 2. Update Role Badge & Status
             const roleBadge = document.getElementById('user-role-badge');
             const profileStatus = document.getElementById('profile-status');
             
             if (roleBadge) {
-                // Reset warna class bawaan biar gampang di-switch
+                // Reset class biar bersih
                 roleBadge.className = "absolute -bottom-2 -right-2 px-3 py-1 text-[10px] font-bold rounded-full border-2 border-[#050505] uppercase tracking-tighter text-white";
                 
                 if (user.role === 'reseller') {
                     roleBadge.innerText = 'RESELLER PRO';
-                    roleBadge.classList.add('bg-amber-500'); // Warna Emas buat Reseller
-                    
-                    // Set tulisan masa aktif
-                    if (user.resellerUntil && profileStatus) {
+                    roleBadge.classList.add('bg-amber-500');
+                    if (profileStatus && user.resellerUntil) {
                         const d = new Date(user.resellerUntil);
                         profileStatus.innerText = d.toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' });
-                    } else if (profileStatus) {
-                        profileStatus.innerText = 'TIDAK TERBACA';
                     }
-                    
                 } else if (user.role === 'admin') {
                     roleBadge.innerText = 'ADMIN';
-                    roleBadge.classList.add('bg-red-500'); // Warna Merah buat Admin
+                    roleBadge.classList.add('bg-red-500');
                     if (profileStatus) profileStatus.innerText = 'SELAMANYA';
-                    
                 } else {
                     roleBadge.innerText = 'MEMBER';
-                    roleBadge.classList.add('bg-purple-600'); // Warna Ungu standar buat Member
+                    roleBadge.classList.add('bg-purple-600');
                     if (profileStatus) profileStatus.innerText = 'SELAMANYA';
                 }
             }
 
-            // 3. Jalankan fungsi update UI Banner Upgrade (Tetap dipertahankan)
+            // 3. Jalankan UI Upgrade (Jika ada)
             if (typeof updateMembershipUI === "function") {
                 updateMembershipUI(user);
+            }
+
+            // Kalau di halaman login tapi udah ada sesi, lempar ke dashboard
+            if (isAuthPage) {
+                window.location.href = 'index.html';
+            }
+
+        } else {
+            // JIKA TIDAK LOGIN:
+            // Lempar ke auth.html HANYA JIKA sedang tidak di halaman auth
+            if (!isAuthPage) {
+                window.location.href = 'auth.html';
             }
         }
     } catch (e) {
         console.error("Gagal memuat profil:", e);
     }
 }
-
-// Pastikan fungsi ini jalan setiap web dibuka
-window.addEventListener('DOMContentLoaded', loadUserProfile);
