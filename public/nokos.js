@@ -667,35 +667,46 @@ async function loadUserProfile() {
         if (data.login && data.user) {
             const user = data.user;
             
-            // 1. Update Saldo & Nama
-            const profileName = document.getElementById('profile-name');
+            // 1. Update Username & Saldo (Sesuai ID HTML baru)
+            const profileName = document.getElementById('profile-username');
             const profileBalance = document.getElementById('profile-balance');
             
             if (profileName) profileName.innerText = user.username;
             if (profileBalance) profileBalance.innerText = `Rp ${user.balance.toLocaleString('id-ID')}`;
             
-            // 2. Update Role Badge di Profil
-            const badgeBox = document.getElementById('profile-role-badge');
-            if (badgeBox) {
+            // 2. Update Role Badge & Masa Aktif di Profil
+            const roleBadge = document.getElementById('user-role-badge');
+            const profileStatus = document.getElementById('profile-status');
+            
+            if (roleBadge) {
+                // Reset warna class bawaan biar gampang di-switch
+                roleBadge.className = "absolute -bottom-2 -right-2 px-3 py-1 text-[10px] font-bold rounded-full border-2 border-[#050505] uppercase tracking-tighter text-white";
+                
                 if (user.role === 'reseller') {
-                    badgeBox.innerHTML = `
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[9px] font-bold uppercase tracking-wider">
-                            <i class="fa-solid fa-crown text-[8px]"></i> RESELLER PRO
-                        </span>`;
+                    roleBadge.innerText = 'RESELLER PRO';
+                    roleBadge.classList.add('bg-amber-500'); // Warna Emas buat Reseller
+                    
+                    // Set tulisan masa aktif
+                    if (user.resellerUntil && profileStatus) {
+                        const d = new Date(user.resellerUntil);
+                        profileStatus.innerText = d.toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' });
+                    } else if (profileStatus) {
+                        profileStatus.innerText = 'TIDAK TERBACA';
+                    }
+                    
                 } else if (user.role === 'admin') {
-                    badgeBox.innerHTML = `
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-[9px] font-bold uppercase tracking-wider">
-                            <i class="fa-solid fa-shield text-[8px]"></i> ADMIN
-                        </span>`;
+                    roleBadge.innerText = 'ADMIN';
+                    roleBadge.classList.add('bg-red-500'); // Warna Merah buat Admin
+                    if (profileStatus) profileStatus.innerText = 'SELAMANYA';
+                    
                 } else {
-                    badgeBox.innerHTML = `
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-500/10 border border-white/5 text-gray-400 text-[9px] font-bold uppercase tracking-wider">
-                            <i class="fa-solid fa-user text-[8px]"></i> MEMBER
-                        </span>`;
+                    roleBadge.innerText = 'MEMBER';
+                    roleBadge.classList.add('bg-purple-600'); // Warna Ungu standar buat Member
+                    if (profileStatus) profileStatus.innerText = 'SELAMANYA';
                 }
             }
 
-            // 3. Jalankan fungsi update UI Banner Upgrade (Jika ada)
+            // 3. Jalankan fungsi update UI Banner Upgrade (Tetap dipertahankan)
             if (typeof updateMembershipUI === "function") {
                 updateMembershipUI(user);
             }
