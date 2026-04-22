@@ -5,7 +5,7 @@ const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const https = require('https');
 const axios = require('axios');
-const MongoStore = require('connect-mongo'); // Tambahkan ini
+const MongoStore = require('connect-mongo'); // Tetap begini,
 
 const app = express();
 
@@ -194,12 +194,12 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
-        mongoUrl: process.env.MONGO_URI || 'mongodb://localhost:27017/manzzy-id', // Sesuaikan dengan URI lo
+        mongoUrl: process.env.MONGO_URI || 'mongodb+srv://manzzdb:Lukman11l@manzzy.ymi9nvm.mongodb.net/?appName=Manzzy', // Sesuaikan dengan URI lo
         ttl: 14 * 24 * 60 * 60, // Sesi berlaku selama 14 hari
         autoRemove: 'native' 
     }),
     cookie: { 
-        secure: false, // Set ke true kalau sudah pakai HTTPS
+        secure: true, // Set ke true kalau sudah pakai HTTPS
         maxAge: 14 * 24 * 60 * 60 * 1000 // Expired cookie 14 hari
     }
 }));
