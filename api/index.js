@@ -5,7 +5,8 @@ const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const https = require('https');
 const axios = require('axios');
-
+const session = require('express-session');
+const MongoStore = require('connect-mongo'); // Tambahkan ini
 
 const app = express();
 
@@ -190,13 +191,18 @@ mongoose.connect(process.env.MONGO_URI).then(() => console.log("--- DATABASE CON
 app.set('trust proxy', 1); 
 
 app.use(session({
-    secret: 'manzzy-galaxy-secret',
+    secret: process.env.SESSION_SECRET || 'manzzy-galaxy-secret',
     resave: false,
     saveUninitialized: false,
+    store: MongoStore.create({
+        mongoUrl: process.env.MONGO_URI || 'mongodb://localhost:27017/manzzy-id', // Sesuaikan dengan URI lo
+        ttl: 14 * 24 * 60 * 60, // Sesi berlaku selama 14 hari
+        autoRemove: 'native' 
+    }),
     cookie: { 
-        maxAge: 24 * 60 * 60 * 1000, // 24 Jam
-        secure: false // Pastikan ini false dulu biar bisa jalan di HTTP & HTTPS
-    } 
+        secure: false, // Set ke true kalau sudah pakai HTTPS
+        maxAge: 14 * 24 * 60 * 60 * 1000 // Expired cookie 14 hari
+    }
 }));
 
 // ==========================================
