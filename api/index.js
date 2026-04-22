@@ -198,11 +198,11 @@ app.use(session({
         autoRemove: 'native' 
     }),
     cookie: { 
-        // WAJIB FALSE: Karena web lo sekarang masih pakai HTTP (belum HTTPS)
-        secure: false, 
-        httpOnly: true,
-        maxAge: 14 * 24 * 60 * 60 * 1000 
-    }
+    secure: true,    // Karena lo udah HTTPS, pake TRUE aja (udah bener)
+    httpOnly: true,
+    sameSite: 'lax', // Penting biar cookie gak ilang pas redirect
+    maxAge: 14 * 24 * 60 * 60 * 1000 
+}
 }));
 // ==========================================
 // 3. MIDDLEWARE
@@ -223,14 +223,11 @@ app.post('/api/auth/submit', async (req, res) => {
     const { username, password, type } = req.body;
     try {
         if (type === 'register') {
-            // Cek apakah user sudah ada
-            const exist = await User.findOne({ username });
+            const exist = await User.findOne({ username: username.toLowerCase() });
             if (exist) return res.json({ success: false, msg: "Username sudah dipakai!" });
 
             const salt = await bcrypt.genSalt(10);
             const hashedPassword = await bcrypt.hash(password, salt);
-            
-            // Cek jika username 'man' otomatis jadi admin
             const role = username.toLowerCase() === 'man' ? 'admin' : 'member';
             
             const newUser = new User({ 
@@ -246,7 +243,12 @@ app.post('/api/auth/submit', async (req, res) => {
             const user = await User.findOne({ username: username.toLowerCase() });
             if (user && await bcrypt.compare(password, user.password)) {
                 req.session.userId = user._id;
-                return res.json({ success: true, msg: "Login berhasil!" });
+
+                // PENTING: Paksa simpan sesi ke MongoDB dulu sebelum kirim JSON
+                return req.session.save((err) => {
+                    if (err) return res.json({ success: false, msg: "Gagal sinkronisasi sesi" });
+                    res.json({ success: true, msg: "Login berhasil!" });
+                });
             }
             res.json({ success: false, msg: "Username/Password salah!" });
         }
